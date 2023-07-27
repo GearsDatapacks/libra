@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/gearsdatapacks/libra/lexer"
 )
 
 func repl() {
@@ -23,7 +25,9 @@ func repl() {
 			log.Fatal(err)
 		}
 
-		fmt.Print(nextLine)
+		lexer := lexer.NewLexer(input)
+		tokens := lexer.Tokenise()
+		fmt.Println(tokens)
 	}
 }
 
