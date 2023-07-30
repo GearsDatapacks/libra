@@ -1,13 +1,13 @@
 package ast
 
 import (
-	"github.com/gearsdatapacks/libra/token"
+	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 type NodeType string
 
 type BaseNode struct {
-	Token token.Token
+	Token       token.Token
 	isStatement bool
 }
 
@@ -37,9 +37,9 @@ func (n *BaseNode) MarkExpression() {
 
 type node interface {
 	GetToken() token.Token
-	// Type() NodeType
+	Type() NodeType
 	Line() int
-	ToString() string
+	String() string
 	IsExpression() bool
 	IsStatement() bool
 	MarkStatement()
@@ -60,11 +60,11 @@ type Program struct {
 	Body []Statement
 }
 
-func (p *Program) ToString() string {
+func (p *Program) String() string {
 	result := ""
 
 	for _, statement := range p.Body {
-		result += statement.ToString()
+		result += statement.String()
 		result += "\n"
 	}
 

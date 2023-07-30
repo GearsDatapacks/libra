@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/gearsdatapacks/libra/ast"
+	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 func (p *parser) parseStatement() ast.Statement {

@@ -3,8 +3,8 @@ package parser
 import (
 	"log"
 
-	"github.com/gearsdatapacks/libra/ast"
-	"github.com/gearsdatapacks/libra/token"
+	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 type parser struct {

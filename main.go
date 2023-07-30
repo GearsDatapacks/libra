@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gearsdatapacks/libra/interpreter"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 )
@@ -30,7 +31,8 @@ func repl() {
 		parser := parser.New()
 		tokens := lexer.Tokenise()
 		ast := parser.Parse(tokens)
-		fmt.Println(ast.ToString())
+		result := interpreter.Evaluate(ast)
+		fmt.Println(result.ToString())
 	}
 }
 

@@ -4,8 +4,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/gearsdatapacks/libra/ast"
-	"github.com/gearsdatapacks/libra/token"
+	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 func (p *parser) parseExpression() ast.Expression {
@@ -13,16 +13,16 @@ func (p *parser) parseExpression() ast.Expression {
 }
 
 // Orders of precedence
-  
-  // Assignment
-  // Logical operators
-  // Comparison
-  // Addition/Subtraction
-  // Multiplication/Division
-  // Member access
-  // Function call
-  // Unary operation
-  // Literal
+
+// Assignment
+// Logical operators
+// Comparison
+// Addition/Subtraction
+// Multiplication/Division
+// Member access
+// Function call
+// Unary operation
+// Literal
 
 func (p *parser) parseAdditiveExpression() ast.Expression {
 	left := p.parseMultiplicativeExpression()
@@ -31,9 +31,9 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 		operator := p.consume().Value
 		right := p.parseMultiplicativeExpression()
 		left = &ast.BinaryOperation{
-			Left: left,
-			Op: operator,
-			Right: right,
+			Left:     left,
+			Op:       operator,
+			Right:    right,
 			BaseNode: &ast.BaseNode{Token: left.GetToken()},
 		}
 	}
@@ -48,9 +48,9 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 		operator := p.consume().Value
 		right := p.parseLiteral()
 		left = &ast.BinaryOperation{
-			Left: left,
-			Op: operator,
-			Right: right,
+			Left:     left,
+			Op:       operator,
+			Right:    right,
 			BaseNode: &ast.BaseNode{Token: left.GetToken()},
 		}
 	}
@@ -60,14 +60,14 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 
 func (p *parser) parseLiteral() ast.Expression {
 	switch p.next().Type {
-	case token.NUMBER:
+	case token.INTEGER:
 		tok := p.consume()
 		value, _ := strconv.ParseInt(tok.Value, 10, 32)
 		return &ast.IntegerLiteral{
-			Value: int(value),
+			Value:    int(value),
 			BaseNode: &ast.BaseNode{Token: tok},
 		}
-	
+
 	case token.LEFT_PAREN:
 		p.consume()
 		expression := p.parseExpression()

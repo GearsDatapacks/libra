@@ -5,13 +5,13 @@ import (
 	"log"
 	"strings"
 
-	"github.com/gearsdatapacks/libra/token"
+	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 type lexer struct {
-	code []byte
-	pos  int
-	line int
+	code   []byte
+	pos    int
+	line   int
 	offset int
 }
 
@@ -45,7 +45,7 @@ func (l *lexer) parseToken() token.Token {
 		for isNumeric(l.next()) {
 			number = append(number, l.consume())
 		}
-		return l.createToken(token.NUMBER, number...)
+		return l.createToken(token.INTEGER, number...)
 	} else if sym, ok := l.parseSymbol(); ok {
 		return sym
 	} else {
