@@ -5,8 +5,8 @@ type Type string
 type Token struct {
 	Type Type
 	Value string
-	Start int
-	End int
+	Line int
+	Offset int
 }
 
 const (
@@ -30,11 +30,11 @@ var Symbols = map[string]Type {
 	"%": OPERATOR,
 }
 
-func New(start int, end int, tokenType Type, value []rune) Token {
+func New(line int, offset int, tokenType Type, value []rune) Token {
 	return Token{
 		Type: tokenType,
 		Value: string(value),
-		Start: start,
-		End: end,
+		Line: line,
+		Offset: offset,
 	}
 }

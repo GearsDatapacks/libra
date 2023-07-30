@@ -8,21 +8,23 @@ import (
 	"github.com/gearsdatapacks/libra/token"
 )
 
-type lexer struct{
+type lexer struct {
 	code []byte
-	pos int
+	pos  int
+	line int
+	offset int
 }
 
-func NewLexer(code []byte) *lexer {
-	return &lexer{ code: code }
+func New(code []byte) *lexer {
+	return &lexer{code: code, line: 1}
 }
 
 func (l *lexer) Tokenise() []token.Token {
 	tokens := []token.Token{}
 
 	for !l.eof() {
-		if isWhitespace(l.peek()) {
-			l.next()
+		if isWhitespace(l.next()) {
+			l.consume()
 			continue
 		}
 
@@ -36,12 +38,12 @@ func (l *lexer) Tokenise() []token.Token {
 }
 
 func (l *lexer) parseToken() token.Token {
-	nextChar := l.peek()
+	nextChar := l.next()
 
 	if isNumeric(nextChar) {
 		number := []rune{}
-		for isNumeric(l.peek()) {
-			number = append(number, l.next())
+		for isNumeric(l.next()) {
+			number = append(number, l.consume())
 		}
 		return l.createToken(token.NUMBER, number...)
 	} else if sym, ok := l.parseSymbol(); ok {
@@ -67,24 +69,31 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 
 func (l *lexer) createToken(tokenType token.Type, value ...rune) token.Token {
 	return token.New(
-		l.pos - len(value),
-		l.pos,
+		l.line,
+		l.offset,
 		tokenType,
 		value,
 	)
 }
 
-func (l *lexer) next() rune {
+func (l *lexer) consume() rune {
 	if l.pos > len(l.code) {
 		log.Fatal(errors.New("lexer: expected more charactes, got EOF"))
 	}
 
 	nextByte := l.code[l.pos]
 	l.pos++
+	l.offset++
+
+	if nextByte == '\n' {
+		l.line++
+		l.offset = 0
+	}
+
 	return rune(nextByte)
 }
 
-func (l *lexer) peek() rune {
+func (l *lexer) next() rune {
 	if l.pos > len(l.code) {
 		log.Fatal(errors.New("lexer: expected more charactes, got EOF"))
 	}
@@ -94,7 +103,7 @@ func (l *lexer) peek() rune {
 func (l *lexer) startsWith(prefix string) bool {
 	workingString := string(l.code[l.pos:])
 	return strings.HasPrefix(workingString, prefix)
-} 
+}
 
 func (l *lexer) eof() bool {
 	return l.pos >= len(l.code)

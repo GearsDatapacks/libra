@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer"
+	"github.com/gearsdatapacks/libra/parser"
 )
 
 func repl() {
@@ -25,9 +26,11 @@ func repl() {
 			log.Fatal(err)
 		}
 
-		lexer := lexer.NewLexer(input)
+		lexer := lexer.New(input)
+		parser := parser.New()
 		tokens := lexer.Tokenise()
-		fmt.Println(tokens)
+		ast := parser.Parse(tokens)
+		fmt.Println(ast.ToString())
 	}
 }
 
@@ -38,7 +41,9 @@ func run(file string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(code))
+	lexer := lexer.New(code)
+	tokens := lexer.Tokenise()
+	fmt.Println(tokens)
 }
 
 func main() {
