@@ -10,8 +10,7 @@ import (
 func evaluateExpression(expr ast.Expression) values.RuntimeValue {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		res := values.MakeInteger(expression.Value)
-		return &res
+		return values.MakeInteger(expression.Value)
 
 	case *ast.BinaryOperation:
 		return evaluateBinaryOperation(*expression)

@@ -17,18 +17,18 @@ func extractValues[T any](vals ...values.RuntimeValue) []T {
 	return result
 }
 
+func makeOperator[A, B, C any] (operator, leftType, rightType string,  operation func(A, B)C) {
+	RegisterOperator(operator, leftType, rightType, func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
+		leftValue := extractValues[A](left)[0]
+		rightValue := extractValues[B](right)[0]
+
+		return values.MakeValue(operation(leftValue, rightValue))
+	})
+}
+
 func registerOperators() {
-	RegisterOperator("+", "integer", "integer", func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
-		ints := extractValues[int](left, right)
-
-		res := values.MakeInteger(ints[0] + ints[1])
-		return &res
-	})
-
-	RegisterOperator("*", "integer", "integer", func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
-		ints := extractValues[int](left, right)
-
-		res := values.MakeInteger(ints[0] * ints[1])
-		return &res
-	})
+	makeOperator("+", "integer", "integer", func(a, b int) int { return a + b })
+	makeOperator("-", "integer", "integer", func(a, b int) int { return a - b })
+	makeOperator("*", "integer", "integer", func(a, b int) int { return a * b })
+	makeOperator("/", "integer", "integer", func(a, b int) int { return a / b })
 }

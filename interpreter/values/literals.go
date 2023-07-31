@@ -7,8 +7,8 @@ type IntegerLiteral struct {
 	value int
 }
 
-func MakeInteger(value int) IntegerLiteral {
-	return IntegerLiteral{value: value}
+func MakeInteger(value int) *IntegerLiteral {
+	return &IntegerLiteral{value: value}
 }
 
 func (il *IntegerLiteral) Value() any {
