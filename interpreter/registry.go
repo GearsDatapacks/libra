@@ -6,12 +6,12 @@ func Register() {
 	registerOperators()
 }
 
-func extractInts(vals ...values.RuntimeValue) []int {
-	result := []int{}
+func extractValues[T any](vals ...values.RuntimeValue) []T {
+	result := []T{}
 	
 	for _, value := range vals {
-		intValue := value.(*values.IntegerLiteral).Value().(int)
-		result = append(result, intValue)
+		typedValue := value.Value().(T)
+		result = append(result, typedValue)
 	}
 
 	return result
@@ -19,14 +19,14 @@ func extractInts(vals ...values.RuntimeValue) []int {
 
 func registerOperators() {
 	RegisterOperator("+", "integer", "integer", func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
-		ints := extractInts(left, right)
+		ints := extractValues[int](left, right)
 
 		res := values.MakeInteger(ints[0] + ints[1])
 		return &res
 	})
 
 	RegisterOperator("*", "integer", "integer", func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
-		ints := extractInts(left, right)
+		ints := extractValues[int](left, right)
 
 		res := values.MakeInteger(ints[0] * ints[1])
 		return &res

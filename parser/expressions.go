@@ -4,8 +4,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 func (p *parser) parseExpression() ast.Expression {
@@ -32,7 +32,7 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 		right := p.parseMultiplicativeExpression()
 		left = &ast.BinaryOperation{
 			Left:     left,
-			Op:       operator,
+			Operator: operator,
 			Right:    right,
 			BaseNode: &ast.BaseNode{Token: left.GetToken()},
 		}
@@ -49,7 +49,7 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 		right := p.parseLiteral()
 		left = &ast.BinaryOperation{
 			Left:     left,
-			Op:       operator,
+			Operator: operator,
 			Right:    right,
 			BaseNode: &ast.BaseNode{Token: left.GetToken()},
 		}

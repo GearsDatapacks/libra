@@ -1,11 +1,14 @@
 package ast
 
+type BaseStatment struct {}
+
+func (stmt *BaseStatment) statementNode() {}
+
 type ExpressionStatement struct {
 	*BaseNode
+	*BaseStatment
 	Expression Expression
 }
-
-func (es *ExpressionStatement) statementNode() {}
 
 func (es *ExpressionStatement) Type() NodeType { return "ExpressionStatement" }
 

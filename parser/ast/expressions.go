@@ -1,11 +1,14 @@
 package ast
 
+type BaseExpression struct{}
+
+func (exp *BaseExpression) expressionNode() {}
+
 type IntegerLiteral struct {
 	*BaseNode
+	*BaseExpression
 	Value int
 }
-
-func (il *IntegerLiteral) expressionNode() {}
 
 func (il *IntegerLiteral) Type() NodeType { return "Integer" }
 
@@ -15,12 +18,11 @@ func (il *IntegerLiteral) String() string {
 
 type BinaryOperation struct {
 	*BaseNode
-	Left  Expression
-	Op    string
-	Right Expression
+	*BaseExpression
+	Left     Expression
+	Operator string
+	Right    Expression
 }
-
-func (binOp *BinaryOperation) expressionNode() {}
 
 func (binOp *BinaryOperation) Type() NodeType { return "BinaryOperation" }
 
@@ -30,7 +32,7 @@ func (binOp *BinaryOperation) String() string {
 	result += "("
 	result += binOp.Left.String()
 	result += " "
-	result += binOp.Op
+	result += binOp.Operator
 	result += " "
 	result += binOp.Right.String()
 	result += ")"
