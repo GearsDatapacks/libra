@@ -9,7 +9,7 @@ import (
 )
 
 func (p *parser) parseExpression() ast.Expression {
-	return p.parseAdditiveExpression()
+	return p.parseAssignmentExpression()
 }
 
 // Orders of precedence
@@ -23,6 +23,24 @@ func (p *parser) parseExpression() ast.Expression {
 // Function call
 // Unary operation
 // Literal
+
+func (p *parser) parseAssignmentExpression() ast.Expression {
+	assignee := p.parseAdditiveExpression()
+
+	if p.next().Type != token.EQUALS {
+		return assignee
+	}
+
+	p.consume()
+
+	value := p.parseAssignmentExpression()
+
+	return &ast.AssignmentExpression{
+		Assignee: assignee,
+		Value: value,
+		BaseNode: &ast.BaseNode{Token: assignee.GetToken()},
+	}
+}
 
 func (p *parser) parseAdditiveExpression() ast.Expression {
 	left := p.parseMultiplicativeExpression()

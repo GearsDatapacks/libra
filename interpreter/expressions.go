@@ -16,6 +16,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.Identifier:
 		return env.GetVariable(expression.Symbol)
 
+	case *ast.AssignmentExpression:
+		return evaluateAssignmentExpression(*expression, env)
+
 	case *ast.BinaryOperation:
 		return evaluateBinaryOperation(*expression, env)
 

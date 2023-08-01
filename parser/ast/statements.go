@@ -21,7 +21,7 @@ type VariableDeclaration struct {
 	*BaseStatment
 	Constant bool
 	Name string
-	Value *Expression
+	Value Expression
 }
 
 func (varDec *VariableDeclaration) Type() NodeType { return "VariableDeclaration" }
@@ -33,7 +33,7 @@ func (varDec *VariableDeclaration) String() string {
 	result += " "
 	result += varDec.Name
 	result += " = "
-	result += (*varDec.Value).String()
+	result += varDec.Value.String()
 
 	return result
 }

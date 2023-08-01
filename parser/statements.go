@@ -42,6 +42,6 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		Constant: isConstant,
 		Name: name,
 		BaseNode: &ast.BaseNode{Token: tok},
-		Value: &value,
+		Value: value,
 	}
 }

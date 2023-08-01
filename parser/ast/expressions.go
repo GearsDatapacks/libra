@@ -16,6 +16,19 @@ func (il *IntegerLiteral) String() string {
 	return il.Token.Value
 }
 
+type Identifier struct {
+	*BaseNode
+	*BaseExpression
+	Symbol string
+}
+
+func (ident *Identifier) Type() NodeType { return "Identifier" }
+
+func (ident *Identifier) String() string {
+	return ident.Symbol
+}
+
+
 type BinaryOperation struct {
 	*BaseNode
 	*BaseExpression
@@ -40,14 +53,21 @@ func (binOp *BinaryOperation) String() string {
 	return result
 }
 
-type Identifier struct {
+type AssignmentExpression struct {
 	*BaseNode
 	*BaseExpression
-	Symbol string
+	Assignee     Expression
+	Value    Expression
 }
 
-func (ident *Identifier) Type() NodeType { return "Identifier" }
+func (ae *AssignmentExpression) Type() NodeType { return "AssignmentExpression" }
 
-func (ident *Identifier) String() string {
-	return ident.Symbol
+func (ae *AssignmentExpression) String() string {
+	result := ""
+
+	result += ae.Assignee.String()
+	result += " = "
+	result += ae.Value.String()
+
+	return result
 }
