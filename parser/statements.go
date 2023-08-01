@@ -1,16 +1,26 @@
 package parser
 
 import (
+	"log"
+
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 func (p *parser) parseStatement() ast.Statement {
+	var statement ast.Statement
+
 	if p.isKeyword("let") || p.isKeyword("const") {
-		return p.parseVariableDeclaration()
+		statement = p.parseVariableDeclaration()
 	} else {
-		return p.parseExpressionStatement()
+		statement = p.parseExpressionStatement()
 	}
+
+	if !p.eof() && !p.next().LeadingNewline {
+		log.Fatal("ParseError: Expected new line after statement")
+	}
+
+	return statement
 }
 
 func (p *parser) parseExpressionStatement() ast.Statement {

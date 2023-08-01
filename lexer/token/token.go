@@ -7,6 +7,7 @@ type Token struct {
 	Value  string
 	Line   int
 	Offset int
+	LeadingNewline bool
 }
 
 const (
@@ -34,11 +35,12 @@ var Symbols = map[string]Type {
 	"=": EQUALS,
 }
 
-func New(line int, offset int, tokenType Type, value []rune) Token {
+func New(line int, offset int, tokenType Type, value []rune, leadingNewline bool) Token {
 	return Token{
 		Type:   tokenType,
 		Value:  string(value),
 		Line:   line,
 		Offset: offset,
+		LeadingNewline: leadingNewline,
 	}
 }

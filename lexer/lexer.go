@@ -22,8 +22,13 @@ func New(code []byte) *lexer {
 func (l *lexer) Tokenise() []token.Token {
 	tokens := []token.Token{}
 
-	for !l.eof() {
-		tokens = append(tokens, l.parseToken())
+	for {
+		nextToken := l.parseToken()
+		tokens = append(tokens, nextToken)
+
+		if nextToken.Type == token.EOF {
+			break
+		}
 	}
 
 	return tokens
@@ -40,8 +45,10 @@ func (l *lexer) parseToken() token.Token {
 
 	l.skipWhitespace()
 
+	leadingNewline := l.skipNewlines()
+
 	if l.eof() {
-		tok := l.createToken(token.EOF, []rune{'\u0000'})
+		tok := l.createToken(token.EOF, []rune{'\u0000'}, leadingNewline)
 		tok.Value = "EndOfFile"
 		return tok
 	}
@@ -50,18 +57,19 @@ func (l *lexer) parseToken() token.Token {
 
 	if isNumeric(nextChar) {
 		number := []rune{}
-		for isNumeric(l.next()) {
+		for !l.eof() && isNumeric(l.next()) {
 			number = append(number, l.consume())
 		}
-		return l.createToken(token.INTEGER, number)
+		return l.createToken(token.INTEGER, number, leadingNewline)
 	} else if sym, ok := l.parseSymbol(); ok {
+		sym.LeadingNewline = leadingNewline
 		return sym
 	} else if isAlphabetic(nextChar) {
 		ident := []rune{}
-		for isAlphanumeric(l.next()) {
+		for !l.eof() && isAlphanumeric(l.next()) {
 			ident = append(ident, l.consume())
 		}
-		return l.createToken(token.IDENTIFIER, ident)
+		return l.createToken(token.IDENTIFIER, ident, leadingNewline)
 	} else {
 		log.Fatalf("lexer: Unexpected token: %q", nextChar)
 	}
@@ -73,7 +81,7 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	for symbol, tokenType := range token.Symbols {
 		if l.startsWith(symbol) {
 			l.pos += len(symbol)
-			tok := l.createToken(tokenType, []rune(symbol))
+			tok := l.createToken(tokenType, []rune(symbol), false)
 			return tok, true
 		}
 	}
@@ -87,12 +95,24 @@ func (l *lexer) skipWhitespace() {
 	}
 }
 
-func (l *lexer) createToken(tokenType token.Type, value []rune) token.Token {
+func (l *lexer) skipNewlines() bool {
+	if l.eof() || !isNewline(l.next()) {
+		return false
+	}
+
+	for !l.eof() && isNewline(l.next()) {
+		l.consume()
+	}
+	return true
+}
+
+func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline bool) token.Token {
 	return token.New(
 		l.line,
 		l.offset,
 		tokenType,
 		value,
+		leadingNewline,
 	)
 }
 

@@ -19,7 +19,7 @@ func MakeValue(v any) RuntimeValue {
 	case int:
 		return MakeInteger(value)
 	default:
-		log.Fatalf("Cannot create runtime value of type %v", v)
+		log.Fatalf("Cannot create runtime value of type %T", v)
 		return MakeInteger(0)
 	}
 }

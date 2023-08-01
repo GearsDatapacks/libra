@@ -32,8 +32,8 @@ func repl() {
 		}
 
 		lexer := lexer.New(input)
-
 		tokens := lexer.Tokenise()
+
 		ast := parser.Parse(tokens)
 
 		result := interpreter.Evaluate(ast, env)
@@ -49,8 +49,14 @@ func run(file string) {
 	}
 
 	lexer := lexer.New(code)
+	parser := parser.New()
+	env := environment.New()
+
 	tokens := lexer.Tokenise()
-	fmt.Println(tokens)
+	ast := parser.Parse(tokens)
+
+	result := interpreter.Evaluate(ast, env)
+	fmt.Println(result.ToString())
 }
 
 func main() {

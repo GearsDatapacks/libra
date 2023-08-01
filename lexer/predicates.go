@@ -8,7 +8,11 @@ func isNumeric(char rune) bool {
 
 func isWhitespace(char rune) bool {
 	str := string(char)
-	return len(str) != len(strings.TrimSpace(str))
+	return !isNewline(char) && (len(str) != len(strings.TrimSpace(str)))
+}
+
+func isNewline(char rune) bool {
+	return char == '\n' || char == '\r'
 }
 
 func isAlphabetic(char rune) bool {
