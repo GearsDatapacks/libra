@@ -23,21 +23,29 @@ func (l *lexer) Tokenise() []token.Token {
 	tokens := []token.Token{}
 
 	for !l.eof() {
-		if isWhitespace(l.next()) {
-			l.consume()
-			continue
-		}
-
 		tokens = append(tokens, l.parseToken())
 	}
-
-	tokens = append(tokens, l.createToken(token.EOF, []rune{'\u0000'}))
-	tokens[len(tokens)-1].Value = "EndOfFile"
 
 	return tokens
 }
 
 func (l *lexer) parseToken() token.Token {
+	l.skipWhitespace()
+
+	if l.startsWith("//") {
+		for !l.eof() && l.next() != '\n' {
+			l.consume()
+		}
+	}
+
+	l.skipWhitespace()
+
+	if l.eof() {
+		tok := l.createToken(token.EOF, []rune{'\u0000'})
+		tok.Value = "EndOfFile"
+		return tok
+	}
+
 	nextChar := l.next()
 
 	if isNumeric(nextChar) {
@@ -71,6 +79,12 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	}
 
 	return token.Token{}, false
+}
+
+func (l *lexer) skipWhitespace() {
+	for !l.eof() && isWhitespace(l.next()) {
+		l.consume()
+	}
 }
 
 func (l *lexer) createToken(tokenType token.Type, value []rune) token.Token {

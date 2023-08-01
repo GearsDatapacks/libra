@@ -20,7 +20,7 @@ const (
 	OPERATOR    = "OPERATOR"
 )
 
-var Symbols = map[string]Type{
+var Symbols = map[string]Type {
 	"(": LEFT_PAREN,
 	")": RIGHT_PAREN,
 
