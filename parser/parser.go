@@ -39,6 +39,19 @@ func (p *parser) expect(tokenType token.Type, fString string) token.Token {
 	return nextToken
 }
 
+func (p *parser) isKeyword(keyword string) bool {
+	return p.next().Type == token.IDENTIFIER && p.next().Value == keyword
+}
+
+/*
+func (p *parser) expectKeyword(keyword string, fString string) token.Token {
+	if !p.isKeyword(keyword) {
+		log.Fatalf(fString, p.next().Value)
+	}
+
+	return p.consume()
+} */
+
 func (p *parser) Parse(tokens []token.Token) ast.Program {
 	p.tokens = tokens
 

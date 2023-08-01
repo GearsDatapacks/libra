@@ -18,6 +18,7 @@ const (
 	LEFT_PAREN  = "LEFT_PAREN"
 	RIGHT_PAREN = "RIGHT_PAREN"
 	OPERATOR    = "OPERATOR"
+	EQUALS    = "EQUALS"
 )
 
 var Symbols = map[string]Type {
@@ -29,6 +30,8 @@ var Symbols = map[string]Type {
 	"*": OPERATOR,
 	"/": OPERATOR,
 	"%": OPERATOR,
+
+	"=": EQUALS,
 }
 
 func New(line int, offset int, tokenType Type, value []rune) Token {
