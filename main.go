@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/gearsdatapacks/libra/interpreter"
+	"github.com/gearsdatapacks/libra/interpreter/environment"
+	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 )
@@ -29,9 +31,14 @@ func repl() {
 
 		lexer := lexer.New(input)
 		parser := parser.New()
+		env := environment.New()
+
+		env.DeclareVariable("x", values.MakeValue(100))
+
 		tokens := lexer.Tokenise()
 		ast := parser.Parse(tokens)
-		result := interpreter.Evaluate(ast)
+
+		result := interpreter.Evaluate(ast, env)
 		fmt.Println(result.ToString())
 	}
 }

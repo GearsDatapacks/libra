@@ -31,7 +31,7 @@ func (l *lexer) Tokenise() []token.Token {
 		tokens = append(tokens, l.parseToken())
 	}
 
-	tokens = append(tokens, l.createToken(token.EOF, '\u0000'))
+	tokens = append(tokens, l.createToken(token.EOF, []rune{'\u0000'}))
 	tokens[len(tokens)-1].Value = "EndOfFile"
 
 	return tokens
@@ -45,9 +45,15 @@ func (l *lexer) parseToken() token.Token {
 		for isNumeric(l.next()) {
 			number = append(number, l.consume())
 		}
-		return l.createToken(token.INTEGER, number...)
+		return l.createToken(token.INTEGER, number)
 	} else if sym, ok := l.parseSymbol(); ok {
 		return sym
+	} else if isAlphabetic(nextChar) {
+		ident := []rune{}
+		for isAlphanumeric(l.next()) {
+			ident = append(ident, l.consume())
+		}
+		return l.createToken(token.IDENTIFIER, ident)
 	} else {
 		log.Fatalf("lexer: Unexpected token: %q", nextChar)
 	}
@@ -59,7 +65,7 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	for symbol, tokenType := range token.Symbols {
 		if l.startsWith(symbol) {
 			l.pos += len(symbol)
-			tok := l.createToken(tokenType, []rune(symbol)...)
+			tok := l.createToken(tokenType, []rune(symbol))
 			return tok, true
 		}
 	}
@@ -67,7 +73,7 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	return token.Token{}, false
 }
 
-func (l *lexer) createToken(tokenType token.Type, value ...rune) token.Token {
+func (l *lexer) createToken(tokenType token.Type, value []rune) token.Token {
 	return token.New(
 		l.line,
 		l.offset,

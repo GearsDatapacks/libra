@@ -3,6 +3,7 @@ package interpreter
 import (
 	"log"
 
+	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -15,9 +16,9 @@ func RegisterOperator(op string, left string, right string, operation opFn) {
 	operators[[3]string{op, left, right}] = operation
 }
 
-func evaluateBinaryOperation(binOp ast.BinaryOperation) values.RuntimeValue {
-	left := evaluateExpression(binOp.Left)
-	right := evaluateExpression(binOp.Right)
+func evaluateBinaryOperation(binOp ast.BinaryOperation, env *environment.Environment) values.RuntimeValue {
+	left := evaluateExpression(binOp.Left, env)
+	right := evaluateExpression(binOp.Right, env)
 
 	operation, ok := operators[[3]string{binOp.Operator, string(left.Type()), string(right.Type())}]
 

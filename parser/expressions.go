@@ -67,6 +67,13 @@ func (p *parser) parseLiteral() ast.Expression {
 			Value:    int(value),
 			BaseNode: &ast.BaseNode{Token: tok},
 		}
+	
+	case token.IDENTIFIER:
+		tok := p.consume()
+		return &ast.Identifier{
+			Symbol: tok.Value,
+			BaseNode: &ast.BaseNode{Token: tok},
+		}
 
 	case token.LEFT_PAREN:
 		p.consume()

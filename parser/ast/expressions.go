@@ -39,3 +39,15 @@ func (binOp *BinaryOperation) String() string {
 
 	return result
 }
+
+type Identifier struct {
+	*BaseNode
+	*BaseExpression
+	Symbol string
+}
+
+func (ident *Identifier) Type() NodeType { return "Identifier" }
+
+func (ident *Identifier) String() string {
+	return ident.Symbol
+}
