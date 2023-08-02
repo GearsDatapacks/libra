@@ -1,6 +1,10 @@
 package values
 
-import "log"
+import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/errors"
+)
 
 type ValueType string
 
@@ -19,7 +23,7 @@ func MakeValue(v any) RuntimeValue {
 	case int:
 		return MakeInteger(value)
 	default:
-		log.Fatalf("Cannot create runtime value of type %T", v)
+		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %T", v))
 		return MakeInteger(0)
 	}
 }

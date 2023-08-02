@@ -1,8 +1,9 @@
 package interpreter
 
 import (
-	"log"
+	"fmt"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -23,7 +24,7 @@ func evaluateBinaryOperation(binOp ast.BinaryOperation, env *environment.Environ
 	operation, ok := operators[[3]string{binOp.Operator, string(left.Type()), string(right.Type())}]
 
 	if !ok {
-		log.Fatalf("Operator %q does not exist or does not support operands of type %q and %q", binOp.Operator, left.Type(), right.Type())
+		errors.RuntimeError(fmt.Sprintf("Operator %q does not exist or does not support operands of type %q and %q", binOp.Operator, left.Type(), right.Type()), &binOp)
 	}
 
 	return operation(left, right)
@@ -31,7 +32,7 @@ func evaluateBinaryOperation(binOp ast.BinaryOperation, env *environment.Environ
 
 func evaluateAssignmentExpression(assignment ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
 	if assignment.Assignee.Type() != "Identifier" {
-		log.Fatalf("Cannot assign value to type %q", assignment.Assignee.Type())
+		errors.RuntimeError(fmt.Sprintf("Cannot assign value to type %q", assignment.Assignee.Type()), &assignment)
 	}
 
 	varName := assignment.Assignee.(*ast.Identifier).Symbol

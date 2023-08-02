@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -12,11 +12,11 @@ type lexer struct {
 	code   []byte
 	pos    int
 	line   int
-	offset int
+	column int
 }
 
 func New(code []byte) *lexer {
-	return &lexer{code: code, line: 1}
+	return &lexer{code: code, line: 1, column: 1}
 }
 
 func (l *lexer) Tokenise() []token.Token {
@@ -71,7 +71,7 @@ func (l *lexer) parseToken() token.Token {
 		}
 		return l.createToken(token.IDENTIFIER, ident, leadingNewline)
 	} else {
-		log.Fatalf("lexer: Unexpected token: %q", nextChar)
+		l.error(fmt.Sprintf("Unexpected token: %q", nextChar))
 	}
 
 	return token.Token{}
@@ -109,7 +109,7 @@ func (l *lexer) skipNewlines() bool {
 func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline bool) token.Token {
 	return token.New(
 		l.line,
-		l.offset,
+		l.column,
 		tokenType,
 		value,
 		leadingNewline,
@@ -117,25 +117,25 @@ func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline b
 }
 
 func (l *lexer) consume() rune {
-	if l.pos > len(l.code) {
-		log.Fatal(errors.New("lexer: expected more charactes, got EOF"))
+	if l.eof() {
+		l.error("Expected more charactes, got EOF")
 	}
 
 	nextByte := l.code[l.pos]
 	l.pos++
-	l.offset++
+	l.column++
 
 	if nextByte == '\n' {
 		l.line++
-		l.offset = 0
+		l.column = 1
 	}
 
 	return rune(nextByte)
 }
 
 func (l *lexer) next() rune {
-	if l.pos > len(l.code) {
-		log.Fatal(errors.New("lexer: expected more charactes, got EOF"))
+	if l.eof() {
+		l.error("Expected more charactes, got EOF")
 	}
 	return rune(l.code[l.pos])
 }
@@ -147,4 +147,8 @@ func (l *lexer) startsWith(prefix string) bool {
 
 func (l *lexer) eof() bool {
 	return l.pos >= len(l.code)
+}
+
+func (l *lexer) error(message string) {
+	log.Fatalf("SyntaxError at line %d, column %d: %s", l.line, l.column, message)
 }

@@ -1,8 +1,9 @@
 package interpreter
 
 import (
-	"log"
+	"fmt"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -23,7 +24,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 		return evaluateBinaryOperation(*expression, env)
 
 	default:
-		log.Fatalf("Unexpected expression type %t", expression)
+		errors.DevError(fmt.Sprintf("Unexpected expression type %t", expression), expr)
 
 		return &values.IntegerLiteral{}
 	}

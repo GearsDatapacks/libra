@@ -1,8 +1,9 @@
 package interpreter
 
 import (
-	"log"
+	"fmt"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -24,12 +25,14 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 	switch statement := astNode.(type) {
 	case *ast.ExpressionStatement:
 		return evaluateExpressionStatement(*statement, env)
-	
+
 	case *ast.VariableDeclaration:
 		return evaluateVariableDeclaration(*statement, env)
 
 	default:
-		log.Fatalf("Unreconised AST node: %s", astNode.String())
+		errors.DevError(fmt.Sprintf("Unreconised AST node: %s", astNode.String()), astNode)
 		return &values.IntegerLiteral{}
 	}
 }
+
+

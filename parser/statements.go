@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"log"
-
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -17,7 +15,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if !p.eof() && !p.next().LeadingNewline {
-		log.Fatal("ParseError: Expected new line after statement")
+		p.error("Expected new line after statement", p.next())
 	}
 
 	return statement

@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"log"
+	"fmt"
 	"strconv"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -101,7 +101,7 @@ func (p *parser) parseLiteral() ast.Expression {
 		p.bracketLevel--
 		return expression
 	default:
-		log.Fatalf("ParseError: Unexpected token %q", p.next().Value)
+		p.error(fmt.Sprintf("Unexpected token %q", p.next().Value), p.next())
 		return &ast.IntegerLiteral{}
 	}
 }

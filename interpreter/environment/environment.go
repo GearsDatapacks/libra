@@ -1,8 +1,9 @@
 package environment
 
 import (
-	"log"
+	"fmt"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/utils"
 )
@@ -31,7 +32,7 @@ func NewChild(parent *Environment) *Environment {
 
 func (env *Environment) DeclareVariable(name string, value values.RuntimeValue, constant bool) values.RuntimeValue {
 	if _, ok := env.variables[name]; ok {
-		log.Fatalf("Cannot redeclare variable %q, it is already defined", name)
+		errors.RuntimeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
 
 	env.variables[name] = value
@@ -47,7 +48,7 @@ func (env *Environment) AssignVariable(name string, value values.RuntimeValue) v
 	declaredenvironment := env.resolve(name)
 
 	if utils.Contains(declaredenvironment.constants, name) {
-		log.Fatalf("Cannot reassign constant %q", name)
+		errors.RuntimeError(fmt.Sprintf("Cannot reassign constant %q", name))
 	}
 
 	declaredenvironment.variables[name] = value
@@ -65,7 +66,7 @@ func (env *Environment) resolve(varName string) *Environment {
 	}
 
 	if env.parent == nil {
-		log.Fatalf("Cannot find variable %q, it does not exist", varName)
+		errors.RuntimeError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName))
 	}
 
 	return env.parent.resolve(varName)

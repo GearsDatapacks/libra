@@ -11,10 +11,6 @@ type BaseNode struct {
 	isStatement bool
 }
 
-func (n *BaseNode) Line() int {
-	return n.Token.Line
-}
-
 func (n *BaseNode) GetToken() token.Token {
 	return n.Token
 }
@@ -35,10 +31,9 @@ func (n *BaseNode) MarkExpression() {
 	n.isStatement = false
 }
 
-type node interface {
+type Node interface {
 	GetToken() token.Token
 	Type() NodeType
-	Line() int
 	String() string
 	IsExpression() bool
 	IsStatement() bool
@@ -47,12 +42,12 @@ type node interface {
 }
 
 type Statement interface {
-	node
+	Node
 	statementNode()
 }
 
 type Expression interface {
-	node
+	Node
 	expressionNode()
 }
 
