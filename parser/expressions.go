@@ -45,7 +45,7 @@ func (p *parser) parseAssignmentExpression() ast.Expression {
 func (p *parser) parseAdditiveExpression() ast.Expression {
 	left := p.parseMultiplicativeExpression()
 
-	for p.next().Value == "+" || p.next().Value == "-" {
+	for p.canContinue() && (p.next().Value == "+" || p.next().Value == "-") {
 		operator := p.consume().Value
 		right := p.parseMultiplicativeExpression()
 		left = &ast.BinaryOperation{
@@ -62,7 +62,7 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 func (p *parser) parseMultiplicativeExpression() ast.Expression {
 	left := p.parseLiteral()
 
-	for p.next().Value == "*" || p.next().Value == "/" {
+	for p.canContinue() && (p.next().Value == "*" || p.next().Value == "/") {
 		operator := p.consume().Value
 		right := p.parseLiteral()
 		left = &ast.BinaryOperation{
@@ -95,8 +95,10 @@ func (p *parser) parseLiteral() ast.Expression {
 
 	case token.LEFT_PAREN:
 		p.consume()
+		p.bracketLevel++
 		expression := p.parseExpression()
 		p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
+		p.bracketLevel--
 		return expression
 	default:
 		log.Fatalf("ParseError: Unexpected token %q", p.next().Value)

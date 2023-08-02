@@ -9,6 +9,7 @@ import (
 
 type parser struct {
 	tokens []token.Token
+	bracketLevel int
 }
 
 func New() *parser {
@@ -51,6 +52,11 @@ func (p *parser) expectKeyword(keyword string, fString string) token.Token {
 
 	return p.consume()
 } */
+
+// Only continue parsing if there is not a newline, or we're in an expression
+func (p *parser) canContinue() bool {
+	return !p.next().LeadingNewline || p.bracketLevel != 0
+}
 
 func (p *parser) Parse(tokens []token.Token) ast.Program {
 	p.tokens = tokens
