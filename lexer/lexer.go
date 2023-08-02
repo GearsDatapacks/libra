@@ -11,12 +11,18 @@ import (
 type lexer struct {
 	code   []byte
 	pos    int
+	oldLine   int
+	oldColumn int
 	line   int
 	column int
 }
 
 func New(code []byte) *lexer {
-	return &lexer{code: code, line: 1, column: 1}
+	return &lexer{
+		code: code,
+		line: 1, oldLine: 1,
+		column: 1, oldColumn: 1,
+	}
 }
 
 func (l *lexer) Tokenise() []token.Token {
@@ -43,9 +49,12 @@ func (l *lexer) parseToken() token.Token {
 		}
 	}
 
+	leadingNewline := l.skipNewlines()
+	
 	l.skipWhitespace()
 
-	leadingNewline := l.skipNewlines()
+	l.oldLine = l.line
+	l.oldColumn = l.column
 
 	if l.eof() {
 		tok := l.createToken(token.EOF, []rune{'\u0000'}, leadingNewline)
@@ -107,13 +116,18 @@ func (l *lexer) skipNewlines() bool {
 }
 
 func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline bool) token.Token {
-	return token.New(
-		l.line,
-		l.column,
+	tok := token.New(
+		l.oldLine,
+		l.oldColumn,
 		tokenType,
 		value,
 		leadingNewline,
 	)
+
+	l.oldLine = l.line
+	l.oldColumn = l.column
+	
+	return tok
 }
 
 func (l *lexer) consume() rune {

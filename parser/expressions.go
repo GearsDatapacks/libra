@@ -101,7 +101,7 @@ func (p *parser) parseLiteral() ast.Expression {
 		p.bracketLevel--
 		return expression
 	default:
-		p.error(fmt.Sprintf("Unexpected token %q", p.next().Value), p.next())
+		p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())
 		return &ast.IntegerLiteral{}
 	}
 }
