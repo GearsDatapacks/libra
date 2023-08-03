@@ -17,7 +17,9 @@ func extractValues[T any](vals ...values.RuntimeValue) []T {
 	return result
 }
 
-func makeOperator[A, B, C any] (operator, leftType, rightType string,  operation func(A, B)C) {
+func makeOperator[A, B, C any] (operator string, operation func(A, B)C) {
+	leftType := values.TypeToString[A]()
+	rightType := values.TypeToString[B]()
 	RegisterOperator(operator, leftType, rightType, func(left values.RuntimeValue, right values.RuntimeValue) values.RuntimeValue {
 		leftValue := extractValues[A](left)[0]
 		rightValue := extractValues[B](right)[0]
@@ -27,8 +29,17 @@ func makeOperator[A, B, C any] (operator, leftType, rightType string,  operation
 }
 
 func registerOperators() {
-	makeOperator("+", "integer", "integer", func(a, b int) int { return a + b })
-	makeOperator("-", "integer", "integer", func(a, b int) int { return a - b })
-	makeOperator("*", "integer", "integer", func(a, b int) int { return a * b })
-	makeOperator("/", "integer", "integer", func(a, b int) int { return a / b })
+	makeOperator("+", func(a, b int) int { return a + b })
+	makeOperator("-", func(a, b int) int { return a - b })
+	makeOperator("*", func(a, b int) int { return a * b })
+	makeOperator("/", func(a, b int) int { return a / b })
+	makeOperator("%", func(a, b int) int { return a % b })
+
+	makeOperator(">", func(a, b int) bool { return a > b })
+	makeOperator(">=", func(a, b int) bool { return a >= b })
+	makeOperator("<", func(a, b int) bool { return a < b })
+	makeOperator("<=", func(a, b int) bool { return a <= b })
+
+	makeOperator("||", func(a, b bool) bool { return a || b })
+	makeOperator("&&", func(a, b bool) bool { return a || b })
 }

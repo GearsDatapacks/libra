@@ -25,7 +25,7 @@ func (p *parser) parseExpressionStatement() ast.Statement {
 	expr := p.parseExpression()
 	return &ast.ExpressionStatement{
 		Expression: expr,
-		BaseNode: &ast.BaseNode{Token: expr.GetToken()},
+		BaseNode:   &ast.BaseNode{Token: expr.GetToken()},
 	}
 }
 
@@ -40,7 +40,7 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 	// TODO: add possibility for `let x string`
 
 	p.expect(
-		token.EQUALS,
+		token.ASSIGNMENT_OPERATOR,
 		"ParseError: Missing initialiser in variable declaration",
 	)
 
@@ -48,8 +48,8 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 
 	return &ast.VariableDeclaration{
 		Constant: isConstant,
-		Name: name,
+		Name:     name,
 		BaseNode: &ast.BaseNode{Token: tok},
-		Value: value,
+		Value:    value,
 	}
 }

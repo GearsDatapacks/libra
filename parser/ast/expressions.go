@@ -16,6 +16,27 @@ func (il *IntegerLiteral) String() string {
 	return il.Token.Value
 }
 
+type BooleanLiteral struct {
+	*BaseNode
+	*BaseExpression
+	Value bool
+}
+
+func (bl *BooleanLiteral) Type() NodeType { return "Boolean" }
+
+func (bl *BooleanLiteral) String() string {
+	return bl.Token.Value
+}
+
+type NullLiteral struct {
+	*BaseNode
+	*BaseExpression
+}
+
+func (nl *NullLiteral) Type() NodeType { return "Null" }
+
+func (nl *NullLiteral) String() string { return "null" }
+
 type Identifier struct {
 	*BaseNode
 	*BaseExpression
