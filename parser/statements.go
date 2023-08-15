@@ -8,7 +8,7 @@ import (
 func (p *parser) parseStatement() ast.Statement {
 	var statement ast.Statement
 
-	if p.isKeyword("let") || p.isKeyword("const") {
+	if p.isKeyword("var") || p.isKeyword("const") {
 		statement = p.parseVariableDeclaration()
 	} else {
 		statement = p.parseExpressionStatement()
@@ -37,7 +37,7 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		"ParseError: Expected identifier for variable declaration, got %q",
 	).Value
 
-	// TODO: add possibility for `let x string`
+	// TODO: add possibility for `var x string`
 
 	p.expect(
 		token.ASSIGNMENT_OPERATOR,

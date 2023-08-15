@@ -29,7 +29,7 @@ func (varDec *VariableDeclaration) Type() NodeType { return "VariableDeclaration
 func (varDec *VariableDeclaration) String() string {
 	result := ""
 
-	if varDec.Constant { result += "const" } else { result += "let" }
+	if varDec.Constant { result += "const" } else { result += "var" }
 	result += " "
 	result += varDec.Name
 	result += " = "

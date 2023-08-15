@@ -34,5 +34,3 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return &values.IntegerLiteral{}
 	}
 }
-
-
