@@ -22,6 +22,7 @@ type VariableDeclaration struct {
 	Constant bool
 	Name string
 	Value Expression
+	DataType string
 }
 
 func (varDec *VariableDeclaration) Type() NodeType { return "VariableDeclaration" }

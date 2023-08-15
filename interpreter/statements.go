@@ -11,7 +11,13 @@ func evaluateExpressionStatement(exprStmt ast.ExpressionStatement, env *environm
 }
 
 func evaluateVariableDeclaration(varDec ast.VariableDeclaration, env *environment.Environment) values.RuntimeValue {
-	value := evaluateExpression(varDec.Value, env)
+	var value values.RuntimeValue
+
+	if varDec.Value == nil {
+		value = values.MakeNull()
+	} else {
+		value = evaluateExpression(varDec.Value, env)
+	}
 
 	return env.DeclareVariable(varDec.Name, value, varDec.Constant)
 }

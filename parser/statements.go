@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -36,8 +38,31 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		token.IDENTIFIER,
 		"ParseError: Expected identifier for variable declaration, got %q",
 	).Value
+	dataType := ""
+	
+	if p.canContinue() && p.next().Type == token.IDENTIFIER {
+		dataType = p.consume().Value
+	}
 
 	// TODO: add possibility for `var x string`
+
+	if !p.canContinue() || p.next().Type != token.ASSIGNMENT_OPERATOR {
+		if isConstant {
+			p.error(fmt.Sprintf("Cannot leave constant %q uninitialised", name), p.next())
+		}
+
+		if dataType == "" {
+			p.error(fmt.Sprintf("Cannot declare uninitialised variable %q without type annotation", name), p.next())
+		}
+
+		return &ast.VariableDeclaration{
+			Constant: isConstant,
+			Name:     name,
+			BaseNode: &ast.BaseNode{Token: tok},
+			Value:    nil,
+			DataType: dataType,
+		}
+	}
 
 	p.expect(
 		token.ASSIGNMENT_OPERATOR,
@@ -51,5 +76,6 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		Name:     name,
 		BaseNode: &ast.BaseNode{Token: tok},
 		Value:    value,
+		DataType: dataType,
 	}
 }
