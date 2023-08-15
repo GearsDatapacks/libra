@@ -14,7 +14,7 @@ func evaluateVariableDeclaration(varDec ast.VariableDeclaration, env *environmen
 	var value values.RuntimeValue
 
 	if varDec.Value == nil {
-		value = values.MakeNull()
+		value = values.GetZeroValue(varDec.DataType)
 	} else {
 		value = evaluateExpression(varDec.Value, env)
 	}

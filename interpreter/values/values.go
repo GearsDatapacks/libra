@@ -32,6 +32,20 @@ func MakeValue(v any) RuntimeValue {
 	}
 }
 
+func GetZeroValue(dataType string) RuntimeValue {
+	switch dataType {
+	case "int":
+		return MakeInteger(0)
+	case "boolean":
+		return MakeBoolean(false)
+	case "null":
+		return MakeNull()
+	default:
+		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType))
+		return MakeInteger(0)
+	}
+}
+
 var typeStringMap = map[string]string {
 	"int": "integer",
 	"bool": "boolean",
