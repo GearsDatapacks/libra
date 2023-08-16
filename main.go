@@ -11,6 +11,7 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
+	typechecker "github.com/gearsdatapacks/libra/type_checker"
 )
 
 func repl() {
@@ -54,6 +55,10 @@ func run(file string) {
 
 	tokens := lexer.Tokenise()
 	ast := parser.Parse(tokens)
+
+	if !typechecker.TypeCheck(ast) {
+		log.Fatal("Invalid types")
+	}
 
 	result := interpreter.Evaluate(ast, env)
 	fmt.Println(result.ToString())
