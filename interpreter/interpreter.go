@@ -10,8 +10,6 @@ import (
 )
 
 func Evaluate(program ast.Program, env *environment.Environment) values.RuntimeValue {
-	Register()
-
 	var lastValue values.RuntimeValue
 
 	for _, statement := range program.Body {

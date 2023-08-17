@@ -5,7 +5,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckExpression(expr ast.Expression) types.Type {
+func typeCheckExpression(expr ast.Expression) types.DataType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return types.INT
@@ -16,11 +16,7 @@ func typeCheckExpression(expr ast.Expression) types.Type {
 	case *ast.Identifier:
 		return types.NULL
 	case *ast.BinaryOperation:
-		validTypes := valid(typeCheckExpression(expression.Left)) && valid(typeCheckExpression(expression.Right))
-		if !validTypes {
-			return types.INVALID
-		}
-		return types.INT
+		return typeCheckBinaryOperation(expression)
 	default:
 		return types.INVALID
 	}

@@ -65,6 +65,8 @@ func run(file string) {
 }
 
 func main() {
+	register()
+
 	if len(os.Args) == 1 {
 		repl()
 	} else {

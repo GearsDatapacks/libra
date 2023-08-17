@@ -1,6 +1,6 @@
 package types
 
-type Type int
+type DataType int
 
 const (
 	INT = iota
@@ -10,13 +10,13 @@ const (
 	INVALID = -1
 )
 
-var typeTable = map[string]Type{
-	"int": INT,
+var typeTable = map[string]DataType{
+	"int":     INT,
 	"boolean": BOOL,
-	"null": NULL,
+	"null":    NULL,
 }
 
-func FromString(typeString string) Type {
+func FromString(typeString string) DataType {
 	dataType, ok := typeTable[typeString]
 	if !ok {
 		return INVALID

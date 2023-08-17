@@ -41,5 +41,5 @@ func registerOperators() {
 	makeOperator("<=", func(a, b int) bool { return a <= b })
 
 	makeOperator("||", func(a, b bool) bool { return a || b })
-	makeOperator("&&", func(a, b bool) bool { return a || b })
+	makeOperator("&&", func(a, b bool) bool { return a && b })
 }
