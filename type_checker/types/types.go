@@ -1,13 +1,17 @@
 package types
 
-type DataType int
+import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/errors"
+)
+
+type DataType string
 
 const (
-	INT = iota
-	BOOL
-	NULL
-
-	INVALID = -1
+	INT = "int"
+	BOOL = "boolean"
+	NULL = "null"
 )
 
 var typeTable = map[string]DataType{
@@ -19,7 +23,7 @@ var typeTable = map[string]DataType{
 func FromString(typeString string) DataType {
 	dataType, ok := typeTable[typeString]
 	if !ok {
-		return INVALID
+		errors.TypeError(fmt.Sprintf("Invalid type %q", typeString))
 	}
 
 	return dataType

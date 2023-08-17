@@ -1,6 +1,9 @@
 package typechecker
 
 import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
@@ -34,7 +37,7 @@ func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *SymbolTab
 	resultType, validTypes := operators[operation]
 
 	if !validTypes {
-		return types.INVALID
+		errors.TypeError(fmt.Sprintf("Operator %q does not exist or is not defined for types %s and %s", binOp.Operator, leftType, rightType))
 	}
 
 	return resultType

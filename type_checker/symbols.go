@@ -30,7 +30,7 @@ func NewChildSymbolTable(parent *SymbolTable) *SymbolTable {
 
 func (st *SymbolTable) RegisterSymbol(name string, dataType types.DataType, constant bool) {
 	if _, ok := st.symbols[name]; ok {
-		errors.RuntimeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
+		errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
 
 	if constant {
@@ -44,7 +44,7 @@ func (st *SymbolTable) GetSymbol(name string) types.DataType {
 	table, err := st.resolve(name)
 
 	if err != "" {
-		errors.RuntimeError(err)
+		errors.TypeError(err)
 	}
 
 	return table.symbols[name]

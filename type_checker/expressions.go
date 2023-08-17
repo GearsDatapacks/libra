@@ -1,6 +1,8 @@
 package typechecker
 
 import (
+	"fmt"
+
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/types"
@@ -21,7 +23,8 @@ func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.Da
 	case *ast.AssignmentExpression:
 		return typeCheckAssignmentExpression(expression, symbolTable)
 	default:
-		return types.INVALID
+		errors.DevError("Unexpected expression type")
+		return types.INT
 	}
 }
 
@@ -33,7 +36,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	symbolName := assignment.Assignee.(*ast.Identifier).Symbol
 
 	if symbolTable.IsConstant(symbolName) {
-		return types.INVALID
+		errors.TypeError("Cannot reassign constant " + symbolName)
 	}
 
 	dataType := symbolTable.GetSymbol(symbolName)
@@ -45,5 +48,6 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 		return dataType
 	}
 
-	return types.INVALID
+	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
+	return types.INT
 }

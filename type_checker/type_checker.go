@@ -1,20 +1,19 @@
 package typechecker
 
 import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func TypeCheck(program ast.Program) bool {
+func TypeCheck(program ast.Program) {
 	symbolTable := NewSymbolTable()
 
 	for _, stmt := range program.Body {
-		if !valid(typeCheck(stmt, symbolTable)) {
-			return false
-		}
+		typeCheck(stmt, symbolTable)
 	}
-
-	return true
 }
 
 func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
@@ -26,29 +25,28 @@ func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
 		return typeCheckExpression(statement.Expression, symbolTable)
 
 	default:
-		return types.INVALID
+		errors.DevError("Unexpected statment type")
+		return types.INT
 	}
 }
 
-func typeCheckVariableDeclaration(varDex *ast.VariableDeclaration, symbolTable *SymbolTable) types.DataType {
-	expressionType := typeCheckExpression(varDex.Value, symbolTable)
-	dataType := types.FromString(varDex.DataType)
-	correctType := dataType == expressionType
-
+func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *SymbolTable) types.DataType {
+	expressionType := typeCheckExpression(varDec.Value, symbolTable)
+	
 	// Blank if type to be inferred
-	if varDex.DataType == "" {
-		symbolTable.RegisterSymbol(varDex.Name, expressionType, varDex.Constant)
+	if varDec.DataType == "" {
+		symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		return expressionType
 	}
+	
+	dataType := types.FromString(varDec.DataType)
+	correctType := dataType == expressionType
 
 	if correctType {
-		symbolTable.RegisterSymbol(varDex.Name, dataType, varDex.Constant)
+		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
 		return dataType
 	}
 
-	return types.INVALID
-}
-
-func valid(t types.DataType) bool {
-	return t != types.INVALID
+	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
+	return types.INT
 }

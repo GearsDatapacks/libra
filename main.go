@@ -56,9 +56,7 @@ func run(file string) {
 	tokens := lexer.Tokenise()
 	ast := parser.Parse(tokens)
 
-	if !typechecker.TypeCheck(ast) {
-		log.Fatal("Invalid types")
-	}
+	typechecker.TypeCheck(ast)
 
 	result := interpreter.Evaluate(ast, env)
 	fmt.Println(result.ToString())
