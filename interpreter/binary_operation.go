@@ -29,14 +29,3 @@ func evaluateBinaryOperation(binOp ast.BinaryOperation, env *environment.Environ
 
 	return operation(left, right)
 }
-
-func evaluateAssignmentExpression(assignment ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
-	if assignment.Assignee.Type() != "Identifier" {
-		errors.RuntimeError(fmt.Sprintf("Cannot assign value to type %q", assignment.Assignee.Type()), &assignment)
-	}
-
-	varName := assignment.Assignee.(*ast.Identifier).Symbol
-	value := evaluateExpression(assignment.Value, env)
-
-	return env.AssignVariable(varName, value)
-}

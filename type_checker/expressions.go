@@ -19,22 +19,31 @@ func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.Da
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, symbolTable)
 	case *ast.AssignmentExpression:
-		if expression.Assignee.Type() != "Identifier" {
-			errors.TypeError("Can only assign values to variables")
-		}
-
-		dataType := symbolTable.GetSymbol(expression.Assignee.(*ast.Identifier).Symbol)
-
-		expressionType := typeCheckExpression(expression.Value, symbolTable)
-		correctType := dataType == expressionType
-
-		if correctType {
-			return dataType
-		}
-
-		return types.INVALID
-
+		return typeCheckAssignmentExpression(expression, symbolTable)
 	default:
 		return types.INVALID
 	}
+}
+
+func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *SymbolTable) types.DataType {
+	if assignment.Assignee.Type() != "Identifier" {
+		errors.TypeError("Can only assign values to variables")
+	}
+
+	symbolName := assignment.Assignee.(*ast.Identifier).Symbol
+
+	if symbolTable.IsConstant(symbolName) {
+		return types.INVALID
+	}
+
+	dataType := symbolTable.GetSymbol(symbolName)
+
+	expressionType := typeCheckExpression(assignment.Value, symbolTable)
+	correctType := dataType == expressionType
+
+	if correctType {
+		return dataType
+	}
+
+	return types.INVALID
 }

@@ -20,22 +20,7 @@ func TypeCheck(program ast.Program) bool {
 func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
 	switch statement := stmt.(type) {
 	case *ast.VariableDeclaration:
-		expressionType := typeCheckExpression(statement.Value, symbolTable)
-		dataType := types.FromString(statement.DataType)
-		correctType := dataType == expressionType
-
-		// Blank if type to be inferred
-		if statement.DataType == "" {
-			symbolTable.RegisterSymbol(statement.Name, expressionType)
-			return expressionType
-		}
-
-		if correctType {
-			symbolTable.RegisterSymbol(statement.Name, dataType)
-			return dataType
-		}
-
-		return types.INVALID
+		return typeCheckVariableDeclaration(statement, symbolTable)
 
 	case *ast.ExpressionStatement:
 		return typeCheckExpression(statement.Expression, symbolTable)
@@ -43,6 +28,25 @@ func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
 	default:
 		return types.INVALID
 	}
+}
+
+func typeCheckVariableDeclaration(varDex *ast.VariableDeclaration, symbolTable *SymbolTable) types.DataType {
+	expressionType := typeCheckExpression(varDex.Value, symbolTable)
+	dataType := types.FromString(varDex.DataType)
+	correctType := dataType == expressionType
+
+	// Blank if type to be inferred
+	if varDex.DataType == "" {
+		symbolTable.RegisterSymbol(varDex.Name, expressionType, varDex.Constant)
+		return expressionType
+	}
+
+	if correctType {
+		symbolTable.RegisterSymbol(varDex.Name, dataType, varDex.Constant)
+		return dataType
+	}
+
+	return types.INVALID
 }
 
 func valid(t types.DataType) bool {

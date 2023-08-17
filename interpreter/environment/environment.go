@@ -5,13 +5,11 @@ import (
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/values"
-	"github.com/gearsdatapacks/libra/utils"
 )
 
 type Environment struct {
 	parent *Environment
 	variables map[string]values.RuntimeValue
-	constants []string
 }
 
 func New() *Environment {
@@ -30,26 +28,14 @@ func NewChild(parent *Environment) *Environment {
 	}
 }
 
-func (env *Environment) DeclareVariable(name string, value values.RuntimeValue, constant bool) values.RuntimeValue {
-	if _, ok := env.variables[name]; ok {
-		errors.RuntimeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
-	}
-
+func (env *Environment) DeclareVariable(name string, value values.RuntimeValue) values.RuntimeValue {
 	env.variables[name] = value
-
-	if constant {
-		env.constants = append(env.constants, name)
-	}
 
 	return value
 }
 
 func (env *Environment) AssignVariable(name string, value values.RuntimeValue) values.RuntimeValue {
 	declaredenvironment := env.resolve(name)
-
-	if utils.Contains(declaredenvironment.constants, name) {
-		errors.RuntimeError(fmt.Sprintf("Cannot reassign constant %q", name))
-	}
 
 	declaredenvironment.variables[name] = value
 	return value

@@ -19,5 +19,5 @@ func evaluateVariableDeclaration(varDec ast.VariableDeclaration, env *environmen
 		value = evaluateExpression(varDec.Value, env)
 	}
 
-	return env.DeclareVariable(varDec.Name, value, varDec.Constant)
+	return env.DeclareVariable(varDec.Name, value)
 }

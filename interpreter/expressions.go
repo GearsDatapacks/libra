@@ -13,7 +13,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return values.MakeInteger(expression.Value)
-	
+		
 	case *ast.BooleanLiteral:
 		return values.MakeBoolean(expression.Value)
 
@@ -34,4 +34,11 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 		return &values.IntegerLiteral{}
 	}
+}
+
+func evaluateAssignmentExpression(assignment ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
+	varName := assignment.Assignee.(*ast.Identifier).Symbol
+	value := evaluateExpression(assignment.Value, env)
+
+	return env.AssignVariable(varName, value)
 }
