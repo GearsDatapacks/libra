@@ -17,3 +17,11 @@ func RuntimeError(message string, errorNodes ...ast.Node) {
 	errorNode := errorNodes[0]
 	log.Fatalf("RuntimeError at line %d, column %d: %s", errorNode.GetToken().Line, errorNode.GetToken().Column, message)
 }
+
+func TypeError(message string, errorNodes ...ast.Node) {
+	if len(errorNodes) == 0 {
+		log.Fatalf("TypeError: %s", message)
+	}
+	errorNode := errorNodes[0]
+	log.Fatalf("TypeError at line %d, column %d: %s", errorNode.GetToken().Line, errorNode.GetToken().Column, message)
+}
