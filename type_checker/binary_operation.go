@@ -9,26 +9,26 @@ var operators = map[operation]types.DataType{}
 
 type operation struct {
 	operator string
-	left types.DataType
-	right types.DataType
+	left     types.DataType
+	right    types.DataType
 }
 
 func RegisterOperator(operator string, left, right, result types.DataType) {
 	operation := operation{
 		operator: operator,
-		left: left,
-		right: right,
+		left:     left,
+		right:    right,
 	}
 	operators[operation] = result
 }
 
-func typeCheckBinaryOperation(binOp *ast.BinaryOperation) types.DataType {
-	leftType := typeCheckExpression(binOp.Left)
-	rightType := typeCheckExpression(binOp.Right)
+func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *SymbolTable) types.DataType {
+	leftType := typeCheckExpression(binOp.Left, symbolTable)
+	rightType := typeCheckExpression(binOp.Right, symbolTable)
 	operation := operation{
 		operator: binOp.Operator,
-		left: leftType,
-		right: rightType,
+		left:     leftType,
+		right:    rightType,
 	}
 
 	resultType, validTypes := operators[operation]
