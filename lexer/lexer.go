@@ -69,6 +69,16 @@ func (l *lexer) parseToken() token.Token {
 		for !l.eof() && isNumeric(l.next()) {
 			number = append(number, l.consume())
 		}
+
+		if l.next() == '.' && isNumeric(rune(l.code[l.pos + 1])) {
+			number = append(number, l.consume())
+			for !l.eof() && isNumeric(l.next()) {
+				number = append(number, l.consume())
+			}
+
+			return l.createToken(token.FLOAT, number, leadingNewline)
+		}
+
 		return l.createToken(token.INTEGER, number, leadingNewline)
 	} else if sym, ok := l.parseSymbol(); ok {
 		sym.LeadingNewline = leadingNewline

@@ -22,6 +22,8 @@ func MakeValue(v any) RuntimeValue {
 	switch value := v.(type) {
 	case int:
 		return MakeInteger(value)
+	case float64:
+		return MakeFloat(value)
 	case bool:
 		return MakeBoolean(value)
 	case nil:
@@ -36,6 +38,8 @@ func GetZeroValue(dataType string) RuntimeValue {
 	switch dataType {
 	case "int":
 		return MakeInteger(0)
+	case "float":
+		return MakeFloat(0)
 	case "boolean":
 		return MakeBoolean(false)
 	case "null":
@@ -48,6 +52,7 @@ func GetZeroValue(dataType string) RuntimeValue {
 
 var typeStringMap = map[string]string {
 	"int": "integer",
+	"float": "float",
 	"bool": "boolean",
 	"null": "null",
 }

@@ -14,6 +14,7 @@ const (
 	EOF = "EOF"
 
 	INTEGER    = "INTEGER"
+	FLOAT      = "FLOAT"
 	IDENTIFIER = "IDENTIFIER"
 
 	LEFT_PAREN  = "LEFT_PAREN"

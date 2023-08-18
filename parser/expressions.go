@@ -120,6 +120,14 @@ func (p *parser) parseLiteral() ast.Expression {
 			BaseNode: &ast.BaseNode{Token: tok},
 		}
 
+	case token.FLOAT:
+		tok := p.consume()
+		value, _ := strconv.ParseFloat(tok.Value, 64)
+		return &ast.FloatLiteral{
+			Value:    value,
+			BaseNode: &ast.BaseNode{Token: tok},
+		}
+
 	case token.IDENTIFIER:
 		if p.isKeyword("true") {
 			tok := p.consume()

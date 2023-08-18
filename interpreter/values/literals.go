@@ -33,6 +33,37 @@ func (il *IntegerLiteral) equalTo(value RuntimeValue) bool {
 	return ok && integer.value == il.value
 }
 
+type FloatLiteral struct {
+	*BaseValue
+	value float64
+}
+
+func MakeFloat(value float64) *FloatLiteral {
+	return &FloatLiteral{value: value}
+}
+
+func (fl *FloatLiteral) Value() any {
+	return fl.value
+}
+
+func (fl *FloatLiteral) Type() ValueType {
+	return "float"
+}
+
+func (fl *FloatLiteral) ToString() string {
+	return fmt.Sprint(fl.value)
+}
+
+func (fl *FloatLiteral) truthy() bool {
+	return fl.value != 0
+}
+
+func (fl *FloatLiteral) equalTo(value RuntimeValue) bool {
+	float, ok := value.(*FloatLiteral)
+
+	return ok && float.value == fl.value
+}
+
 type NullLiteral struct {
 	*BaseValue
 }

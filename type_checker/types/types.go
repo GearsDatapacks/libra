@@ -10,12 +10,14 @@ type DataType string
 
 const (
 	INT = "int"
+	FLOAT = "float"
 	BOOL = "boolean"
 	NULL = "null"
 )
 
 var typeTable = map[string]DataType{
 	"int":     INT,
+	"float":     FLOAT,
 	"boolean": BOOL,
 	"null":    NULL,
 }

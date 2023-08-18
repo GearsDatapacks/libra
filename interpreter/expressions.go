@@ -13,6 +13,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return values.MakeInteger(expression.Value)
+
+	case *ast.FloatLiteral:
+		return values.MakeFloat(expression.Value)
 		
 	case *ast.BooleanLiteral:
 		return values.MakeBoolean(expression.Value)

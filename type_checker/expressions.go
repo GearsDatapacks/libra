@@ -12,6 +12,8 @@ func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.Da
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return types.INT
+	case *ast.FloatLiteral:
+		return types.FLOAT
 	case *ast.NullLiteral:
 		return types.NULL
 	case *ast.BooleanLiteral:
