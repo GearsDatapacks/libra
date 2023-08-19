@@ -52,7 +52,7 @@ func GetZeroValue(dataType string) RuntimeValue {
 
 var typeStringMap = map[string]string {
 	"int": "integer",
-	"float": "float",
+	"float64": "float",
 	"bool": "boolean",
 	"null": "null",
 }

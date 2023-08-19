@@ -6,18 +6,18 @@ import (
 	"github.com/gearsdatapacks/libra/errors"
 )
 
-type DataType string
+type DataType = string
 
 const (
-	INT = "int"
+	INT   = "int"
 	FLOAT = "float"
-	BOOL = "boolean"
-	NULL = "null"
+	BOOL  = "boolean"
+	NULL  = "null"
 )
 
 var typeTable = map[string]DataType{
 	"int":     INT,
-	"float":     FLOAT,
+	"float":   FLOAT,
 	"boolean": BOOL,
 	"null":    NULL,
 }
@@ -29,4 +29,10 @@ func FromString(typeString string) DataType {
 	}
 
 	return dataType
+}
+
+type ValidType interface {
+	Valid(ValidType) bool
+	valid(DataType) bool
+	String() string
 }

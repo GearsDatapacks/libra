@@ -9,26 +9,26 @@ import (
 )
 
 type SymbolTable struct {
-	parent  *SymbolTable
-	symbols map[string]types.DataType
+	parent    *SymbolTable
+	symbols   map[string]types.ValidType
 	constants []string
 }
 
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
 		parent:  nil,
-		symbols: map[string]types.DataType{},
+		symbols: map[string]types.ValidType{},
 	}
 }
 
 func NewChildSymbolTable(parent *SymbolTable) *SymbolTable {
 	return &SymbolTable{
 		parent:  parent,
-		symbols: map[string]types.DataType{},
+		symbols: map[string]types.ValidType{},
 	}
 }
 
-func (st *SymbolTable) RegisterSymbol(name string, dataType types.DataType, constant bool) {
+func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) {
 	if _, ok := st.symbols[name]; ok {
 		errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
@@ -40,7 +40,7 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.DataType, cons
 	st.symbols[name] = dataType
 }
 
-func (st *SymbolTable) GetSymbol(name string) types.DataType {
+func (st *SymbolTable) GetSymbol(name string) types.ValidType {
 	table, err := st.resolve(name)
 
 	if err != "" {

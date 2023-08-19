@@ -24,7 +24,7 @@ func evaluateBinaryOperation(binOp ast.BinaryOperation, env *environment.Environ
 	operation, ok := operators[[3]string{binOp.Operator, string(left.Type()), string(right.Type())}]
 
 	if !ok {
-		errors.RuntimeError(fmt.Sprintf("Operator %q does not exist or does not support operands of type %q and %q", binOp.Operator, left.Type(), right.Type()), &binOp)
+		errors.DevError(fmt.Sprintf("Operator %q does not exist or does not support operands of type %q and %q", binOp.Operator, left.Type(), right.Type()), &binOp)
 	}
 
 	return operation(left, right)

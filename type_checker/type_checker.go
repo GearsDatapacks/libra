@@ -16,7 +16,7 @@ func TypeCheck(program ast.Program) {
 	}
 }
 
-func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
+func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.ValidType {
 	switch statement := stmt.(type) {
 	case *ast.VariableDeclaration:
 		return typeCheckVariableDeclaration(statement, symbolTable)
@@ -26,27 +26,27 @@ func typeCheck(stmt ast.Statement, symbolTable *SymbolTable) types.DataType {
 
 	default:
 		errors.DevError("Unexpected statment type")
-		return types.INT
+		return &types.Literal{}
 	}
 }
 
-func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *SymbolTable) types.DataType {
+func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *SymbolTable) types.ValidType {
 	expressionType := typeCheckExpression(varDec.Value, symbolTable)
-	
+
 	// Blank if type to be inferred
 	if varDec.DataType == "" {
 		symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		return expressionType
 	}
-	
-	dataType := types.FromString(varDec.DataType)
-	correctType := dataType == expressionType
 
+	dataType := types.MakeLiteral(types.FromString(varDec.DataType))
+	correctType := expressionType.Valid(dataType)
+	
 	if correctType {
 		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
 		return dataType
 	}
 
 	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
-	return types.INT
+	return &types.Literal{}
 }

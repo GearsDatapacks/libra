@@ -8,16 +8,16 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.DataType {
+func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return types.INT
+		return types.MakeLiteral(types.INT)
 	case *ast.FloatLiteral:
-		return types.FLOAT
+		return types.MakeLiteral(types.FLOAT)
 	case *ast.NullLiteral:
-		return types.NULL
+		return types.MakeLiteral(types.NULL)
 	case *ast.BooleanLiteral:
-		return types.BOOL
+		return types.MakeLiteral(types.BOOL)
 	case *ast.Identifier:
 		return symbolTable.GetSymbol(expression.Symbol)
 	case *ast.BinaryOperation:
@@ -26,11 +26,11 @@ func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.Da
 		return typeCheckAssignmentExpression(expression, symbolTable)
 	default:
 		errors.DevError("Unexpected expression type")
-		return types.INT
+		return &types.Literal{}
 	}
 }
 
-func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *SymbolTable) types.DataType {
+func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *SymbolTable) types.ValidType {
 	if assignment.Assignee.Type() != "Identifier" {
 		errors.TypeError("Can only assign values to variables")
 	}
@@ -51,5 +51,5 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	}
 
 	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
-	return types.INT
+	return &types.Literal{}
 }

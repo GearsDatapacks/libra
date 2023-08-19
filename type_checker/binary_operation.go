@@ -8,53 +8,46 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-var operators = map[operation]types.DataType{}
+var operators = map[string][3]types.ValidType{}
 
-type operation struct {
-	operator string
-	left     types.DataType
-	right    types.DataType
+func RegisterOperator(operator string, left, right, result types.ValidType) {
+	operators[operator] = [3]types.ValidType{left, right, result}
 }
 
-func RegisterOperator(operator string, left, right, result types.DataType) {
-	operation := operation{
-		operator: operator,
-		left:     left,
-		right:    right,
-	}
-	operators[operation] = result
-}
-
-func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *SymbolTable) types.DataType {
+func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *SymbolTable) types.ValidType {
 	leftType := typeCheckExpression(binOp.Left, symbolTable)
 	rightType := typeCheckExpression(binOp.Right, symbolTable)
-	operation := operation{
-		operator: binOp.Operator,
-		left:     leftType,
-		right:    rightType,
+
+	types, exists := operators[binOp.Operator]
+
+	if !exists {
+		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator))
 	}
 
-	resultType, validTypes := operators[operation]
+	validTypes := types[0].Valid(leftType) && types[1].Valid(rightType)
 
 	if !validTypes {
-		errors.TypeError(fmt.Sprintf("Operator %q does not exist or is not defined for types %s and %s", binOp.Operator, leftType, rightType))
+		errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType))
 	}
 
-	return resultType
+	return types[2]
 }
 
 func RegisterOperators() {
-	RegisterOperator("+", types.INT, types.INT, types.INT)
-	RegisterOperator("-", types.INT, types.INT, types.INT)
-	RegisterOperator("*", types.INT, types.INT, types.INT)
-	RegisterOperator("/", types.INT, types.INT, types.INT)
-	RegisterOperator("%", types.INT, types.INT, types.INT)
+	numberType := types.MakeUnion(types.INT, types.FLOAT)
+	boolType := types.MakeLiteral(types.BOOL)
 
-	RegisterOperator(">", types.INT, types.INT, types.BOOL)
-	RegisterOperator(">=", types.INT, types.INT, types.BOOL)
-	RegisterOperator("<", types.INT, types.INT, types.BOOL)
-	RegisterOperator("<=", types.INT, types.INT, types.BOOL)
+	RegisterOperator("+", numberType, numberType, numberType)
+	RegisterOperator("-", numberType, numberType, numberType)
+	RegisterOperator("*", numberType, numberType, numberType)
+	RegisterOperator("/", numberType, numberType, numberType)
+	RegisterOperator("%", numberType, numberType, numberType)
 
-	RegisterOperator("||", types.BOOL, types.BOOL, types.BOOL)
-	RegisterOperator("&&", types.BOOL, types.BOOL, types.BOOL)
+	RegisterOperator(">", numberType, numberType, boolType)
+	RegisterOperator(">=", numberType, numberType, boolType)
+	RegisterOperator("<", numberType, numberType, boolType)
+	RegisterOperator("<=", numberType, numberType, boolType)
+
+	RegisterOperator("||", boolType, boolType, boolType)
+	RegisterOperator("&&", boolType, boolType, boolType)
 }
