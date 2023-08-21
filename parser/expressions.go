@@ -126,30 +126,6 @@ func (p *parser) parseFunctionCall() ast.Expression {
 	}
 }
 
-func (p *parser) parseArgumentList() []ast.Expression {
-	p.expect(token.LEFT_PAREN, "Expected '(' to open argument list, got %t")
-
-	args := []ast.Expression{}
-
-	if p.next().Type != token.RIGHT_PAREN {
-		args = p.parseArgs()
-	}
-
-	p.expect(token.RIGHT_PAREN, "Expected ')' after argument list, got %t")
-
-	return args
-}
-
-func (p *parser) parseArgs() []ast.Expression {
-	args := []ast.Expression{ p.parseExpression() }
-
-	for p.next().Type == token.COMMA {
-		args = append(args, p.parseExpression())
-	}
-
-	return args
-}
-
 func (p *parser) parseLiteral() ast.Expression {
 	switch p.next().Type {
 	case token.INTEGER:

@@ -38,3 +38,42 @@ func (varDec *VariableDeclaration) String() string {
 
 	return result
 }
+
+type FunctionDeclaration struct {
+	*BaseNode
+	*BaseStatment
+	Name string
+	Parameters [][2]string // [name, type]
+	ReturnType string
+	Body []Statement
+}
+
+func (funcDec *FunctionDeclaration) Type() NodeType { return "FunctionDeclaration" }
+
+func (funcDec *FunctionDeclaration) String() string {
+	result := "function "
+
+	result += funcDec.Name
+	result += "("
+
+	for i, parameter := range funcDec.Parameters {
+		result += parameter[0]
+		result += " "
+		result += parameter[1]
+
+		if i != len(funcDec.Parameters) - 1 {
+			result += ", "
+		}
+	}
+
+	result += ") {\n"
+
+	for _, statement := range funcDec.Body {
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}

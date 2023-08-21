@@ -12,6 +12,8 @@ func (p *parser) parseStatement() ast.Statement {
 
 	if p.isKeyword("var") || p.isKeyword("const") {
 		statement = p.parseVariableDeclaration()
+	} else if p.isKeyword("function") {
+		statement = p.parseFunctionDeclaration()
 	} else {
 		statement = p.parseExpressionStatement()
 	}
@@ -77,5 +79,29 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		BaseNode: &ast.BaseNode{Token: tok},
 		Value:    value,
 		DataType: dataType,
+	}
+}
+
+func (p *parser) parseFunctionDeclaration() ast.Statement {
+	tok := p.consume()
+
+	name := p.expect(token.IDENTIFIER, "Expected function name, got %q").Value
+
+	parameters := p.parseParameterList()
+
+	returnType := ""
+
+	if p.next().Type == token.IDENTIFIER {
+		returnType = p.consume().Value
+	}
+
+	code := p.parseCodeBlock()
+
+	return &ast.FunctionDeclaration{
+		Name: name,
+		Parameters: parameters,
+		Body: code,
+		ReturnType: returnType,
+		BaseNode: &ast.BaseNode{Token: tok},
 	}
 }
