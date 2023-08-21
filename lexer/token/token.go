@@ -19,6 +19,7 @@ const (
 
 	LEFT_PAREN  = "LEFT_PAREN"
 	RIGHT_PAREN = "RIGHT_PAREN"
+	COMMA       = "COMMA"
 
 	ASSIGNMENT_OPERATOR     = "ASSIGNMENT_OPERATOR"
 	LOGICAL_OPERATOR        = "LOGICAL_OPERATOR"
@@ -30,6 +31,7 @@ const (
 var Symbols = map[string]Type{
 	"(": LEFT_PAREN,
 	")": RIGHT_PAREN,
+	",": COMMA,
 
 	"+": ADDITIVE_OPERATOR,
 	"-": ADDITIVE_OPERATOR,

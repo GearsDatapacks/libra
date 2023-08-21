@@ -62,6 +62,33 @@ func (ident *Identifier) String() string {
 }
 
 
+type FunctionCall struct {
+	*BaseNode
+	*BaseExpression
+	Name string
+	Args []Expression
+}
+
+func (fn *FunctionCall) Type() NodeType { return "FunctionCall" }
+
+func (fn *FunctionCall) String() string {
+	result := fn.Name
+
+	result += "("
+
+	for i, arg := range fn.Args {
+		result += arg.String()
+		if i != len(fn.Args) - 1 {
+			result += ", "
+		}
+	}
+
+	result += ")"
+
+	return result
+}
+
+
 type BinaryOperation struct {
 	*BaseNode
 	*BaseExpression

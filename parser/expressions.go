@@ -94,11 +94,11 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 }
 
 func (p *parser) parseMultiplicativeExpression() ast.Expression {
-	left := p.parseLiteral()
+	left := p.parseFunctionCall()
 
 	for p.canContinue() && p.next().Type == token.MULTIPLICATIVE_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseLiteral()
+		right := p.parseFunctionCall()
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -108,6 +108,46 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 	}
 
 	return left
+}
+
+func (p *parser) parseFunctionCall() ast.Expression {
+	if (p.next().Type != token.IDENTIFIER || p.tokens[1].Type != token.LEFT_PAREN) {
+		return p.parseLiteral()
+	}
+
+	token := p.consume()
+
+	args := p.parseArgumentList()
+
+	return &ast.FunctionCall{
+		Name: token.Value,
+		Args: args,
+		BaseNode: &ast.BaseNode{Token: token},
+	}
+}
+
+func (p *parser) parseArgumentList() []ast.Expression {
+	p.expect(token.LEFT_PAREN, "Expected '(' to open argument list, got %t")
+
+	args := []ast.Expression{}
+
+	if p.next().Type != token.RIGHT_PAREN {
+		args = p.parseArgs()
+	}
+
+	p.expect(token.RIGHT_PAREN, "Expected ')' after argument list, got %t")
+
+	return args
+}
+
+func (p *parser) parseArgs() []ast.Expression {
+	args := []ast.Expression{ p.parseExpression() }
+
+	for p.next().Type == token.COMMA {
+		args = append(args, p.parseExpression())
+	}
+
+	return args
 }
 
 func (p *parser) parseLiteral() ast.Expression {
