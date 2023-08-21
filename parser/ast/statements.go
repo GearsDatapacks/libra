@@ -77,3 +77,15 @@ func (funcDec *FunctionDeclaration) String() string {
 
 	return result
 }
+
+type ReturnStatement struct {
+	*BaseNode
+	*BaseStatment
+	Value Expression
+}
+
+func (ret *ReturnStatement) Type() NodeType { return "ReturnStatement" }
+
+func (ret *ReturnStatement) String() string {
+	return "return " + ret.Value.String()
+}

@@ -14,6 +14,8 @@ func (p *parser) parseStatement() ast.Statement {
 		statement = p.parseVariableDeclaration()
 	} else if p.isKeyword("function") {
 		statement = p.parseFunctionDeclaration()
+	} else if p.isKeyword("return") {
+		statement = p.parseReturnStatement()
 	} else {
 		statement = p.parseExpressionStatement()
 	}
@@ -103,5 +105,20 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 		Body: code,
 		ReturnType: returnType,
 		BaseNode: &ast.BaseNode{Token: tok},
+	}
+}
+
+func (p *parser) parseReturnStatement() ast.Statement {
+	token := p.consume()
+
+	var value ast.Expression = &ast.NullLiteral{}
+
+	if p.canContinue() {
+		value = p.parseExpression()
+	}
+
+	return &ast.ReturnStatement{
+		Value: value,
+		BaseNode: &ast.BaseNode{Token: token},
 	}
 }
