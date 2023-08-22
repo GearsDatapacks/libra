@@ -9,46 +9,73 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
 
-var operators = map[string][3]types.ValidType{}
+type operatorChecker func(types.ValidType, types.ValidType)types.ValidType
 
-func RegisterOperator(operator string, left, right, result types.ValidType) {
-	operators[operator] = [3]types.ValidType{left, right, result}
+var operators = map[string]operatorChecker{}
+
+func RegisterOperator(operator string, fn operatorChecker) {
+	operators[operator] = fn
 }
 
 func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
 	leftType := typeCheckExpression(binOp.Left, symbolTable)
 	rightType := typeCheckExpression(binOp.Right, symbolTable)
 
-	types, exists := operators[binOp.Operator]
+	checkerFn, exists := operators[binOp.Operator]
 
 	if !exists {
 		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
 	}
 
-	validTypes := types[0].Valid(leftType) && types[1].Valid(rightType)
+	resultType := checkerFn(leftType, rightType)
 
-	if !validTypes {
+	if resultType == nil {
 		errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType), binOp)
 	}
 
-	return types[2]
+	return resultType
+}
+
+func registerRegularOperator(name string, left, right, result types.ValidType) {
+	fn := func(leftType, rightType types.ValidType) types.ValidType {
+		if left.Valid(leftType) && right.Valid(rightType) {
+			return result
+		}
+		return nil
+	}
+
+	RegisterOperator(name, fn)
+}
+
+var numberType = types.MakeUnion(types.INT, types.FLOAT)
+var boolType = types.MakeLiteral(types.BOOL)
+var floatType = types.MakeLiteral(types.FLOAT)
+var intType = types.MakeLiteral(types.INT)
+
+func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
+	if !numberType.Valid(leftType) || !numberType.Valid(rightType) {
+		return nil
+	}
+	
+	if leftType.Valid(floatType) || rightType.Valid(floatType) {
+		return floatType
+	}
+
+	return intType
 }
 
 func RegisterOperators() {
-	numberType := types.MakeUnion(types.INT, types.FLOAT)
-	boolType := types.MakeLiteral(types.BOOL)
+	RegisterOperator("+", arithmeticOperator)
+	RegisterOperator("-", arithmeticOperator)
+	RegisterOperator("*", arithmeticOperator)
+	registerRegularOperator("/", numberType, numberType, floatType)
+	RegisterOperator("%", arithmeticOperator)
 
-	RegisterOperator("+", numberType, numberType, numberType)
-	RegisterOperator("-", numberType, numberType, numberType)
-	RegisterOperator("*", numberType, numberType, numberType)
-	RegisterOperator("/", numberType, numberType, numberType)
-	RegisterOperator("%", numberType, numberType, numberType)
+	registerRegularOperator(">", numberType, numberType, boolType)
+	registerRegularOperator(">=", numberType, numberType, boolType)
+	registerRegularOperator("<", numberType, numberType, boolType)
+	registerRegularOperator("<=", numberType, numberType, boolType)
 
-	RegisterOperator(">", numberType, numberType, boolType)
-	RegisterOperator(">=", numberType, numberType, boolType)
-	RegisterOperator("<", numberType, numberType, boolType)
-	RegisterOperator("<=", numberType, numberType, boolType)
-
-	RegisterOperator("||", boolType, boolType, boolType)
-	RegisterOperator("&&", boolType, boolType, boolType)
+	registerRegularOperator("||", boolType, boolType, boolType)
+	registerRegularOperator("&&", boolType, boolType, boolType)
 }
