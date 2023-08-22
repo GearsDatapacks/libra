@@ -5,10 +5,11 @@ import (
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.ValidType {
+func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return types.MakeLiteral(types.INT)
@@ -24,13 +25,15 @@ func typeCheckExpression(expr ast.Expression, symbolTable *SymbolTable) types.Va
 		return typeCheckBinaryOperation(expression, symbolTable)
 	case *ast.AssignmentExpression:
 		return typeCheckAssignmentExpression(expression, symbolTable)
+	case *ast.FunctionCall:
+		return typeCheckFunctionCall(expression, symbolTable)
 	default:
-		errors.DevError("Unexpected expression type")
+		errors.DevError("Unexpected expression type: " + expr.String())
 		return &types.Literal{}
 	}
 }
 
-func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *SymbolTable) types.ValidType {
+func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *symbols.SymbolTable) types.ValidType {
 	if assignment.Assignee.Type() != "Identifier" {
 		errors.TypeError("Can only assign values to variables")
 	}
@@ -52,4 +55,27 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 
 	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
 	return &types.Literal{}
+}
+
+func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+	if !symbolTable.Exists(call.Name) {
+		errors.TypeError(fmt.Sprintf("Function %q is undefined", call.Name))
+	}
+
+	callVar := symbolTable.GetSymbol(call.Name)
+
+	if !callVar.Valid(&types.Function{}) {
+		errors.TypeError(fmt.Sprintf("Variable %q is not a function", call.Name))
+	}
+
+	function := callVar.(*types.Function)
+
+	for i, param := range function.Parameters {
+		arg := typeCheckExpression(call.Args[i], symbolTable)
+		if !param.Valid(arg) {
+			errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name))
+		}
+	}
+
+	return function.ReturnType
 }

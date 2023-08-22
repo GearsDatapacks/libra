@@ -11,7 +11,7 @@ type Literal struct {
 }
 
 func MakeLiteral(dataType DataType) *Literal {
-	return &Literal{ DataType: dataType }
+	return &Literal{DataType: dataType}
 }
 
 func (lit *Literal) Valid(dataType ValidType) bool {
@@ -31,7 +31,7 @@ type Union struct {
 }
 
 func MakeUnion(types ...DataType) *Union {
-	return &Union{ Types: types }
+	return &Union{Types: types}
 }
 
 func (u *Union) Valid(dataType ValidType) bool {
@@ -50,4 +50,21 @@ func (u *Union) valid(dataType DataType) bool {
 
 func (u *Union) String() string {
 	return strings.Join(u.Types, " | ")
+}
+
+type Function struct {
+	Parameters []ValidType
+	ReturnType ValidType
+}
+
+func (fn *Function) Valid(dataType ValidType) bool {
+	return dataType.valid(FUNCTION)
+}
+
+func (fn *Function) valid(dataType DataType) bool {
+	return dataType == FUNCTION
+}
+
+func (fn *Function) String() string {
+	return FUNCTION
 }

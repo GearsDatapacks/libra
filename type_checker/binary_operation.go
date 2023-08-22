@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
 
 var operators = map[string][3]types.ValidType{}
@@ -14,7 +15,7 @@ func RegisterOperator(operator string, left, right, result types.ValidType) {
 	operators[operator] = [3]types.ValidType{left, right, result}
 }
 
-func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *SymbolTable) types.ValidType {
+func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
 	leftType := typeCheckExpression(binOp.Left, symbolTable)
 	rightType := typeCheckExpression(binOp.Right, symbolTable)
 

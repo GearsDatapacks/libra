@@ -1,4 +1,4 @@
-package typechecker
+package symbols
 
 import (
 	"fmt"
@@ -8,24 +8,41 @@ import (
 	"github.com/gearsdatapacks/libra/utils"
 )
 
+type scopeKind int
+
+const (
+	GLOBAL_SCOPE = iota
+	FUNCTION_SCOPE
+)
+
 type SymbolTable struct {
 	parent    *SymbolTable
 	symbols   map[string]types.ValidType
 	constants []string
+	kind scopeKind
+	returnType types.ValidType
 }
 
-func NewSymbolTable() *SymbolTable {
+func New() *SymbolTable {
 	return &SymbolTable{
 		parent:  nil,
 		symbols: map[string]types.ValidType{},
+		kind: GLOBAL_SCOPE,
 	}
 }
 
-func NewChildSymbolTable(parent *SymbolTable) *SymbolTable {
+func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
 	return &SymbolTable{
 		parent:  parent,
 		symbols: map[string]types.ValidType{},
+		kind: kind,
 	}
+}
+
+func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
+	table := NewChild(parent, FUNCTION_SCOPE)
+	table.returnType = returnType
+	return table
 }
 
 func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) {
@@ -70,4 +87,28 @@ func (st *SymbolTable) resolve(varName string) (table *SymbolTable, err string) 
 	}
 
 	return st.parent.resolve(varName)
+}
+
+func (st *SymbolTable) isFunctionScope() bool {
+	return st.kind == FUNCTION_SCOPE
+}
+
+func (st *SymbolTable) ReturnType() types.ValidType {
+	if !st.isFunctionScope() {
+		errors.DevError("Cannot get return type of non-function scope")
+	}
+
+	return st.returnType
+}
+
+func (st *SymbolTable) FindFunctionScope() *SymbolTable {
+	if st.isFunctionScope() {
+		return st
+	}
+
+	if st.parent == nil {
+		return nil
+	}
+
+	return st.parent.FindFunctionScope()
 }
