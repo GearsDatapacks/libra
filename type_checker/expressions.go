@@ -70,6 +70,10 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 
 	function := callVar.(*types.Function)
 
+	if len(function.Parameters) != len(call.Args) {
+		errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name))
+	}
+
 	for i, param := range function.Parameters {
 		arg := typeCheckExpression(call.Args[i], symbolTable)
 		if !param.Valid(arg) {

@@ -55,6 +55,7 @@ var typeStringMap = map[string]string {
 	"float64": "float",
 	"bool": "boolean",
 	"null": "null",
+	"func": "function",
 }
 
 func TypeToString[T any]() string {

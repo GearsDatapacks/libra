@@ -1,6 +1,11 @@
 package values
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/gearsdatapacks/libra/parser/ast"
+)
 
 type IntegerLiteral struct {
 	*BaseValue
@@ -122,4 +127,47 @@ func (bl *BooleanLiteral) equalTo(value RuntimeValue) bool {
 	boolean, ok := value.(*BooleanLiteral)
 
 	return ok && boolean.value == bl.value
+}
+
+type FunctionValue struct {
+	*BaseValue
+	Name string
+	Parameters []string
+	DeclarationEnvironment any
+	Body []ast.Statement
+}
+
+func (fn *FunctionValue) Value() any {
+	return fn.Name
+}
+
+func (fn *FunctionValue) Type() ValueType {
+	return "function"
+}
+
+func (fn *FunctionValue) ToString() string {
+	result := "function ("
+
+	result += strings.Join(fn.Parameters, ", ")
+	result += ") {"
+
+	for _, statement := range fn.Body {
+		result += "  "
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+func (fn *FunctionValue) truthy() bool {
+	return true
+}
+
+func (fn *FunctionValue) equalTo(value RuntimeValue) bool {
+	function, ok := value.(*FunctionValue)
+
+	return ok && function.Name == fn.Name
 }

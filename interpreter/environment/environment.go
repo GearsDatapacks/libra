@@ -7,24 +7,35 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/values"
 )
 
+type scopeKind int
+
+const (
+	GLOBAL_SCOPE scopeKind = iota
+	FUNCTION_SCOPE
+)
+
 type Environment struct {
-	parent *Environment
-	variables map[string]values.RuntimeValue
+	parent      *Environment
+	variables   map[string]values.RuntimeValue
+	kind        scopeKind
+	ReturnValue values.RuntimeValue
 }
 
 func New() *Environment {
 	env := Environment{
-		parent: nil,
+		parent:    nil,
 		variables: map[string]values.RuntimeValue{},
+		kind:      GLOBAL_SCOPE,
 	}
 
 	return &env
 }
 
-func NewChild(parent *Environment) *Environment {
+func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
-		parent: parent,
+		parent:    parent,
 		variables: map[string]values.RuntimeValue{},
+		kind:      kind,
 	}
 }
 
@@ -56,4 +67,18 @@ func (env *Environment) resolve(varName string) *Environment {
 	}
 
 	return env.parent.resolve(varName)
+}
+
+func (env *Environment) isFunctionScope() bool {
+	return env.kind == FUNCTION_SCOPE
+}
+
+func (env *Environment) FindFunctionScope() *Environment {
+	if env.isFunctionScope() {
+		return env
+	}
+	if env.parent == nil {
+		errors.DevError("Cannot use return statement outside of a function")
+	}
+	return env.parent.FindFunctionScope()
 }

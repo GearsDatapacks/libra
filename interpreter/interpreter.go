@@ -22,10 +22,16 @@ func Evaluate(program ast.Program, env *environment.Environment) values.RuntimeV
 func evaluate(astNode ast.Statement, env *environment.Environment) values.RuntimeValue {
 	switch statement := astNode.(type) {
 	case *ast.ExpressionStatement:
-		return evaluateExpressionStatement(*statement, env)
+		return evaluateExpressionStatement(statement, env)
 
 	case *ast.VariableDeclaration:
-		return evaluateVariableDeclaration(*statement, env)
+		return evaluateVariableDeclaration(statement, env)
+
+	case *ast.FunctionDeclaration:
+		return evaluateFunctionDeclaration(statement, env)
+	
+	case *ast.ReturnStatement:
+		return evaluateReturnStatement(statement, env)
 
 	default:
 		errors.DevError(fmt.Sprintf("Unreconised AST node: %s", astNode.String()), astNode)

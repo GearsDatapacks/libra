@@ -69,6 +69,7 @@ func (funcDec *FunctionDeclaration) String() string {
 	result += ") {\n"
 
 	for _, statement := range funcDec.Body {
+		result += "  "
 		result += statement.String()
 		result += "\n"
 	}
