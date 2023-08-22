@@ -47,7 +47,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	dataType := symbolTable.GetSymbol(symbolName)
 
 	expressionType := typeCheckExpression(assignment.Value, symbolTable)
-	correctType := dataType == expressionType
+	correctType := dataType.Valid(expressionType)
 
 	if correctType {
 		return dataType
