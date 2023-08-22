@@ -54,7 +54,7 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 		return dataType
 	}
 
-	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType))
+	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), varDec)
 	return &types.Literal{}
 }
 
@@ -88,13 +88,13 @@ func typeCheckReturnStatement(ret *ast.ReturnStatement, symbolTable *symbols.Sym
 	functionScope := symbolTable.FindFunctionScope()
 
 	if functionScope == nil {
-		errors.TypeError("Cannot use return statement outside of a function")
+		errors.TypeError("Cannot use return statement outside of a function", ret)
 	}
 
 	expectedType := functionScope.ReturnType()
 
 	if !expectedType.Valid(expressionType) {
-		errors.TypeError(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType))
+		errors.TypeError(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType), ret)
 	}
 
 	return expressionType

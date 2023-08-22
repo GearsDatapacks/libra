@@ -22,13 +22,13 @@ func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.S
 	types, exists := operators[binOp.Operator]
 
 	if !exists {
-		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator))
+		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
 	}
 
 	validTypes := types[0].Valid(leftType) && types[1].Valid(rightType)
 
 	if !validTypes {
-		errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType))
+		errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType), binOp)
 	}
 
 	return types[2]
