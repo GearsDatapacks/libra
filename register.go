@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/gearsdatapacks/libra/interpreter"
-	typechecker "github.com/gearsdatapacks/libra/type_checker"
+	"github.com/gearsdatapacks/libra/type_checker/registry"
 )
 
 func register() {
 	interpreter.Register()
-	typechecker.RegisterOperators()
+	registry.Register()
 }

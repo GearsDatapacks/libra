@@ -8,6 +8,7 @@ const (
 	BOOL     = "boolean"
 	NULL     = "null"
 	FUNCTION = "function"
+	STRING   = "string"
 )
 
 type ValidType interface {

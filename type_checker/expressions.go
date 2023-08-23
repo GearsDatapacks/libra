@@ -5,6 +5,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/registry"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
@@ -15,6 +16,8 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return types.MakeLiteral(types.INT)
 	case *ast.FloatLiteral:
 		return types.MakeLiteral(types.FLOAT)
+	case *ast.StringLiteral:
+		return types.MakeLiteral(types.STRING)
 	case *ast.NullLiteral:
 		return types.MakeLiteral(types.NULL)
 	case *ast.BooleanLiteral:
@@ -33,7 +36,7 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	case *ast.FunctionCall:
 		return typeCheckFunctionCall(expression, symbolTable)
-		
+
 	default:
 		errors.DevError("Unexpected expression type: " + expr.String())
 		return &types.Literal{}
@@ -65,6 +68,21 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 }
 
 func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+	if builtin, ok := registry.Builtins[call.Name]; ok {
+		if len(builtin.Parameters) != len(call.Args) {
+			errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+		}
+
+		for i, param := range builtin.Parameters {
+			arg := typeCheckExpression(call.Args[i], symbolTable)
+			if !param.Valid(arg) {
+				errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+			}
+		}
+
+		return builtin.ReturnType
+	}
+
 	if !symbolTable.Exists(call.Name) {
 		errors.TypeError(fmt.Sprintf("Function %q is undefined", call.Name), call)
 	}

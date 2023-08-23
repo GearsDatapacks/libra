@@ -89,6 +89,14 @@ func (l *lexer) parseToken() token.Token {
 			ident = append(ident, l.consume())
 		}
 		return l.createToken(token.IDENTIFIER, ident, leadingNewline)
+	} else if nextChar == '"' {
+		stringValue := []rune{}
+		l.consume()
+		for l.next() != '"' {
+			stringValue = append(stringValue, l.consume())
+		}
+		l.consume()
+		return l.createToken(token.STRING, stringValue, leadingNewline)
 	} else {
 		l.error(fmt.Sprintf("Unexpected token: %q", nextChar))
 	}

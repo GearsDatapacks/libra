@@ -11,7 +11,7 @@ func FromAst(node ast.TypeExpression) ValidType {
 	switch typeExpr := node.(type) {
 	case *ast.TypeName:
 		return MakeLiteral(FromString(typeExpr.Name))
-	
+
 	case *ast.Union:
 		types := []ValidType{}
 
@@ -20,10 +20,10 @@ func FromAst(node ast.TypeExpression) ValidType {
 		}
 
 		return MakeUnion(types...)
-	
+
 	case *ast.VoidType:
 		return &Void{}
-	
+
 	case *ast.InferType:
 		errors.TypeError("Expected type, got nothing", node)
 		return &Literal{}
@@ -40,6 +40,7 @@ var typeTable = map[string]DataType{
 	"boolean":  BOOL,
 	"null":     NULL,
 	"function": FUNCTION,
+	"string":   STRING,
 }
 
 func FromString(typeString string) DataType {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gearsdatapacks/libra/errors"
+	"github.com/gearsdatapacks/libra/type_checker/registry"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/utils"
 )
@@ -48,6 +49,10 @@ func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
 func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) {
 	if _, ok := st.symbols[name]; ok {
 		errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
+	}
+
+	if _, ok := registry.Builtins[name]; ok {
+		errors.TypeError(fmt.Sprintf("Cannot redifne builtin function %q", name))
 	}
 
 	if constant {

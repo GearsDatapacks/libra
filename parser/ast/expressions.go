@@ -30,6 +30,18 @@ func (fl *FloatLiteral) String() string {
 	return fl.Token.Value
 }
 
+type StringLiteral struct {
+	*BaseNode
+	*BaseExpression
+	Value string
+}
+
+func (sl *StringLiteral) Type() NodeType { return "String" }
+
+func (sl *StringLiteral) String() string {
+	return "\"" + sl.Value + "\""
+}
+
 type BooleanLiteral struct {
 	*BaseNode
 	*BaseExpression

@@ -143,6 +143,13 @@ func (p *parser) parseLiteral() ast.Expression {
 			Value:    value,
 			BaseNode: &ast.BaseNode{Token: tok},
 		}
+	
+	case token.STRING:
+		tok := p.consume()
+		return &ast.StringLiteral{
+			Value: tok.Value,
+			BaseNode: &ast.BaseNode{ Token: tok },
+		}
 
 	case token.IDENTIFIER:
 		if p.isKeyword("true") {
