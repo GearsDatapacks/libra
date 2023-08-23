@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/gearsdatapacks/libra/lexer/token"
+
 type BaseExpression struct{}
 
 func (exp *BaseExpression) expressionNode() {}
@@ -48,6 +50,15 @@ type NullLiteral struct {
 func (nl *NullLiteral) Type() NodeType { return "Null" }
 
 func (nl *NullLiteral) String() string { return "null" }
+
+type VoidValue struct {
+	*BaseNode
+	*BaseExpression
+}
+
+func (nl *VoidValue) Type() NodeType { return "Void" }
+func (nl *VoidValue) String() string { return "void" }
+func (v *VoidValue) GetToken() token.Token { return token.Token{Value: "void"} }
 
 type Identifier struct {
 	*BaseNode

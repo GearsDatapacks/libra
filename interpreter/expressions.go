@@ -23,6 +23,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.NullLiteral:
 		return values.MakeNull()
 
+	case *ast.VoidValue:
+		return values.MakeNull()
+
 	case *ast.Identifier:
 		return env.GetVariable(expression.Symbol)
 

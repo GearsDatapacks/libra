@@ -91,9 +91,9 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	parameters := p.parseParameterList()
 
-	var returnType ast.TypeExpression = &ast.InferType{}
+	var returnType ast.TypeExpression = &ast.VoidType{}
 
-	if p.next().Type == token.IDENTIFIER {
+	if p.next().Type != token.LEFT_BRACE {
 		returnType = p.parseType()
 	}
 
@@ -111,7 +111,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 func (p *parser) parseReturnStatement() ast.Statement {
 	token := p.consume()
 
-	var value ast.Expression = &ast.NullLiteral{}
+	var value ast.Expression = &ast.VoidValue{}
 
 	if p.canContinue() {
 		value = p.parseExpression()

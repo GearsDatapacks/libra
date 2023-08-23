@@ -40,6 +40,10 @@ func typeCheck(stmt ast.Statement, symbolTable *symbols.SymbolTable) types.Valid
 func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
 	expressionType := typeCheckExpression(varDec.Value, symbolTable)
 
+	if _, ok := expressionType.(*types.Void); ok {
+		errors.TypeError(fmt.Sprintf("Cannot assign void to variable %q", varDec.Name), varDec)
+	}
+
 	// Blank if type to be inferred
 	if varDec.DataType.Type() == "Infer" {
 		symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)

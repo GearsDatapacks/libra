@@ -21,6 +21,9 @@ func FromAst(node ast.TypeExpression) ValidType {
 
 		return MakeUnion(types...)
 	
+	case *ast.VoidType:
+		return &Void{}
+	
 	case *ast.InferType:
 		errors.TypeError("Expected type, got nothing", node)
 		return &Literal{}

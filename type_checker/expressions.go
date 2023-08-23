@@ -19,14 +19,21 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return types.MakeLiteral(types.NULL)
 	case *ast.BooleanLiteral:
 		return types.MakeLiteral(types.BOOL)
+	case *ast.VoidValue:
+		return &types.Void{}
+
 	case *ast.Identifier:
 		return symbolTable.GetSymbol(expression.Symbol)
+
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, symbolTable)
+
 	case *ast.AssignmentExpression:
 		return typeCheckAssignmentExpression(expression, symbolTable)
+
 	case *ast.FunctionCall:
 		return typeCheckFunctionCall(expression, symbolTable)
+		
 	default:
 		errors.DevError("Unexpected expression type: " + expr.String())
 		return &types.Literal{}

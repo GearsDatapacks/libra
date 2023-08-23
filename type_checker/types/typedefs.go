@@ -78,3 +78,18 @@ func (fn *Function) valid(dataType DataType) bool {
 func (fn *Function) String() string {
 	return FUNCTION
 }
+
+type Void struct {}
+
+func (v *Void) Valid(dataType ValidType) bool {
+	_, isVoid := dataType.(*Void)
+	return isVoid
+}
+
+func (v *Void) valid(dataType DataType) bool {
+	return false
+}
+
+func (v *Void) String() string {
+	return "void"
+}

@@ -1,6 +1,10 @@
 package ast
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/gearsdatapacks/libra/lexer/token"
+)
 
 type BaseType struct {}
 
@@ -47,3 +51,12 @@ type InferType struct {
 
 func (i *InferType) Type() NodeType { return "Infer" }
 func (i *InferType) String() string { return "" }
+
+type VoidType struct {
+	*BaseNode
+	*BaseType
+}
+
+func (v *VoidType) Type() NodeType { return "Void" }
+func (v *VoidType) String() string { return "void" }
+func (v *VoidType) GetToken() token.Token { return token.Token{Value: "void"} }
