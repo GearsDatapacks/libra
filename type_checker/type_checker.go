@@ -41,12 +41,12 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	expressionType := typeCheckExpression(varDec.Value, symbolTable)
 
 	// Blank if type to be inferred
-	if varDec.DataType == "" {
+	if varDec.DataType.Type() == "Infer" {
 		symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		return expressionType
 	}
 
-	dataType := types.MakeLiteral(types.FromString(varDec.DataType))
+	dataType := types.FromAst(varDec.DataType)
 	correctType := expressionType.Valid(dataType)
 	
 	if correctType {
@@ -60,13 +60,13 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 
 func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
 	params := []types.ValidType{}
-	returnType := types.MakeLiteral(types.FromString(funcDec.ReturnType))
+	returnType := types.FromAst(funcDec.ReturnType)
 	
 	childTable := symbols.NewFunction(symbolTable, returnType)
 	for _, param := range funcDec.Parameters {
-		paramType := types.MakeLiteral(types.FromString(param[1]))
+		paramType := types.FromAst(param.Type)
 		params = append(params, paramType)
-		childTable.RegisterSymbol(param[0], paramType, false)
+		childTable.RegisterSymbol(param.Name, paramType, false)
 	}
 
 	functionType := &types.Function{

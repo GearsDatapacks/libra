@@ -47,10 +47,10 @@ func registerRegularOperator(name string, left, right, result types.ValidType) {
 	RegisterOperator(name, fn)
 }
 
-var numberType = types.MakeUnion(types.INT, types.FLOAT)
 var boolType = types.MakeLiteral(types.BOOL)
 var floatType = types.MakeLiteral(types.FLOAT)
 var intType = types.MakeLiteral(types.INT)
+var numberType = types.MakeUnion(intType, floatType)
 
 func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
 	if !numberType.Valid(leftType) || !numberType.Valid(rightType) {

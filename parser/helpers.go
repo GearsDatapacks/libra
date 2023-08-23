@@ -31,10 +31,10 @@ func (p *parser) parseArgs() []ast.Expression {
 	return args
 }
 
-func (p *parser) parseParameterList() [][2]string {
+func (p *parser) parseParameterList() []ast.Parameter {
 	p.expect(token.LEFT_PAREN, "Expected '(' to open parameter list, got %q")
 
-	params := [][2]string{}
+	params := []ast.Parameter{}
 
 	if p.next().Type != token.RIGHT_PAREN {
 		params = p.parseParameters()
@@ -45,8 +45,8 @@ func (p *parser) parseParameterList() [][2]string {
 	return params
 }
 
-func (p *parser) parseParameters() [][2]string {
-	params := [][2]string{ p.parseParameter() }
+func (p *parser) parseParameters() []ast.Parameter {
+	params := []ast.Parameter{ p.parseParameter() }
 
 	for p.next().Type == token.COMMA {
 		p.consume()
@@ -57,11 +57,11 @@ func (p *parser) parseParameters() [][2]string {
 	return params
 }
 
-func (p *parser) parseParameter() [2]string {
+func (p *parser) parseParameter() ast.Parameter {
 	name := p.expect(token.IDENTIFIER, "Expected identifier for parameter name")
-	dataType := p.expect(token.IDENTIFIER, "Expected identifier for parameter type")
+	dataType := p.parseType()
 
-	return [2]string{name.Value, dataType.Value}
+	return ast.Parameter{Name: name.Value, Type: dataType}
 }
 
 func (p *parser) parseCodeBlock() []ast.Statement {

@@ -2,8 +2,6 @@ package types
 
 import (
 	"strings"
-
-	"github.com/gearsdatapacks/libra/utils"
 )
 
 type Literal struct {
@@ -27,16 +25,16 @@ func (lit *Literal) String() string {
 }
 
 type Union struct {
-	Types []DataType
+	Types []ValidType
 }
 
-func MakeUnion(types ...DataType) *Union {
+func MakeUnion(types ...ValidType) *Union {
 	return &Union{Types: types}
 }
 
 func (u *Union) Valid(dataType ValidType) bool {
 	for _, unionType := range u.Types {
-		if dataType.valid(unionType) {
+		if dataType.Valid(unionType) {
 			return true
 		}
 	}
@@ -45,11 +43,23 @@ func (u *Union) Valid(dataType ValidType) bool {
 }
 
 func (u *Union) valid(dataType DataType) bool {
-	return utils.Contains(u.Types, dataType)
+	for _, unionType := range u.Types {
+		if unionType.valid(dataType) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (u *Union) String() string {
-	return strings.Join(u.Types, " | ")
+	typeStrings := []string{}
+
+	for _, dataType := range u.Types {
+		typeStrings = append(typeStrings, dataType.String())
+	}
+
+	return strings.Join(typeStrings, " | ")
 }
 
 type Function struct {

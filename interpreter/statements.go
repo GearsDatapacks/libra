@@ -14,7 +14,7 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, env *environme
 	var value values.RuntimeValue
 
 	if varDec.Value == nil {
-		value = values.GetZeroValue(varDec.DataType)
+		value = values.GetZeroValue(varDec.DataType.String())
 	} else {
 		value = evaluateExpression(varDec.Value, env)
 	}
@@ -27,7 +27,7 @@ func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environm
 
 	// Only need names
 	for _, param := range funcDec.Parameters {
-		params = append(params, param[0])
+		params = append(params, param.Name)
 	}
 
 	fn := &values.FunctionValue{

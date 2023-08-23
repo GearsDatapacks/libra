@@ -22,7 +22,7 @@ type VariableDeclaration struct {
 	Constant bool
 	Name string
 	Value Expression
-	DataType string
+	DataType TypeExpression
 }
 
 func (varDec *VariableDeclaration) Type() NodeType { return "VariableDeclaration" }
@@ -39,12 +39,17 @@ func (varDec *VariableDeclaration) String() string {
 	return result
 }
 
+type Parameter struct {
+	Name string
+	Type TypeExpression
+}
+
 type FunctionDeclaration struct {
 	*BaseNode
 	*BaseStatment
 	Name string
-	Parameters [][2]string // [name, type]
-	ReturnType string
+	Parameters []Parameter
+	ReturnType TypeExpression
 	Body []Statement
 }
 
@@ -57,9 +62,9 @@ func (funcDec *FunctionDeclaration) String() string {
 	result += "("
 
 	for i, parameter := range funcDec.Parameters {
-		result += parameter[0]
+		result += parameter.Name
 		result += " "
-		result += parameter[1]
+		result += parameter.Type.String()
 
 		if i != len(funcDec.Parameters) - 1 {
 			result += ", "

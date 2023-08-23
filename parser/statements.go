@@ -42,10 +42,10 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		token.IDENTIFIER,
 		"ParseError: Expected identifier for variable declaration, got %q",
 	).Value
-	dataType := ""
+	var dataType ast.TypeExpression = &ast.InferType{}
 	
-	if p.canContinue() && p.next().Type == token.IDENTIFIER {
-		dataType = p.consume().Value
+	if p.canContinue() && p.next().Type != token.ASSIGNMENT_OPERATOR {
+		dataType = p.parseType()
 	}
 
 	// TODO: add possibility for `var x string`
@@ -55,7 +55,7 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 			p.error(fmt.Sprintf("Cannot leave constant %q uninitialised", name), p.next())
 		}
 
-		if dataType == "" {
+		if dataType.Type() == "Infer" {
 			p.error(fmt.Sprintf("Cannot declare uninitialised variable %q without type annotation", name), p.next())
 		}
 
@@ -91,10 +91,10 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	parameters := p.parseParameterList()
 
-	returnType := ""
+	var returnType ast.TypeExpression = &ast.InferType{}
 
 	if p.next().Type == token.IDENTIFIER {
-		returnType = p.consume().Value
+		returnType = p.parseType()
 	}
 
 	code := p.parseCodeBlock()
