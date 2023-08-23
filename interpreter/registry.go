@@ -1,9 +1,13 @@
 package interpreter
 
-import "github.com/gearsdatapacks/libra/interpreter/values"
+import (
+	"github.com/gearsdatapacks/libra/interpreter/environment"
+	"github.com/gearsdatapacks/libra/interpreter/values"
+)
 
 func Register() {
 	registerOperators()
+	registerBuiltins()
 }
 
 func extractValues[T any](vals ...values.RuntimeValue) []T {
@@ -263,4 +267,11 @@ func registerOperators() {
 
 	makeOperator("||", func(a, b bool) bool { return a || b })
 	makeOperator("&&", func(a, b bool) bool { return a && b })
+}
+
+type builtin func([]values.RuntimeValue, *environment.Environment) values.RuntimeValue
+var builtins = map[string]builtin{}
+
+func registerBuiltins() {
+	builtins["print"] = print
 }

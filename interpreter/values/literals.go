@@ -69,6 +69,37 @@ func (fl *FloatLiteral) equalTo(value RuntimeValue) bool {
 	return ok && float.value == fl.value
 }
 
+type StringLiteral struct {
+	*BaseValue
+	value string
+}
+
+func MakeString(value string) *StringLiteral {
+	return &StringLiteral{value: value}
+}
+
+func (str *StringLiteral) Value() any {
+	return str.value
+}
+
+func (str *StringLiteral) Type() ValueType {
+	return "string"
+}
+
+func (str *StringLiteral) ToString() string {
+	return  "\"" + str.value + "\""
+}
+
+func (str *StringLiteral) truthy() bool {
+	return len(str.value) != 0
+}
+
+func (str *StringLiteral) equalTo(value RuntimeValue) bool {
+	s, ok := value.(*StringLiteral)
+
+	return ok && s.value == str.value
+}
+
 type NullLiteral struct {
 	*BaseValue
 }

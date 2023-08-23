@@ -26,6 +26,8 @@ func MakeValue(v any) RuntimeValue {
 		return MakeFloat(value)
 	case bool:
 		return MakeBoolean(value)
+	case string:
+		return MakeString(value)
 	case nil:
 		return MakeNull()
 	default:
@@ -44,6 +46,8 @@ func GetZeroValue(dataType string) RuntimeValue {
 		return MakeBoolean(false)
 	case "null":
 		return MakeNull()
+	case "string":
+		return MakeString("")
 	default:
 		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType))
 		return MakeInteger(0)
@@ -56,6 +60,7 @@ var typeStringMap = map[string]string {
 	"bool": "boolean",
 	"null": "null",
 	"func": "function",
+	"string": "string",
 }
 
 func TypeToString[T any]() string {

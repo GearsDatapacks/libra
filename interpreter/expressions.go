@@ -16,6 +16,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.FloatLiteral:
 		return values.MakeFloat(expression.Value)
+
+	case *ast.StringLiteral:
+		return values.MakeString(expression.Value)
 		
 	case *ast.BooleanLiteral:
 		return values.MakeBoolean(expression.Value)
@@ -53,6 +56,16 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 }
 
 func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
+	if builtin, ok := builtins[call.Name]; ok {
+		args := []values.RuntimeValue{}
+
+		for _, arg := range call.Args {
+			args = append(args, evaluateExpression(arg, env))
+		}
+
+		return builtin(args, env)
+	}
+
 	function := env.GetVariable(call.Name).(*values.FunctionValue)
 	declarationEnvironment := function.DeclarationEnvironment.(*environment.Environment)
 	scope := environment.NewChild(declarationEnvironment, environment.FUNCTION_SCOPE)
