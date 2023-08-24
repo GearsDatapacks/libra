@@ -96,7 +96,10 @@ func (v *Void) String() string {
 
 type Any struct {}
 
-func (a *Any) Valid(dataType ValidType) bool { return true }
+func (a *Any) Valid(dataType ValidType) bool {
+	_, isVoid := dataType.(*Void)
+	return !isVoid
+}
 func (a *Any) valid(dataType DataType) bool { return true }
 
 func (a *Any) String() string {
