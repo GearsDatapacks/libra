@@ -105,12 +105,20 @@ func (l *lexer) parseToken() token.Token {
 }
 
 func (l *lexer) parseSymbol() (token.Token, bool) {
+	// Prevent prefering "+" over "+="
+	longestSymbol := ""
+	var symbolType token.Type
 	for symbol, tokenType := range token.Symbols {
-		if l.startsWith(symbol) {
-			l.pos += len(symbol)
-			tok := l.createToken(tokenType, []rune(symbol), false)
-			return tok, true
+		if l.startsWith(symbol) && len(symbol) > len(longestSymbol) {
+			longestSymbol = symbol
+			symbolType = tokenType
 		}
+	}
+
+	if longestSymbol != "" {
+		l.pos += len(longestSymbol)
+		tok := l.createToken(symbolType, []rune(longestSymbol), false)
+		return tok, true
 	}
 
 	return token.Token{}, false
