@@ -32,6 +32,9 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 	
 	case *ast.ReturnStatement:
 		return evaluateReturnStatement(statement, env)
+	
+	case *ast.IfStatement:
+		return evaluateIfStatement(statement, env)
 
 	default:
 		errors.DevError(fmt.Sprintf("Unreconised AST node: %s", astNode.String()), astNode)

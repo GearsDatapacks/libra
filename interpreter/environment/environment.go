@@ -11,6 +11,7 @@ type scopeKind int
 
 const (
 	GLOBAL_SCOPE scopeKind = iota
+	GENERIC_SCOPE
 	FUNCTION_SCOPE
 )
 

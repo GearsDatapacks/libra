@@ -8,14 +8,14 @@ import (
 
 type ValueType string
 
-type BaseValue struct {}
+type BaseValue struct{}
 
 type RuntimeValue interface {
 	Value() any
 	Type() ValueType
 	ToString() string
-	truthy() bool
-	equalTo(RuntimeValue) bool
+	Truthy() bool
+	EqualTo(RuntimeValue) bool
 }
 
 func MakeValue(v any) RuntimeValue {
@@ -54,17 +54,17 @@ func GetZeroValue(dataType string) RuntimeValue {
 	}
 }
 
-var typeStringMap = map[string]string {
-	"int": "integer",
+var typeStringMap = map[string]string{
+	"int":     "integer",
 	"float64": "float",
-	"bool": "boolean",
-	"null": "null",
-	"func": "function",
-	"string": "string",
+	"bool":    "boolean",
+	"null":    "null",
+	"func":    "function",
+	"string":  "string",
 }
 
 func TypeToString[T any]() string {
-	tValue := struct{t T}{}.t
+	tValue := struct{ t T }{}.t
 
 	typeString, ok := typeStringMap[fmt.Sprintf("%T", tValue)]
 

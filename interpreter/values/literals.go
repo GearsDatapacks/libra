@@ -28,11 +28,11 @@ func (il *IntegerLiteral) ToString() string {
 	return fmt.Sprint(il.value)
 }
 
-func (il *IntegerLiteral) truthy() bool {
+func (il *IntegerLiteral) Truthy() bool {
 	return il.value != 0
 }
 
-func (il *IntegerLiteral) equalTo(value RuntimeValue) bool {
+func (il *IntegerLiteral) EqualTo(value RuntimeValue) bool {
 	integer, ok := value.(*IntegerLiteral)
 
 	return ok && integer.value == il.value
@@ -59,11 +59,11 @@ func (fl *FloatLiteral) ToString() string {
 	return fmt.Sprint(fl.value)
 }
 
-func (fl *FloatLiteral) truthy() bool {
+func (fl *FloatLiteral) Truthy() bool {
 	return fl.value != 0
 }
 
-func (fl *FloatLiteral) equalTo(value RuntimeValue) bool {
+func (fl *FloatLiteral) EqualTo(value RuntimeValue) bool {
 	float, ok := value.(*FloatLiteral)
 
 	return ok && float.value == fl.value
@@ -87,14 +87,14 @@ func (str *StringLiteral) Type() ValueType {
 }
 
 func (str *StringLiteral) ToString() string {
-	return  "\"" + str.value + "\""
+	return "\"" + str.value + "\""
 }
 
-func (str *StringLiteral) truthy() bool {
+func (str *StringLiteral) Truthy() bool {
 	return len(str.value) != 0
 }
 
-func (str *StringLiteral) equalTo(value RuntimeValue) bool {
+func (str *StringLiteral) EqualTo(value RuntimeValue) bool {
 	s, ok := value.(*StringLiteral)
 
 	return ok && s.value == str.value
@@ -120,11 +120,11 @@ func (nl *NullLiteral) ToString() string {
 	return "null"
 }
 
-func (nl *NullLiteral) truthy() bool {
+func (nl *NullLiteral) Truthy() bool {
 	return false
 }
 
-func (nl *NullLiteral) equalTo(value RuntimeValue) bool {
+func (nl *NullLiteral) EqualTo(value RuntimeValue) bool {
 	_, ok := value.(*NullLiteral)
 	return ok
 }
@@ -150,11 +150,11 @@ func (bl *BooleanLiteral) ToString() string {
 	return fmt.Sprint(bl.value)
 }
 
-func (bl *BooleanLiteral) truthy() bool {
+func (bl *BooleanLiteral) Truthy() bool {
 	return bl.value
 }
 
-func (bl *BooleanLiteral) equalTo(value RuntimeValue) bool {
+func (bl *BooleanLiteral) EqualTo(value RuntimeValue) bool {
 	boolean, ok := value.(*BooleanLiteral)
 
 	return ok && boolean.value == bl.value
@@ -162,10 +162,10 @@ func (bl *BooleanLiteral) equalTo(value RuntimeValue) bool {
 
 type FunctionValue struct {
 	*BaseValue
-	Name string
-	Parameters []string
+	Name                   string
+	Parameters             []string
 	DeclarationEnvironment any
-	Body []ast.Statement
+	Body                   []ast.Statement
 }
 
 func (fn *FunctionValue) Value() any {
@@ -193,11 +193,11 @@ func (fn *FunctionValue) ToString() string {
 	return result
 }
 
-func (fn *FunctionValue) truthy() bool {
+func (fn *FunctionValue) Truthy() bool {
 	return true
 }
 
-func (fn *FunctionValue) equalTo(value RuntimeValue) bool {
+func (fn *FunctionValue) EqualTo(value RuntimeValue) bool {
 	function, ok := value.(*FunctionValue)
 
 	return ok && function.Name == fn.Name

@@ -46,3 +46,35 @@ func evaluateReturnStatement(ret *ast.ReturnStatement, env *environment.Environm
 	functionScope.ReturnValue = value
 	return value
 }
+
+func evaluateIfStatement(ifStatement *ast.IfStatement, env *environment.Environment) values.RuntimeValue {
+	condition := evaluateExpression(ifStatement.Condition, env)
+
+	if !condition.Truthy() {
+		if ifStatement.Condition == nil { return values.MakeNull() }
+		if elseStatement, isElse := ifStatement.Else.(*ast.ElseStatement); isElse {
+			return evaluateElseStatement(elseStatement, env)
+		}
+		if nextIf, isIf := ifStatement.Else.(*ast.IfStatement); isIf {
+			return evaluateIfStatement(nextIf, env)
+		}
+	}
+
+	newScope := environment.NewChild(env, environment.GENERIC_SCOPE)
+
+	for _, statement := range ifStatement.Body {
+		evaluate(statement, newScope)
+	}
+
+	return values.MakeNull()
+}
+
+func evaluateElseStatement(elseStatement *ast.ElseStatement, env *environment.Environment) values.RuntimeValue {
+	newScope := environment.NewChild(env, environment.GENERIC_SCOPE)
+
+	for _, statement := range elseStatement.Body {
+		evaluate(statement, newScope)
+	}
+
+	return values.MakeNull()
+}
