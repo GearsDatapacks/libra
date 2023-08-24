@@ -65,6 +65,9 @@ func (p *parser) parseParameter() ast.Parameter {
 }
 
 func (p *parser) parseCodeBlock() []ast.Statement {
+	outerSymbols := make([]string, len(p.usedSymbols))
+	copy(outerSymbols, p.usedSymbols)
+
 	p.expect(token.LEFT_BRACE, "Expected '{' to begin code block")
 
 	code := []ast.Statement{}
@@ -72,6 +75,8 @@ func (p *parser) parseCodeBlock() []ast.Statement {
 	for p.next().Type != token.RIGHT_BRACE {
 		code = append(code, p.parseStatement())
 	}
+
+	p.usedSymbols = outerSymbols
 
 	p.expect(token.RIGHT_BRACE, "Expected '}' after code block")
 

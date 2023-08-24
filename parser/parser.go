@@ -6,11 +6,13 @@ import (
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/utils"
 )
 
 type parser struct {
 	tokens       []token.Token
 	bracketLevel int
+	usedSymbols  []string
 }
 
 func New() *parser {
@@ -42,7 +44,9 @@ func (p *parser) expect(tokenType token.Type, fString string) token.Token {
 }
 
 func (p *parser) isKeyword(keyword string) bool {
-	return p.next().Type == token.IDENTIFIER && p.next().Value == keyword
+	isKeyword := p.next().Type == token.IDENTIFIER && p.next().Value == keyword
+	notUsed := !utils.Contains(p.usedSymbols, keyword)
+	return isKeyword && notUsed
 }
 
 /*
@@ -67,6 +71,7 @@ func (p *parser) Parse(tokens []token.Token) ast.Program {
 	p.tokens = tokens
 
 	program := ast.Program{}
+	p.usedSymbols = []string{}
 
 	for !p.eof() {
 		program.Body = append(program.Body, p.parseStatement())

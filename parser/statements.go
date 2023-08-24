@@ -21,7 +21,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if !p.eof() && !p.next().LeadingNewline {
-		p.error("Expected new line after statement", p.next())
+		p.error(fmt.Sprintf("Expected new line after statement, got %q", p.next().Value), p.next())
 	}
 
 	return statement
@@ -75,6 +75,8 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 
 	value := p.parseExpression()
 
+	p.usedSymbols = append(p.usedSymbols, name)
+
 	return &ast.VariableDeclaration{
 		Constant: isConstant,
 		Name:     name,
@@ -88,6 +90,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	tok := p.consume()
 
 	name := p.expect(token.IDENTIFIER, "Expected function name, got %q").Value
+	p.usedSymbols = append(p.usedSymbols, name)
 
 	parameters := p.parseParameterList()
 

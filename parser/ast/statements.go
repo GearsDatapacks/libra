@@ -95,3 +95,57 @@ func (ret *ReturnStatement) Type() NodeType { return "ReturnStatement" }
 func (ret *ReturnStatement) String() string {
 	return "return " + ret.Value.String()
 }
+
+type IfElseStatement interface { ifElse() }
+
+type IfStatement struct {
+	*BaseNode
+	*BaseStatment
+	Condition Expression
+	Body []Statement
+	Else *IfElseStatement
+}
+
+func (ifs *IfStatement) Type() NodeType { return "IfStatement" }
+
+func (ifs *IfStatement) String() string {
+	result := "if "
+	result += ifs.Condition.String()
+	result += " {\n"
+
+	for _, statement := range ifs.Body {
+		result += "  "
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+func (ifs IfStatement) ifElse() {}
+
+type ElseStatement struct {
+	*BaseNode
+	*BaseStatment
+	Body []Statement
+}
+
+func (elses *ElseStatement) Type() NodeType { return "IfStatement" }
+
+func (elses *ElseStatement) String() string {
+	result := "else {\n"
+
+	for _, statement := range elses.Body {
+		result += "  "
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+func (elses ElseStatement) ifElse() {}
