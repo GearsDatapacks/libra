@@ -51,7 +51,7 @@ func evaluateIfStatement(ifStatement *ast.IfStatement, env *environment.Environm
 	condition := evaluateExpression(ifStatement.Condition, env)
 
 	if !condition.Truthy() {
-		if ifStatement.Condition == nil { return values.MakeNull() }
+		if ifStatement.Else == nil { return values.MakeNull() }
 		if elseStatement, isElse := ifStatement.Else.(*ast.ElseStatement); isElse {
 			return evaluateElseStatement(elseStatement, env)
 		}
