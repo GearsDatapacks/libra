@@ -40,6 +40,18 @@ func makeOverloadedOperator(operator string, operation opFn, validTypes []string
 	}
 }
 
+func modulo(a, b float64) float64 {
+	for a > b {
+		a -= b
+	}
+
+	for a < -b {
+		a += b
+	}
+
+	return a
+}
+
 func registerOperators() {
 	makeOverloadedOperator(
 		"+",
@@ -159,6 +171,37 @@ func registerOperators() {
 		},
 		[]string{"integer", "float"},
 	)
+
+	makeOverloadedOperator(
+		"%",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			_, isAInt := a.(*values.IntegerLiteral)
+			_, isBInt := b.(*values.IntegerLiteral)
+
+			if isAInt && isBInt {
+				intValues := extractValues[int](a, b)
+				return values.MakeInteger(intValues[0] % intValues[1])
+			}
+
+			var valueA float64
+			var valueB float64
+
+			if isAInt {
+				valueA = float64(extractValues[int](a)[0])
+			} else {
+				valueA = extractValues[float64](a)[0]
+			}
+
+			if isBInt {
+				valueB = float64(extractValues[int](b)[0])
+			} else {
+				valueB = extractValues[float64](b)[0]
+			}
+
+			return values.MakeFloat(modulo(valueA, valueB))
+		},
+		[]string{"integer", "float"},
+	)
 	
 
 	makeOverloadedOperator(
@@ -263,6 +306,22 @@ func registerOperators() {
 			return values.MakeBoolean(valueA <= valueB)
 		},
 		[]string{"integer", "float"},
+	)
+
+	makeOverloadedOperator(
+		"==",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			return values.MakeBoolean(a.EqualTo(b))
+		},
+		[]string{"integer", "float", "boolean", "string", "null", "function"},
+	)
+
+	makeOverloadedOperator(
+		"!=",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			return values.MakeBoolean(!a.EqualTo(b))
+		},
+		[]string{"integer", "float", "boolean", "string", "null", "function"},
 	)
 
 	makeOperator("||", func(a, b bool) bool { return a || b })

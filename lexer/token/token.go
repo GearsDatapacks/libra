@@ -49,6 +49,8 @@ var Symbols = map[string]Type{
 	"<=": COMPARISON_OPERATOR,
 	">":  COMPARISON_OPERATOR,
 	"<":  COMPARISON_OPERATOR,
+	"==": COMPARISON_OPERATOR,
+	"!=": COMPARISON_OPERATOR,
 
 	"|": BITWISE_OR,
 

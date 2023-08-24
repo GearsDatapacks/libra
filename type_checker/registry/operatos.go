@@ -44,6 +44,8 @@ func registerOperators() {
 	registerRegularOperator(">=", numberType, numberType, boolType)
 	registerRegularOperator("<", numberType, numberType, boolType)
 	registerRegularOperator("<=", numberType, numberType, boolType)
+	registerRegularOperator("==", &types.Any{}, &types.Any{}, boolType)
+	registerRegularOperator("!=", &types.Any{}, &types.Any{}, boolType)
 
 	registerRegularOperator("||", boolType, boolType, boolType)
 	registerRegularOperator("&&", boolType, boolType, boolType)
