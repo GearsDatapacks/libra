@@ -274,4 +274,9 @@ var builtins = map[string]builtin{}
 
 func registerBuiltins() {
 	builtins["print"] = print
+	builtins["printil"] = printil
+	builtins["prompt"] = prompt
+	builtins["toString"] = toString
+	builtins["parseInt"] = parseInt
+	builtins["parseFloat"] = parseFloat
 }

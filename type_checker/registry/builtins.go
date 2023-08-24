@@ -22,4 +22,9 @@ func registerBuiltin(name string, parameters params, returnType types.ValidType)
 
 func registerBuiltins() {
 	registerBuiltin("print", params{&types.Any{}}, &types.Void{})
+	registerBuiltin("printil", params{&types.Any{}}, &types.Void{})
+	registerBuiltin("prompt", params{stringType}, stringType)
+	registerBuiltin("toString", params{&types.Any{}}, stringType)
+	registerBuiltin("parseInt", params{stringType}, intType)
+	registerBuiltin("parseFloat", params{stringType}, floatType)
 }
