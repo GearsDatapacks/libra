@@ -58,8 +58,8 @@ func run(file string) {
 
 	typechecker.TypeCheck(ast)
 
-	result := interpreter.Evaluate(ast, env)
-	fmt.Println(result.ToString())
+	interpreter.Evaluate(ast, env)
+	// fmt.Println(result.ToString())
 }
 
 func main() {

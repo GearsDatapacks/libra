@@ -21,5 +21,5 @@ func registerBuiltin(name string, parameters params, returnType types.ValidType)
 }
 
 func registerBuiltins() {
-	registerBuiltin("print", params{stringType}, &types.Void{})
+	registerBuiltin("print", params{&types.Any{}}, &types.Void{})
 }

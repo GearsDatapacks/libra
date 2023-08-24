@@ -93,3 +93,12 @@ func (v *Void) valid(dataType DataType) bool {
 func (v *Void) String() string {
 	return "void"
 }
+
+type Any struct {}
+
+func (a *Any) Valid(dataType ValidType) bool { return true }
+func (a *Any) valid(dataType DataType) bool { return true }
+
+func (a *Any) String() string {
+	return "any"
+}

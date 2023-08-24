@@ -8,6 +8,13 @@ import (
 )
 
 func print(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-	fmt.Println(args[0].(*values.StringLiteral).Value())
+	printStr := args[0].ToString()
+	
+	if _, ok := args[0].(*values.StringLiteral); ok {
+		printStr = printStr[1:len(printStr)-1]
+	}
+
+	fmt.Println(printStr)
+
 	return values.MakeNull()
 }
