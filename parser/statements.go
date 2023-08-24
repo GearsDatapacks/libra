@@ -16,6 +16,10 @@ func (p *parser) parseStatement() ast.Statement {
 		statement = p.parseFunctionDeclaration()
 	} else if p.isKeyword("return") {
 		statement = p.parseReturnStatement()
+	} else if p.isKeyword("if") {
+		statement = p.parseIfStatement()
+	} else if p.isKeyword("else") {
+		p.error("Cannot use else statement without preceding if", p.next())
 	} else {
 		statement = p.parseExpressionStatement()
 	}
@@ -43,7 +47,7 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		"ParseError: Expected identifier for variable declaration, got %q",
 	).Value
 	var dataType ast.TypeExpression = &ast.InferType{}
-	
+
 	if p.canContinue() && p.next().Type != token.ASSIGNMENT_OPERATOR {
 		dataType = p.parseType()
 	}
@@ -103,11 +107,11 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	code := p.parseCodeBlock()
 
 	return &ast.FunctionDeclaration{
-		Name: name,
+		Name:       name,
 		Parameters: parameters,
-		Body: code,
+		Body:       code,
 		ReturnType: returnType,
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode:   &ast.BaseNode{Token: tok},
 	}
 }
 
@@ -121,7 +125,34 @@ func (p *parser) parseReturnStatement() ast.Statement {
 	}
 
 	return &ast.ReturnStatement{
-		Value: value,
+		Value:    value,
 		BaseNode: &ast.BaseNode{Token: token},
+	}
+}
+
+func (p *parser) parseIfStatement() *ast.IfStatement {
+	tok := p.consume()
+
+	condition := p.parseExpression()
+	body := p.parseCodeBlock()
+	var elseStatement ast.IfElseStatement = nil
+
+	if p.isKeyword("else") {
+		elseToken := p.consume()
+		if p.next().Type == token.LEFT_BRACE {
+			elseStatement = &ast.ElseStatement{
+				Body: p.parseCodeBlock(),
+				BaseNode: &ast.BaseNode{Token: elseToken},
+			}
+		} else {
+			elseStatement = p.parseIfStatement()
+		}
+	}
+
+	return &ast.IfStatement{
+		Condition: condition,
+		Body: body,
+		BaseNode: &ast.BaseNode{Token: tok},
+		Else: elseStatement,
 	}
 }

@@ -103,7 +103,7 @@ type IfStatement struct {
 	*BaseStatment
 	Condition Expression
 	Body []Statement
-	Else *IfElseStatement
+	Else IfElseStatement
 }
 
 func (ifs *IfStatement) Type() NodeType { return "IfStatement" }
@@ -124,7 +124,7 @@ func (ifs *IfStatement) String() string {
 	return result
 }
 
-func (ifs IfStatement) ifElse() {}
+func (ifs *IfStatement) ifElse() {}
 
 type ElseStatement struct {
 	*BaseNode
@@ -148,4 +148,4 @@ func (elses *ElseStatement) String() string {
 	return result
 }
 
-func (elses ElseStatement) ifElse() {}
+func (elses *ElseStatement) ifElse() {}
