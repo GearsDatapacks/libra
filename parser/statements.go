@@ -7,7 +7,7 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func (p *parser) parseStatement() ast.Statement {
+func (p *parser) parseStatement(inline ...bool) ast.Statement {
 	var statement ast.Statement
 
 	if p.isKeyword("var") || p.isKeyword("const") {
@@ -20,8 +20,16 @@ func (p *parser) parseStatement() ast.Statement {
 		statement = p.parseIfStatement()
 	} else if p.isKeyword("else") {
 		p.error("Cannot use else statement without preceding if", p.next())
+	} else if p.isKeyword("while") {
+		statement = p.parseWhileLoop()
+	} else if p.isKeyword("for") {
+		statement = p.parseForLoop()
 	} else {
 		statement = p.parseExpressionStatement()
+	}
+
+	if len(inline) != 0 && inline[0] {
+		return statement
 	}
 
 	if !p.eof() && !p.next().LeadingNewline {
@@ -154,5 +162,37 @@ func (p *parser) parseIfStatement() *ast.IfStatement {
 		Body: body,
 		BaseNode: &ast.BaseNode{Token: tok},
 		Else: elseStatement,
+	}
+}
+
+func (p *parser) parseWhileLoop() ast.Statement {
+	tok := p.consume()
+
+	condition := p.parseExpression()
+	body := p.parseCodeBlock()
+
+	return &ast.WhileLoop{
+		Condition: condition,
+		Body: body,
+		BaseNode: &ast.BaseNode{Token: tok},
+	}
+}
+
+func (p *parser) parseForLoop() ast.Statement {
+	tok := p.consume()
+
+	initial := p.parseStatement(true)
+	p.expect(token.SEMICOLON, "Expected for loop condition")
+	condition := p.parseExpression()
+	p.expect(token.SEMICOLON, "Expected for loop update statement")
+	update := p.parseStatement(true)
+	body := p.parseCodeBlock()
+
+	return &ast.ForLoop{
+		Initial: initial,
+		Condition: condition,
+		Update: update,
+		Body: body,
+		BaseNode: &ast.BaseNode{Token: tok},
 	}
 }

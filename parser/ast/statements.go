@@ -149,3 +149,60 @@ func (elses *ElseStatement) String() string {
 }
 
 func (elses *ElseStatement) ifElse() {}
+
+
+type WhileLoop struct {
+	*BaseNode
+	*BaseStatment
+	Condition Expression
+	Body []Statement
+}
+
+func (while *WhileLoop) Type() NodeType { return "WhileLoop" }
+
+func (while *WhileLoop) String() string {
+	result := "while "
+	result += while.Condition.String()
+	result += " {\n"
+
+	for _, statement := range while.Body {
+		result += "  "
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+type ForLoop struct {
+	*BaseNode
+	*BaseStatment
+	Initial Statement
+	Condition Expression
+	Update Statement
+	Body []Statement
+}
+
+func (forLoop *ForLoop) Type() NodeType { return "ForLoop" }
+
+func (forLoop *ForLoop) String() string {
+	result := "for "
+	result += forLoop.Initial.String()
+	result += "; "
+	result += forLoop.Condition.String()
+	result += "; "
+	result += forLoop.Update.String()
+	result += " {\n"
+
+	for _, statement := range forLoop.Body {
+		result += "  "
+		result += statement.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}
