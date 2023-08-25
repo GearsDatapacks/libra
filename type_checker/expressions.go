@@ -30,6 +30,9 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, symbolTable)
+	
+	case *ast.UnaryOperation:
+		return typeCheckUnaryOperation(expression, symbolTable)
 
 	case *ast.AssignmentExpression:
 		return typeCheckAssignmentExpression(expression, symbolTable)

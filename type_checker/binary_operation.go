@@ -10,13 +10,11 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-
-
 func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
 	leftType := typeCheckExpression(binOp.Left, symbolTable)
 	rightType := typeCheckExpression(binOp.Right, symbolTable)
 
-	checkerFn, exists := registry.Operators[binOp.Operator]
+	checkerFn, exists := registry.BinaryOperators[binOp.Operator]
 
 	if !exists {
 		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)

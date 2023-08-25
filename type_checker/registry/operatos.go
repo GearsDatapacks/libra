@@ -2,15 +2,21 @@ package registry
 
 import "github.com/gearsdatapacks/libra/type_checker/types"
 
-type operatorChecker func(types.ValidType, types.ValidType) types.ValidType
+type binaryOperatorChecker func(types.ValidType, types.ValidType) types.ValidType
+type unaryOperatorChecker func(types.ValidType) types.ValidType
 
-var Operators = map[string]operatorChecker{}
+var BinaryOperators = map[string]binaryOperatorChecker{}
+var UnaryOperators = map[string]unaryOperatorChecker{}
 
-func registerOperator(operator string, fn operatorChecker) {
-	Operators[operator] = fn
+func registerBinaryOperator(operator string, fn binaryOperatorChecker) {
+	BinaryOperators[operator] = fn
 }
 
-func registerRegularOperator(name string, left, right, result types.ValidType) {
+func registerUnaryOperator(operator string, fn unaryOperatorChecker) {
+	UnaryOperators[operator] = fn
+}
+
+func registerRegularBinaryOperator(name string, left, right, result types.ValidType) {
 	fn := func(leftType, rightType types.ValidType) types.ValidType {
 		if left.Valid(leftType) && right.Valid(rightType) {
 			return result
@@ -18,7 +24,18 @@ func registerRegularOperator(name string, left, right, result types.ValidType) {
 		return nil
 	}
 
-	registerOperator(name, fn)
+	registerBinaryOperator(name, fn)
+}
+
+func registerRegularUnaryOperator(name string, value, result types.ValidType) {
+	fn := func(valueType types.ValidType) types.ValidType {
+		if value.Valid(valueType) {
+			return result
+		}
+		return nil
+	}
+
+	registerUnaryOperator(name, fn)
 }
 
 func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
@@ -53,21 +70,33 @@ func powerOperator(leftType, rightType types.ValidType) types.ValidType {
 	return intType
 }
 
+func incDecOperator(dataType types.ValidType) types.ValidType {
+	if !numberType.Valid(dataType) {
+		return nil
+	}
+
+	return dataType
+}
+
 func registerOperators() {
-	registerOperator("+", plusOperator)
-	registerOperator("-", arithmeticOperator)
-	registerOperator("*", arithmeticOperator)
-	registerRegularOperator("/", numberType, numberType, floatType)
-	registerOperator("%", arithmeticOperator)
-	registerOperator("**", powerOperator)
+	registerBinaryOperator("+", plusOperator)
+	registerBinaryOperator("-", arithmeticOperator)
+	registerBinaryOperator("*", arithmeticOperator)
+	registerRegularBinaryOperator("/", numberType, numberType, floatType)
+	registerBinaryOperator("%", arithmeticOperator)
+	registerBinaryOperator("**", powerOperator)
 
-	registerRegularOperator(">", numberType, numberType, boolType)
-	registerRegularOperator(">=", numberType, numberType, boolType)
-	registerRegularOperator("<", numberType, numberType, boolType)
-	registerRegularOperator("<=", numberType, numberType, boolType)
-	registerRegularOperator("==", &types.Any{}, &types.Any{}, boolType)
-	registerRegularOperator("!=", &types.Any{}, &types.Any{}, boolType)
+	registerRegularBinaryOperator(">", numberType, numberType, boolType)
+	registerRegularBinaryOperator(">=", numberType, numberType, boolType)
+	registerRegularBinaryOperator("<", numberType, numberType, boolType)
+	registerRegularBinaryOperator("<=", numberType, numberType, boolType)
+	registerRegularBinaryOperator("==", &types.Any{}, &types.Any{}, boolType)
+	registerRegularBinaryOperator("!=", &types.Any{}, &types.Any{}, boolType)
 
-	registerRegularOperator("||", boolType, boolType, boolType)
-	registerRegularOperator("&&", boolType, boolType, boolType)
+	registerRegularBinaryOperator("||", boolType, boolType, boolType)
+	registerRegularBinaryOperator("&&", boolType, boolType, boolType)
+
+	registerUnaryOperator("++", incDecOperator)
+	registerUnaryOperator("--", incDecOperator)
+	registerRegularUnaryOperator("!", boolType, boolType)
 }
