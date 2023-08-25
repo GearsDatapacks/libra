@@ -78,3 +78,32 @@ func evaluateElseStatement(elseStatement *ast.ElseStatement, env *environment.En
 
 	return values.MakeNull()
 }
+
+func evaluateWhileLoop(while *ast.WhileLoop, env *environment.Environment) values.RuntimeValue {
+	for evaluateExpression(while.Condition, env).Truthy() {
+		newEnv := environment.NewChild(env, environment.GENERIC_SCOPE)
+
+		for _, statement := range while.Body {
+			evaluate(statement, newEnv)
+		}
+	}
+
+	return values.MakeNull()
+}
+
+func evaluateForLoop(forLoop *ast.ForLoop, env *environment.Environment) values.RuntimeValue {
+	loopEnv := environment.NewChild(env, environment.GENERIC_SCOPE)
+
+	evaluate(forLoop.Initial, loopEnv)
+
+	for evaluateExpression(forLoop.Condition, loopEnv).Truthy() {
+		newEnv := environment.NewChild(loopEnv, environment.GENERIC_SCOPE)
+
+		for _, statement := range forLoop.Body {
+			evaluate(statement, newEnv)
+		}
+		evaluate(forLoop.Update, loopEnv)
+	}
+
+	return values.MakeNull()
+}
