@@ -31,6 +31,8 @@ const (
 	ADDITIVE_OPERATOR       = "ADDITIVE_OPERATOR"
 	MULTIPLICATIVE_OPERATOR = "MULTIPLICATIVE_OPERATOR"
 	EXPONENTIAL_OPERATOR    = "EXPONENTIAL_OPERATOR"
+	POSTFIX_OPERATOR        = "POSTFIX_OPERATOR"
+	PREFIX_OPERATOR         = "PREFIX_OPERATOR"
 	BITWISE_OR              = "BITWISE_OR"
 )
 
@@ -66,6 +68,10 @@ var Symbols = map[string]Type{
 
 	"||": LOGICAL_OPERATOR,
 	"&&": LOGICAL_OPERATOR,
+
+	"++": POSTFIX_OPERATOR,
+	"--": POSTFIX_OPERATOR,
+	"!":  PREFIX_OPERATOR,
 }
 
 func New(line int, offset int, tokenType Type, value []rune, leadingNewline bool) Token {

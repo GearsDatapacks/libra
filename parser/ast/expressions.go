@@ -134,6 +134,23 @@ func (binOp *BinaryOperation) String() string {
 	return result
 }
 
+type UnaryOperation struct {
+	*BaseNode
+	*BaseExpression
+	Value    Expression
+	Operator string
+	Postfix  bool
+}
+
+func (unOp *UnaryOperation) Type() NodeType { return "UnaryOperation" }
+
+func (unOp *UnaryOperation) String() string {
+	if unOp.Postfix {
+		return unOp.Value.String() + unOp.Operator
+	}
+	return unOp.Operator + unOp.Value.String()
+}
+
 type AssignmentExpression struct {
 	*BaseNode
 	*BaseExpression

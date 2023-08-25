@@ -112,7 +112,7 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 }
 
 func (p *parser) parseExponentialExpression() ast.Expression {
-	left := p.parseFunctionCall()
+	left := p.parsePrefixOperation()
 
 	if !p.canContinue() || p.next().Type != token.EXPONENTIAL_OPERATOR {
 		return left
@@ -128,6 +128,37 @@ func (p *parser) parseExponentialExpression() ast.Expression {
 		Right:    right,
 		BaseNode: &ast.BaseNode{Token: left.GetToken()},
 	}
+}
+
+func (p *parser) parsePrefixOperation() ast.Expression {
+	if p.next().Type != token.PREFIX_OPERATOR {
+		return p.parsePostfixOperation()
+	}
+
+	operator := p.consume()
+	value := p.parsePrefixOperation()
+
+	return &ast.UnaryOperation{
+		Operator: operator.Value,
+		Value: value,
+		BaseNode: &ast.BaseNode{Token: operator},
+		Postfix: false,
+	}
+}
+
+func (p *parser) parsePostfixOperation() ast.Expression {
+	value := p.parseFunctionCall()
+
+	for p.next().Type == token.POSTFIX_OPERATOR {
+		value = &ast.UnaryOperation{
+			Value: value,
+			Operator: p.consume().Value,
+			BaseNode: &ast.BaseNode{Token: value.GetToken()},
+			Postfix: true,
+		}
+	}
+
+	return value
 }
 
 func (p *parser) parseFunctionCall() ast.Expression {
