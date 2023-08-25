@@ -25,6 +25,12 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 	
 	case *ast.IfStatement:
 		return typeCheckIfStatement(statement, symbolTable)
+	
+	case *ast.WhileLoop:
+		return typeCheckWhileLoop(statement, symbolTable)
+
+	case *ast.ForLoop:
+		return typeCheckForLoop(statement, symbolTable)
 
 	default:
 		errors.DevError("Unexpected statment type: " + statement.String())
@@ -123,6 +129,31 @@ func typeCheckElseStatement(elseStatement *ast.ElseStatement, symbolTable *symbo
 	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
 
 	for _, statement := range elseStatement.Body {
+		typeCheckStatement(statement, newScope)
+	}
+
+	return &types.Void{}
+}
+
+func typeCheckWhileLoop(while *ast.WhileLoop, symbolTable *symbols.SymbolTable) types.ValidType {
+	typeCheckExpression(while.Condition, symbolTable)
+	
+	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+
+	for _, statement := range while.Body {
+		typeCheckStatement(statement, newScope)
+	}
+
+	return &types.Void{}
+}
+
+func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) types.ValidType {
+	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+	typeCheckStatement(forLoop.Initial, newScope)
+	typeCheckExpression(forLoop.Condition, newScope)
+	typeCheckStatement(forLoop.Update, newScope)
+
+	for _, statement := range forLoop.Body {
 		typeCheckStatement(statement, newScope)
 	}
 
