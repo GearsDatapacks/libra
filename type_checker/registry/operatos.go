@@ -33,8 +33,16 @@ func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
 	return intType
 }
 
+func plusOperator(leftType, rightType types.ValidType) types.ValidType {
+	if !stringType.Valid(leftType) || !stringType.Valid(rightType) {
+		return arithmeticOperator(leftType, rightType)
+	}
+
+	return stringType
+}
+
 func registerOperators() {
-	registerOperator("+", arithmeticOperator)
+	registerOperator("+", plusOperator)
 	registerOperator("-", arithmeticOperator)
 	registerOperator("*", arithmeticOperator)
 	registerRegularOperator("/", numberType, numberType, floatType)

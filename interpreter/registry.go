@@ -64,6 +64,14 @@ func registerOperators() {
 				return values.MakeInteger(intValues[0] + intValues[1])
 			}
 
+			_, isAString := a.(*values.StringLiteral)
+			_, isBString := b.(*values.StringLiteral)
+
+			if isAString && isBString {
+				stringValues := extractValues[string](a, b)
+				return values.MakeString(stringValues[0] + stringValues[1])
+			}
+
 			var valueA float64
 			var valueB float64
 
@@ -81,7 +89,7 @@ func registerOperators() {
 
 			return values.MakeFloat(valueA + valueB)
 		},
-		[]string{"integer", "float"},
+		[]string{"integer", "float", "string"},
 	)
 
 	makeOverloadedOperator(
