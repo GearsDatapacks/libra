@@ -1,6 +1,8 @@
 package interpreter
 
 import (
+	"math"
+
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 )
@@ -176,6 +178,25 @@ func registerOperators() {
 			}
 
 			return values.MakeFloat(valueA / valueB)
+		},
+		[]string{"integer", "float"},
+	)
+
+	makeOverloadedOperator(
+		"**",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			_, isAInt := a.(*values.IntegerLiteral)
+			var valueA float64
+			valueB := float64(extractValues[int](b)[0])
+
+			if isAInt {
+				valueA = float64(extractValues[int](a)[0])
+				return values.MakeInteger(int(math.Pow(valueA, valueB)))
+			}
+
+			valueA = extractValues[float64](a)[0]
+
+			return values.MakeFloat(math.Pow(valueA, valueB))
 		},
 		[]string{"integer", "float"},
 	)

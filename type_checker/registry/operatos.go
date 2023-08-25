@@ -41,12 +41,25 @@ func plusOperator(leftType, rightType types.ValidType) types.ValidType {
 	return stringType
 }
 
+func powerOperator(leftType, rightType types.ValidType) types.ValidType {
+	if !numberType.Valid(leftType) || !intType.Valid(rightType) {
+		return nil
+	}
+
+	if leftType.Valid(floatType) {
+		return floatType
+	}
+
+	return intType
+}
+
 func registerOperators() {
 	registerOperator("+", plusOperator)
 	registerOperator("-", arithmeticOperator)
 	registerOperator("*", arithmeticOperator)
 	registerRegularOperator("/", numberType, numberType, floatType)
 	registerOperator("%", arithmeticOperator)
+	registerOperator("**", powerOperator)
 
 	registerRegularOperator(">", numberType, numberType, boolType)
 	registerRegularOperator(">=", numberType, numberType, boolType)

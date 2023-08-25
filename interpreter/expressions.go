@@ -50,6 +50,18 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
 	varName := assignment.Assignee.(*ast.Identifier).Symbol
+
+	if assignment.Operation != "=" {
+		operator := assignment.Operation[:len(assignment.Operation)-1]
+		newValue := evaluateBinaryOperation(&ast.BinaryOperation{
+			Left: assignment.Assignee,
+			Right: assignment.Value,
+			Operator: operator,
+		}, env)
+
+		return env.AssignVariable(varName, newValue)
+	}
+
 	value := evaluateExpression(assignment.Value, env)
 
 	return env.AssignVariable(varName, value)

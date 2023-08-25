@@ -68,8 +68,8 @@ type VoidValue struct {
 	*BaseExpression
 }
 
-func (nl *VoidValue) Type() NodeType { return "Void" }
-func (nl *VoidValue) String() string { return "void" }
+func (nl *VoidValue) Type() NodeType       { return "Void" }
+func (nl *VoidValue) String() string       { return "void" }
 func (v *VoidValue) GetToken() token.Token { return token.Token{Value: "void"} }
 
 type Identifier struct {
@@ -83,7 +83,6 @@ func (ident *Identifier) Type() NodeType { return "Identifier" }
 func (ident *Identifier) String() string {
 	return ident.Symbol
 }
-
 
 type FunctionCall struct {
 	*BaseNode
@@ -101,7 +100,7 @@ func (fn *FunctionCall) String() string {
 
 	for i, arg := range fn.Args {
 		result += arg.String()
-		if i != len(fn.Args) - 1 {
+		if i != len(fn.Args)-1 {
 			result += ", "
 		}
 	}
@@ -110,7 +109,6 @@ func (fn *FunctionCall) String() string {
 
 	return result
 }
-
 
 type BinaryOperation struct {
 	*BaseNode
@@ -139,8 +137,9 @@ func (binOp *BinaryOperation) String() string {
 type AssignmentExpression struct {
 	*BaseNode
 	*BaseExpression
-	Assignee     Expression
-	Value    Expression
+	Assignee  Expression
+	Value     Expression
+	Operation string
 }
 
 func (ae *AssignmentExpression) Type() NodeType { return "AssignmentExpression" }
@@ -149,7 +148,9 @@ func (ae *AssignmentExpression) String() string {
 	result := ""
 
 	result += ae.Assignee.String()
-	result += " = "
+	result += " "
+	result += ae.Operation
+	result += " "
 	result += ae.Value.String()
 
 	return result

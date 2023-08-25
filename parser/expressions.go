@@ -31,13 +31,14 @@ func (p *parser) parseAssignmentExpression() ast.Expression {
 		return assignee
 	}
 
-	p.consume()
+	operation := p.consume()
 
 	value := p.parseAssignmentExpression()
 
 	return &ast.AssignmentExpression{
 		Assignee: assignee,
 		Value:    value,
+		Operation: operation.Value,
 		BaseNode: &ast.BaseNode{Token: assignee.GetToken()},
 	}
 }
@@ -94,11 +95,11 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 }
 
 func (p *parser) parseMultiplicativeExpression() ast.Expression {
-	left := p.parseFunctionCall()
+	left := p.parseExponentialExpression()
 
 	for p.canContinue() && p.next().Type == token.MULTIPLICATIVE_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseFunctionCall()
+		right := p.parseExponentialExpression()
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -108,6 +109,25 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 	}
 
 	return left
+}
+
+func (p *parser) parseExponentialExpression() ast.Expression {
+	left := p.parseFunctionCall()
+
+	if !p.canContinue() || p.next().Type != token.EXPONENTIAL_OPERATOR {
+		return left
+	}
+
+	operator := p.consume().Value
+
+	right := p.parseExponentialExpression()
+
+	return &ast.BinaryOperation{
+		Left:     left,
+		Operator: operator,
+		Right:    right,
+		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+	}
 }
 
 func (p *parser) parseFunctionCall() ast.Expression {
