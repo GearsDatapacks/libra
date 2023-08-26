@@ -1,18 +1,58 @@
 package types
 
-type DataType = string
+import (
+	"fmt"
 
-const (
-	INT      = "int"
-	FLOAT    = "float"
-	BOOL     = "boolean"
-	NULL     = "null"
-	FUNCTION = "function"
-	STRING   = "string"
+	"github.com/gearsdatapacks/libra/errors"
+	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 type ValidType interface {
 	Valid(ValidType) bool
-	valid(DataType) bool
 	String() string
+}
+
+func FromAst(node ast.TypeExpression) ValidType {
+	switch typeExpr := node.(type) {
+	case *ast.TypeName:
+		return FromString(typeExpr.Name)
+
+	case *ast.Union:
+		types := []ValidType{}
+
+		for _, dataType := range typeExpr.ValidTypes {
+			types = append(types, FromAst(dataType))
+		}
+
+		return MakeUnion(types...)
+
+	case *ast.VoidType:
+		return &Void{}
+
+	case *ast.InferType:
+		errors.TypeError("Expected type, got nothing", node)
+		return &IntLiteral{}
+
+	default:
+		errors.DevError("Unexpected type node: " + node.String())
+		return &IntLiteral{}
+	}
+}
+
+var typeTable = map[string]ValidType{
+	"int":      &IntLiteral{},
+	"float":    &FloatLiteral{},
+	"boolean":  &BoolLiteral{},
+	"null":     &NullLiteral{},
+	"function": &Function{},
+	"string":   &StringLiteral{},
+}
+
+func FromString(typeString string) ValidType {
+	dataType, ok := typeTable[typeString]
+	if !ok {
+		errors.TypeError(fmt.Sprintf("Invalid type %q", typeString))
+	}
+
+	return dataType
 }

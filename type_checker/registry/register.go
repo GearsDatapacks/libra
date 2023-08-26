@@ -2,11 +2,11 @@ package registry
 
 import "github.com/gearsdatapacks/libra/type_checker/types"
 
-var boolType = types.MakeLiteral(types.BOOL)
-var floatType = types.MakeLiteral(types.FLOAT)
-var intType = types.MakeLiteral(types.INT)
+var boolType = &types.BoolLiteral{}
+var floatType = &types.FloatLiteral{}
+var intType = &types.IntLiteral{}
 var numberType = types.MakeUnion(intType, floatType)
-var stringType = types.MakeLiteral(types.STRING)
+var stringType = &types.StringLiteral{}
 
 func Register() {
 	registerOperators()

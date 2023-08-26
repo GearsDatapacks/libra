@@ -34,7 +34,7 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 
 	default:
 		errors.DevError("Unexpected statment type: " + statement.String())
-		return &types.Literal{}
+		return &types.IntLiteral{}
 	}
 }
 
@@ -52,7 +52,7 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	}
 
 	dataType := types.FromAst(varDec.DataType)
-	correctType := expressionType.Valid(dataType)
+	correctType := dataType.Valid(expressionType)
 	
 	if correctType {
 		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
@@ -60,7 +60,7 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	}
 
 	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), varDec)
-	return &types.Literal{}
+	return &types.IntLiteral{}
 }
 
 func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {

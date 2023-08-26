@@ -13,15 +13,15 @@ import (
 func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return types.MakeLiteral(types.INT)
+		return &types.IntLiteral{}
 	case *ast.FloatLiteral:
-		return types.MakeLiteral(types.FLOAT)
+		return &types.FloatLiteral{}
 	case *ast.StringLiteral:
-		return types.MakeLiteral(types.STRING)
+		return &types.StringLiteral{}
 	case *ast.NullLiteral:
-		return types.MakeLiteral(types.NULL)
+		return &types.NullLiteral{}
 	case *ast.BooleanLiteral:
-		return types.MakeLiteral(types.BOOL)
+		return &types.BoolLiteral{}
 	case *ast.VoidValue:
 		return &types.Void{}
 
@@ -42,7 +42,7 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	default:
 		errors.DevError("Unexpected expression type: " + expr.String())
-		return &types.Literal{}
+		return &types.IntLiteral{}
 	}
 }
 
@@ -67,7 +67,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	}
 
 	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), assignment)
-	return &types.Literal{}
+	return &types.IntLiteral{}
 }
 
 func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
@@ -92,11 +92,11 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 
 	callVar := symbolTable.GetSymbol(call.Name)
 
-	if !callVar.Valid(&types.Function{}) {
+	function, ok := callVar.(*types.Function)
+
+	if !ok {
 		errors.TypeError(fmt.Sprintf("Variable %q is not a function", call.Name), call)
 	}
-
-	function := callVar.(*types.Function)
 
 	if len(function.Parameters) != len(call.Args) {
 		errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
