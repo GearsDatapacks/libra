@@ -53,24 +53,3 @@ func GetZeroValue(dataType string) RuntimeValue {
 		return MakeInteger(0)
 	}
 }
-
-var typeStringMap = map[string]string{
-	"int":     "integer",
-	"float64": "float",
-	"bool":    "boolean",
-	"null":    "null",
-	"func":    "function",
-	"string":  "string",
-}
-
-func TypeToString[T any]() string {
-	tValue := struct{ t T }{}.t
-
-	typeString, ok := typeStringMap[fmt.Sprintf("%T", tValue)]
-
-	if !ok {
-		errors.DevError(fmt.Sprintf("Invalid runtime value type: %T", tValue))
-	}
-
-	return typeString
-}

@@ -9,22 +9,22 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-var operators = map[[3]string]opFn{}
+var binaryOperators = map[string]binOpFn{}
 
-type opFn func(values.RuntimeValue, values.RuntimeValue) values.RuntimeValue
+type binOpFn func(values.RuntimeValue, values.RuntimeValue) values.RuntimeValue
 
-func RegisterOperator(op string, left string, right string, operation opFn) {
-	operators[[3]string{op, left, right}] = operation
+func RegisterBinaryOperator(op string, operation binOpFn) {
+	binaryOperators[op] = operation
 }
 
 func evaluateBinaryOperation(binOp *ast.BinaryOperation, env *environment.Environment) values.RuntimeValue {
 	left := evaluateExpression(binOp.Left, env)
 	right := evaluateExpression(binOp.Right, env)
 
-	operation, ok := operators[[3]string{binOp.Operator, string(left.Type()), string(right.Type())}]
+	operation, ok := binaryOperators[binOp.Operator]
 
 	if !ok {
-		errors.DevError(fmt.Sprintf("Operator %q does not exist or does not support operands of type %q and %q", binOp.Operator, left.Type(), right.Type()), binOp)
+		errors.DevError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
 	}
 
 	return operation(left, right)

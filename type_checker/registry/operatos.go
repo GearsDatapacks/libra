@@ -1,6 +1,8 @@
 package registry
 
-import "github.com/gearsdatapacks/libra/type_checker/types"
+import (
+	"github.com/gearsdatapacks/libra/type_checker/types"
+)
 
 type binaryOperatorChecker func(types.ValidType, types.ValidType) types.ValidType
 type unaryOperatorChecker func(types.ValidType) types.ValidType
@@ -70,6 +72,13 @@ func powerOperator(leftType, rightType types.ValidType) types.ValidType {
 	return intType
 }
 
+func logicalOperator(leftType, rightType types.ValidType) types.ValidType {
+	if leftType.Valid(rightType) {
+		return leftType
+	}
+	return types.MakeUnion(leftType, rightType)
+}
+
 func incDecOperator(dataType types.ValidType) types.ValidType {
 	if !numberType.Valid(dataType) {
 		return nil
@@ -93,10 +102,10 @@ func registerOperators() {
 	registerRegularBinaryOperator("==", &types.Any{}, &types.Any{}, boolType)
 	registerRegularBinaryOperator("!=", &types.Any{}, &types.Any{}, boolType)
 
-	registerRegularBinaryOperator("||", boolType, boolType, boolType)
-	registerRegularBinaryOperator("&&", boolType, boolType, boolType)
+	registerBinaryOperator("||", logicalOperator)
+	registerBinaryOperator("&&", logicalOperator)
 
 	registerUnaryOperator("++", incDecOperator)
 	registerUnaryOperator("--", incDecOperator)
-	registerRegularUnaryOperator("!", boolType, boolType)
+	registerRegularUnaryOperator("!", &types.Any{}, boolType)
 }

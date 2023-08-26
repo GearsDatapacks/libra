@@ -14,7 +14,7 @@ func Register() {
 
 func extractValues[T any](vals ...values.RuntimeValue) []T {
 	result := []T{}
-	
+
 	for _, value := range vals {
 		typedValue := value.Value().(T)
 		result = append(result, typedValue)
@@ -23,10 +23,8 @@ func extractValues[T any](vals ...values.RuntimeValue) []T {
 	return result
 }
 
-func makeOperator[A, B, C any] (operator string, operation func(A, B)C) {
-	leftType := values.TypeToString[A]()
-	rightType := values.TypeToString[B]()
-	RegisterOperator(operator, leftType, rightType, func(left, right values.RuntimeValue) values.RuntimeValue {
+func makeBinaryOperator[A, B, C any](operator string, operation func(A, B) C) {
+	RegisterBinaryOperator(operator, func(left, right values.RuntimeValue) values.RuntimeValue {
 		leftValue := extractValues[A](left)[0]
 		rightValue := extractValues[B](right)[0]
 
@@ -34,13 +32,13 @@ func makeOperator[A, B, C any] (operator string, operation func(A, B)C) {
 	})
 }
 
-func makeOverloadedOperator(operator string, operation opFn, validTypes []string) {
-	for _, leftType := range validTypes {
-		for _, rightType := range validTypes {
-			RegisterOperator(operator, leftType, rightType, operation)
-		}
-	}
-}
+// func makeUnaryOperator[A, B any](operator string, operation func(A) B) {
+// 	RegisterUnaryOperator(operator, func(runtimeValue values.RuntimeValue) values.RuntimeValue {
+// 		value := extractValues[A](runtimeValue)[0]
+
+// 		return values.MakeValue(operation(value))
+// 	})
+// }
 
 func modulo(a, b float64) float64 {
 	for a > b {
@@ -55,7 +53,7 @@ func modulo(a, b float64) float64 {
 }
 
 func registerOperators() {
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"+",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -91,10 +89,9 @@ func registerOperators() {
 
 			return values.MakeFloat(valueA + valueB)
 		},
-		[]string{"integer", "float", "string"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"-",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -122,10 +119,9 @@ func registerOperators() {
 
 			return values.MakeFloat(valueA - valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"*",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -153,10 +149,9 @@ func registerOperators() {
 
 			return values.MakeFloat(valueA * valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"/",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -179,10 +174,9 @@ func registerOperators() {
 
 			return values.MakeFloat(valueA / valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"**",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -198,10 +192,9 @@ func registerOperators() {
 
 			return values.MakeFloat(math.Pow(valueA, valueB))
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"%",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -229,11 +222,9 @@ func registerOperators() {
 
 			return values.MakeFloat(modulo(valueA, valueB))
 		},
-		[]string{"integer", "float"},
 	)
-	
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		">",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -256,10 +247,9 @@ func registerOperators() {
 
 			return values.MakeBoolean(valueA > valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		">=",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -282,10 +272,9 @@ func registerOperators() {
 
 			return values.MakeBoolean(valueA >= valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"<",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -308,10 +297,9 @@ func registerOperators() {
 
 			return values.MakeBoolean(valueA < valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"<=",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			_, isAInt := a.(*values.IntegerLiteral)
@@ -334,30 +322,43 @@ func registerOperators() {
 
 			return values.MakeBoolean(valueA <= valueB)
 		},
-		[]string{"integer", "float"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"==",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			return values.MakeBoolean(a.EqualTo(b))
 		},
-		[]string{"integer", "float", "boolean", "string", "null", "function"},
 	)
 
-	makeOverloadedOperator(
+	RegisterBinaryOperator(
 		"!=",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
 			return values.MakeBoolean(!a.EqualTo(b))
 		},
-		[]string{"integer", "float", "boolean", "string", "null", "function"},
 	)
 
-	makeOperator("||", func(a, b bool) bool { return a || b })
-	makeOperator("&&", func(a, b bool) bool { return a && b })
+	RegisterUnaryOperator("!", func(value values.RuntimeValue) values.RuntimeValue {
+		return values.MakeBoolean(!value.Truthy())
+	})
+
+	RegisterBinaryOperator("||", func(a, b values.RuntimeValue) values.RuntimeValue {
+		if a.Truthy() {
+			return a
+		}
+		return b
+	})
+
+	RegisterBinaryOperator("&&", func(a, b values.RuntimeValue) values.RuntimeValue {
+		if a.Truthy() {
+			return b
+		}
+		return a
+	})
 }
 
 type builtin func([]values.RuntimeValue, *environment.Environment) values.RuntimeValue
+
 var builtins = map[string]builtin{}
 
 func registerBuiltins() {

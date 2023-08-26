@@ -36,6 +36,7 @@ func repl() {
 		tokens := lexer.Tokenise()
 
 		ast := parser.Parse(tokens)
+		typechecker.TypeCheck(ast)
 
 		result := interpreter.Evaluate(ast, env)
 		fmt.Println(result.ToString())

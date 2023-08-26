@@ -38,6 +38,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.BinaryOperation:
 		return evaluateBinaryOperation(expression, env)
 	
+	case *ast.UnaryOperation:
+		return evaluateUnaryOperation(expression, env)
+	
 	case *ast.FunctionCall:
 		return evaluateFunctionCall(expression, env)
 
