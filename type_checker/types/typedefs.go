@@ -15,13 +15,21 @@ func MakeUnion(types ...ValidType) *Union {
 func (u *Union) Valid(dataType ValidType) bool {
 	union, isUnion := dataType.(*Union)
 
-	for _, unionType := range u.Types {
-		if !isUnion && dataType.Valid(unionType) {
-			return true
+	// If it's a union, we want to make sure all possible values it could be are contained within this one
+	if isUnion {
+		for _, unionType := range union.Types {
+			if !u.Valid(unionType) {
+				return false
+			}
 		}
-		
-		if isUnion && !union.Valid(unionType) {
-			return false
+
+		return true
+	}
+
+	// Otherwise, we just make sure the value is contained within this one
+	for _, unionType := range u.Types {
+		if dataType.Valid(unionType) {
+			return true
 		}
 	}
 
