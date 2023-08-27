@@ -180,7 +180,7 @@ func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline b
 
 func (l *lexer) consume() rune {
 	if l.eof() {
-		l.error("Expected more charactes, got EOF")
+		return '\u0000'
 	}
 
 	nextByte := l.code[l.pos]
@@ -197,7 +197,7 @@ func (l *lexer) consume() rune {
 
 func (l *lexer) next() rune {
 	if l.eof() {
-		l.error("Expected more charactes, got EOF")
+		return '\u0000'
 	}
 	return rune(l.code[l.pos])
 }
