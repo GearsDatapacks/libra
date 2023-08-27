@@ -41,17 +41,7 @@ func (l *lexer) Tokenise() []token.Token {
 }
 
 func (l *lexer) parseToken() token.Token {
-	l.skipWhitespace()
-
-	if l.startsWith("//") {
-		for !l.eof() && l.next() != '\n' {
-			l.consume()
-		}
-	}
-
-	leadingNewline := l.skipNewlines()
-	
-	l.skipWhitespace()
+	leadingNewline := l.skip()
 
 	l.oldLine = l.line
 	l.oldColumn = l.column
@@ -124,21 +114,53 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	return token.Token{}, false
 }
 
-func (l *lexer) skipWhitespace() {
+func (l *lexer) skip() bool {
+	leadingNewline := false
+
+	for l.isSkippable() {
+		leadingNewline = l.skipWhitespace()
+		
+		if l.next() == '#' {
+			for !l.eof() && l.next() != '\n' {
+				l.consume()
+			}
+		}
+		
+		if l.startsWith("//") {
+			for !l.eof() && !l.startsWith("\\\\") {
+				l.consume()
+			}
+			l.consume()
+			l.consume()
+		}
+	}
+
+	return leadingNewline
+}
+
+func (l *lexer) isSkippable() bool {
+	if l.eof() {
+		return false
+	}
+	return isWhitespace(l.next()) || isNewline(l.next()) || l.next() == '#' || l.startsWith("//")
+}
+
+func (l *lexer) skipWhitespace() (leadingNewline bool) {
+	for isNewline(l.next()) {
+		l.consume()
+		leadingNewline = true
+	}
+
 	for !l.eof() && isWhitespace(l.next()) {
 		l.consume()
 	}
-}
 
-func (l *lexer) skipNewlines() bool {
-	if l.eof() || !isNewline(l.next()) {
-		return false
-	}
-
-	for !l.eof() && isNewline(l.next()) {
+	for isNewline(l.next()) {
 		l.consume()
+		leadingNewline = true
 	}
-	return true
+
+	return leadingNewline
 }
 
 func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline bool) token.Token {
