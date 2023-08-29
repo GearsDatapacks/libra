@@ -43,7 +43,7 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return evaluateForLoop(statement, env)
 
 	default:
-		errors.DevError(fmt.Sprintf("Unreconised AST node: %s", astNode.String()), astNode)
+		errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode)
 		return &values.IntegerLiteral{}
 	}
 }

@@ -31,6 +31,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.Identifier:
 		return env.GetVariable(expression.Symbol)
+	
+	case *ast.ListLiteral:
+		return evaluateList(expression, env)
 
 	case *ast.AssignmentExpression:
 		return evaluateAssignmentExpression(expression, env)
@@ -45,7 +48,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 		return evaluateFunctionCall(expression, env)
 
 	default:
-		errors.DevError(fmt.Sprintf("Unexpected expression type %q", expression.String()), expr)
+		errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr)
 
 		return &values.IntegerLiteral{}
 	}
@@ -99,4 +102,16 @@ func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) 
 	}
 
 	return values.MakeNull()
+}
+
+func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.RuntimeValue {
+	evaluatedValues := []values.RuntimeValue{}
+
+	for _, elem := range list.Elements {
+		evaluatedValues = append(evaluatedValues, evaluateExpression(elem, env))
+	}
+
+	return &values.ListLiteral{
+		Elements: evaluatedValues,
+	}
 }

@@ -160,6 +160,56 @@ func (bl *BooleanLiteral) EqualTo(value RuntimeValue) bool {
 	return ok && boolean.value == bl.value
 }
 
+type ListLiteral struct {
+	*BaseValue
+	Elements []RuntimeValue
+}
+
+func (list *ListLiteral) Value() any {
+	return list.Elements
+}
+
+func (list *ListLiteral) Type() ValueType {
+	return "list"
+}
+
+func (list *ListLiteral) ToString() string {
+	result := "["
+
+	elemStrings := []string{}
+
+	for _, elem := range list.Elements {
+		elemStrings = append(elemStrings, elem.ToString())
+	}
+
+	result += strings.Join(elemStrings, ", ")
+	result += "]"
+	return result
+}
+
+func (list *ListLiteral) EqualTo(other RuntimeValue) bool {
+	otherList, ok := other.(*ListLiteral)
+	if !ok {
+		return false
+	}
+
+	if len(otherList.Elements) != len(list.Elements) {
+		return false
+	}
+
+	for i, elem := range list.Elements {
+		if !elem.EqualTo(otherList.Elements[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (list *ListLiteral) Truthy() bool {
+	return len(list.Elements) != 0
+}
+
 type FunctionValue struct {
 	*BaseValue
 	Name                   string

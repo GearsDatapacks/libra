@@ -18,23 +18,23 @@ type RuntimeValue interface {
 	EqualTo(RuntimeValue) bool
 }
 
-func MakeValue(v any) RuntimeValue {
-	switch value := v.(type) {
-	case int:
-		return MakeInteger(value)
-	case float64:
-		return MakeFloat(value)
-	case bool:
-		return MakeBoolean(value)
-	case string:
-		return MakeString(value)
-	case nil:
-		return MakeNull()
-	default:
-		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %T", v))
-		return MakeInteger(0)
-	}
-}
+// func MakeValue(v any) RuntimeValue {
+// 	switch value := v.(type) {
+// 	case int:
+// 		return MakeInteger(value)
+// 	case float64:
+// 		return MakeFloat(value)
+// 	case bool:
+// 		return MakeBoolean(value)
+// 	case string:
+// 		return MakeString(value)
+// 	case nil:
+// 		return MakeNull()
+// 	default:
+// 		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %T", v))
+// 		return MakeInteger(0)
+// 	}
+// }
 
 func GetZeroValue(dataType string) RuntimeValue {
 	switch dataType {
