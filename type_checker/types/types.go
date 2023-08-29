@@ -25,6 +25,11 @@ func FromAst(node ast.TypeExpression) ValidType {
 		}
 
 		return MakeUnion(types...)
+	
+	case *ast.ListType:
+		return &ListLiteral{
+			ElemType: FromAst(typeExpr.ElementType),
+		}
 
 	case *ast.VoidType:
 		return &Void{}

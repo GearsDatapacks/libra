@@ -8,7 +8,14 @@ type Union struct {
 	Types []ValidType
 }
 
-func MakeUnion(types ...ValidType) *Union {
+func MakeUnion(types ...ValidType) ValidType {
+	if len(types) == 0 {
+		return &Void{}
+	}
+	if len(types) == 1 {
+		return types[0]
+	}
+
 	return &Union{Types: types}
 }
 

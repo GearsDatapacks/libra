@@ -36,10 +36,10 @@ func (p *parser) parseAssignmentExpression() ast.Expression {
 	value := p.parseAssignmentExpression()
 
 	return &ast.AssignmentExpression{
-		Assignee: assignee,
-		Value:    value,
+		Assignee:  assignee,
+		Value:     value,
 		Operation: operation.Value,
-		BaseNode: &ast.BaseNode{Token: assignee.GetToken()},
+		BaseNode:  &ast.BaseNode{Token: assignee.GetToken()},
 	}
 }
 
@@ -140,9 +140,9 @@ func (p *parser) parsePrefixOperation() ast.Expression {
 
 	return &ast.UnaryOperation{
 		Operator: operator.Value,
-		Value: value,
+		Value:    value,
 		BaseNode: &ast.BaseNode{Token: operator},
-		Postfix: false,
+		Postfix:  false,
 	}
 }
 
@@ -151,10 +151,10 @@ func (p *parser) parsePostfixOperation() ast.Expression {
 
 	for p.next().Type == token.POSTFIX_OPERATOR {
 		value = &ast.UnaryOperation{
-			Value: value,
+			Value:    value,
 			Operator: p.consume().Value,
 			BaseNode: &ast.BaseNode{Token: value.GetToken()},
-			Postfix: true,
+			Postfix:  true,
 		}
 	}
 
@@ -167,8 +167,8 @@ func (p *parser) parseFunctionCall() ast.Expression {
 	args := p.parseArgumentList()
 
 	return &ast.FunctionCall{
-		Name: token.Value,
-		Args: args,
+		Name:     token.Value,
+		Args:     args,
 		BaseNode: &ast.BaseNode{Token: token},
 	}
 }
@@ -188,7 +188,7 @@ func (p *parser) parseList() ast.Expression {
 	p.expect(token.RIGHT_SQUARE, "Expected closing bracket after list, got %q")
 
 	return &ast.ListLiteral{
-		Values: values,
+		Elements: values,
 		BaseNode: &ast.BaseNode{Token: tok},
 	}
 }
@@ -241,12 +241,12 @@ func (p *parser) parseLiteral() ast.Expression {
 			Value:    value,
 			BaseNode: &ast.BaseNode{Token: tok},
 		}
-	
+
 	case token.STRING:
 		tok := p.consume()
 		return &ast.StringLiteral{
-			Value: tok.Value,
-			BaseNode: &ast.BaseNode{ Token: tok },
+			Value:    tok.Value,
+			BaseNode: &ast.BaseNode{Token: tok},
 		}
 
 	case token.IDENTIFIER:
@@ -257,7 +257,6 @@ func (p *parser) parseLiteral() ast.Expression {
 		default:
 			return p.parseIdentifier()
 		}
-		
 
 	case token.LEFT_PAREN:
 		p.consume()
@@ -266,7 +265,7 @@ func (p *parser) parseLiteral() ast.Expression {
 		p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
 		p.bracketLevel--
 		return expression
-	
+
 	case token.LEFT_SQUARE:
 		return p.parseList()
 

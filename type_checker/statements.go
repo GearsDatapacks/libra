@@ -33,7 +33,7 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 		return typeCheckForLoop(statement, symbolTable)
 
 	default:
-		errors.DevError("Unexpected statment type: " + statement.String())
+		errors.DevError("(Type checker) Unexpected statment type: " + statement.String())
 		return &types.IntLiteral{}
 	}
 }

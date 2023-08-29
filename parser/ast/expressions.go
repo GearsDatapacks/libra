@@ -91,7 +91,7 @@ func (ident *Identifier) String() string {
 type ListLiteral struct {
 	*BaseNode
 	*BaseExpression
-	Values []Expression
+	Elements []Expression
 }
 
 func (list *ListLiteral) Type() NodeType { return "List" }
@@ -99,8 +99,8 @@ func (list *ListLiteral) Type() NodeType { return "List" }
 func (list *ListLiteral) String() string {
 	result := "["
 	valueStrings := []string{}
-	
-	for _, value := range list.Values {
+
+	for _, value := range list.Elements {
 		valueStrings = append(valueStrings, value.String())
 	}
 

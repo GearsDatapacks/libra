@@ -8,6 +8,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/registry"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/utils"
 )
 
 func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
@@ -30,7 +31,7 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, symbolTable)
-	
+
 	case *ast.UnaryOperation:
 		return typeCheckUnaryOperation(expression, symbolTable)
 
@@ -40,8 +41,11 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	case *ast.FunctionCall:
 		return typeCheckFunctionCall(expression, symbolTable)
 
+	case *ast.ListLiteral:
+		return typeCheckList(expression, symbolTable)
+
 	default:
-		errors.DevError("Unexpected expression type: " + expr.String())
+		errors.DevError("(Type checker) Unexpected expression type: " + expr.String())
 		return &types.IntLiteral{}
 	}
 }
@@ -54,7 +58,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	symbolName := assignment.Assignee.(*ast.Identifier).Symbol
 
 	if symbolTable.IsConstant(symbolName) {
-		errors.TypeError("Cannot reassign constant " + symbolName, assignment)
+		errors.TypeError("Cannot reassign constant "+symbolName, assignment)
 	}
 
 	dataType := symbolTable.GetSymbol(symbolName)
@@ -110,4 +114,19 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	}
 
 	return function.ReturnType
+}
+
+func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+	listTypes := []types.ValidType{}
+
+	for _, elem := range list.Elements {
+		elemType := typeCheckExpression(elem, symbolTable)
+		if !utils.Contains(listTypes, elemType) {
+			listTypes = append(listTypes, elemType)
+		}
+	}
+
+	return &types.ListLiteral{
+		ElemType: types.MakeUnion(listTypes...),
+	}
 }
