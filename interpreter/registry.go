@@ -23,14 +23,14 @@ func extractValues[T any](vals ...values.RuntimeValue) []T {
 	return result
 }
 
-func makeBinaryOperator[A, B, C any](operator string, operation func(A, B) C) {
-	RegisterBinaryOperator(operator, func(left, right values.RuntimeValue) values.RuntimeValue {
-		leftValue := extractValues[A](left)[0]
-		rightValue := extractValues[B](right)[0]
+// func makeBinaryOperator[A, B, C any](operator string, operation func(A, B) C) {
+// 	RegisterBinaryOperator(operator, func(left, right values.RuntimeValue) values.RuntimeValue {
+// 		leftValue := extractValues[A](left)[0]
+// 		rightValue := extractValues[B](right)[0]
 
-		return values.MakeValue(operation(leftValue, rightValue))
-	})
-}
+// 		return values.MakeValue(operation(leftValue, rightValue))
+// 	})
+// }
 
 // func makeUnaryOperator[A, B any](operator string, operation func(A) B) {
 // 	RegisterUnaryOperator(operator, func(runtimeValue values.RuntimeValue) values.RuntimeValue {

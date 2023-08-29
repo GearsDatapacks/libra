@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -42,6 +43,21 @@ func (u *Union) String() string {
 	}
 
 	return strings.Join(stringTypes, " | ")
+}
+
+type ListType struct {
+	*BaseNode
+	*BaseType
+	ElementType TypeExpression
+}
+
+func (lt *ListType) Type() NodeType { return "ListType" }
+
+func (lt *ListType) String() string {
+	if lt.ElementType.Type() == "Union" {
+		return fmt.Sprintf("(%s)[]", lt.ElementType.String())
+	}
+	return lt.ElementType.String() + "[]"
 }
 
 type InferType struct {

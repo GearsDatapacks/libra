@@ -12,7 +12,7 @@ func (p *parser) parseType() ast.TypeExpression {
 }
 
 func (p *parser) parseUnion() ast.TypeExpression {
-	left := p.parsePrimaryType()
+	left := p.parseListType()
 	
 	if p.next().Type != token.BITWISE_OR {
 		return left
@@ -23,12 +23,27 @@ func (p *parser) parseUnion() ast.TypeExpression {
 	for p.next().Type == token.BITWISE_OR {
 		p.consume()
 
-		types = append(types, p.parsePrimaryType())
+		types = append(types, p.parseListType())
 	}
 
 	return &ast.Union{
 		ValidTypes: types,
 		BaseNode: &ast.BaseNode{ Token: types[0].GetToken() },
+	}
+}
+
+func (p *parser) parseListType() ast.TypeExpression {
+	elemType := p.parsePrimaryType()
+
+	if p.next().Type != token.LEFT_SQUARE {
+		return elemType
+	}
+
+	p.consume()
+	p.expect(token.RIGHT_SQUARE, "List types must have empty brackets")
+	return &ast.ListType{
+		ElementType: elemType,
+		BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
 	}
 }
 

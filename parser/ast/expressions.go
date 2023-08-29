@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/gearsdatapacks/libra/lexer/token"
+import (
+	"strings"
+
+	"github.com/gearsdatapacks/libra/lexer/token"
+)
 
 type BaseExpression struct{}
 
@@ -82,6 +86,28 @@ func (ident *Identifier) Type() NodeType { return "Identifier" }
 
 func (ident *Identifier) String() string {
 	return ident.Symbol
+}
+
+type ListLiteral struct {
+	*BaseNode
+	*BaseExpression
+	Values []Expression
+}
+
+func (list *ListLiteral) Type() NodeType { return "List" }
+
+func (list *ListLiteral) String() string {
+	result := "["
+	valueStrings := []string{}
+	
+	for _, value := range list.Values {
+		valueStrings = append(valueStrings, value.String())
+	}
+
+	result += strings.Join(valueStrings, ", ")
+
+	result += "]"
+	return result
 }
 
 type FunctionCall struct {

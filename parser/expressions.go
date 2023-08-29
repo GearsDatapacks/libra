@@ -147,7 +147,7 @@ func (p *parser) parsePrefixOperation() ast.Expression {
 }
 
 func (p *parser) parsePostfixOperation() ast.Expression {
-	value := p.parseFunctionCall()
+	value := p.parseLiteral()
 
 	for p.next().Type == token.POSTFIX_OPERATOR {
 		value = &ast.UnaryOperation{
@@ -162,10 +162,6 @@ func (p *parser) parsePostfixOperation() ast.Expression {
 }
 
 func (p *parser) parseFunctionCall() ast.Expression {
-	if (p.next().Type != token.IDENTIFIER || p.tokens[1].Type != token.LEFT_PAREN) {
-		return p.parseLiteral()
-	}
-
 	token := p.consume()
 
 	args := p.parseArgumentList()
@@ -174,6 +170,57 @@ func (p *parser) parseFunctionCall() ast.Expression {
 		Name: token.Value,
 		Args: args,
 		BaseNode: &ast.BaseNode{Token: token},
+	}
+}
+
+func (p *parser) parseList() ast.Expression {
+	tok := p.consume()
+	values := []ast.Expression{}
+
+	for p.next().Type != token.RIGHT_SQUARE && !p.eof() {
+		values = append(values, p.parseExpression())
+
+		if p.next().Type != token.RIGHT_SQUARE {
+			p.expect(token.COMMA, "Expected comma after list entry, got %q")
+		}
+	}
+
+	p.expect(token.RIGHT_SQUARE, "Expected closing bracket after list, got %q")
+
+	return &ast.ListLiteral{
+		Values: values,
+		BaseNode: &ast.BaseNode{Token: tok},
+	}
+}
+
+func (p *parser) parseIdentifier() ast.Expression {
+	if p.isKeyword("true") {
+		tok := p.consume()
+		return &ast.BooleanLiteral{
+			Value:    true,
+			BaseNode: &ast.BaseNode{Token: tok},
+		}
+	}
+
+	if p.isKeyword("false") {
+		tok := p.consume()
+		return &ast.BooleanLiteral{
+			Value:    false,
+			BaseNode: &ast.BaseNode{Token: tok},
+		}
+	}
+
+	if p.isKeyword("null") {
+		tok := p.consume()
+		return &ast.NullLiteral{
+			BaseNode: &ast.BaseNode{Token: tok},
+		}
+	}
+
+	tok := p.consume()
+	return &ast.Identifier{
+		Symbol:   tok.Value,
+		BaseNode: &ast.BaseNode{Token: tok},
 	}
 }
 
@@ -203,34 +250,14 @@ func (p *parser) parseLiteral() ast.Expression {
 		}
 
 	case token.IDENTIFIER:
-		if p.isKeyword("true") {
-			tok := p.consume()
-			return &ast.BooleanLiteral{
-				Value:    true,
-				BaseNode: &ast.BaseNode{Token: tok},
-			}
-		}
+		switch p.tokens[1].Type {
+		case token.LEFT_PAREN:
+			return p.parseFunctionCall()
 
-		if p.isKeyword("false") {
-			tok := p.consume()
-			return &ast.BooleanLiteral{
-				Value:    false,
-				BaseNode: &ast.BaseNode{Token: tok},
-			}
+		default:
+			return p.parseIdentifier()
 		}
-
-		if p.isKeyword("null") {
-			tok := p.consume()
-			return &ast.NullLiteral{
-				BaseNode: &ast.BaseNode{Token: tok},
-			}
-		}
-
-		tok := p.consume()
-		return &ast.Identifier{
-			Symbol:   tok.Value,
-			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		
 
 	case token.LEFT_PAREN:
 		p.consume()
@@ -239,6 +266,10 @@ func (p *parser) parseLiteral() ast.Expression {
 		p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
 		p.bracketLevel--
 		return expression
+	
+	case token.LEFT_SQUARE:
+		return p.parseList()
+
 	default:
 		p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())
 		return &ast.IntegerLiteral{}
