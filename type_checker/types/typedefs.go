@@ -5,6 +5,7 @@ import (
 )
 
 type Union struct {
+	BaseType
 	Types []ValidType
 }
 
@@ -54,13 +55,16 @@ func (u *Union) String() string {
 }
 
 type Function struct {
+	BaseType
 	Parameters []ValidType
 	ReturnType ValidType
 }
 
 func (fn *Function) Valid(dataType ValidType) bool {
 	otherFn, isFn := dataType.(*Function)
-	if !isFn { return false }
+	if !isFn {
+		return false
+	}
 
 	return fn == otherFn
 }
@@ -69,7 +73,7 @@ func (fn *Function) String() string {
 	return "function"
 }
 
-type Any struct {}
+type Any struct{ BaseType }
 
 func (a *Any) Valid(dataType ValidType) bool {
 	_, isVoid := dataType.(*Void)

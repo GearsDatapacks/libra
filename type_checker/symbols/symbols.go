@@ -60,6 +60,7 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 		st.constants = append(st.constants, name)
 	}
 
+	dataType.MarkVariable()
 	st.symbols[name] = dataType
 }
 

@@ -1,6 +1,9 @@
 package registry
 
 import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -79,9 +82,13 @@ func logicalOperator(leftType, rightType types.ValidType) types.ValidType {
 	return types.MakeUnion(leftType, rightType)
 }
 
-func incDecOperator(dataType types.ValidType) types.ValidType {
+func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 	if !numberType.Valid(dataType) {
 		return nil
+	}
+
+	if !dataType.WasVariable() {
+		errors.TypeError(fmt.Sprintf("Operator %q is not defined for non-variable values", op))
 	}
 
 	return dataType
@@ -105,7 +112,7 @@ func registerOperators() {
 	registerBinaryOperator("||", logicalOperator)
 	registerBinaryOperator("&&", logicalOperator)
 
-	registerUnaryOperator("++", incDecOperator)
-	registerUnaryOperator("--", incDecOperator)
+	registerUnaryOperator("++", func(v types.ValidType)types.ValidType{return incDecOperator(v, "++")})
+	registerUnaryOperator("--", func(v types.ValidType)types.ValidType{return incDecOperator(v, "--")})
 	registerRegularUnaryOperator("!", &types.Any{}, boolType)
 }

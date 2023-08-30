@@ -10,6 +10,20 @@ import (
 type ValidType interface {
 	Valid(ValidType) bool
 	String() string
+	WasVariable() bool
+	MarkVariable()
+}
+
+type BaseType struct {
+	wasVariable bool
+}
+
+func (b *BaseType) WasVariable() bool {
+	return b.wasVariable
+}
+
+func (b *BaseType) MarkVariable() {
+	b.wasVariable = true
 }
 
 func FromAst(node ast.TypeExpression) ValidType {
@@ -25,7 +39,7 @@ func FromAst(node ast.TypeExpression) ValidType {
 		}
 
 		return MakeUnion(types...)
-	
+
 	case *ast.ListType:
 		return &ListLiteral{
 			ElemType: FromAst(typeExpr.ElementType),
