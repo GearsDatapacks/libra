@@ -8,7 +8,6 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/registry"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
-	"github.com/gearsdatapacks/libra/utils"
 )
 
 func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
@@ -121,7 +120,15 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) type
 
 	for _, elem := range list.Elements {
 		elemType := typeCheckExpression(elem, symbolTable)
-		if !utils.Contains(listTypes, elemType) {
+		newType := true
+		for _, listType := range listTypes {
+			if listType.Valid(elemType) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
 			listTypes = append(listTypes, elemType)
 		}
 	}
