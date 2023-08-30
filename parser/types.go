@@ -52,6 +52,12 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	case token.IDENTIFIER:
 		tok := p.consume()
 		return &ast.TypeName{ Name: tok.Value, BaseNode: &ast.BaseNode{ Token: tok } }
+
+	case token.LEFT_PAREN:
+		p.consume()
+		expr := p.parseType()
+		p.expect(token.RIGHT_PAREN, "Expected closing bracket after expression, got %q")
+		return expr
 		
 	default:
 		p.error(fmt.Sprintf("Expected type, got %q", p.next().Value), p.next())
