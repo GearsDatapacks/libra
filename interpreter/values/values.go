@@ -8,14 +8,26 @@ import (
 
 type ValueType string
 
-type BaseValue struct{}
-
 type RuntimeValue interface {
 	Value() any
 	Type() ValueType
 	ToString() string
 	Truthy() bool
 	EqualTo(RuntimeValue) bool
+	Varname() string
+	SetVarname(string)
+}
+
+type BaseValue struct {
+	varname string
+}
+
+func (b *BaseValue) Varname() string {
+	return b.varname
+}
+
+func (b *BaseValue) SetVarname(name string) {
+	b.varname = name
 }
 
 // func MakeValue(v any) RuntimeValue {

@@ -338,7 +338,31 @@ func registerOperators() {
 		},
 	)
 
-	RegisterUnaryOperator("!", func(value values.RuntimeValue) values.RuntimeValue {
+	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+		return values.MakeBoolean(!value.Truthy())
+	})
+
+	RegisterUnaryOperator("++", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+		_, isInt := value.(*values.IntegerLiteral)
+		if isInt {
+			intValue := extractValues[int](value)[0]
+			return env.AssignVariable(value.Varname(), values.MakeInteger(intValue + 1))
+		}
+		floatValue := extractValues[float64](value)[0]
+		return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue + 1.0))
+	})
+
+	RegisterUnaryOperator("--", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+		_, isInt := value.(*values.IntegerLiteral)
+		if isInt {
+			intValue := extractValues[int](value)[0]
+			return env.AssignVariable(value.Varname(), values.MakeInteger(intValue - 1))
+		}
+		floatValue := extractValues[float64](value)[0]
+		return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue - 1.0))
+	})
+
+	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 		return values.MakeBoolean(!value.Truthy())
 	})
 

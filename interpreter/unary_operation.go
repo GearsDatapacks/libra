@@ -11,7 +11,7 @@ import (
 
 var unaryOperators = map[string]unOpFn{}
 
-type unOpFn func(values.RuntimeValue) values.RuntimeValue
+type unOpFn func(values.RuntimeValue, *environment.Environment) values.RuntimeValue
 
 func RegisterUnaryOperator(op string, operation unOpFn) {
 	unaryOperators[op] = operation
@@ -26,5 +26,5 @@ func evaluateUnaryOperation(unOp *ast.UnaryOperation, env *environment.Environme
 		errors.DevError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
 	}
 
-	return operation(value)
+	return operation(value, env)
 }

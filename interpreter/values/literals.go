@@ -8,7 +8,7 @@ import (
 )
 
 type IntegerLiteral struct {
-	*BaseValue
+	BaseValue
 	value int
 }
 
@@ -39,7 +39,7 @@ func (il *IntegerLiteral) EqualTo(value RuntimeValue) bool {
 }
 
 type FloatLiteral struct {
-	*BaseValue
+	BaseValue
 	value float64
 }
 
@@ -70,7 +70,7 @@ func (fl *FloatLiteral) EqualTo(value RuntimeValue) bool {
 }
 
 type StringLiteral struct {
-	*BaseValue
+	BaseValue
 	value string
 }
 
@@ -101,7 +101,7 @@ func (str *StringLiteral) EqualTo(value RuntimeValue) bool {
 }
 
 type NullLiteral struct {
-	*BaseValue
+	BaseValue
 }
 
 func MakeNull() *NullLiteral {
@@ -130,7 +130,7 @@ func (nl *NullLiteral) EqualTo(value RuntimeValue) bool {
 }
 
 type BooleanLiteral struct {
-	*BaseValue
+	BaseValue
 	value bool
 }
 
@@ -161,7 +161,7 @@ func (bl *BooleanLiteral) EqualTo(value RuntimeValue) bool {
 }
 
 type ListLiteral struct {
-	*BaseValue
+	BaseValue
 	Elements []RuntimeValue
 }
 
@@ -211,7 +211,7 @@ func (list *ListLiteral) Truthy() bool {
 }
 
 type FunctionValue struct {
-	*BaseValue
+	BaseValue
 	Name                   string
 	Parameters             []string
 	DeclarationEnvironment any

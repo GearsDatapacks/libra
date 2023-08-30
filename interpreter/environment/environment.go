@@ -41,6 +41,7 @@ func NewChild(parent *Environment, kind scopeKind) *Environment {
 }
 
 func (env *Environment) DeclareVariable(name string, value values.RuntimeValue) values.RuntimeValue {
+	value.SetVarname(name)
 	env.variables[name] = value
 
 	return value
@@ -49,6 +50,7 @@ func (env *Environment) DeclareVariable(name string, value values.RuntimeValue) 
 func (env *Environment) AssignVariable(name string, value values.RuntimeValue) values.RuntimeValue {
 	declaredenvironment := env.resolve(name)
 
+	value.SetVarname(name)
 	declaredenvironment.variables[name] = value
 	return value
 }
