@@ -106,6 +106,13 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	parameters := p.parseParameterList()
 
+	outerSymbols := make([]string, len(p.usedSymbols))
+	copy(outerSymbols, p.usedSymbols)
+
+	for _, param := range parameters {
+		p.usedSymbols = append(p.usedSymbols, param.Name)
+	}
+
 	var returnType ast.TypeExpression = &ast.VoidType{}
 
 	if p.next().Type != token.LEFT_BRACE {
@@ -113,6 +120,8 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	}
 
 	code := p.parseCodeBlock()
+
+	p.usedSymbols = outerSymbols
 
 	return &ast.FunctionDeclaration{
 		Name:       name,
@@ -181,12 +190,17 @@ func (p *parser) parseWhileLoop() ast.Statement {
 func (p *parser) parseForLoop() ast.Statement {
 	tok := p.consume()
 
+	outerSymbols := make([]string, len(p.usedSymbols))
+	copy(outerSymbols, p.usedSymbols)
+
 	initial := p.parseStatement(true)
 	p.expect(token.SEMICOLON, "Expected for loop condition")
 	condition := p.parseExpression()
 	p.expect(token.SEMICOLON, "Expected for loop update statement")
 	update := p.parseStatement(true)
 	body := p.parseCodeBlock()
+
+	p.usedSymbols = outerSymbols
 
 	return &ast.ForLoop{
 		Initial: initial,
