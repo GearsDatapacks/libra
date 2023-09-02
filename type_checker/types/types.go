@@ -44,6 +44,12 @@ func FromAst(node ast.TypeExpression) ValidType {
 		return &ListLiteral{
 			ElemType: FromAst(typeExpr.ElementType),
 		}
+	
+	case *ast.ArrayType:
+		return &ArrayLiteral{
+			ElemType: FromAst(typeExpr.ElementType),
+			Length: typeExpr.Length,
+		}
 
 	case *ast.VoidType:
 		return &Void{}

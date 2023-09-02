@@ -50,6 +50,7 @@ func (p *parser) parseListType() ast.TypeExpression {
 			p.consume()
 			elemType = &ast.ArrayType{
 				ElementType: elemType,
+				Length: -1,
 				BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
 			}
 			continue
@@ -60,7 +61,7 @@ func (p *parser) parseListType() ast.TypeExpression {
 		p.expect(token.RIGHT_BRACE, "Array types must contain one entry")
 		elemType = &ast.ArrayType{
 			ElementType: elemType,
-			Length: &intLength,
+			Length: intLength,
 			BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
 		}
 	}

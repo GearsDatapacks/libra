@@ -47,6 +47,31 @@ func (list *ListLiteral) Valid(t ValidType) bool {
 	return isA[*ListLiteral](t) && list.ElemType.Valid(t.(*ListLiteral).ElemType)
 }
 
+type ArrayLiteral struct {
+	BaseType
+	ElemType ValidType
+	Length   int
+}
+
+func (array *ArrayLiteral) String() string {
+	length := ""
+	if array.Length != -1 {
+		length = fmt.Sprint(array.Length)
+	}
+	if isA[*Union](array.ElemType) {
+		return fmt.Sprintf("(%s){%s}", array.ElemType.String(), length)
+	}
+	return fmt.Sprintf("%s{%s}", array.ElemType.String(), length)
+}
+
+func (array *ArrayLiteral) Valid(t ValidType) bool {
+	if !isA[*ArrayLiteral](t) {
+		return false
+	}
+	lengthsMatch := array.Length == -1 || array.Length == t.(*ArrayLiteral).Length
+	return lengthsMatch && array.ElemType.Valid(t.(*ArrayLiteral).ElemType)
+}
+
 type Void struct{ BaseType }
 
 func (v *Void) String() string         { return "void" }
