@@ -112,7 +112,7 @@ func registerOperators() {
 	registerBinaryOperator("||", logicalOperator)
 	registerBinaryOperator("&&", logicalOperator)
 
-	registerUnaryOperator("++", func(v types.ValidType)types.ValidType{return incDecOperator(v, "++")})
-	registerUnaryOperator("--", func(v types.ValidType)types.ValidType{return incDecOperator(v, "--")})
+	registerUnaryOperator("++", func(v types.ValidType) types.ValidType { return incDecOperator(v, "++") })
+	registerUnaryOperator("--", func(v types.ValidType) types.ValidType { return incDecOperator(v, "--") })
 	registerRegularUnaryOperator("!", &types.Any{}, boolType)
 }

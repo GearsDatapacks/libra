@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -35,16 +36,35 @@ func (p *parser) parseUnion() ast.TypeExpression {
 func (p *parser) parseListType() ast.TypeExpression {
 	elemType := p.parsePrimaryType()
 
-	if p.next().Type != token.LEFT_SQUARE {
-		return elemType
+	for p.next().Type == token.LEFT_SQUARE || p.next().Type == token.LEFT_BRACE {
+		if nextTok := p.consume().Type; nextTok == token.LEFT_SQUARE {
+			p.expect(token.RIGHT_SQUARE, "List types must have empty brackets")
+			elemType = &ast.ListType{
+				ElementType: elemType,
+				BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
+			}
+			continue
+		}
+			
+		if p.next().Type == token.RIGHT_BRACE {
+			p.consume()
+			elemType = &ast.ArrayType{
+				ElementType: elemType,
+				BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
+			}
+			continue
+		}
+		lengthTok := p.expect(token.INTEGER, "Array types must have length of an integer value")
+		length, _ := strconv.ParseInt(lengthTok.Value, 10, 32)
+		intLength := int(length)
+		p.expect(token.RIGHT_BRACE, "Array types must contain one entry")
+		elemType = &ast.ArrayType{
+			ElementType: elemType,
+			Length: &intLength,
+			BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
+		}
 	}
-
-	p.consume()
-	p.expect(token.RIGHT_SQUARE, "List types must have empty brackets")
-	return &ast.ListType{
-		ElementType: elemType,
-		BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
-	}
+	return elemType
 }
 
 func (p *parser) parsePrimaryType() ast.TypeExpression {

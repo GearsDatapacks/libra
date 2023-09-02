@@ -60,6 +60,27 @@ func (lt *ListType) String() string {
 	return lt.ElementType.String() + "[]"
 }
 
+type ArrayType struct {
+	*BaseNode
+	*BaseType
+	ElementType TypeExpression
+	Length *int
+}
+
+func (at *ArrayType) Type() NodeType { return "ArrayType" }
+
+func (at *ArrayType) String() string {
+	lengthString := ""
+	if at.Length != nil {
+		lengthString = fmt.Sprint(*at.Length)
+	}
+
+	if at.ElementType.Type() == "Union" {
+		return fmt.Sprintf("(%s){%s}", at.ElementType.String(), lengthString)
+	}
+	return fmt.Sprintf("%s{%s}", at.ElementType.String(), lengthString)
+}
+
 type InferType struct {
 	*BaseNode
 	*BaseType
