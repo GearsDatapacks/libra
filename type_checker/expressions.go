@@ -43,9 +43,6 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	case *ast.ListLiteral:
 		return typeCheckList(expression, symbolTable)
 
-	case *ast.ArrayLiteral:
-		return typeCheckArray(expression, symbolTable)
-
 	default:
 		return nil, errors.DevError("(Type checker) Unexpected expression type: " + expr.String())
 	}
@@ -152,34 +149,9 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) (typ
 		}
 	}
 
-	return &types.ListLiteral{
-		ElemType: types.MakeUnion(listTypes...),
-	}, nil
-}
-
-func typeCheckArray(array *ast.ArrayLiteral, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
-	arrayTypes := []types.ValidType{}
-
-	for _, elem := range array.Elements {
-		elemType, err := typeCheckExpression(elem, symbolTable)
-		if err != nil {
-			return nil, err
-		}
-		newType := true
-		for _, listType := range arrayTypes {
-			if listType.Valid(elemType) {
-				newType = false
-				break
-			}
-		}
-
-		if newType {
-			arrayTypes = append(arrayTypes, elemType)
-		}
-	}
-
 	return &types.ArrayLiteral{
-		ElemType: types.MakeUnion(arrayTypes...),
-		Length: len(array.Elements),
+		ElemType: types.MakeUnion(listTypes...),
+		Length: len(list.Elements),
+		CanInfer: true,
 	}, nil
 }

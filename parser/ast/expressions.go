@@ -110,28 +110,6 @@ func (list *ListLiteral) String() string {
 	return result
 }
 
-type ArrayLiteral struct {
-	*BaseNode
-	*BaseExpression
-	Elements []Expression
-}
-
-func (array *ArrayLiteral) Type() NodeType { return "Array" }
-
-func (array *ArrayLiteral) String() string {
-	result := "{"
-	valueStrings := []string{}
-
-	for _, value := range array.Elements {
-		valueStrings = append(valueStrings, value.String())
-	}
-
-	result += strings.Join(valueStrings, ", ")
-
-	result += "}"
-	return result
-}
-
 type FunctionCall struct {
 	*BaseNode
 	*BaseExpression

@@ -57,6 +57,10 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 		return errors.TypeError(fmt.Sprintf("Cannot redifne builtin function %q", name))
 	}
 
+	if array, isArray := dataType.(*types.ArrayLiteral); isArray {
+		array.CanInfer = false
+	}
+
 	if constant {
 		st.constants = append(st.constants, name)
 	}

@@ -252,36 +252,6 @@ func (p *parser) parseList() (ast.Expression, error) {
 	}, nil
 }
 
-func (p *parser) parseArray() (ast.Expression, error) {
-	tok := p.consume()
-	values := []ast.Expression{}
-
-	for p.next().Type != token.RIGHT_BRACE && !p.eof() {
-		nextExpr, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, nextExpr)
-
-		if p.next().Type != token.RIGHT_BRACE {
-			_, err := p.expect(token.COMMA, "Expected comma after array entry, got %q")
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	_, err := p.expect(token.RIGHT_BRACE, "Expected closing bracket after array, got %q")
-	if err != nil {
-		return nil, err
-	}
-
-	return &ast.ArrayLiteral{
-		Elements: values,
-		BaseNode: &ast.BaseNode{Token: tok},
-	}, nil
-}
-
 func (p *parser) parseIdentifier() (ast.Expression, error) {
 	if p.isKeyword("true") {
 		tok := p.consume()
@@ -365,9 +335,6 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 
 	case token.LEFT_SQUARE:
 		return p.parseList()
-	
-	case token.LEFT_BRACE:
-		return p.parseArray()
 
 	default:
 		return nil, p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())

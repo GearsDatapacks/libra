@@ -44,24 +44,49 @@ func (list *ListLiteral) String() string {
 	return list.ElemType.String() + "[]"
 }
 func (list *ListLiteral) Valid(t ValidType) bool {
-	return isA[*ListLiteral](t) && list.ElemType.Valid(t.(*ListLiteral).ElemType)
+	if l, isList := t.(*ListLiteral); isList {
+		return list.ElemType.Valid(l.ElemType)
+	}
+	if array, isArray := t.(*ArrayLiteral); isArray {
+		return array.CanInfer && list.ElemType.Valid(array.ElemType)
+	}
+	return false
+}
+
+func (list *ListLiteral) Infer(dataType ValidType) (ValidType, bool) {
+	if !list.Valid(dataType) {
+		return list, false
+	}
+
+	if list.ElemType.String() != "Infer" {
+		return list, true
+	}
+	
+	if array, ok := dataType.(*ArrayLiteral); ok {
+		return &ListLiteral{
+			ElemType: array.ElemType,
+		}, true
+	}
+
+	return dataType, true
 }
 
 type ArrayLiteral struct {
 	BaseType
 	ElemType ValidType
 	Length   int
+	CanInfer bool // For array literals to be type inferred
 }
 
 func (array *ArrayLiteral) String() string {
-	length := ""
+	length := "_"
 	if array.Length != -1 {
 		length = fmt.Sprint(array.Length)
 	}
 	if isA[*Union](array.ElemType) {
-		return fmt.Sprintf("(%s){%s}", array.ElemType.String(), length)
+		return fmt.Sprintf("(%s)[%s]", array.ElemType.String(), length)
 	}
-	return fmt.Sprintf("%s{%s}", array.ElemType.String(), length)
+	return fmt.Sprintf("%s[%s]", array.ElemType.String(), length)
 }
 
 func (array *ArrayLiteral) Valid(t ValidType) bool {
@@ -72,7 +97,43 @@ func (array *ArrayLiteral) Valid(t ValidType) bool {
 	return lengthsMatch && array.ElemType.Valid(t.(*ArrayLiteral).ElemType)
 }
 
+func (array *ArrayLiteral) Infer(dataType ValidType) (ValidType, bool) {
+	if !array.Valid(dataType) {
+		return array, false
+	}
+
+	if array.Length != -1 && array.ElemType.String() != "Infer" {
+		return array, true
+	}
+ 
+	other := dataType.(*ArrayLiteral)
+	var length int
+	var elemType ValidType
+	if array.Length != -1 {
+		length = array.Length
+	} else {
+		length = other.Length
+	}
+
+	if array.ElemType.String() != "Infer" {
+		elemType = array.ElemType
+	} else {
+		elemType = other.ElemType
+	}
+
+	return &ArrayLiteral{
+		ElemType: elemType,
+		Length:   length,
+		CanInfer: false,
+	}, true
+}
+
 type Void struct{ BaseType }
 
 func (v *Void) String() string         { return "void" }
 func (v *Void) Valid(t ValidType) bool { return isA[*Void](t) }
+
+type Infer struct{ BaseType }
+
+func (i *Infer) String() string         { return "Infer" }
+func (i *Infer) Valid(t ValidType) bool { return true }

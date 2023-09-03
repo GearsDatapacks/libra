@@ -47,7 +47,6 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 		return nil, errors.TypeError(fmt.Sprintf("Cannot assign void to variable %q", varDec.Name), varDec)
 	}
 
-	// Blank if type to be inferred
 	if varDec.DataType.Type() == "Infer" {
 		err := symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		if err != nil {
@@ -62,6 +61,10 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	}
 	correctType := dataType.Valid(expressionType)
 	
+	if partial, ok := dataType.(types.PartialType); ok {
+		dataType, correctType = partial.Infer(expressionType)
+	}
+
 	if correctType {
 		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
 		return dataType, nil

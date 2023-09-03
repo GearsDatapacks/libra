@@ -13,7 +13,7 @@ func (p *parser) parseType() (ast.TypeExpression, error) {
 }
 
 func (p *parser) parseUnion() (ast.TypeExpression, error) {
-	left, err := p.parseListType()
+	left, err := p.parseArrayType()
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (p *parser) parseUnion() (ast.TypeExpression, error) {
 	for p.next().Type == token.BITWISE_OR {
 		p.consume()
 
-		nextType, err := p.parseListType()
+		nextType, err := p.parseArrayType()
 		if err != nil {
 			return nil, err
 		}
@@ -40,49 +40,62 @@ func (p *parser) parseUnion() (ast.TypeExpression, error) {
 	}, nil
 }
 
-func (p *parser) parseListType() (ast.TypeExpression, error) {
-	elemType, err := p.parsePrimaryType()
-	if err != nil {
-		return nil, err
+func (p *parser) parseArrayType() (ast.TypeExpression, error) {
+	var elemType ast.TypeExpression
+	var tok token.Token
+	if p.next().Type == token.LEFT_SQUARE {
+		elemType = &ast.InferType{BaseNode: &ast.BaseNode{Token: p.next()}}
+		tok = p.next()
+	} else {
+		var err error = nil
+		elemType, err = p.parsePrimaryType()
+		if err != nil {
+			return nil, err
+		}
+		tok = elemType.GetToken()
 	}
 
-	for p.next().Type == token.LEFT_SQUARE || p.next().Type == token.LEFT_BRACE {
-		if nextTok := p.consume().Type; nextTok == token.LEFT_SQUARE {
-			_, err := p.expect(token.RIGHT_SQUARE, "List types must have empty brackets")
+	for p.next().Type == token.LEFT_SQUARE {
+		p.consume()
+
+		if p.next().Type == token.RIGHT_SQUARE {
+			p.consume()
+			elemType = &ast.ListType{
+				ElementType: elemType,
+				BaseNode: &ast.BaseNode{Token: tok},
+			}
+			continue
+		}
+		
+		if p.isKeyword("_") {
+			p.consume()
+			_, err := p.expect(token.RIGHT_SQUARE, "Array types must contain one entry")
 			if err != nil {
 				return nil, err
 			}
-			elemType = &ast.ListType{
-				ElementType: elemType,
-				BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
-			}
-			continue
-		}
-			
-		if p.next().Type == token.RIGHT_BRACE {
-			p.consume()
 			elemType = &ast.ArrayType{
 				ElementType: elemType,
 				Length: -1,
-				BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
+				BaseNode: &ast.BaseNode{Token: tok},
 			}
 			continue
 		}
-		lengthTok, err := p.expect(token.INTEGER, "Array types must have length of an integer value")
+		
+		lengthTok, err := p.expect(token.INTEGER, "Invalid array length: %q")
 		if err != nil {
 			return nil, err
 		}
 
 		length, _ := strconv.ParseInt(lengthTok.Value, 10, 32)
 		intLength := int(length)
-		_, err = p.expect(token.RIGHT_BRACE, "Array types must contain one entry")
+		_, err = p.expect(token.RIGHT_SQUARE, "Array types must contain one entry")
 		if err != nil {
 			return nil, err
 		}
 		elemType = &ast.ArrayType{
 			ElementType: elemType,
 			Length: intLength,
-			BaseNode: &ast.BaseNode{Token: elemType.GetToken()},
+			BaseNode: &ast.BaseNode{Token: tok},
 		}
 	}
 

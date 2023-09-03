@@ -26,6 +26,11 @@ func (b *BaseType) MarkVariable() {
 	b.wasVariable = true
 }
 
+type PartialType interface {
+	ValidType
+	Infer(ValidType) (ValidType, bool)
+}
+
 func FromAst(node ast.TypeExpression) (ValidType, error) {
 	switch typeExpr := node.(type) {
 	case *ast.TypeName:
@@ -69,7 +74,7 @@ func FromAst(node ast.TypeExpression) (ValidType, error) {
 		return &Void{}, nil
 
 	case *ast.InferType:
-		return nil, errors.TypeError("Expected type, got nothing", node)
+		return &Infer{}, nil
 
 	default:
 		return nil, errors.DevError("Unexpected type node: " + node.String())

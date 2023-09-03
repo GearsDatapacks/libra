@@ -34,9 +34,6 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	
 	case *ast.ListLiteral:
 		return evaluateList(expression, env)
-	
-	case *ast.ArrayLiteral:
-		return evaluateArray(expression, env)
 
 	case *ast.AssignmentExpression:
 		return evaluateAssignmentExpression(expression, env)
@@ -111,18 +108,6 @@ func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.Ru
 	evaluatedValues := []values.RuntimeValue{}
 
 	for _, elem := range list.Elements {
-		evaluatedValues = append(evaluatedValues, evaluateExpression(elem, env))
-	}
-
-	return &values.ListLiteral{
-		Elements: evaluatedValues,
-	}
-}
-
-func evaluateArray(array *ast.ArrayLiteral, env *environment.Environment) values.RuntimeValue {
-	evaluatedValues := []values.RuntimeValue{}
-
-	for _, elem := range array.Elements {
 		evaluatedValues = append(evaluatedValues, evaluateExpression(elem, env))
 	}
 
