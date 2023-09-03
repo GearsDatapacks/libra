@@ -8,7 +8,7 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func (p *parser) parseExpression() ast.Expression {
+func (p *parser) parseExpression() (ast.Expression, error) {
 	return p.parseAssignmentExpression()
 }
 
@@ -24,31 +24,44 @@ func (p *parser) parseExpression() ast.Expression {
 // Unary operation
 // Literal
 
-func (p *parser) parseAssignmentExpression() ast.Expression {
-	assignee := p.parseLogicalExpression()
+func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
+	assignee, err := p.parseLogicalExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	if !p.canContinue() || p.next().Type != token.ASSIGNMENT_OPERATOR {
-		return assignee
+		return assignee, nil
 	}
 
 	operation := p.consume()
 
-	value := p.parseAssignmentExpression()
+	value, err := p.parseAssignmentExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.AssignmentExpression{
 		Assignee:  assignee,
 		Value:     value,
 		Operation: operation.Value,
 		BaseNode:  &ast.BaseNode{Token: assignee.GetToken()},
-	}
+	}, nil
 }
 
-func (p *parser) parseLogicalExpression() ast.Expression {
-	left := p.parseComparisonExpression()
+func (p *parser) parseLogicalExpression() (ast.Expression, error) {
+	left, err := p.parseComparisonExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	for p.canContinue() && p.next().Type == token.LOGICAL_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseComparisonExpression()
+		right, err := p.parseComparisonExpression()
+		if err != nil {
+			return nil, err
+		}
+
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -57,15 +70,22 @@ func (p *parser) parseLogicalExpression() ast.Expression {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *parser) parseComparisonExpression() ast.Expression {
-	left := p.parseAdditiveExpression()
+func (p *parser) parseComparisonExpression() (ast.Expression, error) {
+	left, err := p.parseAdditiveExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	for p.canContinue() && p.next().Type == token.COMPARISON_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseAdditiveExpression()
+		right, err := p.parseAdditiveExpression()
+		if err != nil {
+			return nil, err
+		}
+
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -74,15 +94,22 @@ func (p *parser) parseComparisonExpression() ast.Expression {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *parser) parseAdditiveExpression() ast.Expression {
-	left := p.parseMultiplicativeExpression()
+func (p *parser) parseAdditiveExpression() (ast.Expression, error) {
+	left, err := p.parseMultiplicativeExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	for p.canContinue() && p.next().Type == token.ADDITIVE_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseMultiplicativeExpression()
+		right, err := p.parseMultiplicativeExpression()
+		if err != nil {
+			return nil, err
+		}
+
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -91,15 +118,22 @@ func (p *parser) parseAdditiveExpression() ast.Expression {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *parser) parseMultiplicativeExpression() ast.Expression {
-	left := p.parseExponentialExpression()
+func (p *parser) parseMultiplicativeExpression() (ast.Expression, error) {
+	left, err := p.parseExponentialExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	for p.canContinue() && p.next().Type == token.MULTIPLICATIVE_OPERATOR {
 		operator := p.consume().Value
-		right := p.parseExponentialExpression()
+		right, err := p.parseExponentialExpression()
+		if err != nil {
+			return nil, err
+		}
+
 		left = &ast.BinaryOperation{
 			Left:     left,
 			Operator: operator,
@@ -108,46 +142,58 @@ func (p *parser) parseMultiplicativeExpression() ast.Expression {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *parser) parseExponentialExpression() ast.Expression {
-	left := p.parsePrefixOperation()
+func (p *parser) parseExponentialExpression() (ast.Expression, error) {
+	left, err := p.parsePrefixOperation()
+	if err != nil {
+		return nil, err
+	}
 
 	if !p.canContinue() || p.next().Type != token.EXPONENTIAL_OPERATOR {
-		return left
+		return left, nil
 	}
 
 	operator := p.consume().Value
 
-	right := p.parseExponentialExpression()
+	right, err := p.parseExponentialExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.BinaryOperation{
 		Left:     left,
 		Operator: operator,
 		Right:    right,
 		BaseNode: &ast.BaseNode{Token: left.GetToken()},
-	}
+	}, nil
 }
 
-func (p *parser) parsePrefixOperation() ast.Expression {
+func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 	if p.next().Type != token.PREFIX_OPERATOR {
 		return p.parsePostfixOperation()
 	}
 
 	operator := p.consume()
-	value := p.parsePrefixOperation()
+	value, err := p.parsePrefixOperation()
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.UnaryOperation{
 		Operator: operator.Value,
 		Value:    value,
 		BaseNode: &ast.BaseNode{Token: operator},
 		Postfix:  false,
-	}
+	}, nil
 }
 
-func (p *parser) parsePostfixOperation() ast.Expression {
-	value := p.parseLiteral()
+func (p *parser) parsePostfixOperation() (ast.Expression, error) {
+	value, err := p.parseLiteral()
+	if err != nil {
+		return nil, err
+	}
 
 	for p.next().Type == token.POSTFIX_OPERATOR {
 		value = &ast.UnaryOperation{
@@ -158,68 +204,91 @@ func (p *parser) parsePostfixOperation() ast.Expression {
 		}
 	}
 
-	return value
+	return value, nil
 }
 
-func (p *parser) parseFunctionCall() ast.Expression {
+func (p *parser) parseFunctionCall() (ast.Expression, error) {
 	token := p.consume()
 
-	args := p.parseArgumentList()
+	args, err := p.parseArgumentList()
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.FunctionCall{
 		Name:     token.Value,
 		Args:     args,
 		BaseNode: &ast.BaseNode{Token: token},
-	}
+	}, nil
 }
 
-func (p *parser) parseList() ast.Expression {
+func (p *parser) parseList() (ast.Expression, error) {
 	tok := p.consume()
 	values := []ast.Expression{}
 
 	for p.next().Type != token.RIGHT_SQUARE && !p.eof() {
-		values = append(values, p.parseExpression())
+		nextExpr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, nextExpr)
 
 		if p.next().Type != token.RIGHT_SQUARE {
-			p.expect(token.COMMA, "Expected comma after list entry, got %q")
+			_, err := p.expect(token.COMMA, "Expected comma after list entry, got %q")
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	p.expect(token.RIGHT_SQUARE, "Expected closing bracket after list, got %q")
+	_, err := p.expect(token.RIGHT_SQUARE, "Expected closing bracket after list, got %q")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.ListLiteral{
 		Elements: values,
 		BaseNode: &ast.BaseNode{Token: tok},
-	}
+	}, nil
 }
 
-func (p *parser) parseArray() ast.Expression {
+func (p *parser) parseArray() (ast.Expression, error) {
 	tok := p.consume()
 	values := []ast.Expression{}
 
 	for p.next().Type != token.RIGHT_BRACE && !p.eof() {
-		values = append(values, p.parseExpression())
+		nextExpr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, nextExpr)
 
 		if p.next().Type != token.RIGHT_BRACE {
-			p.expect(token.COMMA, "Expected comma after array entry, got %q")
+			_, err := p.expect(token.COMMA, "Expected comma after array entry, got %q")
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	p.expect(token.RIGHT_BRACE, "Expected closing bracket after array, got %q")
+	_, err := p.expect(token.RIGHT_BRACE, "Expected closing bracket after array, got %q")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.ArrayLiteral{
 		Elements: values,
 		BaseNode: &ast.BaseNode{Token: tok},
-	}
+	}, nil
 }
 
-func (p *parser) parseIdentifier() ast.Expression {
+func (p *parser) parseIdentifier() (ast.Expression, error) {
 	if p.isKeyword("true") {
 		tok := p.consume()
 		return &ast.BooleanLiteral{
 			Value:    true,
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 	}
 
 	if p.isKeyword("false") {
@@ -227,24 +296,24 @@ func (p *parser) parseIdentifier() ast.Expression {
 		return &ast.BooleanLiteral{
 			Value:    false,
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 	}
 
 	if p.isKeyword("null") {
 		tok := p.consume()
 		return &ast.NullLiteral{
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 	}
 
 	tok := p.consume()
 	return &ast.Identifier{
 		Symbol:   tok.Value,
 		BaseNode: &ast.BaseNode{Token: tok},
-	}
+	}, nil
 }
 
-func (p *parser) parseLiteral() ast.Expression {
+func (p *parser) parseLiteral() (ast.Expression, error) {
 	switch p.next().Type {
 	case token.INTEGER:
 		tok := p.consume()
@@ -252,7 +321,7 @@ func (p *parser) parseLiteral() ast.Expression {
 		return &ast.IntegerLiteral{
 			Value:    int(value),
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 
 	case token.FLOAT:
 		tok := p.consume()
@@ -260,14 +329,14 @@ func (p *parser) parseLiteral() ast.Expression {
 		return &ast.FloatLiteral{
 			Value:    value,
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 
 	case token.STRING:
 		tok := p.consume()
 		return &ast.StringLiteral{
 			Value:    tok.Value,
 			BaseNode: &ast.BaseNode{Token: tok},
-		}
+		}, nil
 
 	case token.IDENTIFIER:
 		switch p.tokens[1].Type {
@@ -281,10 +350,18 @@ func (p *parser) parseLiteral() ast.Expression {
 	case token.LEFT_PAREN:
 		p.consume()
 		p.bracketLevel++
-		expression := p.parseExpression()
-		p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
+		expression, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
+		if err != nil {
+			return nil, err
+		}
+
 		p.bracketLevel--
-		return expression
+		return expression, nil
 
 	case token.LEFT_SQUARE:
 		return p.parseList()
@@ -293,7 +370,6 @@ func (p *parser) parseLiteral() ast.Expression {
 		return p.parseArray()
 
 	default:
-		p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())
-		return &ast.IntegerLiteral{}
+		return nil, p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())
 	}
 }

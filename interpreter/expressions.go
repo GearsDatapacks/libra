@@ -51,7 +51,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 		return evaluateFunctionCall(expression, env)
 
 	default:
-		errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr)
+		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
 
 		return &values.IntegerLiteral{}
 	}

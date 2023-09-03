@@ -24,7 +24,7 @@ func evaluateBinaryOperation(binOp *ast.BinaryOperation, env *environment.Enviro
 	operation, ok := binaryOperators[binOp.Operator]
 
 	if !ok {
-		errors.DevError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
+		errors.LogError(errors.DevError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp))
 	}
 
 	return operation(left, right)

@@ -10,20 +10,23 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
-	valueType := typeCheckExpression(unOp.Value, symbolTable)
+func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+	valueType, err := typeCheckExpression(unOp.Value, symbolTable)
+	if err != nil {
+		return nil, err
+	}
 
 	checkerFn, exists := registry.UnaryOperators[unOp.Operator]
 
 	if !exists {
-		errors.TypeError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
+		return nil, errors.TypeError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
 	}
 
 	resultType := checkerFn(valueType)
 
 	if resultType == nil {
-		errors.TypeError(fmt.Sprintf("Operator %q is not defined for type %q", unOp.Operator, valueType), unOp)
+		return nil, errors.TypeError(fmt.Sprintf("Operator %q is not defined for type %q", unOp.Operator, valueType), unOp)
 	}
 
-	return resultType
+	return resultType, nil
 }

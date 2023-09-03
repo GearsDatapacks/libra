@@ -26,7 +26,7 @@ func (b *BaseType) MarkVariable() {
 	b.wasVariable = true
 }
 
-func FromAst(node ast.TypeExpression) ValidType {
+func FromAst(node ast.TypeExpression) (ValidType, error) {
 	switch typeExpr := node.(type) {
 	case *ast.TypeName:
 		return FromString(typeExpr.Name)
@@ -35,32 +35,44 @@ func FromAst(node ast.TypeExpression) ValidType {
 		types := []ValidType{}
 
 		for _, dataType := range typeExpr.ValidTypes {
-			types = append(types, FromAst(dataType))
+			nextType, err := FromAst(dataType)
+			if err != nil {
+				return nil, err
+			}
+			types = append(types, nextType)
 		}
 
-		return MakeUnion(types...)
+		return MakeUnion(types...), nil
 
 	case *ast.ListType:
-		return &ListLiteral{
-			ElemType: FromAst(typeExpr.ElementType),
+		dataType, err := FromAst(typeExpr.ElementType)
+		if err != nil {
+			return nil, err
 		}
+
+		return &ListLiteral{
+			ElemType: dataType,
+		}, nil
 	
 	case *ast.ArrayType:
-		return &ArrayLiteral{
-			ElemType: FromAst(typeExpr.ElementType),
-			Length: typeExpr.Length,
+		dataType, err := FromAst(typeExpr.ElementType)
+		if err != nil {
+			return nil, err
 		}
 
+		return &ArrayLiteral{
+			ElemType: dataType,
+			Length: typeExpr.Length,
+		}, nil
+
 	case *ast.VoidType:
-		return &Void{}
+		return &Void{}, nil
 
 	case *ast.InferType:
-		errors.TypeError("Expected type, got nothing", node)
-		return &IntLiteral{}
+		return nil, errors.TypeError("Expected type, got nothing", node)
 
 	default:
-		errors.DevError("Unexpected type node: " + node.String())
-		return &IntLiteral{}
+		return nil, errors.DevError("Unexpected type node: " + node.String())
 	}
 }
 
@@ -73,11 +85,11 @@ var typeTable = map[string]ValidType{
 	"string":   &StringLiteral{},
 }
 
-func FromString(typeString string) ValidType {
+func FromString(typeString string) (ValidType, error) {
 	dataType, ok := typeTable[typeString]
 	if !ok {
-		errors.TypeError(fmt.Sprintf("Invalid type %q", typeString))
+		return nil, errors.TypeError(fmt.Sprintf("Invalid type %q", typeString))
 	}
 
-	return dataType
+	return dataType, nil
 }

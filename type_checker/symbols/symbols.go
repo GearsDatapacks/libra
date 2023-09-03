@@ -2,6 +2,7 @@ package symbols
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/type_checker/registry"
@@ -47,13 +48,13 @@ func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
 	return table
 }
 
-func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) {
+func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) error {
 	if _, ok := st.symbols[name]; ok {
-		errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
+		return errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
 
 	if _, ok := registry.Builtins[name]; ok {
-		errors.TypeError(fmt.Sprintf("Cannot redifne builtin function %q", name))
+		return errors.TypeError(fmt.Sprintf("Cannot redifne builtin function %q", name))
 	}
 
 	if constant {
@@ -62,16 +63,17 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 
 	dataType.MarkVariable()
 	st.symbols[name] = dataType
+	return nil
 }
 
-func (st *SymbolTable) GetSymbol(name string) types.ValidType {
+func (st *SymbolTable) GetSymbol(name string) (types.ValidType, error) {
 	table, err := st.resolve(name)
 
-	if err != "" {
-		errors.TypeError(err)
+	if err != nil {
+		return nil, err
 	}
 
-	return table.symbols[name]
+	return table.symbols[name], nil
 }
 
 func (st *SymbolTable) IsConstant(name string) bool {
@@ -81,16 +83,16 @@ func (st *SymbolTable) IsConstant(name string) bool {
 func (st *SymbolTable) Exists(name string) bool {
 	_, err := st.resolve(name)
 
-	return err == ""
+	return err == nil
 }
 
-func (st *SymbolTable) resolve(varName string) (table *SymbolTable, err string) {
+func (st *SymbolTable) resolve(varName string) (*SymbolTable, error) {
 	if _, ok := st.symbols[varName]; ok {
-		return st, ""
+		return st, nil
 	}
 
 	if st.parent == nil {
-		return nil, fmt.Sprintf("Variable %q is undefined", varName)
+		return nil, errors.TypeError(fmt.Sprintf("Variable %q is undefined", varName))
 	}
 
 	return st.parent.resolve(varName)
@@ -102,7 +104,7 @@ func (st *SymbolTable) isFunctionScope() bool {
 
 func (st *SymbolTable) ReturnType() types.ValidType {
 	if !st.isFunctionScope() {
-		errors.DevError("Cannot get return type of non-function scope")
+		log.Fatal(errors.DevError("Cannot get return type of non-function scope"))
 	}
 
 	return st.returnType

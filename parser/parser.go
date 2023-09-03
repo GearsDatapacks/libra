@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -33,14 +32,14 @@ func (p *parser) consume() token.Token {
 	return nextToken
 }
 
-func (p *parser) expect(tokenType token.Type, fString string) token.Token {
+func (p *parser) expect(tokenType token.Type, fString string) (token.Token, error) {
 	nextToken := p.consume()
 
 	if nextToken.Type != tokenType {
-		p.error(fmt.Sprintf(fString, nextToken.Value), nextToken)
+		return token.Token{}, p.error(fmt.Sprintf(fString, nextToken.Value), nextToken)
 	}
 
-	return nextToken
+	return nextToken, nil
 }
 
 func (p *parser) isKeyword(keyword string) bool {
@@ -63,19 +62,23 @@ func (p *parser) canContinue() bool {
 	return !p.next().LeadingNewline || p.bracketLevel != 0
 }
 
-func (p *parser) error(message string, errorToken token.Token) {
-	log.Fatalf("SyntaxError at line %d, column %d: %s", errorToken.Line, errorToken.Column, message)
+func (p *parser) error(message string, errorToken token.Token) error {
+	return fmt.Errorf("SyntaxError at line %d, column %d: %s", errorToken.Line, errorToken.Column, message)
 }
 
-func (p *parser) Parse(tokens []token.Token) ast.Program {
+func (p *parser) Parse(tokens []token.Token) (ast.Program, error) {
 	p.tokens = tokens
 
 	program := ast.Program{}
 	p.usedSymbols = []string{}
 
 	for !p.eof() {
-		program.Body = append(program.Body, p.parseStatement())
+		nextStatement, err := p.parseStatement()
+		if err != nil {
+			return ast.Program{}, err
+		}
+		program.Body = append(program.Body, nextStatement)
 	}
 
-	return program
+	return program, nil
 }

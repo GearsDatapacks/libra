@@ -10,20 +10,20 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return &types.IntLiteral{}
+		return &types.IntLiteral{}, nil
 	case *ast.FloatLiteral:
-		return &types.FloatLiteral{}
+		return &types.FloatLiteral{}, nil
 	case *ast.StringLiteral:
-		return &types.StringLiteral{}
+		return &types.StringLiteral{}, nil
 	case *ast.NullLiteral:
-		return &types.NullLiteral{}
+		return &types.NullLiteral{}, nil
 	case *ast.BooleanLiteral:
-		return &types.BoolLiteral{}
+		return &types.BoolLiteral{}, nil
 	case *ast.VoidValue:
-		return &types.Void{}
+		return &types.Void{}, nil
 
 	case *ast.Identifier:
 		return symbolTable.GetSymbol(expression.Symbol)
@@ -47,82 +47,98 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return typeCheckArray(expression, symbolTable)
 
 	default:
-		errors.DevError("(Type checker) Unexpected expression type: " + expr.String())
-		return &types.IntLiteral{}
+		return nil, errors.DevError("(Type checker) Unexpected expression type: " + expr.String())
 	}
 }
 
-func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
 	if assignment.Assignee.Type() != "Identifier" {
-		errors.TypeError("Can only assign values to variables", assignment)
+		return nil, errors.TypeError("Can only assign values to variables", assignment)
 	}
 
 	symbolName := assignment.Assignee.(*ast.Identifier).Symbol
 
 	if symbolTable.IsConstant(symbolName) {
-		errors.TypeError("Cannot reassign constant "+symbolName, assignment)
+		return nil, errors.TypeError("Cannot reassign constant "+symbolName, assignment)
 	}
 
-	dataType := symbolTable.GetSymbol(symbolName)
+	dataType, err := symbolTable.GetSymbol(symbolName)
+	if err != nil {
+		return nil, err
+	}
 
-	expressionType := typeCheckExpression(assignment.Value, symbolTable)
+	expressionType, err := typeCheckExpression(assignment.Value, symbolTable)
+	if err != nil {
+		return nil, err
+	}
 	correctType := dataType.Valid(expressionType)
 
 	if correctType {
-		return dataType
+		return dataType, nil
 	}
 
-	errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), assignment)
-	return &types.IntLiteral{}
+	return nil, errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), assignment)
 }
 
-func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
 	if builtin, ok := registry.Builtins[call.Name]; ok {
 		if len(builtin.Parameters) != len(call.Args) {
-			errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+			return nil, errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
 		}
 
 		for i, param := range builtin.Parameters {
-			arg := typeCheckExpression(call.Args[i], symbolTable)
+			arg, err := typeCheckExpression(call.Args[i], symbolTable)
+			if err != nil {
+				return nil, err
+			}
 			if !param.Valid(arg) {
-				errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+				return nil, errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
 			}
 		}
 
-		return builtin.ReturnType
+		return builtin.ReturnType, nil
 	}
 
 	if !symbolTable.Exists(call.Name) {
-		errors.TypeError(fmt.Sprintf("Function %q is undefined", call.Name), call)
+		return nil, errors.TypeError(fmt.Sprintf("Function %q is undefined", call.Name), call)
 	}
 
-	callVar := symbolTable.GetSymbol(call.Name)
+	callVar, err := symbolTable.GetSymbol(call.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	function, ok := callVar.(*types.Function)
 
 	if !ok {
-		errors.TypeError(fmt.Sprintf("Variable %q is not a function", call.Name), call)
+		return nil, errors.TypeError(fmt.Sprintf("Variable %q is not a function", call.Name), call)
 	}
 
 	if len(function.Parameters) != len(call.Args) {
-		errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+		return nil, errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
 	}
 
 	for i, param := range function.Parameters {
-		arg := typeCheckExpression(call.Args[i], symbolTable)
+		arg, err := typeCheckExpression(call.Args[i], symbolTable)
+		if err != nil {
+			return nil, err
+		}
 		if !param.Valid(arg) {
-			errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+			return nil, errors.TypeError(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
 		}
 	}
 
-	return function.ReturnType
+	return function.ReturnType, nil
 }
 
-func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
 	listTypes := []types.ValidType{}
 
 	for _, elem := range list.Elements {
-		elemType := typeCheckExpression(elem, symbolTable)
+		elemType, err := typeCheckExpression(elem, symbolTable)
+		if err != nil {
+			return nil, err
+		}
 		newType := true
 		for _, listType := range listTypes {
 			if listType.Valid(elemType) {
@@ -138,14 +154,17 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) type
 
 	return &types.ListLiteral{
 		ElemType: types.MakeUnion(listTypes...),
-	}
+	}, nil
 }
 
-func typeCheckArray(array *ast.ArrayLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckArray(array *ast.ArrayLiteral, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
 	arrayTypes := []types.ValidType{}
 
 	for _, elem := range array.Elements {
-		elemType := typeCheckExpression(elem, symbolTable)
+		elemType, err := typeCheckExpression(elem, symbolTable)
+		if err != nil {
+			return nil, err
+		}
 		newType := true
 		for _, listType := range arrayTypes {
 			if listType.Valid(elemType) {
@@ -162,5 +181,5 @@ func typeCheckArray(array *ast.ArrayLiteral, symbolTable *symbols.SymbolTable) t
 	return &types.ArrayLiteral{
 		ElemType: types.MakeUnion(arrayTypes...),
 		Length: len(array.Elements),
-	}
+	}, nil
 }

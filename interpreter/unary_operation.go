@@ -23,7 +23,7 @@ func evaluateUnaryOperation(unOp *ast.UnaryOperation, env *environment.Environme
 	operation, ok := unaryOperators[unOp.Operator]
 
 	if !ok {
-		errors.DevError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
+		errors.LogError(errors.DevError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp))
 	}
 
 	return operation(value, env)

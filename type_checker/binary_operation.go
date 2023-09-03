@@ -10,21 +10,28 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(binOp.Left, symbolTable)
-	rightType := typeCheckExpression(binOp.Right, symbolTable)
+func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+	leftType, err := typeCheckExpression(binOp.Left, symbolTable)
+	if err != nil {
+		return nil, err
+	}
+
+	rightType, err := typeCheckExpression(binOp.Right, symbolTable)
+	if err != nil {
+		return nil, err
+	}
 
 	checkerFn, exists := registry.BinaryOperators[binOp.Operator]
 
 	if !exists {
-		errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
+		return nil, errors.TypeError(fmt.Sprintf("Operator %q does not exist", binOp.Operator), binOp)
 	}
 
 	resultType := checkerFn(leftType, rightType)
 
 	if resultType == nil {
-		errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType), binOp)
+		return nil, errors.TypeError(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType), binOp)
 	}
 
-	return resultType
+	return resultType, nil
 }

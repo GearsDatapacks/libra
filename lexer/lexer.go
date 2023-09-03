@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -25,11 +24,14 @@ func New(code []byte) *lexer {
 	}
 }
 
-func (l *lexer) Tokenise() []token.Token {
+func (l *lexer) Tokenise() ([]token.Token, error) {
 	tokens := []token.Token{}
 
 	for {
-		nextToken := l.parseToken()
+		nextToken, err := l.parseToken()
+		if err != nil {
+			return nil, err
+		}
 		tokens = append(tokens, nextToken)
 
 		if nextToken.Type == token.EOF {
@@ -37,10 +39,10 @@ func (l *lexer) Tokenise() []token.Token {
 		}
 	}
 
-	return tokens
+	return tokens, nil
 }
 
-func (l *lexer) parseToken() token.Token {
+func (l *lexer) parseToken() (token.Token, error) {
 	leadingNewline := l.skip()
 
 	l.oldLine = l.line
@@ -49,7 +51,7 @@ func (l *lexer) parseToken() token.Token {
 	if l.eof() {
 		tok := l.createToken(token.EOF, []rune{'\u0000'}, leadingNewline)
 		tok.Value = "EndOfFile"
-		return tok
+		return tok, nil
 	}
 
 	nextChar := l.next()
@@ -66,19 +68,19 @@ func (l *lexer) parseToken() token.Token {
 				number = append(number, l.consume())
 			}
 
-			return l.createToken(token.FLOAT, number, leadingNewline)
+			return l.createToken(token.FLOAT, number, leadingNewline), nil
 		}
 
-		return l.createToken(token.INTEGER, number, leadingNewline)
+		return l.createToken(token.INTEGER, number, leadingNewline), nil
 	} else if sym, ok := l.parseSymbol(); ok {
 		sym.LeadingNewline = leadingNewline
-		return sym
+		return sym, nil
 	} else if isAlphabetic(nextChar) {
 		ident := []rune{}
 		for !l.eof() && isAlphanumeric(l.next()) {
 			ident = append(ident, l.consume())
 		}
-		return l.createToken(token.IDENTIFIER, ident, leadingNewline)
+		return l.createToken(token.IDENTIFIER, ident, leadingNewline), nil
 	} else if nextChar == '"' {
 		stringValue := []rune{}
 		l.consume()
@@ -86,12 +88,10 @@ func (l *lexer) parseToken() token.Token {
 			stringValue = append(stringValue, l.consume())
 		}
 		l.consume()
-		return l.createToken(token.STRING, stringValue, leadingNewline)
+		return l.createToken(token.STRING, stringValue, leadingNewline), nil
 	} else {
-		l.error(fmt.Sprintf("Unexpected token: %q", nextChar))
+		return token.Token{}, l.error(fmt.Sprintf("Unexpected token: %q", nextChar))
 	}
-
-	return token.Token{}
 }
 
 func (l *lexer) parseSymbol() (token.Token, bool) {
@@ -211,6 +211,6 @@ func (l *lexer) eof() bool {
 	return l.pos >= len(l.code)
 }
 
-func (l *lexer) error(message string) {
-	log.Fatalf("SyntaxError at line %d, column %d: %s", l.line, l.column, message)
+func (l *lexer) error(message string) error {
+	return fmt.Errorf("SyntaxError at line %d, column %d: %s", l.line, l.column, message)
 }

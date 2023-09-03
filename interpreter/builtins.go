@@ -51,7 +51,7 @@ func parseInt(args []values.RuntimeValue, env *environment.Environment) values.R
 	intValue, err := strconv.ParseInt(stringValue, 10, 32)
 
 	if err != nil {
-		errors.RuntimeError(err.Error())
+		errors.LogError(errors.RuntimeError(err.Error()))
 	}
 
 	return values.MakeInteger(int(intValue))
@@ -62,7 +62,7 @@ func parseFloat(args []values.RuntimeValue, env *environment.Environment) values
 	floatValue, err := strconv.ParseFloat(stringValue, 32)
 
 	if err != nil {
-		errors.RuntimeError(err.Error())
+		errors.LogError(errors.RuntimeError(err.Error()))
 	}
 
 	return values.MakeFloat(floatValue)

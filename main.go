@@ -16,27 +16,42 @@ import (
 
 func repl() {
 	fmt.Println("Libra repl v0.1.0")
-	nextLine := ""
 	reader := bufio.NewReader(os.Stdin)
 
 	parser := parser.New()
 	env := environment.New()
 
-	for strings.ToLower(strings.TrimSpace(nextLine)) != "exit" {
+	for {
 		fmt.Print("> ")
 
 		input, err := reader.ReadBytes('\n')
-		nextLine = string(input)
+		nextLine := string(input)
 
 		if err != nil {
-			log.Fatal(err)
+			os.Exit(0)
+		}
+
+		if strings.ToLower(strings.TrimSpace(nextLine)) == "exit" {
+			os.Exit(0)
 		}
 
 		lexer := lexer.New(input)
-		tokens := lexer.Tokenise()
+		tokens, err := lexer.Tokenise()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 
-		ast := parser.Parse(tokens)
-		typechecker.TypeCheck(ast)
+		ast, err := parser.Parse(tokens)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		err = typechecker.TypeCheck(ast)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 
 		result := interpreter.Evaluate(ast, env)
 		fmt.Println(result.ToString())
@@ -54,10 +69,23 @@ func run(file string) {
 	parser := parser.New()
 	env := environment.New()
 
-	tokens := lexer.Tokenise()
-	ast := parser.Parse(tokens)
+	tokens, err := lexer.Tokenise()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	typechecker.TypeCheck(ast)
+	ast, err := parser.Parse(tokens)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	
+	err = typechecker.TypeCheck(ast)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	interpreter.Evaluate(ast, env)
 	// fmt.Println(result.ToString())

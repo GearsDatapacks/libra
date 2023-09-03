@@ -89,6 +89,7 @@ func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 
 	if !dataType.WasVariable() {
 		errors.TypeError(fmt.Sprintf("Operator %q is not defined for non-variable values", op))
+		return nil
 	}
 
 	return dataType

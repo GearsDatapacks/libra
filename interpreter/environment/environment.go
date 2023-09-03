@@ -66,7 +66,7 @@ func (env *Environment) resolve(varName string) *Environment {
 	}
 
 	if env.parent == nil {
-		errors.RuntimeError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName))
+		errors.LogError(errors.RuntimeError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName)))
 	}
 
 	return env.parent.resolve(varName)
@@ -81,7 +81,7 @@ func (env *Environment) FindFunctionScope() *Environment {
 		return env
 	}
 	if env.parent == nil {
-		errors.DevError("Cannot use return statement outside of a function")
+		errors.LogError(errors.DevError("Cannot use return statement outside of a function"))
 	}
 	return env.parent.FindFunctionScope()
 }

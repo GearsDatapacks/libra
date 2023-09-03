@@ -5,80 +5,130 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func (p *parser) parseArgumentList() []ast.Expression {
-	p.expect(token.LEFT_PAREN, "Expected '(' to open argument list, got %q")
+func (p *parser) parseArgumentList() ([]ast.Expression, error) {
+	_, err := p.expect(token.LEFT_PAREN, "Expected '(' to open argument list, got %q")
+	if err != nil {
+		return nil, err
+	}
 
 	args := []ast.Expression{}
 
 	if p.next().Type != token.RIGHT_PAREN {
-		args = p.parseArgs()
+		args, err = p.parseArgs()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	p.expect(token.RIGHT_PAREN, "Expected ')' after argument list, got %q")
+	_, err = p.expect(token.RIGHT_PAREN, "Expected ')' after argument list, got %q")
+	if err != nil {
+		return nil, err
+	}
 
-	return args
+	return args, nil
 }
 
-func (p *parser) parseArgs() []ast.Expression {
-	args := []ast.Expression{ p.parseExpression() }
+func (p *parser) parseArgs() ([]ast.Expression, error) {
+	initialExpr, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+	args := []ast.Expression{ initialExpr }
 
 	for p.next().Type == token.COMMA {
 		p.consume()
 
-		args = append(args, p.parseExpression())
+		nextExpr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, nextExpr)
 	}
 
-	return args
+	return args, nil
 }
 
-func (p *parser) parseParameterList() []ast.Parameter {
-	p.expect(token.LEFT_PAREN, "Expected '(' to open parameter list, got %q")
+func (p *parser) parseParameterList() ([]ast.Parameter, error) {
+	_, err := p.expect(token.LEFT_PAREN, "Expected '(' to open parameter list, got %q")
+	if err != nil {
+		return nil, err
+	}
 
 	params := []ast.Parameter{}
 
 	if p.next().Type != token.RIGHT_PAREN {
-		params = p.parseParameters()
+		params, err = p.parseParameters()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	p.expect(token.RIGHT_PAREN, "Expected ')' after parameter list, got %q")
+	_, err = p.expect(token.RIGHT_PAREN, "Expected ')' after parameter list, got %q")
+	if err != nil {
+		return nil, err
+	}
 
-	return params
+	return params, nil
 }
 
-func (p *parser) parseParameters() []ast.Parameter {
-	params := []ast.Parameter{ p.parseParameter() }
+func (p *parser) parseParameters() ([]ast.Parameter, error) {
+	initialParam, err := p.parseParameter()
+	if err != nil {
+		return nil, err
+	}
+	params := []ast.Parameter{ initialParam }
 
 	for p.next().Type == token.COMMA {
 		p.consume()
 
-		params = append(params, p.parseParameter())
+		nextParam, err := p.parseParameter()
+		if err != nil {
+			return nil, err
+		}
+		params = append(params, nextParam)
 	}
 
-	return params
+	return params, nil
 }
 
-func (p *parser) parseParameter() ast.Parameter {
-	name := p.expect(token.IDENTIFIER, "Expected identifier for parameter name")
-	dataType := p.parseType()
+func (p *parser) parseParameter() (ast.Parameter, error) {
+	name, err := p.expect(token.IDENTIFIER, "Expected identifier for parameter name")
+	if err != nil {
+		return ast.Parameter{}, err
+	}
+	dataType, err := p.parseType()
+	if err != nil {
+		return ast.Parameter{}, err
+	}
 
-	return ast.Parameter{Name: name.Value, Type: dataType}
+	return ast.Parameter{Name: name.Value, Type: dataType}, nil
 }
 
-func (p *parser) parseCodeBlock() []ast.Statement {
+func (p *parser) parseCodeBlock() ([]ast.Statement, error) {
 	outerSymbols := make([]string, len(p.usedSymbols))
 	copy(outerSymbols, p.usedSymbols)
 
-	p.expect(token.LEFT_BRACE, "Expected '{' to begin code block")
+	_, err := p.expect(token.LEFT_BRACE, "Expected '{' to begin code block")
+	if err != nil {
+		return nil, err
+	}
 
 	code := []ast.Statement{}
 
 	for p.next().Type != token.RIGHT_BRACE {
-		code = append(code, p.parseStatement())
+		nextStmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+		code = append(code, nextStmt)
 	}
 
 	p.usedSymbols = outerSymbols
 
-	p.expect(token.RIGHT_BRACE, "Expected '}' after code block")
+	_, err = p.expect(token.RIGHT_BRACE, "Expected '}' after code block")
+	if err != nil {
+		return nil, err
+	}
 
-	return code
+	return code, nil
 }

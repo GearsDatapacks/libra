@@ -61,7 +61,7 @@ func GetZeroValue(dataType string) RuntimeValue {
 	case "string":
 		return MakeString("")
 	default:
-		errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType))
+		errors.LogError(errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType)))
 		return MakeInteger(0)
 	}
 }
