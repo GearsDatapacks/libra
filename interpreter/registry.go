@@ -342,6 +342,16 @@ func registerOperators() {
 		return values.MakeBoolean(!value.Truthy())
 	})
 
+	RegisterUnaryOperator("-", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+		if _, isInt := value.(*values.IntegerLiteral); isInt {
+			intVal := extractValues[int](value)[0]
+			return values.MakeInteger(-intVal)
+		}
+
+		floatVal := extractValues[float64](value)[0]
+		return values.MakeFloat(-floatVal)
+	})
+
 	RegisterUnaryOperator("++", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 		_, isInt := value.(*values.IntegerLiteral)
 		if isInt {

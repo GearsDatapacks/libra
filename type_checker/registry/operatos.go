@@ -93,6 +93,14 @@ func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 	return dataType
 }
 
+func negateOperator(dataType types.ValidType) types.ValidType {
+	if !numberType.Valid(dataType) {
+		return nil
+	}
+
+	return dataType
+}
+
 func registerOperators() {
 	registerBinaryOperator("+", plusOperator)
 	registerBinaryOperator("-", arithmeticOperator)
@@ -114,4 +122,5 @@ func registerOperators() {
 	registerUnaryOperator("++", func(v types.ValidType) types.ValidType { return incDecOperator(v, "++") })
 	registerUnaryOperator("--", func(v types.ValidType) types.ValidType { return incDecOperator(v, "--") })
 	registerRegularUnaryOperator("!", &types.Any{}, boolType)
+	registerUnaryOperator("-", negateOperator)
 }
