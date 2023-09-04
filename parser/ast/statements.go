@@ -56,7 +56,7 @@ type FunctionDeclaration struct {
 func (funcDec *FunctionDeclaration) Type() NodeType { return "FunctionDeclaration" }
 
 func (funcDec *FunctionDeclaration) String() string {
-	result := "function "
+	result := "fn "
 
 	result += funcDec.Name
 	result += "("

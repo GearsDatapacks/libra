@@ -13,7 +13,7 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 
 	if p.isKeyword("var") || p.isKeyword("const") {
 		statement, err = p.parseVariableDeclaration()
-	} else if p.isKeyword("function") {
+	} else if p.isKeyword("fn") {
 		statement, err = p.parseFunctionDeclaration()
 	} else if p.isKeyword("return") {
 		statement, err = p.parseReturnStatement()

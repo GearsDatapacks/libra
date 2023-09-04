@@ -227,7 +227,7 @@ func (fn *FunctionValue) Type() ValueType {
 }
 
 func (fn *FunctionValue) ToString() string {
-	result := "function ("
+	result := "fn ("
 
 	result += strings.Join(fn.Parameters, ", ")
 	result += ") {"
