@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
@@ -212,6 +213,19 @@ func (list *ListLiteral) Truthy() bool {
 
 func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 	index := indexValue.(*IntegerLiteral).value
+	indexSize := index
+	// negative indexing
+	if index < 0 {
+		indexSize = -indexSize - 1
+	}
+
+	if indexSize >= len(list.Elements) {
+		errors.LogError(fmt.Sprintf("Index out of range [%d] with length %d", index, len(list.Elements)))
+	}
+	
+	if index < 0 {
+		return list.Elements[len(list.Elements) + index]
+	}
 	return list.Elements[index]
 }
 
