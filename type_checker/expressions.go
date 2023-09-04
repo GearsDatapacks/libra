@@ -172,8 +172,8 @@ func typeCheckIndexExpression(indexExpr *ast.IndexExpression, symbolTable *symbo
 		return indexType
 	}
 
-	resultType, indexable := leftType.Indexable(indexType)
-	if !indexable {
+	resultType := leftType.IndexBy(indexType)
+	if resultType == nil {
 		return types.Error(fmt.Sprintf("Type %q is not indexable with type %q", leftType.String(), indexType.String()), indexExpr)
 	}
 

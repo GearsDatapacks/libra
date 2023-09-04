@@ -13,7 +13,7 @@ type ValidType interface {
 	String() string
 	WasVariable() bool
 	MarkVariable()
-	Indexable(ValidType) (ValidType, bool)
+	IndexBy(ValidType) ValidType
 }
 
 type BaseType struct {
@@ -28,8 +28,8 @@ func (b *BaseType) MarkVariable() {
 	b.wasVariable = true
 }
 
-func (*BaseType) Indexable(ValidType) (ValidType, bool) {
-	return nil, false
+func (*BaseType) IndexBy(ValidType) ValidType {
+	return nil
 }
 
 type PartialType interface {
