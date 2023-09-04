@@ -30,7 +30,7 @@ func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	if !p.canContinue() || p.next().Type != token.ASSIGNMENT_OPERATOR {
+	if !p.canContinue() || !p.next().Is(token.AssignmentOperator) {
 		return assignee, nil
 	}
 
@@ -55,7 +55,7 @@ func (p *parser) parseLogicalExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.canContinue() && p.next().Type == token.LOGICAL_OPERATOR {
+	for p.canContinue() && p.next().Is(token.LogicalOperator) {
 		operator := p.consume().Value
 		right, err := p.parseComparisonExpression()
 		if err != nil {
@@ -79,7 +79,7 @@ func (p *parser) parseComparisonExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.canContinue() && p.next().Type == token.COMPARISON_OPERATOR {
+	for p.canContinue() && p.next().Is(token.ComparisonOperator) {
 		operator := p.consume().Value
 		right, err := p.parseAdditiveExpression()
 		if err != nil {
@@ -103,7 +103,7 @@ func (p *parser) parseAdditiveExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.canContinue() && p.next().Type == token.ADDITIVE_OPERATOR {
+	for p.canContinue() && p.next().Is(token.AdditiveOperator) {
 		operator := p.consume().Value
 		right, err := p.parseMultiplicativeExpression()
 		if err != nil {
@@ -127,7 +127,7 @@ func (p *parser) parseMultiplicativeExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.canContinue() && p.next().Type == token.MULTIPLICATIVE_OPERATOR {
+	for p.canContinue() && p.next().Is(token.MultiplicativeOperator) {
 		operator := p.consume().Value
 		right, err := p.parseExponentialExpression()
 		if err != nil {
@@ -151,7 +151,7 @@ func (p *parser) parseExponentialExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	if !p.canContinue() || p.next().Type != token.EXPONENTIAL_OPERATOR {
+	if !p.canContinue() || p.next().Type != token.POWER {
 		return left, nil
 	}
 
@@ -171,7 +171,7 @@ func (p *parser) parseExponentialExpression() (ast.Expression, error) {
 }
 
 func (p *parser) parsePrefixOperation() (ast.Expression, error) {
-	if p.next().Type != token.PREFIX_OPERATOR {
+	if !p.next().Is(token.PrefixOperator) {
 		return p.parsePostfixOperation()
 	}
 
@@ -195,7 +195,7 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.next().Type == token.POSTFIX_OPERATOR {
+	for p.next().Is(token.PostfixOperator) {
 		value = &ast.UnaryOperation{
 			Value:    value,
 			Operator: p.consume().Value,

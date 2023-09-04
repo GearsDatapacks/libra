@@ -57,7 +57,7 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 	isConstant := tok.Value == "const"
 	name, err := p.expect(
 		token.IDENTIFIER,
-		"ParseError: Expected identifier for variable declaration, got %q",
+		"Expected identifier for variable declaration, got %q",
 	)
 	if err != nil {
 		return nil, err
@@ -65,16 +65,14 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 
 	var dataType ast.TypeExpression = &ast.InferType{}
 
-	if p.canContinue() && p.next().Type != token.ASSIGNMENT_OPERATOR {
+	if p.canContinue() && p.next().Type != token.ASSIGN {
 		dataType, err = p.parseType()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// TODO: add possibility for `var x string`
-
-	if !p.canContinue() || p.next().Type != token.ASSIGNMENT_OPERATOR {
+	if !p.canContinue() || p.next().Type != token.ASSIGN {
 		if isConstant {
 			return nil, p.error(fmt.Sprintf("Cannot leave constant %q uninitialised", name.Value), p.next())
 		}
@@ -93,8 +91,8 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 	}
 
 	_, err = p.expect(
-		token.ASSIGNMENT_OPERATOR,
-		"ParseError: Missing initialiser in variable declaration",
+		token.ASSIGN,
+		"Missing initialiser in variable declaration",
 	)
 	if err != nil {
 		return nil, err

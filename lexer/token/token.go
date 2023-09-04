@@ -1,5 +1,7 @@
 package token
 
+import "github.com/gearsdatapacks/libra/utils"
+
 type Type string
 
 type Token struct {
@@ -27,15 +29,38 @@ const (
 	COMMA        = "COMMA"
 	SEMICOLON    = "SEMICOLON"
 
-	ASSIGNMENT_OPERATOR     = "ASSIGNMENT_OPERATOR"
-	LOGICAL_OPERATOR        = "LOGICAL_OPERATOR"
-	COMPARISON_OPERATOR     = "COMPARISON_OPERATOR"
-	ADDITIVE_OPERATOR       = "ADDITIVE_OPERATOR"
-	MULTIPLICATIVE_OPERATOR = "MULTIPLICATIVE_OPERATOR"
-	EXPONENTIAL_OPERATOR    = "EXPONENTIAL_OPERATOR"
-	POSTFIX_OPERATOR        = "POSTFIX_OPERATOR"
-	PREFIX_OPERATOR         = "PREFIX_OPERATOR"
-	BITWISE_OR              = "BITWISE_OR"
+	ASSIGN     = "ASSIGN"
+	ADD_ASSIGN = "ADD_ASSIGN"
+	SUB_ASSIGN = "SUB_ASSIGN"
+	MUL_ASSIGN = "MUL_ASSIGN"
+	DIV_ASSIGN = "DIV_ASSIGN"
+	MOD_ASSIGN = "MOD_ASSIGN"
+
+	LOGICAL_AND = "LOGICAL_AND"
+	LOGICAL_OR  = "LOGICAL_OR"
+
+	LESS_THAN       = "LESS_THAN"
+	GREATER_THAN    = "GREATER_THAN"
+	LESS_THAN_EQ    = "LESS_THAN_EQ"
+	GREATER_THAN_EQ = "GREATER_THAN_EQ"
+	EQUAL           = "EQUAL"
+	NOT_EQUAL       = "NOT_EQUAL"
+
+	ADD      = "ADD"
+	SUBTRACT = "SUBTRACT"
+
+	MULTIPLY = "MULTIPLY"
+	DIVIDE   = "DIVIDE"
+	MODULO   = "MODULO"
+
+	POWER = "POWER"
+
+	INCREMENT = "INCREMENT"
+	DECREMENT = "DECREMENT"
+
+	LOGICAL_NOT = "LOGICAL_NOT"
+
+	BITWISE_OR = "BITWISE_OR"
 )
 
 var Symbols = map[string]Type{
@@ -48,34 +73,84 @@ var Symbols = map[string]Type{
 	",": COMMA,
 	";": SEMICOLON,
 
-	"+":  ADDITIVE_OPERATOR,
-	"-":  ADDITIVE_OPERATOR,
-	"*":  MULTIPLICATIVE_OPERATOR,
-	"/":  MULTIPLICATIVE_OPERATOR,
-	"%":  MULTIPLICATIVE_OPERATOR,
-	"**": EXPONENTIAL_OPERATOR,
+	"+":  ADD,
+	"-":  SUBTRACT,
+	"*":  MULTIPLY,
+	"/":  DIVIDE,
+	"%":  MODULO,
+	"**": POWER,
 
-	"=":  ASSIGNMENT_OPERATOR,
-	"+=": ASSIGNMENT_OPERATOR,
-	"*=": ASSIGNMENT_OPERATOR,
-	"/=": ASSIGNMENT_OPERATOR,
-	"%=": ASSIGNMENT_OPERATOR,
+	"=":  ASSIGN,
+	"+=": ADD_ASSIGN,
+	"-=": SUB_ASSIGN,
+	"*=": MUL_ASSIGN,
+	"/=": DIV_ASSIGN,
+	"%=": MOD_ASSIGN,
 
-	"<":  COMPARISON_OPERATOR,
-	"<=": COMPARISON_OPERATOR,
-	">":  COMPARISON_OPERATOR,
-	">=": COMPARISON_OPERATOR,
-	"==": COMPARISON_OPERATOR,
-	"!=": COMPARISON_OPERATOR,
+	"<":  LESS_THAN,
+	"<=": LESS_THAN_EQ,
+	">":  GREATER_THAN,
+	">=": GREATER_THAN_EQ,
+	"==": EQUAL,
+	"!=": NOT_EQUAL,
 
 	"|": BITWISE_OR,
 
-	"||": LOGICAL_OPERATOR,
-	"&&": LOGICAL_OPERATOR,
+	"||": LOGICAL_OR,
+	"&&": LOGICAL_AND,
 
-	"++": POSTFIX_OPERATOR,
-	"--": POSTFIX_OPERATOR,
-	"!":  PREFIX_OPERATOR,
+	"++": INCREMENT,
+	"--": DECREMENT,
+	"!":  LOGICAL_NOT,
+}
+
+var ComparisonOperator = []Type{
+	LESS_THAN,
+	LESS_THAN_EQ,
+	GREATER_THAN,
+	GREATER_THAN_EQ,
+	EQUAL,
+	NOT_EQUAL,
+}
+
+var AssignmentOperator = []Type{
+	ASSIGN,
+	ADD_ASSIGN,
+	SUB_ASSIGN,
+	MUL_ASSIGN,
+	DIV_ASSIGN,
+	MOD_ASSIGN,
+}
+
+var LogicalOperator = []Type{
+	LOGICAL_AND,
+	LOGICAL_OR,
+}
+
+var AdditiveOperator = []Type{ADD, SUBTRACT}
+
+var MultiplicativeOperator = []Type{
+	MULTIPLY,
+	DIVIDE,
+	MODULO,
+}
+
+var PrefixOperator = []Type{
+	SUBTRACT,
+	LOGICAL_NOT,
+}
+
+var PostfixOperator = []Type{
+	INCREMENT,
+	DECREMENT,
+}
+
+func (tokenType Type) Is(opGroup []Type) bool {
+	return utils.Contains(opGroup, tokenType)
+}
+
+func (token Token) Is(opGroup []Type) bool {
+	return utils.Contains(opGroup, token.Type)
 }
 
 func New(line int, offset int, tokenType Type, value []rune, leadingNewline bool) Token {
