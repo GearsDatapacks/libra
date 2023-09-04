@@ -19,10 +19,10 @@ const (
 )
 
 type SymbolTable struct {
-	parent    *SymbolTable
-	symbols   map[string]types.ValidType
-	constants []string
-	kind scopeKind
+	parent     *SymbolTable
+	symbols    map[string]types.ValidType
+	constants  []string
+	kind       scopeKind
 	returnType types.ValidType
 }
 
@@ -30,7 +30,7 @@ func New() *SymbolTable {
 	return &SymbolTable{
 		parent:  nil,
 		symbols: map[string]types.ValidType{},
-		kind: GLOBAL_SCOPE,
+		kind:    GLOBAL_SCOPE,
 	}
 }
 
@@ -38,7 +38,7 @@ func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
 	return &SymbolTable{
 		parent:  parent,
 		symbols: map[string]types.ValidType{},
-		kind: kind,
+		kind:    kind,
 	}
 }
 
@@ -48,13 +48,13 @@ func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
 	return table
 }
 
-func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) error {
+func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) *types.TypeError {
 	if _, ok := st.symbols[name]; ok {
-		return errors.TypeError(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
+		return types.Error(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
 
 	if _, ok := registry.Builtins[name]; ok {
-		return errors.TypeError(fmt.Sprintf("Cannot redifne builtin function %q", name))
+		return types.Error(fmt.Sprintf("Cannot redifne builtin function %q", name))
 	}
 
 	if array, isArray := dataType.(*types.ArrayLiteral); isArray {
@@ -70,14 +70,14 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 	return nil
 }
 
-func (st *SymbolTable) GetSymbol(name string) (types.ValidType, error) {
+func (st *SymbolTable) GetSymbol(name string) types.ValidType {
 	table, err := st.resolve(name)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return table.symbols[name], nil
+	return table.symbols[name]
 }
 
 func (st *SymbolTable) IsConstant(name string) bool {
@@ -90,13 +90,13 @@ func (st *SymbolTable) Exists(name string) bool {
 	return err == nil
 }
 
-func (st *SymbolTable) resolve(varName string) (*SymbolTable, error) {
+func (st *SymbolTable) resolve(varName string) (*SymbolTable, *types.TypeError) {
 	if _, ok := st.symbols[varName]; ok {
 		return st, nil
 	}
 
 	if st.parent == nil {
-		return nil, errors.TypeError(fmt.Sprintf("Variable %q is undefined", varName))
+		return nil, types.Error(fmt.Sprintf("Variable %q is undefined", varName))
 	}
 
 	return st.parent.resolve(varName)

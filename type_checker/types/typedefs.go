@@ -1,7 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 type Union struct {
@@ -82,4 +85,43 @@ func (a *Any) Valid(dataType ValidType) bool {
 
 func (a *Any) String() string {
 	return "any"
+}
+
+type TypeError struct {
+	*BaseType
+	Message string
+	Line int
+	Column int
+}
+
+func (err TypeError) Error() string {
+	if err.Line == -1 || err.Column == -1 {
+		return "TypeError: " + err.Message
+	}
+	return fmt.Sprintf("TypeError at line %d, column %d: %s", err.Line, err.Column, err.Message)
+}
+
+func (*TypeError) Valid(ValidType) bool {
+	return false
+}
+
+func (*TypeError) String() string {
+	return "TypeError"
+}
+
+func Error(message string, errorNodes ...ast.Node) *TypeError {
+	if len(errorNodes) == 0 {
+		return &TypeError{
+			Line: -1,
+			Column: -1,
+			Message: message,
+		}
+	}
+
+	errorNode := errorNodes[0]
+	return &TypeError{
+		Line: errorNode.GetToken().Line,
+		Column: errorNode.GetToken().Column,
+		Message: message,
+	}
 }

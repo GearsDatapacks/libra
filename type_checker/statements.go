@@ -2,6 +2,7 @@ package typechecker
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -9,7 +10,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) types.ValidType {
 	switch statement := stmt.(type) {
 	case *ast.VariableDeclaration:
 		return typeCheckVariableDeclaration(statement, symbolTable)
@@ -19,13 +20,13 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) (t
 
 	case *ast.FunctionDeclaration:
 		return typeCheckFunctionDeclaration(statement, symbolTable)
-	
+
 	case *ast.ReturnStatement:
 		return typeCheckReturnStatement(statement, symbolTable)
-	
+
 	case *ast.IfStatement:
 		return typeCheckIfStatement(statement, symbolTable)
-	
+
 	case *ast.WhileLoop:
 		return typeCheckWhileLoop(statement, symbolTable)
 
@@ -33,63 +34,64 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) (t
 		return typeCheckForLoop(statement, symbolTable)
 
 	default:
-		return nil, errors.DevError("(Type checker) Unexpected statment type: " + statement.String())
+		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
+		return nil
 	}
 }
 
-func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
-	expressionType, err := typeCheckExpression(varDec.Value, symbolTable)
-	if err != nil {
-		return nil, err
+func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	expressionType := typeCheckExpression(varDec.Value, symbolTable)
+	if expressionType.String() == "TypeError" {
+		return expressionType
 	}
 
 	if _, ok := expressionType.(*types.Void); ok {
-		return nil, errors.TypeError(fmt.Sprintf("Cannot assign void to variable %q", varDec.Name), varDec)
+		return types.Error(fmt.Sprintf("Cannot assign void to variable %q", varDec.Name), varDec)
 	}
 
 	if varDec.DataType.Type() == "Infer" {
 		err := symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return expressionType, nil
+		return expressionType
 	}
 
-	dataType, err := types.FromAst(varDec.DataType)
-	if err != nil {
-		return nil, err
+	dataType := types.FromAst(varDec.DataType)
+	if dataType.String() == "TypeError" {
+		return dataType
 	}
 	correctType := dataType.Valid(expressionType)
-	
+
 	if partial, ok := dataType.(types.PartialType); ok {
 		dataType, correctType = partial.Infer(expressionType)
 	}
 
 	if correctType {
 		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
-		return dataType, nil
+		return dataType
 	}
 
-	return nil, errors.TypeError(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), varDec)
+	return types.Error(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), varDec)
 }
 
-func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
 	params := []types.ValidType{}
-	returnType, err := types.FromAst(funcDec.ReturnType)
-	if err != nil {
-		return nil, err
+	returnType := types.FromAst(funcDec.ReturnType)
+	if returnType.String() == "TypeError" {
+		return returnType
 	}
-	
+
 	childTable := symbols.NewFunction(symbolTable, returnType)
 	for _, param := range funcDec.Parameters {
-		paramType, err := types.FromAst(param.Type)
-		if err != nil {
-			return nil, err
+		paramType := types.FromAst(param.Type)
+		if paramType.String() == "TypeError" {
+			return paramType
 		}
 		params = append(params, paramType)
-		err = childTable.RegisterSymbol(param.Name, paramType, false)
+		err := childTable.RegisterSymbol(param.Name, paramType, false)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -98,53 +100,53 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		ReturnType: returnType,
 	}
 
-	err = symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
+	err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, statement := range funcDec.Body {
-		_, err := typeCheckStatement(statement, childTable)
-		if err != nil {
-			return nil, err
+		err := typeCheckStatement(statement, childTable)
+		if err.String() == "TypeError" {
+			return err
 		}
 	}
 
-	return functionType, nil
+	return functionType
 }
 
-func typeCheckReturnStatement(ret *ast.ReturnStatement, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
-	expressionType, err := typeCheckExpression(ret.Value, symbolTable)
-	if err != nil {
-		return nil, err
+func typeCheckReturnStatement(ret *ast.ReturnStatement, symbolTable *symbols.SymbolTable) types.ValidType {
+	expressionType := typeCheckExpression(ret.Value, symbolTable)
+	if expressionType.String() == "TypeError" {
+		return expressionType
 	}
 	functionScope := symbolTable.FindFunctionScope()
 
 	if functionScope == nil {
-		return nil, errors.TypeError("Cannot use return statement outside of a function", ret)
+		return types.Error("Cannot use return statement outside of a function", ret)
 	}
 
 	expectedType := functionScope.ReturnType()
 
 	if !expectedType.Valid(expressionType) {
-		return nil, errors.TypeError(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType), ret)
+		return types.Error(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType), ret)
 	}
 
-	return expressionType, nil
+	return expressionType
 }
 
-func typeCheckIfStatement(ifStatement *ast.IfStatement, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
-	_, err := typeCheckExpression(ifStatement.Condition, symbolTable)
-	if err != nil {
-		return nil, err
+func typeCheckIfStatement(ifStatement *ast.IfStatement, symbolTable *symbols.SymbolTable) types.ValidType {
+	err := typeCheckExpression(ifStatement.Condition, symbolTable)
+	if err.String() == "TypeError" {
+		return err
 	}
 
 	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
 
 	for _, statement := range ifStatement.Body {
-		_, err := typeCheckStatement(statement, newScope)
-		if err != nil {
-			return nil, err
+		err := typeCheckStatement(statement, newScope)
+		if err.String() == "TypeError" {
+			return err
 		}
 	}
 
@@ -156,58 +158,58 @@ func typeCheckIfStatement(ifStatement *ast.IfStatement, symbolTable *symbols.Sym
 		return typeCheckElseStatement(nextElse, symbolTable)
 	}
 
-	return &types.Void{}, nil
+	return &types.Void{}
 }
 
-func typeCheckElseStatement(elseStatement *ast.ElseStatement, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+func typeCheckElseStatement(elseStatement *ast.ElseStatement, symbolTable *symbols.SymbolTable) types.ValidType {
 	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
 
 	for _, statement := range elseStatement.Body {
-		_, err := typeCheckStatement(statement, newScope)
-		if err != nil {
-			return nil, err
+		err := typeCheckStatement(statement, newScope)
+		if err.String() == "TypeError" {
+			return err
 		}
 	}
 
-	return &types.Void{}, nil
+	return &types.Void{}
 }
 
-func typeCheckWhileLoop(while *ast.WhileLoop, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+func typeCheckWhileLoop(while *ast.WhileLoop, symbolTable *symbols.SymbolTable) types.ValidType {
 	typeCheckExpression(while.Condition, symbolTable)
-	
+
 	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
 
 	for _, statement := range while.Body {
-		_, err := typeCheckStatement(statement, newScope)
-		if err != nil {
-			return nil, err
+		err := typeCheckStatement(statement, newScope)
+		if err.String() == "TypeError" {
+			return err
 		}
 	}
 
-	return &types.Void{}, nil
+	return &types.Void{}
 }
 
-func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) types.ValidType {
 	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
-	_, err := typeCheckStatement(forLoop.Initial, newScope)
-	if err != nil {
-		return nil, err
+	err := typeCheckStatement(forLoop.Initial, newScope)
+	if err.String() == "TypeError" {
+		return err
 	}
-	_, err = typeCheckExpression(forLoop.Condition, newScope)
-	if err != nil {
-		return nil, err
+	err = typeCheckExpression(forLoop.Condition, newScope)
+	if err.String() == "TypeError" {
+		return err
 	}
-	_, err = typeCheckStatement(forLoop.Update, newScope)
-	if err != nil {
-		return nil, err
+	err = typeCheckStatement(forLoop.Update, newScope)
+	if err.String() == "TypeError" {
+		return err
 	}
 
 	for _, statement := range forLoop.Body {
-		_, err := typeCheckStatement(statement, newScope)
-		if err != nil {
-			return nil, err
+		err := typeCheckStatement(statement, newScope)
+		if err.String() == "TypeError" {
+			return err
 		}
 	}
 
-	return &types.Void{}, nil
+	return &types.Void{}
 }

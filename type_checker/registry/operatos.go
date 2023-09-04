@@ -3,7 +3,6 @@ package registry
 import (
 	"fmt"
 
-	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -88,8 +87,7 @@ func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 	}
 
 	if !dataType.WasVariable() {
-		errors.TypeError(fmt.Sprintf("Operator %q is not defined for non-variable values", op))
-		return nil
+		return types.Error(fmt.Sprintf("Operator %q is not defined for non-variable values", op))
 	}
 
 	return dataType

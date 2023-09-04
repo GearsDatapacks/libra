@@ -48,10 +48,6 @@ func RuntimeError(message string, errorNodes ...ast.Node) error {
 	return makeError("RuntimeError", message, errorNodes...)
 }
 
-func TypeError(message string, errorNodes ...ast.Node) error {
-	return makeError("TypeError", message, errorNodes...)
-}
-
 func LogError(err error) {
 	fmt.Println(err)
 	os.Exit(1)
