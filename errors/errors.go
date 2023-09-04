@@ -44,11 +44,7 @@ func makeError(prefix, message string, errorNodes ...ast.Node) error {
 	}
 }
 
-func RuntimeError(message string, errorNodes ...ast.Node) error {
-	return makeError("RuntimeError", message, errorNodes...)
-}
-
-func LogError(err error) {
-	fmt.Println(err)
+func LogError(values ...any) {
+	fmt.Println(values...)
 	os.Exit(1)
 }

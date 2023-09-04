@@ -66,7 +66,7 @@ func (env *Environment) resolve(varName string) *Environment {
 	}
 
 	if env.parent == nil {
-		errors.LogError(errors.RuntimeError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName)))
+		errors.LogError(errors.DevError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName)))
 	}
 
 	return env.parent.resolve(varName)
