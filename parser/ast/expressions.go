@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -197,4 +198,17 @@ func (ae *AssignmentExpression) String() string {
 	result += ae.Value.String()
 
 	return result
+}
+
+type IndexExpression struct {
+	*BaseNode
+	*BaseExpression
+	Left Expression
+	Index Expression
+}
+
+func (index *IndexExpression) Type() NodeType { return "IndexExpression" }
+
+func (index *IndexExpression) String() string {
+	return fmt.Sprintf("%s[%s]", index.Left.String(), index.Index.String())
 }

@@ -190,7 +190,7 @@ func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 }
 
 func (p *parser) parsePostfixOperation() (ast.Expression, error) {
-	value, err := p.parseLiteral()
+	value, err := p.parseIndexExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +205,30 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 	}
 
 	return value, nil
+}
+
+func (p *parser) parseIndexExpression() (ast.Expression, error) {
+	left, err := p.parseLiteral()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.next().Type != token.LEFT_SQUARE {
+		return left, nil
+	}
+
+	p.consume()
+	index, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+	p.expect(token.RIGHT_SQUARE, "Expected bracket after index expression")
+
+	return &ast.IndexExpression{
+		Left: left,
+		Index: index,
+		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+	}, nil
 }
 
 func (p *parser) parseFunctionCall() (ast.Expression, error) {
