@@ -43,6 +43,9 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	case *ast.ListLiteral:
 		return typeCheckList(expression, symbolTable)
 
+	case *ast.IndexExpression:
+		return typeCheckIndexExpression(expression, symbolTable)
+
 	default:
 		return nil, errors.DevError("(Type checker) Unexpected expression type: " + expr.String())
 	}
@@ -151,7 +154,26 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) (typ
 
 	return &types.ArrayLiteral{
 		ElemType: types.MakeUnion(listTypes...),
-		Length: len(list.Elements),
+		Length:   len(list.Elements),
 		CanInfer: true,
 	}, nil
+}
+
+func typeCheckIndexExpression(indexExpr *ast.IndexExpression, symbolTable *symbols.SymbolTable) (types.ValidType, error) {
+	leftType, err := typeCheckExpression(indexExpr.Left, symbolTable)
+	if err != nil {
+		return nil, err
+	}
+
+	indexType, err := typeCheckExpression(indexExpr.Index, symbolTable)
+	if err != nil {
+		return nil, err
+	}
+
+	resultType, indexable := leftType.Indexable(indexType)
+	if !indexable {
+		return nil, errors.TypeError(fmt.Sprintf("Type %q is not indexable with type %q", leftType.String(), indexType.String()), indexExpr)
+	}
+
+	return resultType, nil
 }

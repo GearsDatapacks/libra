@@ -71,6 +71,13 @@ func (list *ListLiteral) Infer(dataType ValidType) (ValidType, bool) {
 	return dataType, true
 }
 
+func (list *ListLiteral) Indexable(dataType ValidType) (ValidType, bool) {
+	if !(&IntLiteral{}).Valid(dataType) {
+		return nil, false
+	}
+	return list.ElemType, true
+}
+
 type ArrayLiteral struct {
 	BaseType
 	ElemType ValidType
@@ -126,6 +133,13 @@ func (array *ArrayLiteral) Infer(dataType ValidType) (ValidType, bool) {
 		Length:   length,
 		CanInfer: false,
 	}, true
+}
+
+func (array *ArrayLiteral) Indexable(dataType ValidType) (ValidType, bool) {
+	if !(&IntLiteral{}).Valid(dataType) {
+		return nil, false
+	}
+	return array.ElemType, true
 }
 
 type Void struct{ BaseType }
