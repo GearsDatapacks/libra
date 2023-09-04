@@ -16,6 +16,7 @@ type RuntimeValue interface {
 	EqualTo(RuntimeValue) bool
 	Varname() string
 	SetVarname(string)
+	Index(RuntimeValue) RuntimeValue
 }
 
 type BaseValue struct {
@@ -28,6 +29,10 @@ func (b *BaseValue) Varname() string {
 
 func (b *BaseValue) SetVarname(name string) {
 	b.varname = name
+}
+
+func (b *BaseValue) Index(v RuntimeValue) RuntimeValue {
+	return MakeNull()
 }
 
 // func MakeValue(v any) RuntimeValue {

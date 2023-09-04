@@ -47,6 +47,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.FunctionCall:
 		return evaluateFunctionCall(expression, env)
 
+	case *ast.IndexExpression:
+		return evaluateIndexExpression(expression, env)
+
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
 
@@ -114,4 +117,11 @@ func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.Ru
 	return &values.ListLiteral{
 		Elements: evaluatedValues,
 	}
+}
+
+func evaluateIndexExpression(indexExpr *ast.IndexExpression, env *environment.Environment) values.RuntimeValue {
+	leftValue := evaluateExpression(indexExpr.Left, env)
+	indexValue := evaluateExpression(indexExpr.Index, env)
+
+	return leftValue.Index(indexValue)
 }

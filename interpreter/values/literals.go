@@ -210,6 +210,11 @@ func (list *ListLiteral) Truthy() bool {
 	return len(list.Elements) != 0
 }
 
+func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
+	index := indexValue.(*IntegerLiteral).value
+	return list.Elements[index]
+}
+
 type FunctionValue struct {
 	BaseValue
 	Name                   string
