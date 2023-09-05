@@ -12,20 +12,8 @@ func (p *parser) parseExpression() (ast.Expression, error) {
 	return p.parseAssignmentExpression()
 }
 
-// Orders of precedence
-
-// Assignment
-// Logical operators
-// Comparison
-// Addition/Subtraction
-// Multiplication/Division
-// Member access
-// Function call
-// Unary operation
-// Literal
-
 func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
-	assignee, err := p.parseLogicalExpression()
+	assignee, err := p.parseBinaryOperation(0)
 	if err != nil {
 		return nil, err
 	}
@@ -49,164 +37,39 @@ func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
 	}, nil
 }
 
-func (p *parser) parseLogicalExpression() (ast.Expression, error) {
-	left, err := p.parseComparisonExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.canContinue() && p.next().Is(token.LogicalOperator) {
-		operator := p.consume().Value
-		right, err := p.parseComparisonExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseComparisonExpression() (ast.Expression, error) {
-	left, err := p.parseBitshiftExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.canContinue() && p.next().Is(token.ComparisonOperator) {
-		operator := p.consume().Value
-		right, err := p.parseBitshiftExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseBitshiftExpression() (ast.Expression, error) {
-	left, err := p.parseAdditiveExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	if p.canContinue() && p.next().Type == token.RIGHT_SHIFT {
-		operator := p.consume().Value
-		right, err := p.parseBitshiftExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		return &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}, nil
-	}
-
-	for p.canContinue() && p.next().Is(token.BitshiftOperator) {
-		operator := p.consume().Value
-		right, err := p.parseAdditiveExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseAdditiveExpression() (ast.Expression, error) {
-	left, err := p.parseMultiplicativeExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.canContinue() && p.next().Is(token.AdditiveOperator) {
-		operator := p.consume().Value
-		right, err := p.parseMultiplicativeExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseMultiplicativeExpression() (ast.Expression, error) {
-	left, err := p.parseExponentialExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.canContinue() && p.next().Is(token.MultiplicativeOperator) {
-		operator := p.consume().Value
-		right, err := p.parseExponentialExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.BinaryOperation{
-			Left:     left,
-			Operator: operator,
-			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseExponentialExpression() (ast.Expression, error) {
+func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error) {
 	left, err := p.parsePrefixOperation()
 	if err != nil {
 		return nil, err
 	}
+	
+	for {
+		opInfo, isOp := token.BinOpInfo[p.next().Type]
+		if !isOp || opInfo.Precedence < minPrecedence {
+			break
+		}
 
-	if !p.canContinue() || p.next().Type != token.POWER {
-		return left, nil
+		op := p.consume().Value
+
+		newMinPrec := minPrecedence + 1
+		if opInfo.RightAssociative {
+			newMinPrec = minPrecedence
+		}
+
+		right, err := p.parseBinaryOperation(newMinPrec)
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.BinaryOperation{
+			Left:     left,
+			Operator: op,
+			Right:    right,
+			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		}
 	}
 
-	operator := p.consume().Value
-
-	right, err := p.parseExponentialExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	return &ast.BinaryOperation{
-		Left:     left,
-		Operator: operator,
-		Right:    right,
-		BaseNode: &ast.BaseNode{Token: left.GetToken()},
-	}, nil
+	return left, nil
 }
 
 func (p *parser) parsePrefixOperation() (ast.Expression, error) {
@@ -264,8 +127,8 @@ func (p *parser) parseIndexExpression() (ast.Expression, error) {
 	p.expect(token.RIGHT_SQUARE, "Expected bracket after index expression")
 
 	return &ast.IndexExpression{
-		Left: left,
-		Index: index,
+		Left:     left,
+		Index:    index,
 		BaseNode: &ast.BaseNode{Token: left.GetToken()},
 	}, nil
 }

@@ -110,20 +110,6 @@ var Symbols = map[string]Type{
 	"!":  LOGICAL_NOT,
 }
 
-var ComparisonOperator = []Type{
-	LESS_THAN,
-	LESS_THAN_EQ,
-	GREATER_THAN,
-	GREATER_THAN_EQ,
-	EQUAL,
-	NOT_EQUAL,
-}
-
-var BitshiftOperator = []Type{
-	LEFT_SHIFT,
-	RIGHT_SHIFT,
-}
-
 var AssignmentOperator = []Type{
 	ASSIGN,
 	ADD_ASSIGN,
@@ -131,19 +117,6 @@ var AssignmentOperator = []Type{
 	MUL_ASSIGN,
 	DIV_ASSIGN,
 	MOD_ASSIGN,
-}
-
-var LogicalOperator = []Type{
-	LOGICAL_AND,
-	LOGICAL_OR,
-}
-
-var AdditiveOperator = []Type{ADD, SUBTRACT}
-
-var MultiplicativeOperator = []Type{
-	MULTIPLY,
-	DIVIDE,
-	MODULO,
 }
 
 var PrefixOperator = []Type{
@@ -154,6 +127,33 @@ var PrefixOperator = []Type{
 var PostfixOperator = []Type{
 	INCREMENT,
 	DECREMENT,
+}
+
+var BinOpInfo = map[Type]struct {
+	Precedence       int
+	RightAssociative bool
+}{
+	LOGICAL_AND: {Precedence: 1},
+	LOGICAL_OR:  {Precedence: 1},
+
+	LESS_THAN:       {Precedence: 2},
+	LESS_THAN_EQ:    {Precedence: 2},
+	GREATER_THAN:    {Precedence: 2},
+	GREATER_THAN_EQ: {Precedence: 2},
+	EQUAL:           {Precedence: 2},
+	NOT_EQUAL:       {Precedence: 2},
+
+	LEFT_SHIFT: {Precedence: 3},
+	RIGHT_SHIFT: {Precedence: 3},
+
+	ADD: {Precedence: 4},
+	SUBTRACT: {Precedence: 4},
+	
+	MULTIPLY: {Precedence: 5},
+	DIVIDE: {Precedence: 5},
+	MODULO: {Precedence: 5},
+
+	POWER: {Precedence: 6},
 }
 
 func (tokenType Type) Is(opGroup []Type) bool {
