@@ -9,7 +9,6 @@ import (
 type ValueType string
 
 type RuntimeValue interface {
-	Value() any
 	Type() ValueType
 	ToString() string
 	Truthy() bool

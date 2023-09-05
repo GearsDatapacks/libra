@@ -47,7 +47,7 @@ func toString(args []values.RuntimeValue, env *environment.Environment) values.R
 }
 
 func parseInt(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-	stringValue := extractValues[string](args[0])[0]
+	stringValue := args[0].(*values.StringLiteral).Value
 	intValue, err := strconv.ParseInt(stringValue, 10, 32)
 
 	if err != nil {
@@ -58,7 +58,7 @@ func parseInt(args []values.RuntimeValue, env *environment.Environment) values.R
 }
 
 func parseFloat(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-	stringValue := extractValues[string](args[0])[0]
+	stringValue := args[0].(*values.StringLiteral).Value
 	floatValue, err := strconv.ParseFloat(stringValue, 32)
 
 	if err != nil {

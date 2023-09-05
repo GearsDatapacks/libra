@@ -10,15 +10,11 @@ import (
 
 type IntegerLiteral struct {
 	BaseValue
-	value int
+	Value int
 }
 
 func MakeInteger(value int) *IntegerLiteral {
-	return &IntegerLiteral{value: value}
-}
-
-func (il *IntegerLiteral) Value() any {
-	return il.value
+	return &IntegerLiteral{Value: value}
 }
 
 func (il *IntegerLiteral) Type() ValueType {
@@ -26,30 +22,26 @@ func (il *IntegerLiteral) Type() ValueType {
 }
 
 func (il *IntegerLiteral) ToString() string {
-	return fmt.Sprint(il.value)
+	return fmt.Sprint(il.Value)
 }
 
 func (il *IntegerLiteral) Truthy() bool {
-	return il.value != 0
+	return il.Value != 0
 }
 
 func (il *IntegerLiteral) EqualTo(value RuntimeValue) bool {
 	integer, ok := value.(*IntegerLiteral)
 
-	return ok && integer.value == il.value
+	return ok && integer.Value == il.Value
 }
 
 type FloatLiteral struct {
 	BaseValue
-	value float64
+	Value float64
 }
 
 func MakeFloat(value float64) *FloatLiteral {
-	return &FloatLiteral{value: value}
-}
-
-func (fl *FloatLiteral) Value() any {
-	return fl.value
+	return &FloatLiteral{Value: value}
 }
 
 func (fl *FloatLiteral) Type() ValueType {
@@ -57,30 +49,26 @@ func (fl *FloatLiteral) Type() ValueType {
 }
 
 func (fl *FloatLiteral) ToString() string {
-	return fmt.Sprint(fl.value)
+	return fmt.Sprint(fl.Value)
 }
 
 func (fl *FloatLiteral) Truthy() bool {
-	return fl.value != 0
+	return fl.Value != 0
 }
 
 func (fl *FloatLiteral) EqualTo(value RuntimeValue) bool {
 	float, ok := value.(*FloatLiteral)
 
-	return ok && float.value == fl.value
+	return ok && float.Value == fl.Value
 }
 
 type StringLiteral struct {
 	BaseValue
-	value string
+	Value string
 }
 
 func MakeString(value string) *StringLiteral {
-	return &StringLiteral{value: value}
-}
-
-func (str *StringLiteral) Value() any {
-	return str.value
+	return &StringLiteral{Value: value}
 }
 
 func (str *StringLiteral) Type() ValueType {
@@ -88,17 +76,17 @@ func (str *StringLiteral) Type() ValueType {
 }
 
 func (str *StringLiteral) ToString() string {
-	return "\"" + str.value + "\""
+	return "\"" + str.Value + "\""
 }
 
 func (str *StringLiteral) Truthy() bool {
-	return len(str.value) != 0
+	return len(str.Value) != 0
 }
 
 func (str *StringLiteral) EqualTo(value RuntimeValue) bool {
 	s, ok := value.(*StringLiteral)
 
-	return ok && s.value == str.value
+	return ok && s.Value == str.Value
 }
 
 type NullLiteral struct {
@@ -107,10 +95,6 @@ type NullLiteral struct {
 
 func MakeNull() *NullLiteral {
 	return &NullLiteral{}
-}
-
-func (nl *NullLiteral) Value() any {
-	return nil
 }
 
 func (nl *NullLiteral) Type() ValueType {
@@ -132,15 +116,11 @@ func (nl *NullLiteral) EqualTo(value RuntimeValue) bool {
 
 type BooleanLiteral struct {
 	BaseValue
-	value bool
+	Value bool
 }
 
 func MakeBoolean(value bool) *BooleanLiteral {
-	return &BooleanLiteral{value: value}
-}
-
-func (bl *BooleanLiteral) Value() any {
-	return bl.value
+	return &BooleanLiteral{Value: value}
 }
 
 func (bl *BooleanLiteral) Type() ValueType {
@@ -148,26 +128,22 @@ func (bl *BooleanLiteral) Type() ValueType {
 }
 
 func (bl *BooleanLiteral) ToString() string {
-	return fmt.Sprint(bl.value)
+	return fmt.Sprint(bl.Value)
 }
 
 func (bl *BooleanLiteral) Truthy() bool {
-	return bl.value
+	return bl.Value
 }
 
 func (bl *BooleanLiteral) EqualTo(value RuntimeValue) bool {
 	boolean, ok := value.(*BooleanLiteral)
 
-	return ok && boolean.value == bl.value
+	return ok && boolean.Value == bl.Value
 }
 
 type ListLiteral struct {
 	BaseValue
 	Elements []RuntimeValue
-}
-
-func (list *ListLiteral) Value() any {
-	return list.Elements
 }
 
 func (list *ListLiteral) Type() ValueType {
@@ -212,7 +188,7 @@ func (list *ListLiteral) Truthy() bool {
 }
 
 func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
-	index := indexValue.(*IntegerLiteral).value
+	index := indexValue.(*IntegerLiteral).Value
 	indexSize := index
 	// negative indexing
 	if index < 0 {
@@ -235,10 +211,6 @@ type FunctionValue struct {
 	Parameters             []string
 	DeclarationEnvironment any
 	Body                   []ast.Statement
-}
-
-func (fn *FunctionValue) Value() any {
-	return fn.Name
 }
 
 func (fn *FunctionValue) Type() ValueType {

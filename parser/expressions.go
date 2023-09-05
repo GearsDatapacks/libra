@@ -74,12 +74,51 @@ func (p *parser) parseLogicalExpression() (ast.Expression, error) {
 }
 
 func (p *parser) parseComparisonExpression() (ast.Expression, error) {
-	left, err := p.parseAdditiveExpression()
+	left, err := p.parseBitshiftExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	for p.canContinue() && p.next().Is(token.ComparisonOperator) {
+		operator := p.consume().Value
+		right, err := p.parseBitshiftExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.BinaryOperation{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		}
+	}
+
+	return left, nil
+}
+
+func (p *parser) parseBitshiftExpression() (ast.Expression, error) {
+	left, err := p.parseAdditiveExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.canContinue() && p.next().Type == token.RIGHT_SHIFT {
+		operator := p.consume().Value
+		right, err := p.parseBitshiftExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		return &ast.BinaryOperation{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		}, nil
+	}
+
+	for p.canContinue() && p.next().Is(token.BitshiftOperator) {
 		operator := p.consume().Value
 		right, err := p.parseAdditiveExpression()
 		if err != nil {

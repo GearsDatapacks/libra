@@ -12,16 +12,16 @@ func Register() {
 	registerBuiltins()
 }
 
-func extractValues[T any](vals ...values.RuntimeValue) []T {
-	result := []T{}
+// func extractValues[T any](vals ...values.RuntimeValue) []T {
+// 	result := []T{}
 
-	for _, value := range vals {
-		typedValue := value.Value().(T)
-		result = append(result, typedValue)
-	}
+// 	for _, value := range vals {
+// 		typedValue := value.Value().(T)
+// 		result = append(result, typedValue)
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
 // func makeBinaryOperator[A, B, C any](operator string, operation func(A, B) C) {
 // 	RegisterBinaryOperator(operator, func(left, right values.RuntimeValue) values.RuntimeValue {
@@ -56,35 +56,33 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"+",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				intValues := extractValues[int](a, b)
-				return values.MakeInteger(intValues[0] + intValues[1])
+				return values.MakeInteger(aInt.Value + bInt.Value)
 			}
 
-			_, isAString := a.(*values.StringLiteral)
-			_, isBString := b.(*values.StringLiteral)
+			aString, isAString := a.(*values.StringLiteral)
+			bString, isBString := b.(*values.StringLiteral)
 
 			if isAString && isBString {
-				stringValues := extractValues[string](a, b)
-				return values.MakeString(stringValues[0] + stringValues[1])
+				return values.MakeString(aString.Value + bString.Value)
 			}
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeFloat(valueA + valueB)
@@ -94,27 +92,26 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"-",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				intValues := extractValues[int](a, b)
-				return values.MakeInteger(intValues[0] - intValues[1])
+				return values.MakeInteger(aInt.Value + bInt.Value)
 			}
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeFloat(valueA - valueB)
@@ -124,27 +121,26 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"*",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				intValues := extractValues[int](a, b)
-				return values.MakeInteger(intValues[0] * intValues[1])
+				return values.MakeInteger(aInt.Value + bInt.Value)
 			}
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeFloat(valueA * valueB)
@@ -154,22 +150,22 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"/",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeFloat(valueA / valueB)
@@ -179,16 +175,16 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"**",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
 			var valueA float64
-			valueB := float64(extractValues[int](b)[0])
+			valueB := float64(b.(*values.IntegerLiteral).Value)
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 				return values.MakeInteger(int(math.Pow(valueA, valueB)))
 			}
 
-			valueA = extractValues[float64](a)[0]
+			valueA = a.(*values.FloatLiteral).Value
 
 			return values.MakeFloat(math.Pow(valueA, valueB))
 		},
@@ -197,27 +193,26 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"%",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				intValues := extractValues[int](a, b)
-				return values.MakeInteger(intValues[0] % intValues[1])
+				return values.MakeInteger(aInt.Value + bInt.Value)
 			}
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeFloat(modulo(valueA, valueB))
@@ -227,22 +222,22 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		">",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeBoolean(valueA > valueB)
@@ -252,22 +247,22 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		">=",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeBoolean(valueA >= valueB)
@@ -277,22 +272,22 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"<",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeBoolean(valueA < valueB)
@@ -302,22 +297,22 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"<=",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			_, isAInt := a.(*values.IntegerLiteral)
-			_, isBInt := b.(*values.IntegerLiteral)
+			aInt, isAInt := a.(*values.IntegerLiteral)
+			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			var valueA float64
 			var valueB float64
 
 			if isAInt {
-				valueA = float64(extractValues[int](a)[0])
+				valueA = float64(aInt.Value)
 			} else {
-				valueA = extractValues[float64](a)[0]
+				valueA = a.(*values.FloatLiteral).Value
 			}
 
 			if isBInt {
-				valueB = float64(extractValues[int](b)[0])
+				valueB = float64(bInt.Value)
 			} else {
-				valueB = extractValues[float64](b)[0]
+				valueB = b.(*values.FloatLiteral).Value
 			}
 
 			return values.MakeBoolean(valueA <= valueB)
@@ -338,38 +333,78 @@ func registerOperators() {
 		},
 	)
 
+	RegisterBinaryOperator(
+		"<<",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			list, isList := a.(*values.ListLiteral)
+			if isList {
+				list.Elements = append(list.Elements, b)
+				return list
+			}
+
+			aInt := a.(*values.IntegerLiteral).Value
+			bInt := b.(*values.IntegerLiteral).Value
+
+			return values.MakeInteger(aInt << bInt)
+		},
+	)
+
+	RegisterBinaryOperator(
+		">>",
+		func(a, b values.RuntimeValue) values.RuntimeValue {
+			list, isList := b.(*values.ListLiteral)
+			if isList {
+				newElems := []values.RuntimeValue{a}
+				newElems = append(newElems, list.Elements...)
+				list.Elements = newElems
+				return list
+			}
+
+			aInt := a.(*values.IntegerLiteral).Value
+			bInt := b.(*values.IntegerLiteral).Value
+
+			return values.MakeInteger(aInt >> bInt)
+		},
+	)
+
 	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 		return values.MakeBoolean(!value.Truthy())
 	})
 
 	RegisterUnaryOperator("-", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-		if _, isInt := value.(*values.IntegerLiteral); isInt {
-			intVal := extractValues[int](value)[0]
+		if intValue, isInt := value.(*values.IntegerLiteral); isInt {
+			intVal := intValue.Value
 			return values.MakeInteger(-intVal)
 		}
 
-		floatVal := extractValues[float64](value)[0]
+		floatVal := value.(*values.FloatLiteral).Value
 		return values.MakeFloat(-floatVal)
 	})
 
 	RegisterUnaryOperator("++", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-		_, isInt := value.(*values.IntegerLiteral)
+		intValue, isInt := value.(*values.IntegerLiteral)
 		if isInt {
-			intValue := extractValues[int](value)[0]
-			return env.AssignVariable(value.Varname(), values.MakeInteger(intValue + 1))
+			intValue.Value++
+			return intValue
+			// return env.AssignVariable(value.Varname(), values.MakeInteger(intValue + 1))
 		}
-		floatValue := extractValues[float64](value)[0]
-		return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue + 1.0))
+		floatValue := value.(*values.FloatLiteral)
+		floatValue.Value++
+		return floatValue
+		// return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue + 1.0))
 	})
 
 	RegisterUnaryOperator("--", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-		_, isInt := value.(*values.IntegerLiteral)
+		intValue, isInt := value.(*values.IntegerLiteral)
 		if isInt {
-			intValue := extractValues[int](value)[0]
-			return env.AssignVariable(value.Varname(), values.MakeInteger(intValue - 1))
+			intValue.Value--
+			return intValue
+			// return env.AssignVariable(value.Varname(), values.MakeInteger(intValue - 1))
 		}
-		floatValue := extractValues[float64](value)[0]
-		return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue - 1.0))
+		floatValue := value.(*values.FloatLiteral)
+		floatValue.Value--
+		return floatValue
+		// return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue - 1.0))
 	})
 
 	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {

@@ -81,6 +81,48 @@ func logicalOperator(leftType, rightType types.ValidType) types.ValidType {
 	return types.MakeUnion(leftType, rightType)
 }
 
+func leftShift(leftType, rightType types.ValidType) types.ValidType {
+	if intType.Valid(leftType) && intType.Valid(rightType) {
+		return intType
+	}
+
+	list, isList := leftType.(*types.ListLiteral)
+	if isList {
+		if !list.ElemType.Valid(rightType) {
+			return types.Error(fmt.Sprintf("Cannot append value of type %q to list of type %q", rightType, leftType))
+		}
+		return leftType
+	}
+
+	_, isArray := leftType.(*types.ArrayLiteral)
+	if isArray {
+		return types.Error("Cannot append items to an array of fixed length")
+	}
+
+	return nil
+}
+
+func rightShift(leftType, rightType types.ValidType) types.ValidType {
+	if intType.Valid(leftType) && intType.Valid(rightType) {
+		return intType
+	}
+
+	list, isList := rightType.(*types.ListLiteral)
+	if isList {
+		if !list.ElemType.Valid(leftType) {
+			return types.Error(fmt.Sprintf("Cannot prepend value of type %q to list of type %q", rightType, leftType))
+		}
+		return rightType
+	}
+
+	_, isArray := rightType.(*types.ArrayLiteral)
+	if isArray {
+		return types.Error("Cannot prepend items to an array of fixed length")
+	}
+
+	return nil
+}
+
 func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 	if !numberType.Valid(dataType) {
 		return nil
@@ -115,6 +157,9 @@ func registerOperators() {
 	registerRegularBinaryOperator("<=", numberType, numberType, boolType)
 	registerRegularBinaryOperator("==", &types.Any{}, &types.Any{}, boolType)
 	registerRegularBinaryOperator("!=", &types.Any{}, &types.Any{}, boolType)
+	
+	registerBinaryOperator("<<", leftShift)
+	registerBinaryOperator(">>", rightShift)
 
 	registerBinaryOperator("||", logicalOperator)
 	registerBinaryOperator("&&", logicalOperator)

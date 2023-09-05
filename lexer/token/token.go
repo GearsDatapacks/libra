@@ -46,6 +46,9 @@ const (
 	EQUAL           = "EQUAL"
 	NOT_EQUAL       = "NOT_EQUAL"
 
+	LEFT_SHIFT  = "LEFT_SHIFT"
+	RIGHT_SHIFT = "RIGHT_SHIFT"
+
 	ADD      = "ADD"
 	SUBTRACT = "SUBTRACT"
 
@@ -87,6 +90,9 @@ var Symbols = map[string]Type{
 	"/=": DIV_ASSIGN,
 	"%=": MOD_ASSIGN,
 
+	"<<": LEFT_SHIFT,
+	">>": RIGHT_SHIFT,
+
 	"<":  LESS_THAN,
 	"<=": LESS_THAN_EQ,
 	">":  GREATER_THAN,
@@ -111,6 +117,11 @@ var ComparisonOperator = []Type{
 	GREATER_THAN_EQ,
 	EQUAL,
 	NOT_EQUAL,
+}
+
+var BitshiftOperator = []Type{
+	LEFT_SHIFT,
+	RIGHT_SHIFT,
 }
 
 var AssignmentOperator = []Type{
