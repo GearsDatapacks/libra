@@ -40,6 +40,16 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 }
 
 func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	dataType := types.FromAst(varDec.DataType)
+	if dataType.String() == "TypeError" {
+		return dataType
+	}
+	
+	if varDec.Value == nil {
+		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
+		return dataType
+	}
+
 	expressionType := typeCheckExpression(varDec.Value, symbolTable)
 	if expressionType.String() == "TypeError" {
 		return expressionType
@@ -49,7 +59,7 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 		return types.Error(fmt.Sprintf("Cannot assign void to variable %q", varDec.Name), varDec)
 	}
 
-	if varDec.DataType.Type() == "Infer" {
+	if dataType.String() == "Infer" {
 		err := symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		if err != nil {
 			return err
@@ -57,10 +67,6 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 		return expressionType
 	}
 
-	dataType := types.FromAst(varDec.DataType)
-	if dataType.String() == "TypeError" {
-		return dataType
-	}
 	correctType := dataType.Valid(expressionType)
 
 	if partial, ok := dataType.(types.PartialType); ok {
