@@ -142,6 +142,32 @@ func (array *ArrayLiteral) IndexBy(dataType ValidType) ValidType {
 	return array.ElemType
 }
 
+type MapLiteral struct {
+	BaseType
+	KeyType   ValidType
+	ValueType ValidType
+	Length    int
+}
+
+func (maplit *MapLiteral) String() string {
+	return fmt.Sprintf("{%s: %s}", maplit.KeyType.String(), maplit.ValueType.String())
+}
+
+func (maplit *MapLiteral) Valid(t ValidType) bool {
+	otherMap, isMap := t.(*MapLiteral)
+	if !isMap {
+		return false
+	}
+	return maplit.KeyType.Valid(otherMap.KeyType) && maplit.ValueType.Valid(otherMap.ValueType)
+}
+
+func (maplit *MapLiteral) IndexBy(dataType ValidType) ValidType {
+	if !maplit.KeyType.Valid(dataType) {
+		return nil
+	}
+	return maplit.ValueType
+}
+
 type Void struct{ BaseType }
 
 func (v *Void) String() string         { return "void" }

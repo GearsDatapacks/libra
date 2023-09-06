@@ -75,6 +75,22 @@ func FromAst(node ast.TypeExpression) ValidType {
 			ElemType: dataType,
 			Length:   typeExpr.Length,
 		}
+	
+	case *ast.MapType:
+		keyType := FromAst(typeExpr.KeyType)
+		if keyType.String() == "TypeError" {
+			return keyType
+		}
+
+		valueType := FromAst(typeExpr.ValueType)
+		if valueType.String() == "TypeError" {
+			return valueType
+		}
+
+		return &MapLiteral{
+			KeyType: keyType,
+			ValueType: valueType,
+		}
 
 	case *ast.VoidType:
 		return &Void{}

@@ -44,6 +44,9 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	case *ast.ListLiteral:
 		return typeCheckList(expression, symbolTable)
 
+	case *ast.MapLiteral:
+		return typeCheckMap(expression, symbolTable)
+
 	case *ast.IndexExpression:
 		return typeCheckIndexExpression(expression, symbolTable)
 
@@ -158,6 +161,51 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) type
 		ElemType: types.MakeUnion(listTypes...),
 		Length:   len(list.Elements),
 		CanInfer: true,
+	}
+}
+
+func typeCheckMap(maplit *ast.MapLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+	keyTypes := []types.ValidType{}
+	valueTypes := []types.ValidType{}
+
+	for key, value := range maplit.Elements {
+		keyType := typeCheckExpression(key, symbolTable)
+		if keyType.String() == "TypeError" {
+			return keyType
+		}
+		newType := true
+		for _, dataType := range keyTypes {
+			if dataType.Valid(keyType) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
+			keyTypes = append(keyTypes, keyType)
+		}
+
+		valueType := typeCheckExpression(value, symbolTable)
+		if valueType.String() == "TypeError" {
+			return valueType
+		}
+
+		newType = true
+		for _, dataType := range valueTypes {
+			if dataType.Valid(valueType) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
+			valueTypes = append(valueTypes, valueType)
+		}
+	}
+
+	return &types.MapLiteral{
+		KeyType: types.MakeUnion(keyTypes...),
+		ValueType: types.MakeUnion(valueTypes...),
 	}
 }
 
