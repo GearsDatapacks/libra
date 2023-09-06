@@ -205,6 +205,64 @@ func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 	return list.Elements[index]
 }
 
+type MapLiteral struct {
+	BaseValue
+	Elements map[RuntimeValue]RuntimeValue
+}
+
+func (maplit *MapLiteral) Type() ValueType {
+	return "map"
+}
+
+func (maplit *MapLiteral) ToString() string {
+	result := "{"
+
+	elemStrings := []string{}
+
+	for key, value := range maplit.Elements {
+		elemStrings = append(elemStrings, key.ToString())
+		elemStrings[len(elemStrings)-1] += ": "
+		elemStrings[len(elemStrings)-1] += value.ToString()
+	}
+
+	result += strings.Join(elemStrings, ", ")
+	result += "}"
+	return result
+}
+
+func (maplit *MapLiteral) EqualTo(other RuntimeValue) bool {
+	otherMap, ok := other.(*MapLiteral)
+	if !ok {
+		return false
+	}
+
+	if len(otherMap.Elements) != len(maplit.Elements) {
+		return false
+	}
+
+	for key, value := range maplit.Elements {
+		if !value.EqualTo(otherMap.Elements[key]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (maplit *MapLiteral) Truthy() bool {
+	return len(maplit.Elements) != 0
+}
+
+func (maplit *MapLiteral) Index(indexValue RuntimeValue) RuntimeValue {
+	for key, value := range maplit.Elements {
+		if key.EqualTo(indexValue) {
+			return value
+		}
+	}
+
+	return MakeNull()
+}
+
 type FunctionValue struct {
 	BaseValue
 	Name                   string

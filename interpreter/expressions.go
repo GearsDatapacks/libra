@@ -34,6 +34,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	
 	case *ast.ListLiteral:
 		return evaluateList(expression, env)
+	
+	case *ast.MapLiteral:
+		return evaluateMap(expression, env)
 
 	case *ast.AssignmentExpression:
 		return evaluateAssignmentExpression(expression, env)
@@ -115,6 +118,20 @@ func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.Ru
 	}
 
 	return &values.ListLiteral{
+		Elements: evaluatedValues,
+	}
+}
+
+func evaluateMap(maplit *ast.MapLiteral, env *environment.Environment) values.RuntimeValue {
+	evaluatedValues := map[values.RuntimeValue]values.RuntimeValue{}
+
+	for key, value := range maplit.Elements {
+		keyValue := evaluateExpression(key, env)
+		valueValue := evaluateExpression(value, env)
+		evaluatedValues[keyValue] = valueValue
+	}
+
+	return &values.MapLiteral{
 		Elements: evaluatedValues,
 	}
 }
