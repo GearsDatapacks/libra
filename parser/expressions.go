@@ -51,9 +51,9 @@ func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error)
 
 		op := p.consume().Value
 
-		newMinPrec := minPrecedence + 1
+		newMinPrec := opInfo.Precedence + 1
 		if opInfo.RightAssociative {
-			newMinPrec = minPrecedence
+			newMinPrec = opInfo.Precedence
 		}
 
 		right, err := p.parseBinaryOperation(newMinPrec)
