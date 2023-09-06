@@ -28,6 +28,7 @@ const (
 	RIGHT_SQUARE = "RIGHT_SQUARE"
 	COMMA        = "COMMA"
 	SEMICOLON    = "SEMICOLON"
+	COLON        = "COLON"
 
 	ASSIGN     = "ASSIGN"
 	ADD_ASSIGN = "ADD_ASSIGN"
@@ -75,6 +76,7 @@ var Symbols = map[string]Type{
 	"]": RIGHT_SQUARE,
 	",": COMMA,
 	";": SEMICOLON,
+	":": COLON,
 
 	"+":  ADD,
 	"-":  SUBTRACT,
@@ -143,15 +145,15 @@ var BinOpInfo = map[Type]struct {
 	EQUAL:           {Precedence: 2},
 	NOT_EQUAL:       {Precedence: 2},
 
-	LEFT_SHIFT: {Precedence: 3},
+	LEFT_SHIFT:  {Precedence: 3},
 	RIGHT_SHIFT: {Precedence: 3, RightAssociative: true},
 
-	ADD: {Precedence: 4},
+	ADD:      {Precedence: 4},
 	SUBTRACT: {Precedence: 4},
-	
+
 	MULTIPLY: {Precedence: 5},
-	DIVIDE: {Precedence: 5},
-	MODULO: {Precedence: 5},
+	DIVIDE:   {Precedence: 5},
+	MODULO:   {Precedence: 5},
 
 	POWER: {Precedence: 6, RightAssociative: true},
 }

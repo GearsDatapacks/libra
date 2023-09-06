@@ -81,6 +81,19 @@ func (at *ArrayType) String() string {
 	return fmt.Sprintf("%s{%s}", at.ElementType.String(), lengthString)
 }
 
+type MapType struct {
+	*BaseNode
+	*BaseType
+	KeyType TypeExpression
+	ValueType TypeExpression
+}
+
+func (*MapType) Type() NodeType { return "MapType" }
+
+func (mt *MapType) String() string {
+	return fmt.Sprintf("{%s: %s}", mt.KeyType.String(), mt.ValueType.String())
+}
+
 type InferType struct {
 	*BaseNode
 	*BaseType

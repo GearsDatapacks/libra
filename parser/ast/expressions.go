@@ -111,6 +111,30 @@ func (list *ListLiteral) String() string {
 	return result
 }
 
+type MapLiteral struct {
+	*BaseNode
+	*BaseExpression
+	Elements map[Expression]Expression
+}
+
+func (*MapLiteral) Type() NodeType { return "Map" }
+
+func (maplit *MapLiteral) String() string {
+	result := "{"
+	valueStrings := []string{}
+
+	for key, value := range maplit.Elements {
+		valueStrings = append(valueStrings, key.String())
+		valueStrings[len(valueStrings)-1] += ": "
+		valueStrings[len(valueStrings)-1] += value.String()
+	}
+
+	result += strings.Join(valueStrings, ", ")
+
+	result += "}"
+	return result
+}
+
 type FunctionCall struct {
 	*BaseNode
 	*BaseExpression

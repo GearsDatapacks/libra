@@ -42,7 +42,7 @@ func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for {
 		opInfo, isOp := token.BinOpInfo[p.next().Type]
 		if !isOp || opInfo.Precedence < minPrecedence {
@@ -178,6 +178,48 @@ func (p *parser) parseList() (ast.Expression, error) {
 	}, nil
 }
 
+func (p *parser) parseMap() (ast.Expression, error) {
+	tok := p.consume()
+
+	values := map[ast.Expression]ast.Expression{}
+
+	for p.next().Type != token.RIGHT_BRACE {
+		keyExpr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = p.expect(token.COLON, "Expected ':' after map key")
+		if err != nil {
+			return nil, err
+		}
+
+		valueExpr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		values[keyExpr] = valueExpr
+
+		if p.next().Type != token.RIGHT_BRACE {
+			_, err = p.expect(token.COMMA, "Expected comma after map entry")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	_, err := p.expect(token.RIGHT_BRACE, "Expected closing brace after map")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.MapLiteral{
+		Elements: values,
+		BaseNode: &ast.BaseNode{Token: tok},
+	}, nil
+}
+
 func (p *parser) parseIdentifier() (ast.Expression, error) {
 	if p.isKeyword("true") {
 		tok := p.consume()
@@ -261,6 +303,9 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 
 	case token.LEFT_SQUARE:
 		return p.parseList()
+
+	case token.LEFT_BRACE:
+		return p.parseMap()
 
 	default:
 		return nil, p.error(fmt.Sprintf("Expected expression, got %q", p.next().Value), p.next())

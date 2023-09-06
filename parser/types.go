@@ -102,6 +102,33 @@ func (p *parser) parseArrayType() (ast.TypeExpression, error) {
 	return elemType, nil
 }
 
+func (p *parser) parseMapType() (ast.TypeExpression, error) {
+	tok := p.consume()
+
+	keyType, err := p.parseType()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.expect(token.COLON, "Expected ':' in map type")
+	if err != nil {
+		return nil, err
+	}
+
+	valueType, err := p.parseType()
+	if err != nil {
+		return nil, err
+	}
+
+	p.expect(token.RIGHT_BRACE, "Expected closing brace after map type")
+
+	return &ast.MapType{
+		BaseNode:  &ast.BaseNode{Token: tok},
+		KeyType:   keyType,
+		ValueType: valueType,
+	}, nil
+}
+
 func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 	switch p.next().Type {
 	case token.IDENTIFIER:
@@ -116,6 +143,9 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 		}
 		_, err = p.expect(token.RIGHT_PAREN, "Expected closing bracket after expression, got %q")
 		return expr, err
+	
+	case token.LEFT_BRACE:
+		return p.parseMapType()
 		
 	default:
 		return nil, p.error(fmt.Sprintf("Expected type, got %q", p.next().Value), p.next())
