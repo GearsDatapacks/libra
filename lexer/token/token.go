@@ -144,7 +144,7 @@ var BinOpInfo = map[Type]struct {
 	NOT_EQUAL:       {Precedence: 2},
 
 	LEFT_SHIFT: {Precedence: 3},
-	RIGHT_SHIFT: {Precedence: 3},
+	RIGHT_SHIFT: {Precedence: 3, RightAssociative: true},
 
 	ADD: {Precedence: 4},
 	SUBTRACT: {Precedence: 4},
@@ -153,7 +153,7 @@ var BinOpInfo = map[Type]struct {
 	DIVIDE: {Precedence: 5},
 	MODULO: {Precedence: 5},
 
-	POWER: {Precedence: 6},
+	POWER: {Precedence: 6, RightAssociative: true},
 }
 
 func (tokenType Type) Is(opGroup []Type) bool {
