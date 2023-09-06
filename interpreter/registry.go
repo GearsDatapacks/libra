@@ -96,7 +96,7 @@ func registerOperators() {
 			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value + bInt.Value)
+				return values.MakeInteger(aInt.Value - bInt.Value)
 			}
 
 			var valueA float64
@@ -125,7 +125,7 @@ func registerOperators() {
 			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value + bInt.Value)
+				return values.MakeInteger(aInt.Value * bInt.Value)
 			}
 
 			var valueA float64
@@ -197,7 +197,7 @@ func registerOperators() {
 			bInt, isBInt := b.(*values.IntegerLiteral)
 
 			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value + bInt.Value)
+				return values.MakeInteger(aInt.Value % bInt.Value)
 			}
 
 			var valueA float64
