@@ -20,7 +20,7 @@ func (p *parser) parseArgumentList() ([]ast.Expression, error) {
 		}
 	}
 
-	_, err = p.expect(token.RIGHT_PAREN, "Expected ')' after argument list, got %q")
+	_, err = p.expect(token.RIGHT_PAREN, "Expected comma or end of argument list")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (p *parser) parseParameterList() ([]ast.Parameter, error) {
 		}
 	}
 
-	_, err = p.expect(token.RIGHT_PAREN, "Expected ')' after parameter list, got %q")
+	_, err = p.expect(token.RIGHT_PAREN, "Expected comma or end of parameter list")
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (p *parser) parseParameters() ([]ast.Parameter, error) {
 }
 
 func (p *parser) parseParameter() (ast.Parameter, error) {
-	name, err := p.expect(token.IDENTIFIER, "Expected identifier for parameter name")
+	name, err := p.expect(token.IDENTIFIER, "Invalid parameter name %q")
 	if err != nil {
 		return ast.Parameter{}, err
 	}
@@ -108,7 +108,7 @@ func (p *parser) parseCodeBlock() ([]ast.Statement, error) {
 	outerSymbols := make([]string, len(p.usedSymbols))
 	copy(outerSymbols, p.usedSymbols)
 
-	_, err := p.expect(token.LEFT_BRACE, "Expected '{' to begin code block")
+	_, err := p.expect(token.LEFT_BRACE, "Unexpected %q, expected code block")
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (p *parser) parseCodeBlock() ([]ast.Statement, error) {
 
 	p.usedSymbols = outerSymbols
 
-	_, err = p.expect(token.RIGHT_BRACE, "Expected '}' after code block")
+	_, err = p.expect(token.RIGHT_BRACE, "Unexpected %q, expected '}")
 	if err != nil {
 		return nil, err
 	}

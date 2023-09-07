@@ -69,7 +69,7 @@ func (p *parser) parseArrayType() (ast.TypeExpression, error) {
 		
 		if p.isKeyword("_") {
 			p.consume()
-			_, err := p.expect(token.RIGHT_SQUARE, "Array types must contain one entry")
+			_, err := p.expect(token.RIGHT_SQUARE, "Unexpected %q, expecting ']'")
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +88,7 @@ func (p *parser) parseArrayType() (ast.TypeExpression, error) {
 
 		length, _ := strconv.ParseInt(lengthTok.Value, 10, 32)
 		intLength := int(length)
-		_, err = p.expect(token.RIGHT_SQUARE, "Array types must contain one entry")
+		_, err = p.expect(token.RIGHT_SQUARE, "Unexpected %q, expecting ']'")
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (p *parser) parseMapType() (ast.TypeExpression, error) {
 		return nil, err
 	}
 
-	_, err = p.expect(token.COLON, "Expected ':' in map type")
+	_, err = p.expect(token.COLON, "Unexpected %q, expecting ':'")
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,10 @@ func (p *parser) parseMapType() (ast.TypeExpression, error) {
 		return nil, err
 	}
 
-	p.expect(token.RIGHT_BRACE, "Expected closing brace after map type")
+	_, err = p.expect(token.RIGHT_BRACE, "Unexpected %q, expecting '}'")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.MapType{
 		BaseNode:  &ast.BaseNode{Token: tok},
@@ -141,7 +144,7 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = p.expect(token.RIGHT_PAREN, "Expected closing bracket after expression, got %q")
+		_, err = p.expect(token.RIGHT_PAREN, "Unexpected %q, expecting ')'")
 		return expr, err
 	
 	case token.LEFT_BRACE:

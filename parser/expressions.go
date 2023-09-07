@@ -124,7 +124,10 @@ func (p *parser) parseIndexExpression() (ast.Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.expect(token.RIGHT_SQUARE, "Expected bracket after index expression")
+	_, err = p.expect(token.RIGHT_SQUARE, "Unexpected token %q, expecting ']'")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.IndexExpression{
 		Left:     left,
@@ -160,14 +163,14 @@ func (p *parser) parseList() (ast.Expression, error) {
 		values = append(values, nextExpr)
 
 		if p.next().Type != token.RIGHT_SQUARE {
-			_, err := p.expect(token.COMMA, "Expected comma after list entry, got %q")
+			_, err := p.expect(token.COMMA, "Expected comma or end of list")
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	_, err := p.expect(token.RIGHT_SQUARE, "Expected closing bracket after list, got %q")
+	_, err := p.expect(token.RIGHT_SQUARE, "Unexpected EOF, expecting ']'")
 	if err != nil {
 		return nil, err
 	}
@@ -183,13 +186,13 @@ func (p *parser) parseMap() (ast.Expression, error) {
 
 	values := map[ast.Expression]ast.Expression{}
 
-	for p.next().Type != token.RIGHT_BRACE {
+	for p.next().Type != token.RIGHT_BRACE && !p.eof() {
 		keyExpr, err := p.parseExpression()
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = p.expect(token.COLON, "Expected ':' after map key")
+		_, err = p.expect(token.COLON, "Unexpected %q, expecting ':'")
 		if err != nil {
 			return nil, err
 		}
@@ -202,14 +205,14 @@ func (p *parser) parseMap() (ast.Expression, error) {
 		values[keyExpr] = valueExpr
 
 		if p.next().Type != token.RIGHT_BRACE {
-			_, err = p.expect(token.COMMA, "Expected comma after map entry")
+			_, err = p.expect(token.COMMA, "Expected comma or end of map")
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	_, err := p.expect(token.RIGHT_BRACE, "Expected closing brace after map")
+	_, err := p.expect(token.RIGHT_BRACE, "Unexpected EOF, expecting '}'")
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +296,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 			return nil, err
 		}
 
-		_, err = p.expect(token.RIGHT_PAREN, "Expected closing parentheses after bracketed expression, got %q")
+		_, err = p.expect(token.RIGHT_PAREN, "Unexpected %q, expecting ')'")
 		if err != nil {
 			return nil, err
 		}

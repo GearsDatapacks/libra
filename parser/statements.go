@@ -29,15 +29,19 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseExpressionStatement()
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	if len(inline) != 0 && inline[0] {
-		return statement, err
+		return statement, nil
 	}
 
 	if !p.eof() && !p.next().LeadingNewline {
 		return nil, p.error(fmt.Sprintf("Expected new line after statement, got %q", p.next().Value), p.next())
 	}
 
-	return statement, err
+	return statement, nil
 }
 
 func (p *parser) parseExpressionStatement() (ast.Statement, error) {
@@ -57,7 +61,7 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 	isConstant := tok.Value == "const"
 	name, err := p.expect(
 		token.IDENTIFIER,
-		"Expected identifier for variable declaration, got %q",
+		"Invalid variable name %q",
 	)
 	if err != nil {
 		return nil, err
@@ -117,7 +121,7 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 	tok := p.consume()
 
-	name, err := p.expect(token.IDENTIFIER, "Expected function name, got %q")
+	name, err := p.expect(token.IDENTIFIER, "Invalid function name %q")
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +256,7 @@ func (p *parser) parseForLoop() (ast.Statement, error) {
 		return nil, err
 	}
 
-	_, err = p.expect(token.SEMICOLON, "Expected for loop condition")
+	_, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +265,7 @@ func (p *parser) parseForLoop() (ast.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.expect(token.SEMICOLON, "Expected for loop update statement")
+	_, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
 	if err != nil {
 		return nil, err
 	}
