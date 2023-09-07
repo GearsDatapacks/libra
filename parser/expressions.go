@@ -115,25 +115,25 @@ func (p *parser) parseIndexExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	if p.next().Type != token.LEFT_SQUARE {
-		return left, nil
+	for p.next().Type == token.LEFT_SQUARE {
+		p.consume()
+		index, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		_, err = p.expect(token.RIGHT_SQUARE, "Unexpected token %q, expecting ']'")
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.IndexExpression{
+			Left:     left,
+			Index:    index,
+			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		}
 	}
 
-	p.consume()
-	index, err := p.parseExpression()
-	if err != nil {
-		return nil, err
-	}
-	_, err = p.expect(token.RIGHT_SQUARE, "Unexpected token %q, expecting ']'")
-	if err != nil {
-		return nil, err
-	}
-
-	return &ast.IndexExpression{
-		Left:     left,
-		Index:    index,
-		BaseNode: &ast.BaseNode{Token: left.GetToken()},
-	}, nil
+	return left, nil
 }
 
 func (p *parser) parseFunctionCall() (ast.Expression, error) {
