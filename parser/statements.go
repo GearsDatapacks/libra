@@ -11,6 +11,10 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 	var statement ast.Statement
 	var err error = nil
 
+	if p.needsNewline() && !p.eof() && !p.next().LeadingNewline {
+		return nil, p.error(fmt.Sprintf("Expected new line after statement, got %q", p.next().Value), p.next())
+	}
+
 	if p.isKeyword("var") || p.isKeyword("const") {
 		statement, err = p.parseVariableDeclaration()
 	} else if p.isKeyword("fn") {
@@ -37,10 +41,7 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		return statement, nil
 	}
 
-	if !p.eof() && !p.next().LeadingNewline {
-		return nil, p.error(fmt.Sprintf("Expected new line after statement, got %q", p.next().Value), p.next())
-	}
-
+	p.requireNewline = true
 	return statement, nil
 }
 

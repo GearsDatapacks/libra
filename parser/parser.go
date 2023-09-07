@@ -11,6 +11,7 @@ import (
 type parser struct {
 	tokens       []token.Token
 	bracketLevel int
+	requireNewline bool
 	usedSymbols  []string
 }
 
@@ -64,6 +65,12 @@ func (p *parser) canContinue() bool {
 
 func (p *parser) error(message string, errorToken token.Token) error {
 	return fmt.Errorf("SyntaxError at line %d, column %d: %s", errorToken.Line, errorToken.Column, message)
+}
+
+func (p *parser) needsNewline() bool {
+	needsNewline := p.requireNewline
+	p.requireNewline = false
+	return needsNewline
 }
 
 func (p *parser) Parse(tokens []token.Token) (ast.Program, error) {
