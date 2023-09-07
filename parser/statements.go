@@ -29,6 +29,8 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseWhileLoop()
 	} else if p.isKeyword("for") {
 		statement, err = p.parseForLoop()
+	} else if p.isKeyword("struct") {
+		statement, err = p.parseStructDeclaration()
 	} else {
 		statement, err = p.parseExpressionStatement()
 	}
@@ -207,11 +209,11 @@ func (p *parser) parseIfStatement() (*ast.IfStatement, error) {
 				return nil, err
 			}
 			elseStatement = &ast.ElseStatement{
-				Body: code,
+				Body:     code,
 				BaseNode: &ast.BaseNode{Token: elseToken},
 			}
 		} else {
-			elseStatement, err = p.parseIfStatement()	
+			elseStatement, err = p.parseIfStatement()
 		}
 
 		if err != nil {
@@ -221,9 +223,9 @@ func (p *parser) parseIfStatement() (*ast.IfStatement, error) {
 
 	return &ast.IfStatement{
 		Condition: condition,
-		Body: body,
-		BaseNode: &ast.BaseNode{Token: tok},
-		Else: elseStatement,
+		Body:      body,
+		BaseNode:  &ast.BaseNode{Token: tok},
+		Else:      elseStatement,
 	}, nil
 }
 
@@ -241,8 +243,8 @@ func (p *parser) parseWhileLoop() (ast.Statement, error) {
 
 	return &ast.WhileLoop{
 		Condition: condition,
-		Body: body,
-		BaseNode: &ast.BaseNode{Token: tok},
+		Body:      body,
+		BaseNode:  &ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -284,10 +286,51 @@ func (p *parser) parseForLoop() (ast.Statement, error) {
 	p.usedSymbols = outerSymbols
 
 	return &ast.ForLoop{
-		Initial: initial,
+		Initial:   initial,
 		Condition: condition,
-		Update: update,
-		Body: body,
+		Update:    update,
+		Body:      body,
+		BaseNode:  &ast.BaseNode{Token: tok},
+	}, nil
+}
+
+func (p *parser) parseStructDeclaration() (ast.Statement, error) {
+	tok := p.consume()
+
+	name, err := p.expect(token.IDENTIFIER, "Invalid struct name %q")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.expect(token.LEFT_BRACE, "Expected struct body")
+	if err != nil {
+		return nil, err
+	}
+
+	members := map[string]ast.TypeExpression{}
+
+	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+		memberName, err := p.expect(token.IDENTIFIER, "Expected closing brace or struct member")
+		if err != nil {
+			return nil, err
+		}
+		memberType, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+
+		members[memberName.Value] = memberType
+
+		if p.next().Type != token.RIGHT_BRACE && !p.next().LeadingNewline {
+			return nil, p.error("Expected newline or end of struct body", p.next())
+		}
+	}
+
+	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+
+	return &ast.StructDeclaration{
 		BaseNode: &ast.BaseNode{Token: tok},
+		Name:     name.Value,
+		Members:  members,
 	}, nil
 }

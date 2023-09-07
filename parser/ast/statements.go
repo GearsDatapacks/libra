@@ -206,3 +206,30 @@ func (forLoop *ForLoop) String() string {
 
 	return result
 }
+
+type StructDeclaration struct {
+	*BaseNode
+	*BaseStatment
+	Name string
+	Members map[string]TypeExpression
+}
+
+func (structDec *StructDeclaration) Type() NodeType { return "StructDeclaration" }
+
+func (structDec *StructDeclaration) String() string {
+	result := "struct "
+
+	result += structDec.Name
+	result += " {\n"
+
+	for name, dataType := range structDec.Members {
+		result += name
+		result += " "
+		result += dataType.String()
+		result += "\n"
+	}
+
+	result += "}"
+
+	return result
+}

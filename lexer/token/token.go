@@ -27,6 +27,7 @@ const (
 	LEFT_SQUARE  = "LEFT_SQUARE"
 	RIGHT_SQUARE = "RIGHT_SQUARE"
 	COMMA        = "COMMA"
+	DOT          = "DOT"
 	SEMICOLON    = "SEMICOLON"
 	COLON        = "COLON"
 
@@ -75,6 +76,7 @@ var Symbols = map[string]Type{
 	"[": LEFT_SQUARE,
 	"]": RIGHT_SQUARE,
 	",": COMMA,
+	".": DOT,
 	";": SEMICOLON,
 	":": COLON,
 

@@ -236,3 +236,41 @@ func (index *IndexExpression) Type() NodeType { return "IndexExpression" }
 func (index *IndexExpression) String() string {
 	return fmt.Sprintf("%s[%s]", index.Left.String(), index.Index.String())
 }
+
+type MemberExpression struct {
+	*BaseNode
+	*BaseExpression
+	Left Expression
+	Member string
+}
+
+func (member *MemberExpression) Type() NodeType { return "MemberExpression" }
+
+func (member *MemberExpression) String() string {
+	return fmt.Sprintf("%s.%s", member.Left.String(), member.Member)
+}
+
+type StructExpression struct {
+	*BaseNode
+	*BaseExpression
+	Name string
+	Members map[string]Expression
+}
+
+func (structExpr *StructExpression) Type() NodeType { return "StructExpression" }
+
+func (structExpr *StructExpression) String() string {
+	result := structExpr.Name
+	result += " {\n"
+
+	for memberName, memberValue := range structExpr.Members {
+		result += memberName
+		result += ": "
+		result += memberValue.String()
+		result += ",\n"
+	}
+
+	result += "}"
+
+	return result
+}

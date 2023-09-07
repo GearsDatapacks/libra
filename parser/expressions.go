@@ -92,7 +92,7 @@ func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 }
 
 func (p *parser) parsePostfixOperation() (ast.Expression, error) {
-	value, err := p.parseIndexExpression()
+	value, err := p.parseMemberExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +107,29 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 	}
 
 	return value, nil
+}
+
+func (p *parser) parseMemberExpression() (ast.Expression, error) {
+	left, err := p.parseIndexExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.next().Type == token.DOT {
+		p.consume()
+		memberName, err := p.expect(token.IDENTIFIER, "Invalid member name %q")
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.MemberExpression{
+			Left:     left,
+			Member:    memberName.Value,
+			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		}
+	}
+
+	return left, nil
 }
 
 func (p *parser) parseIndexExpression() (ast.Expression, error) {
@@ -148,6 +171,47 @@ func (p *parser) parseFunctionCall() (ast.Expression, error) {
 		Name:     token.Value,
 		Args:     args,
 		BaseNode: &ast.BaseNode{Token: token},
+	}, nil
+}
+
+func (p *parser) parseStructExpression() (ast.Expression, error) {
+	name := p.consume()
+	p.consume()
+
+	members := map[string]ast.Expression{}
+
+	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+		memberName, err := p.expect(token.IDENTIFIER, "Invalid struct member name %q")
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = p.expect(token.COLON, "Unexpected %q, expected ':'")
+		if err != nil {
+			return nil, err
+		}
+
+		memberValue, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		members[memberName.Value] = memberValue
+
+		if p.next().Type != token.RIGHT_BRACE {
+			_, err := p.expect(token.COMMA, "Expected comma or end of struct body")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+
+	return &ast.StructExpression{
+		BaseNode: &ast.BaseNode{Token: name},
+		Name:     name.Value,
+		Members:  members,
 	}, nil
 }
 
@@ -283,6 +347,9 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		switch p.tokens[1].Type {
 		case token.LEFT_PAREN:
 			return p.parseFunctionCall()
+
+		case token.LEFT_BRACE:
+			return p.parseStructExpression()
 
 		default:
 			return p.parseIdentifier()
