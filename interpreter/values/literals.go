@@ -198,9 +198,9 @@ func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 	if indexSize >= len(list.Elements) {
 		errors.LogError(fmt.Sprintf("Index out of range [%d] with length %d", index, len(list.Elements)))
 	}
-	
+
 	if index < 0 {
-		return list.Elements[len(list.Elements) + index]
+		return list.Elements[len(list.Elements)+index]
 	}
 	return list.Elements[index]
 }
@@ -300,4 +300,62 @@ func (fn *FunctionValue) EqualTo(value RuntimeValue) bool {
 	function, ok := value.(*FunctionValue)
 
 	return ok && function.Name == fn.Name
+}
+
+type StructLiteral struct {
+	BaseValue
+	Name string
+	Members map[string]RuntimeValue
+}
+
+func (sl *StructLiteral) Type() ValueType {
+	return "struct"
+}
+
+func (sl *StructLiteral) ToString() string {
+	result := "{"
+
+	for name, expr := range sl.Members {
+		result += name
+		result += ": "
+		result += expr.ToString()
+		result += ",\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+func (sl *StructLiteral) Truthy() bool {
+	return len(sl.Members) != 0
+}
+
+func (sl *StructLiteral) EqualTo(value RuntimeValue) bool {
+	struc, ok := value.(*StructLiteral)
+	if !ok || sl.Name != struc.Name {
+		return false
+	}
+
+	for name, member := range sl.Members {
+		value, ok := struc.Members[name]
+		if !ok {
+			return false
+		}
+
+		if !member.EqualTo(value) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sl *StructLiteral) Member(member string) RuntimeValue {
+	value, ok := sl.Members[member]
+	if !ok {
+		return MakeNull()
+	}
+
+	return value
 }

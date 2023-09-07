@@ -19,7 +19,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.StringLiteral:
 		return values.MakeString(expression.Value)
-		
+
 	case *ast.BooleanLiteral:
 		return values.MakeBoolean(expression.Value)
 
@@ -31,10 +31,10 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.Identifier:
 		return env.GetVariable(expression.Symbol)
-	
+
 	case *ast.ListLiteral:
 		return evaluateList(expression, env)
-	
+
 	case *ast.MapLiteral:
 		return evaluateMap(expression, env)
 
@@ -43,15 +43,21 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.BinaryOperation:
 		return evaluateBinaryOperation(expression, env)
-	
+
 	case *ast.UnaryOperation:
 		return evaluateUnaryOperation(expression, env)
-	
+
 	case *ast.FunctionCall:
 		return evaluateFunctionCall(expression, env)
 
 	case *ast.IndexExpression:
 		return evaluateIndexExpression(expression, env)
+	
+	case *ast.MemberExpression:
+		return evaluateMemberExpression(*expression, env)
+
+	case *ast.StructExpression:
+		return evaluateStructExpression(*expression, env)
 
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
@@ -66,8 +72,8 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 	if assignment.Operation != "=" {
 		operator := assignment.Operation[:len(assignment.Operation)-1]
 		newValue := evaluateBinaryOperation(&ast.BinaryOperation{
-			Left: assignment.Assignee,
-			Right: assignment.Value,
+			Left:     assignment.Assignee,
+			Right:    assignment.Value,
 			Operator: operator,
 		}, env)
 
@@ -141,4 +147,22 @@ func evaluateIndexExpression(indexExpr *ast.IndexExpression, env *environment.En
 	indexValue := evaluateExpression(indexExpr.Index, env)
 
 	return leftValue.Index(indexValue)
+}
+
+func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.Environment) values.RuntimeValue {
+	value := evaluateExpression(memberExpr.Left, env)
+	return value.Member(memberExpr.Member)
+}
+
+func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {
+	members := map[string]values.RuntimeValue{}
+
+	for name, value := range structExpr.Members {
+		members[name] = evaluateExpression(value, env)
+	}
+
+	return &values.StructLiteral{
+		Name:    structExpr.Name,
+		Members: members,
+	}
 }
