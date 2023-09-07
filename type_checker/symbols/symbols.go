@@ -20,7 +20,8 @@ const (
 
 type SymbolTable struct {
 	parent     *SymbolTable
-	symbols    map[string]types.ValidType
+	variables    map[string]types.ValidType
+	types    map[string]types.ValidType
 	constants  []string
 	kind       scopeKind
 	returnType types.ValidType
@@ -29,7 +30,8 @@ type SymbolTable struct {
 func New() *SymbolTable {
 	return &SymbolTable{
 		parent:  nil,
-		symbols: map[string]types.ValidType{},
+		variables: map[string]types.ValidType{},
+		types: map[string]types.ValidType{},
 		kind:    GLOBAL_SCOPE,
 	}
 }
@@ -37,7 +39,8 @@ func New() *SymbolTable {
 func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
 	return &SymbolTable{
 		parent:  parent,
-		symbols: map[string]types.ValidType{},
+		variables: map[string]types.ValidType{},
+		types: map[string]types.ValidType{},
 		kind:    kind,
 	}
 }
@@ -49,7 +52,7 @@ func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
 }
 
 func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) *types.TypeError {
-	if _, ok := st.symbols[name]; ok {
+	if _, ok := st.variables[name]; ok {
 		return types.Error(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
 
@@ -66,18 +69,18 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 	}
 
 	dataType.MarkVariable()
-	st.symbols[name] = dataType
+	st.variables[name] = dataType
 	return nil
 }
 
 func (st *SymbolTable) GetSymbol(name string) types.ValidType {
-	table, err := st.resolve(name)
+	table := st.resolveVariable(name)
 
-	if err != nil {
-		return err
+	if table == nil {
+		return types.Error(fmt.Sprintf("Variable %q is undefined", name))
 	}
 
-	return table.symbols[name]
+	return table.variables[name]
 }
 
 func (st *SymbolTable) IsConstant(name string) bool {
@@ -85,21 +88,21 @@ func (st *SymbolTable) IsConstant(name string) bool {
 }
 
 func (st *SymbolTable) Exists(name string) bool {
-	_, err := st.resolve(name)
+	table := st.resolveVariable(name)
 
-	return err == nil
+	return table != nil
 }
 
-func (st *SymbolTable) resolve(varName string) (*SymbolTable, *types.TypeError) {
-	if _, ok := st.symbols[varName]; ok {
-		return st, nil
+func (st *SymbolTable) resolveVariable(varName string) *SymbolTable {
+	if _, ok := st.variables[varName]; ok {
+		return st
 	}
 
 	if st.parent == nil {
-		return nil, types.Error(fmt.Sprintf("Variable %q is undefined", varName))
+		return nil
 	}
 
-	return st.parent.resolve(varName)
+	return st.parent.resolveVariable(varName)
 }
 
 func (st *SymbolTable) isFunctionScope() bool {
@@ -124,4 +127,33 @@ func (st *SymbolTable) FindFunctionScope() *SymbolTable {
 	}
 
 	return st.parent.FindFunctionScope()
+}
+
+func (st *SymbolTable) AddType(name string, dataType types.ValidType) *types.TypeError {
+	_, hasType := st.types[name]
+	if hasType {
+		return types.Error(fmt.Sprintf("Cannot redeclare type %q", name))
+	}
+
+	st.types[name] = dataType
+	return nil
+}
+
+func (st *SymbolTable) GetType(name string) types.ValidType {
+	table := st.resolveType(name)
+	if table == nil {
+		return types.Error(fmt.Sprintf("Type %q is undefind", name))
+	}
+
+	return table.types[name]
+}
+
+func (st *SymbolTable) resolveType(name string) *SymbolTable {
+	if _, ok := st.types[name]; ok {
+		return st
+	}
+	if st.parent == nil {
+		return nil
+	}
+	return st.parent.resolveType(name)
 }

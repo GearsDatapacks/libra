@@ -33,6 +33,9 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 	case *ast.ForLoop:
 		return typeCheckForLoop(statement, symbolTable)
 
+	case *ast.StructDeclaration:
+		return typeCheckStructDeclaration(statement, symbolTable)
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
 		return nil
@@ -40,11 +43,11 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 }
 
 func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
-	dataType := types.FromAst(varDec.DataType)
+	dataType := types.FromAst(varDec.DataType, symbolTable)
 	if dataType.String() == "TypeError" {
 		return dataType
 	}
-	
+
 	if varDec.Value == nil {
 		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
 		return dataType
@@ -83,14 +86,14 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 
 func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
 	params := []types.ValidType{}
-	returnType := types.FromAst(funcDec.ReturnType)
+	returnType := types.FromAst(funcDec.ReturnType, symbolTable)
 	if returnType.String() == "TypeError" {
 		return returnType
 	}
 
 	childTable := symbols.NewFunction(symbolTable, returnType)
 	for _, param := range funcDec.Parameters {
-		paramType := types.FromAst(param.Type)
+		paramType := types.FromAst(param.Type, symbolTable)
 		if paramType.String() == "TypeError" {
 			return paramType
 		}
@@ -218,4 +221,28 @@ func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) ty
 	}
 
 	return &types.Void{}
+}
+
+func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := map[string]types.ValidType{}
+
+	for memberName, memberType := range structDecl.Members {
+		dataType := types.FromAst(memberType, symbolTable)
+		if dataType.String() == "TypeError" {
+			return dataType
+		}
+
+		members[memberName] = dataType
+	}
+
+	structType := &types.Struct{
+		Name:    structDecl.Name,
+		Members: members,
+	}
+	err := symbolTable.AddType(structDecl.Name, structType)
+	if err != nil {
+		return err
+	}
+
+	return structType
 }

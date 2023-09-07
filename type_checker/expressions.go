@@ -49,6 +49,12 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	case *ast.IndexExpression:
 		return typeCheckIndexExpression(expression, symbolTable)
+	
+	case *ast.MemberExpression:
+		return typeCheckMemberExpression(expression, symbolTable)
+
+	case *ast.StructExpression:
+		return typeCheckStructExpression(expression, symbolTable)
 
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
@@ -204,7 +210,7 @@ func typeCheckMap(maplit *ast.MapLiteral, symbolTable *symbols.SymbolTable) type
 	}
 
 	return &types.MapLiteral{
-		KeyType: types.MakeUnion(keyTypes...),
+		KeyType:   types.MakeUnion(keyTypes...),
 		ValueType: types.MakeUnion(valueTypes...),
 	}
 }
@@ -226,4 +232,47 @@ func typeCheckIndexExpression(indexExpr *ast.IndexExpression, symbolTable *symbo
 	}
 
 	return resultType
+}
+
+func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+	leftType := typeCheckExpression(memberExpr.Left, symbolTable)
+	if leftType.String() == "TypeError" {
+		return leftType
+	}
+
+	resultType := leftType.Member(memberExpr.Member)
+	if resultType == nil {
+		return types.Error(fmt.Sprintf("Type %q does not have member %q", leftType.String(), memberExpr.Member), memberExpr)
+	}
+
+	return resultType
+}
+
+func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+	definedType := symbolTable.GetType(structExpr.Name)
+	if definedType.String() == "TypeError" {
+		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.Name))
+	}
+
+	members := map[string]types.ValidType{}
+
+	for name, member := range structExpr.Members {
+		dataType := typeCheckExpression(member, symbolTable)
+		if dataType.String() == "TypeError" {
+			return dataType
+		}
+
+		members[name] = dataType
+	}
+
+	structType := &types.Struct{
+		Name:    structExpr.Name,
+		Members: members,
+	}
+
+	if !definedType.Valid(structType) {
+		return types.Error("Struct expression incompatiable with type")
+	}
+
+	return structType
 }

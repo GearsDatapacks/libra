@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gearsdatapacks/libra/errors"
@@ -14,6 +13,7 @@ type ValidType interface {
 	WasVariable() bool
 	MarkVariable()
 	IndexBy(ValidType) ValidType
+	Member(string) ValidType
 }
 
 type BaseType struct {
@@ -32,21 +32,25 @@ func (*BaseType) IndexBy(ValidType) ValidType {
 	return nil
 }
 
+func (*BaseType) Member(string) ValidType {
+	return nil
+}
+
 type PartialType interface {
 	ValidType
 	Infer(ValidType) (ValidType, bool)
 }
 
-func FromAst(node ast.TypeExpression) ValidType {
+func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
 	switch typeExpr := node.(type) {
 	case *ast.TypeName:
-		return FromString(typeExpr.Name)
+		return FromString(typeExpr.Name, table)
 
 	case *ast.Union:
 		types := []ValidType{}
 
 		for _, dataType := range typeExpr.ValidTypes {
-			nextType := FromAst(dataType)
+			nextType := FromAst(dataType, table)
 			if nextType.String() == "TypeError" {
 				return nextType
 			}
@@ -56,7 +60,7 @@ func FromAst(node ast.TypeExpression) ValidType {
 		return MakeUnion(types...)
 
 	case *ast.ListType:
-		dataType := FromAst(typeExpr.ElementType)
+		dataType := FromAst(typeExpr.ElementType, table)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
@@ -66,7 +70,7 @@ func FromAst(node ast.TypeExpression) ValidType {
 		}
 
 	case *ast.ArrayType:
-		dataType := FromAst(typeExpr.ElementType)
+		dataType := FromAst(typeExpr.ElementType, table)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
@@ -75,20 +79,20 @@ func FromAst(node ast.TypeExpression) ValidType {
 			ElemType: dataType,
 			Length:   typeExpr.Length,
 		}
-	
+
 	case *ast.MapType:
-		keyType := FromAst(typeExpr.KeyType)
+		keyType := FromAst(typeExpr.KeyType, table)
 		if keyType.String() == "TypeError" {
 			return keyType
 		}
 
-		valueType := FromAst(typeExpr.ValueType)
+		valueType := FromAst(typeExpr.ValueType, table)
 		if valueType.String() == "TypeError" {
 			return valueType
 		}
 
 		return &MapLiteral{
-			KeyType: keyType,
+			KeyType:   keyType,
 			ValueType: valueType,
 		}
 
@@ -113,10 +117,14 @@ var typeTable = map[string]ValidType{
 	"string":   &StringLiteral{},
 }
 
-func FromString(typeString string) ValidType {
+type TypeTable interface {
+	GetType(string) ValidType
+}
+
+func FromString(typeString string, table TypeTable) ValidType {
 	dataType, ok := typeTable[typeString]
 	if !ok {
-		return Error(fmt.Sprintf("Invalid type %q", typeString))
+		return table.GetType(typeString)
 	}
 
 	return dataType

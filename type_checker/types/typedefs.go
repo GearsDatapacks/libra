@@ -87,6 +87,40 @@ func (a *Any) String() string {
 	return "any"
 }
 
+type Struct struct {
+	BaseType
+	Name string
+	Members map[string]ValidType
+}
+
+func (s *Struct) Valid(dataType ValidType) bool {
+	struc, isStruct := dataType.(*Struct)
+	if !isStruct || struc.Name != s.Name {
+		return false
+	}
+
+	for name, dataType := range s.Members {
+		member, hasMember := struc.Members[name]
+		if !hasMember {
+			continue
+		}
+
+		if !dataType.Valid(member) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *Struct) String() string {
+	return s.Name
+}
+
+func (s *Struct) Member(member string) ValidType {
+	return s.Members[member]
+}
+
 type TypeError struct {
 	*BaseType
 	Message string
