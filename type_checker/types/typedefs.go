@@ -99,13 +99,10 @@ func (s *Struct) Valid(dataType ValidType) bool {
 		return false
 	}
 
-	for name, dataType := range s.Members {
-		member, hasMember := struc.Members[name]
-		if !hasMember {
-			continue
-		}
+	for name, dataType := range struc.Members {
+		member, hasMember := s.Members[name]
 
-		if !dataType.Valid(member) {
+		if !hasMember || !dataType.Valid(member) {
 			return false
 		}
 	}
