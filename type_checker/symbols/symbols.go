@@ -19,27 +19,27 @@ const (
 
 type SymbolTable struct {
 	parent     *SymbolTable
-	variables    map[string]types.ValidType
-	types    map[string]types.ValidType
+	variables  map[string]types.ValidType
+	types      map[string]types.ValidType
 	kind       scopeKind
 	returnType types.ValidType
 }
 
 func New() *SymbolTable {
 	return &SymbolTable{
-		parent:  nil,
+		parent:    nil,
 		variables: map[string]types.ValidType{},
-		types: map[string]types.ValidType{},
-		kind:    GLOBAL_SCOPE,
+		types:     map[string]types.ValidType{},
+		kind:      GLOBAL_SCOPE,
 	}
 }
 
 func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
 	return &SymbolTable{
-		parent:  parent,
+		parent:    parent,
 		variables: map[string]types.ValidType{},
-		types: map[string]types.ValidType{},
-		kind:    kind,
+		types:     map[string]types.ValidType{},
+		kind:      kind,
 	}
 }
 
@@ -55,7 +55,7 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 	}
 
 	if _, ok := registry.Builtins[name]; ok {
-		return types.Error(fmt.Sprintf("Cannot redifne builtin function %q", name))
+		return types.Error(fmt.Sprintf("Cannot redefine builtin function %q", name))
 	}
 
 	if array, isArray := dataType.(*types.ArrayLiteral); isArray {

@@ -55,7 +55,12 @@ type PartialType interface {
 func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
 	switch typeExpr := node.(type) {
 	case *ast.TypeName:
-		return FromString(typeExpr.Name, table)
+		dataType := FromString(typeExpr.Name, table)
+		if err, isErr := dataType.(*TypeError); isErr {
+			err.Line = node.GetToken().Line
+			err.Column = node.GetToken().Column
+		}
+		return dataType
 
 	case *ast.Union:
 		types := []ValidType{}

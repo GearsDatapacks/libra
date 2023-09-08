@@ -32,5 +32,10 @@ func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.S
 		return types.Error(fmt.Sprintf("Operator %q is not defined for types %q and %q", binOp.Operator, leftType, rightType), binOp)
 	}
 
+	if resultType.String() == "TypeError" {
+		resultType.(*types.TypeError).Line = binOp.Token.Line
+		resultType.(*types.TypeError).Column = binOp.Token.Column
+	}
+
 	return resultType
 }

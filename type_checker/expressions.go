@@ -27,7 +27,12 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return &types.Void{}
 
 	case *ast.Identifier:
-		return symbolTable.GetSymbol(expression.Symbol)
+		dataType := symbolTable.GetSymbol(expression.Symbol)
+		if err, isErr := dataType.(*types.TypeError); isErr {
+			err.Line = expression.Token.Line
+			err.Column = expression.Token.Column
+		}
+		return dataType
 
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, symbolTable)
@@ -139,6 +144,8 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 
 	callVar := symbolTable.GetSymbol(call.Name)
 	if callVar.String() == "TypeError" {
+		callVar.(*types.TypeError).Line = call.Token.Line
+		callVar.(*types.TypeError).Column = call.Token.Column
 		return callVar
 	}
 
@@ -274,7 +281,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *sy
 func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *symbols.SymbolTable) types.ValidType {
 	definedType := symbolTable.GetType(structExpr.Name)
 	if definedType.String() == "TypeError" {
-		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.Name))
+		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.Name), structExpr)
 	}
 
 	members := map[string]types.ValidType{}
@@ -294,7 +301,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *sy
 	}
 
 	if !definedType.Valid(structType) {
-		return types.Error("Struct expression incompatiable with type")
+		return types.Error("Struct expression incompatiable with type", structExpr)
 	}
 
 	return structType

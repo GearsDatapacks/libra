@@ -88,6 +88,10 @@ func leftShift(leftType, rightType types.ValidType) types.ValidType {
 
 	list, isList := leftType.(*types.ListLiteral)
 	if isList {
+		if leftType.Constant() {
+			return types.Error("Cannot append value to constant list")
+		}
+
 		if !list.ElemType.Valid(rightType) {
 			return types.Error(fmt.Sprintf("Cannot append value of type %q to list of type %q", rightType, leftType))
 		}
@@ -109,6 +113,10 @@ func rightShift(leftType, rightType types.ValidType) types.ValidType {
 
 	list, isList := rightType.(*types.ListLiteral)
 	if isList {
+		if rightType.Constant() {
+			return types.Error("Cannot prepend value to constant list")
+		}
+
 		if !list.ElemType.Valid(leftType) {
 			return types.Error(fmt.Sprintf("Cannot prepend value of type %q to list of type %q", rightType, leftType))
 		}
@@ -130,6 +138,14 @@ func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 
 	if !dataType.WasVariable() {
 		return types.Error(fmt.Sprintf("Operator %q is not defined for non-variable values", op))
+	}
+
+	if dataType.Constant() {
+		incDecStr := "increment"
+		if op == "--" {
+			incDecStr = "decrement"
+		}
+		return types.Error(fmt.Sprintf("Cannot %s a constant", incDecStr))
 	}
 
 	return dataType

@@ -27,5 +27,10 @@ func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.Symb
 		return types.Error(fmt.Sprintf("Operator %q is not defined for type %q", unOp.Operator, valueType), unOp)
 	}
 
+	if resultType.String() == "TypeError" {
+		resultType.(*types.TypeError).Line = unOp.Token.Line
+		resultType.(*types.TypeError).Column = unOp.Token.Column
+	}
+
 	return resultType
 }

@@ -49,7 +49,12 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	}
 
 	if varDec.Value == nil {
-		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
+		err := symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
+		if err != nil {
+			err.Line = varDec.Token.Line
+			err.Column = varDec.Token.Column
+			return err
+		}
 		return dataType
 	}
 
@@ -65,6 +70,8 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	if dataType.String() == "Infer" {
 		err := symbolTable.RegisterSymbol(varDec.Name, expressionType, varDec.Constant)
 		if err != nil {
+			err.Line = varDec.Token.Line
+			err.Column = varDec.Token.Column
 			return err
 		}
 		return expressionType
@@ -77,7 +84,12 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 	}
 
 	if correctType {
-		symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
+		err := symbolTable.RegisterSymbol(varDec.Name, dataType, varDec.Constant)
+		if err != nil {
+			err.Line = varDec.Token.Line
+			err.Column = varDec.Token.Column
+			return err
+		}
 		return dataType
 	}
 
@@ -100,6 +112,8 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		params = append(params, paramType)
 		err := childTable.RegisterSymbol(param.Name, paramType, false)
 		if err != nil {
+			err.Line = funcDec.Token.Line
+			err.Column = funcDec.Token.Column
 			return err
 		}
 	}
@@ -111,6 +125,8 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 
 	err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
 	if err != nil {
+		err.Line = funcDec.Token.Line
+		err.Column = funcDec.Token.Column
 		return err
 	}
 
