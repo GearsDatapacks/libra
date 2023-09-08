@@ -12,12 +12,15 @@ type ValidType interface {
 	String() string
 	WasVariable() bool
 	MarkVariable()
+	Constant() bool
+	MarkConstant()
 	IndexBy(ValidType) ValidType
 	Member(string) ValidType
 }
 
 type BaseType struct {
 	wasVariable bool
+	constant bool
 }
 
 func (b *BaseType) WasVariable() bool {
@@ -26,6 +29,14 @@ func (b *BaseType) WasVariable() bool {
 
 func (b *BaseType) MarkVariable() {
 	b.wasVariable = true
+}
+
+func (b *BaseType) Constant() bool {
+	return b.constant
+}
+
+func (b *BaseType) MarkConstant() {
+	b.constant = true
 }
 
 func (*BaseType) IndexBy(ValidType) ValidType {

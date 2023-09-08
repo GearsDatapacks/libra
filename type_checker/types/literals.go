@@ -75,6 +75,9 @@ func (list *ListLiteral) IndexBy(dataType ValidType) ValidType {
 	if !(&IntLiteral{}).Valid(dataType) {
 		return nil
 	}
+	if list.constant {
+		list.ElemType.MarkConstant()
+	}
 	return list.ElemType
 }
 
@@ -139,6 +142,9 @@ func (array *ArrayLiteral) IndexBy(dataType ValidType) ValidType {
 	if !(&IntLiteral{}).Valid(dataType) {
 		return nil
 	}
+	if array.constant {
+		array.ElemType.MarkConstant()
+	}
 	return array.ElemType
 }
 
@@ -164,6 +170,9 @@ func (maplit *MapLiteral) Valid(t ValidType) bool {
 func (maplit *MapLiteral) IndexBy(dataType ValidType) ValidType {
 	if !maplit.KeyType.Valid(dataType) {
 		return nil
+	}
+	if maplit.constant {
+		maplit.ValueType.MarkConstant()
 	}
 	return maplit.ValueType
 }

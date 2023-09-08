@@ -66,10 +66,6 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	var dataType types.ValidType
 	if assignment.Assignee.Type() == "Identifier" {
 		symbolName := assignment.Assignee.(*ast.Identifier).Symbol
-
-		if symbolTable.IsConstant(symbolName) {
-			return types.Error("Cannot reassign constant "+symbolName, assignment)
-		}
 	
 		dataType = symbolTable.GetSymbol(symbolName)
 		
@@ -99,6 +95,10 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 
 	if dataType.String() == "TypeError" {
 		return dataType
+	}
+
+	if dataType.Constant() {
+		return types.Error("Cannot assign data to constant value", assignment)
 	}
 
 	expressionType := typeCheckExpression(assignment.Value, symbolTable)

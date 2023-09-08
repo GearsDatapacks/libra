@@ -7,7 +7,6 @@ import (
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/type_checker/registry"
 	"github.com/gearsdatapacks/libra/type_checker/types"
-	"github.com/gearsdatapacks/libra/utils"
 )
 
 type scopeKind int
@@ -22,7 +21,6 @@ type SymbolTable struct {
 	parent     *SymbolTable
 	variables    map[string]types.ValidType
 	types    map[string]types.ValidType
-	constants  []string
 	kind       scopeKind
 	returnType types.ValidType
 }
@@ -65,7 +63,7 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 	}
 
 	if constant {
-		st.constants = append(st.constants, name)
+		dataType.MarkConstant()
 	}
 
 	dataType.MarkVariable()
@@ -81,10 +79,6 @@ func (st *SymbolTable) GetSymbol(name string) types.ValidType {
 	}
 
 	return table.variables[name]
-}
-
-func (st *SymbolTable) IsConstant(name string) bool {
-	return utils.Contains(st.constants, name)
 }
 
 func (st *SymbolTable) Exists(name string) bool {

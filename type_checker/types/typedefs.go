@@ -118,7 +118,11 @@ func (s *Struct) String() string {
 }
 
 func (s *Struct) Member(member string) ValidType {
-	return s.Members[member]
+	memberType := s.Members[member]
+	if s.constant && memberType != nil {
+		memberType.MarkConstant()
+	}
+	return memberType
 }
 
 type TypeError struct {
