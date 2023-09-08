@@ -5,6 +5,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 type scopeKind int
@@ -18,15 +19,17 @@ const (
 type Environment struct {
 	parent      *Environment
 	variables   map[string]values.RuntimeValue
+	structs     map[string]ast.StructDeclaration
 	kind        scopeKind
 	ReturnValue values.RuntimeValue
 }
 
 func New() *Environment {
 	env := Environment{
-		parent:    nil,
-		variables: map[string]values.RuntimeValue{},
-		kind:      GLOBAL_SCOPE,
+		parent:      nil,
+		variables:   map[string]values.RuntimeValue{},
+		structs:     map[string]ast.StructDeclaration{},
+		kind:        GLOBAL_SCOPE,
 	}
 
 	return &env
@@ -36,6 +39,7 @@ func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
 		parent:    parent,
 		variables: map[string]values.RuntimeValue{},
+		structs:     map[string]ast.StructDeclaration{},
 		kind:      kind,
 	}
 }
@@ -84,4 +88,12 @@ func (env *Environment) FindFunctionScope() *Environment {
 		errors.LogError(errors.DevError("Cannot use return statement outside of a function"))
 	}
 	return env.parent.FindFunctionScope()
+}
+
+func (env *Environment) DeclareStruct(structDecl *ast.StructDeclaration) {
+	env.structs[structDecl.Name] = *structDecl
+}
+
+func (env *Environment) GetStruct(name string) ast.StructDeclaration {
+	return env.structs[name]
 }

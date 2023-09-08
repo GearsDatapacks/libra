@@ -1,11 +1,5 @@
 package values
 
-import (
-	"fmt"
-
-	"github.com/gearsdatapacks/libra/errors"
-)
-
 type ValueType string
 
 type RuntimeValue interface {
@@ -80,7 +74,7 @@ func GetZeroValue(dataType string) RuntimeValue {
 	case "string":
 		return MakeString("")
 	default:
-		errors.LogError(errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType)))
-		return MakeInteger(0)
+		// errors.LogError(errors.DevError(fmt.Sprintf("Cannot create runtime value of type %s", dataType)))
+		return MakeNull()
 	}
 }

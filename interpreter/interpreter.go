@@ -43,6 +43,7 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return evaluateForLoop(statement, env)
 	
 	case *ast.StructDeclaration:
+		env.DeclareStruct(statement)
 		return values.MakeNull()
 
 	default:

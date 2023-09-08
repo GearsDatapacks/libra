@@ -76,9 +76,9 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 			Right:    assignment.Value,
 			Operator: operator,
 		}, env)
+	} else {
+		value = evaluateExpression(assignment.Value, env)
 	}
-
-	value = evaluateExpression(assignment.Value, env)
 
 	switch assignee := assignment.Assignee.(type) {
 	case *ast.Identifier:
@@ -168,9 +168,14 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.
 
 func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {
 	members := map[string]values.RuntimeValue{}
+	structType := env.GetStruct(structExpr.Name)
 
-	for name, value := range structExpr.Members {
-		members[name] = evaluateExpression(value, env)
+	for name, dataType := range structType.Members {
+		if value, hasMember := structExpr.Members[name]; hasMember {
+			members[name] = evaluateExpression(value, env)
+			continue
+		}
+		members[name] = values.GetZeroValue(dataType.String())
 	}
 
 	return &values.StructLiteral{
