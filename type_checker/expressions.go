@@ -63,17 +63,40 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 }
 
 func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	if assignment.Assignee.Type() != "Identifier" {
+	var dataType types.ValidType
+	if assignment.Assignee.Type() == "Identifier" {
+		symbolName := assignment.Assignee.(*ast.Identifier).Symbol
+
+		if symbolTable.IsConstant(symbolName) {
+			return types.Error("Cannot reassign constant "+symbolName, assignment)
+		}
+	
+		dataType = symbolTable.GetSymbol(symbolName)
+		
+	} else if assignment.Assignee.Type() == "IndexExpression" {
+		index := assignment.Assignee.(*ast.IndexExpression)
+		leftType := typeCheckExpression(index.Left, symbolTable)
+		if leftType.String() == "TypeError" {
+			return leftType
+		}
+		indexType := typeCheckExpression(index.Index, symbolTable)
+		if indexType.String() == "TypeError" {
+			return indexType
+		}
+
+		dataType = leftType.IndexBy(indexType)
+	}  else if assignment.Assignee.Type() == "MemberExpression" {
+		member := assignment.Assignee.(*ast.MemberExpression)
+		leftType := typeCheckExpression(member.Left, symbolTable)
+		if leftType.String() == "TypeError" {
+			return leftType
+		}
+
+		dataType = leftType.Member(member.Member)
+	} else {
 		return types.Error("Can only assign values to variables", assignment)
 	}
 
-	symbolName := assignment.Assignee.(*ast.Identifier).Symbol
-
-	if symbolTable.IsConstant(symbolName) {
-		return types.Error("Cannot reassign constant "+symbolName, assignment)
-	}
-
-	dataType := symbolTable.GetSymbol(symbolName)
 	if dataType.String() == "TypeError" {
 		return dataType
 	}

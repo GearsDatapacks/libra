@@ -16,7 +16,9 @@ type RuntimeValue interface {
 	Varname() string
 	SetVarname(string)
 	Index(RuntimeValue) RuntimeValue
+	SetIndex(index RuntimeValue, value RuntimeValue) RuntimeValue
 	Member(string) RuntimeValue
+	SetMember(member string, value RuntimeValue) RuntimeValue
 }
 
 type BaseValue struct {
@@ -35,7 +37,15 @@ func (b *BaseValue) Index(RuntimeValue) RuntimeValue {
 	return MakeNull()
 }
 
+func (b *BaseValue) SetIndex(RuntimeValue, RuntimeValue) RuntimeValue {
+	return MakeNull()
+}
+
 func (b *BaseValue) Member(string) RuntimeValue {
+	return MakeNull()
+}
+
+func (b *BaseValue) SetMember(string, RuntimeValue) RuntimeValue {
 	return MakeNull()
 }
 

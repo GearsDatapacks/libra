@@ -67,22 +67,34 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 }
 
 func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
-	varName := assignment.Assignee.(*ast.Identifier).Symbol
+	var value values.RuntimeValue
 
 	if assignment.Operation != "=" {
 		operator := assignment.Operation[:len(assignment.Operation)-1]
-		newValue := evaluateBinaryOperation(&ast.BinaryOperation{
+		value = evaluateBinaryOperation(&ast.BinaryOperation{
 			Left:     assignment.Assignee,
 			Right:    assignment.Value,
 			Operator: operator,
 		}, env)
-
-		return env.AssignVariable(varName, newValue)
 	}
 
-	value := evaluateExpression(assignment.Value, env)
+	value = evaluateExpression(assignment.Value, env)
 
-	return env.AssignVariable(varName, value)
+	switch assignee := assignment.Assignee.(type) {
+	case *ast.Identifier:
+		return env.AssignVariable(assignee.Symbol, value)
+	
+	case *ast.IndexExpression:
+		leftValue := evaluateExpression(assignee.Left, env)
+		indexValue := evaluateExpression(assignee.Index, env)
+		return leftValue.SetIndex(indexValue, value)
+	
+	case *ast.MemberExpression:
+		leftValue := evaluateExpression(assignee.Left, env)
+		return leftValue.SetMember(assignee.Member, value)
+	}
+
+	return value
 }
 
 func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {

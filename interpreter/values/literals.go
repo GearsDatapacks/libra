@@ -205,6 +205,25 @@ func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 	return list.Elements[index]
 }
 
+func (list *ListLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) RuntimeValue {
+	index := indexValue.(*IntegerLiteral).Value
+	indexSize := index
+	// negative indexing
+	if index < 0 {
+		indexSize = -indexSize - 1
+	}
+
+	if indexSize >= len(list.Elements) {
+		errors.LogError(fmt.Sprintf("Index out of range [%d] with length %d", index, len(list.Elements)))
+	}
+
+	if index < 0 {
+		list.Elements[len(list.Elements)+index] = value
+	}
+	list.Elements[index] = value
+	return value
+}
+
 type MapLiteral struct {
 	BaseValue
 	Elements map[RuntimeValue]RuntimeValue
@@ -263,6 +282,11 @@ func (maplit *MapLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 	return MakeNull()
 }
 
+func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) RuntimeValue {
+	maplit.Elements[indexValue] = value
+	return value
+}
+
 type FunctionValue struct {
 	BaseValue
 	Name                   string
@@ -313,13 +337,13 @@ func (sl *StructLiteral) Type() ValueType {
 }
 
 func (sl *StructLiteral) ToString() string {
-	result := "{"
+	result := "{ "
 
 	for name, expr := range sl.Members {
 		result += name
 		result += ": "
 		result += expr.ToString()
-		result += ",\n"
+		result += ", "
 	}
 
 	result += "}"
@@ -356,6 +380,12 @@ func (sl *StructLiteral) Member(member string) RuntimeValue {
 	if !ok {
 		return MakeNull()
 	}
+
+	return value
+}
+
+func (sl *StructLiteral) SetMember(member string, value RuntimeValue) RuntimeValue {
+	sl.Members[member] = value
 
 	return value
 }
