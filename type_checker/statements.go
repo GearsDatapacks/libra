@@ -121,6 +121,7 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 	functionType := &types.Function{
 		Parameters: params,
 		ReturnType: returnType,
+		Name: funcDec.Name,
 	}
 
 	err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)

@@ -92,7 +92,7 @@ func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 }
 
 func (p *parser) parsePostfixOperation() (ast.Expression, error) {
-	value, err := p.parseMemberExpression()
+	value, err := p.parseCallMemberExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -109,68 +109,71 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 	return value, nil
 }
 
-func (p *parser) parseMemberExpression() (ast.Expression, error) {
-	left, err := p.parseIndexExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.next().Type == token.DOT {
-		p.consume()
-		memberName, err := p.expect(token.IDENTIFIER, "Invalid member name %q")
-		if err != nil {
-			return nil, err
-		}
-
-		left = &ast.MemberExpression{
-			Left:     left,
-			Member:    memberName.Value,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
-		}
-	}
-
-	return left, nil
-}
-
-func (p *parser) parseIndexExpression() (ast.Expression, error) {
+func (p *parser) parseCallMemberExpression() (ast.Expression, error) {
 	left, err := p.parseLiteral()
 	if err != nil {
 		return nil, err
 	}
 
-	for p.next().Type == token.LEFT_SQUARE {
-		p.consume()
-		index, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		_, err = p.expect(token.RIGHT_SQUARE, "Unexpected token %q, expecting ']'")
-		if err != nil {
-			return nil, err
+	for p.next().Type == token.LEFT_PAREN || p.next().Type == token.LEFT_SQUARE || p.next().Type == token.DOT {
+		if p.next().Type == token.LEFT_PAREN {
+			left, err = p.parseFunctionCall(left)
+		} else if p.next().Type == token.LEFT_SQUARE {
+			left, err = p.parseIndexExpression(left)
+		} else if p.next().Type == token.DOT {
+			left, err = p.parseMemberExpression(left)
 		}
 
-		left = &ast.IndexExpression{
-			Left:     left,
-			Index:    index,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return left, nil
 }
 
-func (p *parser) parseFunctionCall() (ast.Expression, error) {
-	token := p.consume()
+func (p *parser) parseMemberExpression(left ast.Expression) (ast.Expression, error) {
+	p.consume()
+	memberName, err := p.expect(token.IDENTIFIER, "Invalid member name %q")
+	if err != nil {
+		return nil, err
+	}
 
+	return &ast.MemberExpression{
+		Left:     left,
+		Member:    memberName.Value,
+		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+	}, nil
+}
+
+func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, error) {
+	p.consume()
+	index, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.expect(token.RIGHT_SQUARE, "Unexpected token %q, expecting ']'")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.IndexExpression{
+		Left:     left,
+		Index:    index,
+		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+	}, nil
+}
+
+func (p *parser) parseFunctionCall(left ast.Expression) (ast.Expression, error) {
 	args, err := p.parseArgumentList()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.FunctionCall{
-		Name:     token.Value,
+		Left:     left,
 		Args:     args,
-		BaseNode: &ast.BaseNode{Token: token},
+		BaseNode: &ast.BaseNode{Token: left.GetToken()},
 	}, nil
 }
 
@@ -345,8 +348,6 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 
 	case token.IDENTIFIER:
 		switch p.tokens[1].Type {
-		case token.LEFT_PAREN:
-			return p.parseFunctionCall()
 
 		case token.LEFT_BRACE:
 			return p.parseStructExpression()

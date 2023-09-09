@@ -98,17 +98,19 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 }
 
 func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
-	if builtin, ok := builtins[call.Name]; ok {
-		args := []values.RuntimeValue{}
+	if ident, ok := call.Left.(*ast.Identifier); ok {
+		if builtin, ok := builtins[ident.Symbol]; ok {
+			args := []values.RuntimeValue{}
 
-		for _, arg := range call.Args {
-			args = append(args, evaluateExpression(arg, env))
+			for _, arg := range call.Args {
+				args = append(args, evaluateExpression(arg, env))
+			}
+
+			return builtin(args, env)
 		}
-
-		return builtin(args, env)
 	}
 
-	function := env.GetVariable(call.Name).(*values.FunctionValue)
+	function := evaluateExpression(call.Left, env).(*values.FunctionValue)
 	declarationEnvironment := function.DeclarationEnvironment.(*environment.Environment)
 	scope := environment.NewChild(declarationEnvironment, environment.FUNCTION_SCOPE)
 

@@ -120,43 +120,47 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 }
 
 func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
-	if builtin, ok := registry.Builtins[call.Name]; ok {
-		if len(builtin.Parameters) != len(call.Args) {
-			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
-		}
-
-		for i, param := range builtin.Parameters {
-			arg := typeCheckExpression(call.Args[i], symbolTable)
-			if arg.String() == "TypeError" {
-				return arg
+	if ident, ok := call.Left.(*ast.Identifier); ok {
+		name := ident.Symbol
+		if builtin, ok := registry.Builtins[name]; ok {
+			if len(builtin.Parameters) != len(call.Args) {
+				return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
 			}
-			if !param.Valid(arg) {
-				return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
-			}
-		}
 
-		return builtin.ReturnType
+			for i, param := range builtin.Parameters {
+				arg := typeCheckExpression(call.Args[i], symbolTable)
+				if arg.String() == "TypeError" {
+					return arg
+				}
+				if !param.Valid(arg) {
+					return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
+				}
+			}
+
+			return builtin.ReturnType
+		}
 	}
 
-	if !symbolTable.Exists(call.Name) {
-		return types.Error(fmt.Sprintf("Function %q is undefined", call.Name), call)
-	}
 
-	callVar := symbolTable.GetSymbol(call.Name)
+	callVar := typeCheckExpression(call.Left, symbolTable)
 	if callVar.String() == "TypeError" {
-		callVar.(*types.TypeError).Line = call.Token.Line
-		callVar.(*types.TypeError).Column = call.Token.Column
 		return callVar
 	}
 
 	function, ok := callVar.(*types.Function)
 
 	if !ok {
-		return types.Error(fmt.Sprintf("Variable %q is not a function", call.Name), call)
+		return types.Error(fmt.Sprintf("%q is not a function", call.String()), call)
+	}
+
+	name := function.Name
+
+	if !symbolTable.Exists(name) {
+		return types.Error(fmt.Sprintf("Function %q is undefined", name), call)
 	}
 
 	if len(function.Parameters) != len(call.Args) {
-		return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+		return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
 	}
 
 	for i, param := range function.Parameters {
@@ -165,7 +169,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 			return arg
 		}
 		if !param.Valid(arg) {
-			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", call.Name), call)
+			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
 		}
 	}
 

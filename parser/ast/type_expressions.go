@@ -70,15 +70,15 @@ type ArrayType struct {
 func (at *ArrayType) Type() NodeType { return "ArrayType" }
 
 func (at *ArrayType) String() string {
-	lengthString := ""
+	lengthString := "_"
 	if at.Length != -1 {
 		lengthString = fmt.Sprint(at.Length)
 	}
 
 	if at.ElementType.Type() == "Union" {
-		return fmt.Sprintf("(%s){%s}", at.ElementType.String(), lengthString)
+		return fmt.Sprintf("(%s)[%s]", at.ElementType.String(), lengthString)
 	}
-	return fmt.Sprintf("%s{%s}", at.ElementType.String(), lengthString)
+	return fmt.Sprintf("%s[%s]", at.ElementType.String(), lengthString)
 }
 
 type MapType struct {

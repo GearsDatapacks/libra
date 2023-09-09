@@ -138,14 +138,14 @@ func (maplit *MapLiteral) String() string {
 type FunctionCall struct {
 	*BaseNode
 	*BaseExpression
-	Name string
+	Left Expression
 	Args []Expression
 }
 
 func (fn *FunctionCall) Type() NodeType { return "FunctionCall" }
 
 func (fn *FunctionCall) String() string {
-	result := fn.Name
+	result := fn.Left.String()
 
 	result += "("
 

@@ -59,6 +59,7 @@ func (u *Union) String() string {
 
 type Function struct {
 	BaseType
+	Name string
 	Parameters []ValidType
 	ReturnType ValidType
 }
