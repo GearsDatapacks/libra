@@ -36,7 +36,7 @@ func (b *BaseValue) SetIndex(RuntimeValue, RuntimeValue) RuntimeValue {
 }
 
 func (b *BaseValue) Member(string) RuntimeValue {
-	return MakeNull()
+	return nil
 }
 
 func (b *BaseValue) SetMember(string, RuntimeValue) RuntimeValue {

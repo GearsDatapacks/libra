@@ -293,6 +293,7 @@ type FunctionValue struct {
 	Parameters             []string
 	DeclarationEnvironment any
 	Body                   []ast.Statement
+	This                   RuntimeValue
 }
 
 func (fn *FunctionValue) Type() ValueType {
@@ -328,7 +329,7 @@ func (fn *FunctionValue) EqualTo(value RuntimeValue) bool {
 
 type StructLiteral struct {
 	BaseValue
-	Name string
+	Name    string
 	Members map[string]RuntimeValue
 }
 
@@ -378,7 +379,7 @@ func (sl *StructLiteral) EqualTo(value RuntimeValue) bool {
 func (sl *StructLiteral) Member(member string) RuntimeValue {
 	value, ok := sl.Members[member]
 	if !ok {
-		return MakeNull()
+		return nil
 	}
 
 	return value

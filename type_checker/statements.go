@@ -124,6 +124,16 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		Name: funcDec.Name,
 	}
 
+	if funcDec.MethodOf != nil {
+		parentType := types.FromAst(funcDec.MethodOf, childTable)
+		if parentType.String() == "TypeError" {
+			return parentType
+		}
+		functionType.MethodOf = parentType
+
+		childTable.RegisterSymbol("this", parentType, true)
+	}
+
 	err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
 	if err != nil {
 		err.Line = funcDec.Token.Line

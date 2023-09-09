@@ -119,6 +119,10 @@ func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) 
 		scope.DeclareVariable(param, arg)
 	}
 
+	if function.This != nil {
+		scope.DeclareVariable("this", function.This)
+	}
+
 	for _, statement := range function.Body {
 		evaluate(statement, scope)
 
@@ -165,7 +169,20 @@ func evaluateIndexExpression(indexExpr *ast.IndexExpression, env *environment.En
 
 func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.Environment) values.RuntimeValue {
 	value := evaluateExpression(memberExpr.Left, env)
-	return value.Member(memberExpr.Member)
+	memberValue := value.Member(memberExpr.Member)
+	if memberValue != nil {
+		return memberValue
+	}
+
+	if env.Exists(memberExpr.Member) {
+		variable := env.GetVariable(memberExpr.Member)
+		if fn, ok := variable.(*values.FunctionValue); ok {
+			fn.This = value
+			return fn
+		}
+	}
+
+	return values.MakeNull()
 }
 
 func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {

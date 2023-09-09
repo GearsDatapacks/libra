@@ -60,8 +60,11 @@ func (env *Environment) AssignVariable(name string, value values.RuntimeValue) v
 }
 
 func (env *Environment) GetVariable(name string) values.RuntimeValue {
-	declaredenvironment := env.resolve(name)
-	return declaredenvironment.variables[name]
+	declaredEnvironment := env.resolve(name)
+	if declaredEnvironment == nil {
+		errors.LogError(errors.DevError(fmt.Sprintf("Cannot find variable %q, it does not exist", name)))
+	}
+	return declaredEnvironment.variables[name]
 }
 
 func (env *Environment) resolve(varName string) *Environment {
@@ -70,7 +73,7 @@ func (env *Environment) resolve(varName string) *Environment {
 	}
 
 	if env.parent == nil {
-		errors.LogError(errors.DevError(fmt.Sprintf("Cannot find variable %q, it does not exist", varName)))
+		return nil
 	}
 
 	return env.parent.resolve(varName)
@@ -96,4 +99,8 @@ func (env *Environment) DeclareStruct(structDecl *ast.StructDeclaration) {
 
 func (env *Environment) GetStruct(name string) ast.StructDeclaration {
 	return env.structs[name]
+}
+
+func (env *Environment) Exists(name string) bool {
+	return env.resolve(name) != nil
 }

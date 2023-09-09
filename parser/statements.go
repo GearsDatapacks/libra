@@ -124,6 +124,20 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 	tok := p.consume()
 
+	var methodOf ast.TypeExpression = nil
+	if p.next().Type == token.LEFT_PAREN {
+		p.consume()
+		var err error
+		methodOf, err = p.parseType()
+		if err != nil {
+			return nil, err
+		}
+		_, err = p.expect(token.RIGHT_PAREN, "Unexpected %q, expected ')'")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	name, err := p.expect(token.IDENTIFIER, "Invalid function name %q")
 	if err != nil {
 		return nil, err
@@ -165,6 +179,7 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 		Body:       code,
 		ReturnType: returnType,
 		BaseNode:   &ast.BaseNode{Token: tok},
+		MethodOf: methodOf,
 	}, nil
 }
 

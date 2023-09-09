@@ -62,6 +62,7 @@ type Function struct {
 	Name string
 	Parameters []ValidType
 	ReturnType ValidType
+	MethodOf ValidType
 }
 
 func (fn *Function) Valid(dataType ValidType) bool {

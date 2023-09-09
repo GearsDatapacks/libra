@@ -141,7 +141,6 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 		}
 	}
 
-
 	callVar := typeCheckExpression(call.Left, symbolTable)
 	if callVar.String() == "TypeError" {
 		return callVar
@@ -272,6 +271,15 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *sy
 	leftType := typeCheckExpression(memberExpr.Left, symbolTable)
 	if leftType.String() == "TypeError" {
 		return leftType
+	}
+
+	if symbolTable.Exists(memberExpr.Member) {
+		symbolType := symbolTable.GetSymbol(memberExpr.Member)
+		if fn, ok := symbolType.(*types.Function); ok {
+			if fn.MethodOf.Valid(leftType) {
+				return fn
+			}
+		}
 	}
 
 	resultType := leftType.Member(memberExpr.Member)

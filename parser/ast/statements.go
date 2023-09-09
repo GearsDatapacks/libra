@@ -48,6 +48,7 @@ type FunctionDeclaration struct {
 	*BaseNode
 	*BaseStatment
 	Name string
+	MethodOf TypeExpression
 	Parameters []Parameter
 	ReturnType TypeExpression
 	Body []Statement
