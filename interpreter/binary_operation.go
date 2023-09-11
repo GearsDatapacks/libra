@@ -18,6 +18,24 @@ func RegisterBinaryOperator(op string, operation binOpFn) {
 }
 
 func evaluateBinaryOperation(binOp *ast.BinaryOperation, env *environment.Environment) values.RuntimeValue {
+	if binOp.Operator == "||" {
+		left := evaluateExpression(binOp.Left, env)
+		if left.Truthy() {
+			return left
+		}
+
+		return evaluateExpression(binOp.Right, env)
+	}
+
+	if binOp.Operator == "&&" {
+		left := evaluateExpression(binOp.Left, env)
+		if !left.Truthy() {
+			return left
+		}
+
+		return evaluateExpression(binOp.Right, env)
+	}
+
 	left := evaluateExpression(binOp.Left, env)
 	right := evaluateExpression(binOp.Right, env)
 

@@ -410,20 +410,6 @@ func registerOperators() {
 	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 		return values.MakeBoolean(!value.Truthy())
 	})
-
-	RegisterBinaryOperator("||", func(a, b values.RuntimeValue) values.RuntimeValue {
-		if a.Truthy() {
-			return a
-		}
-		return b
-	})
-
-	RegisterBinaryOperator("&&", func(a, b values.RuntimeValue) values.RuntimeValue {
-		if a.Truthy() {
-			return b
-		}
-		return a
-	})
 }
 
 type builtin func([]values.RuntimeValue, *environment.Environment) values.RuntimeValue
