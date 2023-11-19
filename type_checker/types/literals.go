@@ -45,7 +45,7 @@ func (list *ListLiteral) String() string {
 }
 func (list *ListLiteral) Valid(t ValidType) bool {
 	if l, isList := t.(*ListLiteral); isList {
-		return list.ElemType.Valid(l.ElemType)
+		return list.ElemType.Valid(l.ElemType) && l.ElemType.Valid(list.ElemType)
 	}
 	if array, isArray := t.(*ArrayLiteral); isArray {
 		return array.CanInfer && list.ElemType.Valid(array.ElemType)
@@ -103,8 +103,9 @@ func (array *ArrayLiteral) Valid(t ValidType) bool {
 	if !isA[*ArrayLiteral](t) {
 		return false
 	}
-	lengthsMatch := array.Length == -1 || array.Length == t.(*ArrayLiteral).Length
-	return lengthsMatch && array.ElemType.Valid(t.(*ArrayLiteral).ElemType)
+	other := t.(*ArrayLiteral)
+	lengthsMatch := array.Length == -1 || array.Length == other.Length
+	return lengthsMatch && array.ElemType.Valid(other.ElemType) && other.ElemType.Valid(array.ElemType)
 }
 
 func (array *ArrayLiteral) Infer(dataType ValidType) (ValidType, bool) {
