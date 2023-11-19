@@ -124,7 +124,11 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 		name := ident.Symbol
 		if builtin, ok := registry.Builtins[name]; ok {
 			if len(builtin.Parameters) != len(call.Args) {
-				return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
+				if len(call.Args) < len(builtin.Parameters) {
+
+					return types.Error(fmt.Sprintf("Missing argument for function %q", name), call)
+				}
+				return types.Error(fmt.Sprintf("Extra argument passed to function %q", name), call)
 			}
 
 			for i, param := range builtin.Parameters {
@@ -133,7 +137,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 					return arg
 				}
 				if !param.Valid(arg) {
-					return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
+					return types.Error(fmt.Sprintf("Invalid arguments passed to function %q: Type %q is not a valid argument for parameter of type %q", name, arg, param), call)
 				}
 			}
 
@@ -159,7 +163,11 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	}
 
 	if len(function.Parameters) != len(call.Args) {
-		return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
+		if len(call.Args) < len(function.Parameters) {
+
+			return types.Error(fmt.Sprintf("Missing argument for function %q", name), call)
+		}
+		return types.Error(fmt.Sprintf("Extra argument passed to function %q", name), call)
 	}
 
 	for i, param := range function.Parameters {
@@ -168,7 +176,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 			return arg
 		}
 		if !param.Valid(arg) {
-			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q", name), call)
+			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q: Type %q is not a valid argument for parameter of type %q", name, arg, param), call)
 		}
 	}
 
