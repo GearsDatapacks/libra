@@ -39,7 +39,7 @@ func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
 		parent:    parent,
 		variables: map[string]values.RuntimeValue{},
-		structs:     map[string]ast.StructDeclaration{},
+		structs:     parent.structs,
 		kind:      kind,
 	}
 }
