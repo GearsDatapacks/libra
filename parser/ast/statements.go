@@ -234,3 +234,23 @@ func (structDec *StructDeclaration) String() string {
 
 	return result
 }
+
+type InterfaceMember struct {
+	Name string
+	IsFunction bool
+	Parameters []TypeExpression
+	ResultType TypeExpression
+}
+
+type InterfaceDeclaration struct {
+	*BaseNode
+	*BaseStatment
+	Name string
+	Members []InterfaceMember
+}
+
+func (intDecl *InterfaceDeclaration) Type() NodeType { return "InterfaceDeclaration" }
+
+func (intDecl *InterfaceDeclaration) String() string {
+	return "interface {}"
+}

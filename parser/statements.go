@@ -31,6 +31,8 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseForLoop()
 	} else if p.isKeyword("struct") {
 		statement, err = p.parseStructDeclaration()
+	} else if p.isKeyword("interface") {
+		statement, err = p.parseInterfaceDeclaration()
 	} else {
 		statement, err = p.parseExpressionStatement()
 	}
@@ -344,6 +346,71 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
 
 	return &ast.StructDeclaration{
+		BaseNode: &ast.BaseNode{Token: tok},
+		Name:     name.Value,
+		Members:  members,
+	}, nil
+}
+
+func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
+	tok := p.consume()
+
+	name, err := p.expect(token.IDENTIFIER, "Invalid interface name %q")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.expect(token.LEFT_BRACE, "Expected interface body")
+	if err != nil {
+		return nil, err
+	}
+
+	members := []ast.InterfaceMember{}
+
+	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+		memberName, err := p.expect(token.IDENTIFIER, "Expected closing brace or interface member")
+		if err != nil {
+			return nil, err
+		}
+
+		currentMember := ast.InterfaceMember{Name: memberName.Value}
+
+		if p.next().Type == token.LEFT_PAREN {
+			p.consume()
+			currentMember.IsFunction = true
+			currentMember.Parameters = []ast.TypeExpression{}
+
+			for p.next().Type != token.RIGHT_PAREN {
+				nextType, err := p.parseType()
+				if err != nil {
+					return nil, err
+				}
+				currentMember.Parameters = append(currentMember.Parameters, nextType)
+
+				if p.next().Type != token.RIGHT_PAREN {
+					return nil, p.error("Expected comma or end of parameter list", p.next())
+				}
+			}
+
+			p.consume()
+		}
+
+		resultType, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+		currentMember.ResultType = resultType
+
+		members = append(members, currentMember)
+
+		if p.next().Type != token.RIGHT_BRACE && !p.next().LeadingNewline {
+			return nil, p.error("Expected newline or end of interface body", p.next())
+		}
+	}
+
+	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+
+	return &ast.InterfaceDeclaration{
 		BaseNode: &ast.BaseNode{Token: tok},
 		Name:     name.Value,
 		Members:  members,
