@@ -93,7 +93,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 			return leftType
 		}
 
-		dataType = leftType.Member(member.Member)
+		dataType = types.Member(leftType, member.Member)
 	} else {
 		return types.Error("Can only assign values to variables", assignment)
 	}
@@ -157,10 +157,6 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	}
 
 	name := function.Name
-
-	if !symbolTable.Exists(name) {
-		return types.Error(fmt.Sprintf("Function %q is undefined", name), call)
-	}
 
 	if len(function.Parameters) != len(call.Args) {
 		if len(call.Args) < len(function.Parameters) {
@@ -281,16 +277,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *sy
 		return leftType
 	}
 
-	if symbolTable.Exists(memberExpr.Member) {
-		symbolType := symbolTable.GetSymbol(memberExpr.Member)
-		if fn, ok := symbolType.(*types.Function); ok {
-			if fn.MethodOf.Valid(leftType) {
-				return fn
-			}
-		}
-	}
-
-	resultType := leftType.Member(memberExpr.Member)
+	resultType := types.Member(leftType, memberExpr.Member)
 	if resultType == nil {
 		return types.Error(fmt.Sprintf("Type %q does not have member %q", leftType.String(), memberExpr.Member), memberExpr)
 	}

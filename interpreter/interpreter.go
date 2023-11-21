@@ -45,6 +45,9 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 	case *ast.StructDeclaration:
 		env.DeclareStruct(statement)
 		return values.MakeNull()
+	
+	case *ast.InterfaceDeclaration:
+		return values.MakeNull()
 
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode))

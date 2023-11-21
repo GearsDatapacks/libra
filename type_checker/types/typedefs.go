@@ -71,7 +71,21 @@ func (fn *Function) Valid(dataType ValidType) bool {
 		return false
 	}
 
-	return fn == otherFn
+	if otherFn.Name != fn.Name {
+		return false
+	}
+
+	if !fn.ReturnType.Valid(otherFn.ReturnType) {
+		return false
+	}
+
+	for i, param := range fn.Parameters {
+		if !param.Valid(otherFn.Parameters[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (fn *Function) String() string {
@@ -116,9 +130,43 @@ func (s *Struct) String() string {
 	return s.Name
 }
 
-func (s *Struct) Member(member string) ValidType {
+func (s *Struct) member(member string) ValidType {
 	memberType := s.Members[member]
 	if s.constant && memberType != nil {
+		memberType.MarkConstant()
+	}
+	return memberType
+}
+
+type Interface struct {
+	BaseType
+	Name string
+	Members map[string]ValidType
+}
+
+func (i *Interface) Valid(dataType ValidType) bool {
+	for name, member := range i.Members {
+
+		memberType := Member(dataType, name)
+		if memberType == nil {
+			return false
+		}
+
+		if !member.Valid(memberType) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (i *Interface) String() string {
+	return i.Name
+}
+
+func (i *Interface) member(member string) ValidType {
+	memberType := i.Members[member]
+	if i.constant && memberType != nil {
 		memberType.MarkConstant()
 	}
 	return memberType

@@ -36,6 +36,9 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 	case *ast.StructDeclaration:
 		return typeCheckStructDeclaration(statement, symbolTable)
 
+	case *ast.InterfaceDeclaration:
+		return typeCheckInterfaceDeclaration(statement, symbolTable)
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
 		return nil
@@ -132,15 +135,16 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		functionType.MethodOf = parentType
 
 		childTable.RegisterSymbol("this", parentType, true)
+		types.AddMethod(funcDec.Name, functionType)
+	} else {
+		err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
+		if err != nil {
+			err.Line = funcDec.Token.Line
+			err.Column = funcDec.Token.Column
+			return err
+		}
 	}
-
-	err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
-	if err != nil {
-		err.Line = funcDec.Token.Line
-		err.Column = funcDec.Token.Column
-		return err
-	}
-
+	
 	for _, statement := range funcDec.Body {
 		err := typeCheckStatement(statement, childTable)
 		if err.String() == "TypeError" {
@@ -272,4 +276,52 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *
 	}
 
 	return structType
+}
+
+func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := map[string]types.ValidType{}
+
+	for _, member := range intDecl.Members {
+		if !member.IsFunction {
+			dataType := types.FromAst(member.ResultType, symbolTable)
+			if dataType.String() == "TypeError" {
+				return dataType
+			}
+
+			members[member.Name] = dataType
+			continue
+		}
+
+		fnType := &types.Function{}
+		fnType.Name = member.Name
+
+		returnType := types.FromAst(member.ResultType, symbolTable)
+		if returnType.String() == "TypeError" {
+			return returnType
+		}
+		fnType.ReturnType = returnType
+
+		fnType.Parameters = []types.ValidType{}
+		for _, param := range member.Parameters {
+			paramType := types.FromAst(param, symbolTable)
+			if paramType.String() == "TypeError" {
+				return paramType
+			}
+
+			fnType.Parameters = append(fnType.Parameters, paramType)
+		}
+
+		members[member.Name] = fnType
+	}
+
+	interfaceType := &types.Interface{
+		Name:    intDecl.Name,
+		Members: members,
+	}
+	err := symbolTable.AddType(intDecl.Name, interfaceType)
+	if err != nil {
+		return err
+	}
+
+	return interfaceType
 }

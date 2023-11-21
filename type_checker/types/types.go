@@ -15,7 +15,10 @@ type ValidType interface {
 	Constant() bool
 	MarkConstant()
 	IndexBy(ValidType) ValidType
-	Member(string) ValidType
+}
+
+type hasMembers interface {
+	member(string) ValidType
 }
 
 type BaseType struct {
@@ -40,10 +43,6 @@ func (b *BaseType) MarkConstant() {
 }
 
 func (*BaseType) IndexBy(ValidType) ValidType {
-	return nil
-}
-
-func (*BaseType) Member(string) ValidType {
 	return nil
 }
 
@@ -144,4 +143,43 @@ func FromString(typeString string, table TypeTable) ValidType {
 	}
 
 	return dataType
+}
+
+func Member(memberOf ValidType, name string) ValidType {
+	method := getMethod(memberOf, name)
+	if method != nil {
+		return method
+	}
+
+	hasMembers, ok := memberOf.(hasMembers)
+	if ok {
+		return hasMembers.member(name)
+	}
+	return nil
+}
+
+var methods = map[string][]*Function{}
+
+func AddMethod(name string, method *Function) {
+	overloads, ok := methods[name]
+	if !ok {
+		methods[name] = []*Function{method}
+	}
+	overloads = append(overloads, method)
+	methods[name] = overloads
+}
+
+func getMethod(methodOf ValidType, name string) *Function {
+	overloads, ok := methods[name]
+	if !ok {
+		return nil
+	}
+
+	for _, overload := range overloads {
+		if overload.MethodOf.Valid(methodOf) {
+			return overload
+		}
+	}
+
+	return nil
 }
