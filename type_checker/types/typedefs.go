@@ -39,7 +39,7 @@ func (u *Union) Valid(dataType ValidType) bool {
 
 	// Otherwise, we just make sure the value is contained within this one
 	for _, unionType := range u.Types {
-		if dataType.Valid(unionType) {
+		if unionType.Valid(dataType) {
 			return true
 		}
 	}
