@@ -206,11 +206,15 @@ func (p *parser) parseReturnStatement() (ast.Statement, error) {
 
 func (p *parser) parseIfStatement() (*ast.IfStatement, error) {
 	tok := p.consume()
+	noBraces := p.noBraces
+	p.noBraces = true
 
 	condition, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
+
+	p.noBraces = noBraces
 
 	body, err := p.parseCodeBlock()
 	if err != nil {

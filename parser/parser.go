@@ -9,10 +9,11 @@ import (
 )
 
 type parser struct {
-	tokens       []token.Token
-	bracketLevel int
+	tokens         []token.Token
+	bracketLevel   int
+	noBraces       bool
 	requireNewline bool
-	usedSymbols  []string
+	usedSymbols    []string
 }
 
 func New() *parser {

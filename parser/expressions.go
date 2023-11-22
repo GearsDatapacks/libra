@@ -347,18 +347,17 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		}, nil
 
 	case token.IDENTIFIER:
-		switch p.tokens[1].Type {
-
-		case token.LEFT_BRACE:
+		if p.tokens[1].Type == token.LEFT_BRACE && !p.noBraces {
 			return p.parseStructExpression()
-
-		default:
+		} else {
 			return p.parseIdentifier()
 		}
 
 	case token.LEFT_PAREN:
 		p.consume()
 		p.bracketLevel++
+		noBraces := p.noBraces
+		p.noBraces = false
 		expression, err := p.parseExpression()
 		if err != nil {
 			return nil, err
@@ -370,6 +369,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		}
 
 		p.bracketLevel--
+		p.noBraces = noBraces
 		return expression, nil
 
 	case token.LEFT_SQUARE:
