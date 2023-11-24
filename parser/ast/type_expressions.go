@@ -110,3 +110,17 @@ type VoidType struct {
 func (v *VoidType) Type() NodeType { return "Void" }
 func (v *VoidType) String() string { return "void" }
 func (v *VoidType) GetToken() token.Token { return token.Token{Value: "void"} }
+
+type ErrorType struct {
+	*BaseNode
+	*BaseType
+	ResultType TypeExpression
+}
+
+func (e *ErrorType) Type() NodeType { return "Error" }
+func (e *ErrorType) String() string {
+	if e.ResultType.Type() == "Union" {
+		return fmt.Sprintf("(%s)!", e.ResultType.String())
+	}
+	return e.ResultType.String() + "!"
+}

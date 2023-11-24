@@ -13,7 +13,7 @@ func (p *parser) parseType() (ast.TypeExpression, error) {
 }
 
 func (p *parser) parseUnion() (ast.TypeExpression, error) {
-	left, err := p.parseArrayType()
+	left, err := p.parseSuffixType()
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (p *parser) parseUnion() (ast.TypeExpression, error) {
 	for p.next().Type == token.BITWISE_OR {
 		p.consume()
 
-		nextType, err := p.parseArrayType()
+		nextType, err := p.parseSuffixType()
 		if err != nil {
 			return nil, err
 		}
@@ -40,12 +40,36 @@ func (p *parser) parseUnion() (ast.TypeExpression, error) {
 	}, nil
 }
 
-func (p *parser) parseArrayType() (ast.TypeExpression, error) {
-	var elemType ast.TypeExpression
-	var tok token.Token
+func (p *parser) parseSuffixType() (ast.TypeExpression, error) {
+	leftType, err := p.parsePrimaryType()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		switch p.next().Type {
+		case token.LEFT_SQUARE:
+			leftType, err = p.parseArrayType(leftType, leftType.GetToken())
+			if err != nil {
+				return nil, err
+			}
+
+		case token.LOGICAL_NOT:
+			p.consume()
+			leftType = &ast.ErrorType{
+				ResultType: leftType,
+				BaseNode:   &ast.BaseNode{Token: leftType.GetToken()},
+			}
+
+		default:
+			return leftType, nil
+		}
+	}
+}
+
+func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (ast.TypeExpression, error) {
 	if p.next().Type == token.LEFT_SQUARE {
-		elemType = &ast.InferType{BaseNode: &ast.BaseNode{Token: p.next()}}
-		tok = p.next()
+		
 	} else {
 		var err error = nil
 		elemType, err = p.parsePrimaryType()
@@ -149,6 +173,11 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 	
 	case token.LEFT_BRACE:
 		return p.parseMapType()
+	
+	case token.LEFT_SQUARE:
+		elemType := &ast.InferType{BaseNode: &ast.BaseNode{Token: p.next()}}
+		tok := p.next()
+		return p.parseArrayType(elemType, tok)
 		
 	default:
 		return nil, p.error(fmt.Sprintf("Expected type, got %q", p.next().Value), p.next())
