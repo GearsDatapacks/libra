@@ -21,7 +21,7 @@ func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.Symb
 		return types.Error(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
 	}
 
-	resultType := checkerFn(valueType)
+	resultType := checkerFn(valueType, unOp.Postfix)
 
 	if resultType == nil {
 		return types.Error(fmt.Sprintf("Operator %q is not defined for type %q", unOp.Operator, valueType), unOp)

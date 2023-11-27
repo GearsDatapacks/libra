@@ -30,6 +30,7 @@ const (
 	DOT          = "DOT"
 	SEMICOLON    = "SEMICOLON"
 	COLON        = "COLON"
+	QUESTION        = "QUESTION"
 
 	ASSIGN     = "ASSIGN"
 	ADD_ASSIGN = "ADD_ASSIGN"
@@ -79,6 +80,7 @@ var Symbols = map[string]Type{
 	".": DOT,
 	";": SEMICOLON,
 	":": COLON,
+	"?": QUESTION,
 
 	"+":  ADD,
 	"-":  SUBTRACT,
@@ -131,6 +133,8 @@ var PrefixOperator = []Type{
 var PostfixOperator = []Type{
 	INCREMENT,
 	DECREMENT,
+	QUESTION,
+	LOGICAL_NOT,
 }
 
 var BinOpInfo = map[Type]struct {

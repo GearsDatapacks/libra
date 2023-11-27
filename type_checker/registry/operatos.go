@@ -7,7 +7,7 @@ import (
 )
 
 type binaryOperatorChecker func(types.ValidType, types.ValidType) types.ValidType
-type unaryOperatorChecker func(types.ValidType) types.ValidType
+type unaryOperatorChecker func(types.ValidType, bool) types.ValidType
 
 var BinaryOperators = map[string]binaryOperatorChecker{}
 var UnaryOperators = map[string]unaryOperatorChecker{}
@@ -31,9 +31,9 @@ func registerRegularBinaryOperator(name string, left, right, result types.ValidT
 	registerBinaryOperator(name, fn)
 }
 
-func registerRegularUnaryOperator(name string, value, result types.ValidType) {
-	fn := func(valueType types.ValidType) types.ValidType {
-		if value.Valid(valueType) {
+func registerRegularUnaryOperator(name string, postfix bool, value, result types.ValidType) {
+	fn := func(valueType types.ValidType, post bool) types.ValidType {
+		if post == postfix && value.Valid(valueType) {
 			return result
 		}
 		return nil
@@ -151,12 +151,33 @@ func incDecOperator(dataType types.ValidType, op string) types.ValidType {
 	return dataType
 }
 
-func negateOperator(dataType types.ValidType) types.ValidType {
+func negateOperator(dataType types.ValidType, _ bool) types.ValidType {
 	if !numberType.Valid(dataType) {
 		return nil
 	}
 
 	return dataType
+}
+
+func notOperator(dataType types.ValidType, postfix bool) types.ValidType {
+	if !postfix {
+		if boolType.Valid(dataType) {
+			return boolType
+		}
+		return nil
+	}
+
+	if errType, ok := dataType.(*types.ErrorType); ok {
+		return errType.ResultType
+	}
+	return nil
+}
+
+func unwrapOperator(dataType types.ValidType, _ bool) types.ValidType {
+	if errType, ok := dataType.(*types.ErrorType); ok {
+		return errType.ResultType
+	}
+	return nil
 }
 
 func registerOperators() {
@@ -173,15 +194,16 @@ func registerOperators() {
 	registerRegularBinaryOperator("<=", numberType, numberType, boolType)
 	registerRegularBinaryOperator("==", &types.Any{}, &types.Any{}, boolType)
 	registerRegularBinaryOperator("!=", &types.Any{}, &types.Any{}, boolType)
-	
+
 	registerBinaryOperator("<<", leftShift)
 	registerBinaryOperator(">>", rightShift)
 
 	registerBinaryOperator("||", logicalOperator)
 	registerBinaryOperator("&&", logicalOperator)
 
-	registerUnaryOperator("++", func(v types.ValidType) types.ValidType { return incDecOperator(v, "++") })
-	registerUnaryOperator("--", func(v types.ValidType) types.ValidType { return incDecOperator(v, "--") })
-	registerRegularUnaryOperator("!", &types.Any{}, boolType)
+	registerUnaryOperator("++", func(v types.ValidType, _ bool) types.ValidType { return incDecOperator(v, "++") })
+	registerUnaryOperator("--", func(v types.ValidType, _ bool) types.ValidType { return incDecOperator(v, "--") })
+	registerUnaryOperator("!", notOperator)
+	registerUnaryOperator("?", unwrapOperator)
 	registerUnaryOperator("-", negateOperator)
 }
