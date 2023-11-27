@@ -23,7 +23,7 @@ type hasMembers interface {
 
 type BaseType struct {
 	wasVariable bool
-	constant bool
+	constant    bool
 }
 
 func (b *BaseType) WasVariable() bool {
@@ -110,6 +110,14 @@ func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
 			KeyType:   keyType,
 			ValueType: valueType,
 		}
+
+	case *ast.ErrorType:
+		resultType := FromAst(typeExpr.ResultType, table)
+		if resultType.String() == "TypeError" {
+			return resultType
+		}
+
+		return &ErrorType{ResultType: resultType}
 
 	case *ast.VoidType:
 		return &Void{}

@@ -172,6 +172,30 @@ func (i *Interface) member(member string) ValidType {
 	return memberType
 }
 
+var ErrorInterface = &Interface{
+	Name:     "error",
+	Members:  map[string]ValidType{
+		"error": &Function{
+			Name:       "error",
+			Parameters: []ValidType{},
+			ReturnType: &StringLiteral{},
+		},
+	},
+}
+
+type ErrorType struct {
+	*BaseType
+	ResultType ValidType
+}
+
+func (e *ErrorType) Valid(dataType ValidType) bool {
+	return e.ResultType.Valid(dataType) || ErrorInterface.Valid(dataType)
+}
+
+func (e *ErrorType) String() string {
+	return e.ResultType.String() + "!"
+}
+
 type TypeError struct {
 	*BaseType
 	Message string
