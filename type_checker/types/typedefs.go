@@ -189,6 +189,10 @@ type ErrorType struct {
 }
 
 func (e *ErrorType) Valid(dataType ValidType) bool {
+	if err, ok := dataType.(*ErrorType); ok {
+		return e.ResultType.Valid(err.ResultType)
+	}
+
 	return e.ResultType.Valid(dataType) || ErrorInterface.Valid(dataType)
 }
 
