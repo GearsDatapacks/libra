@@ -5,6 +5,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func Register() {
@@ -39,6 +40,17 @@ func Register() {
 // 		return values.MakeValue(operation(value))
 // 	})
 // }
+
+var errorType = types.Interface{
+	Name: "error",
+	Members: map[string]types.ValidType{
+		"error": &types.Function{
+			Name:       "error",
+			Parameters: []types.ValidType{},
+			ReturnType: &types.StringLiteral{},
+		},
+	},
+}
 
 func modulo(a, b float64) float64 {
 	for a > b {
@@ -409,6 +421,15 @@ func registerOperators() {
 
 	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 		return values.MakeBoolean(!value.Truthy())
+	})
+
+	RegisterUnaryOperator("?", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+		if errorType.Valid(value.Type()) {
+			functionScope := env.FindFunctionScope()
+			functionScope.ReturnValue = value
+			return values.MakeNull()
+		}
+		return value
 	})
 }
 

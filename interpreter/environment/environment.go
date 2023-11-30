@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gearsdatapacks/libra/errors"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/interpreter/values"
-	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 type scopeKind int
@@ -19,17 +19,17 @@ const (
 type Environment struct {
 	parent      *Environment
 	variables   map[string]values.RuntimeValue
-	structs     map[string]ast.StructDeclaration
+	types       map[string]types.ValidType
 	kind        scopeKind
 	ReturnValue values.RuntimeValue
 }
 
 func New() *Environment {
 	env := Environment{
-		parent:      nil,
-		variables:   map[string]values.RuntimeValue{},
-		structs:     map[string]ast.StructDeclaration{},
-		kind:        GLOBAL_SCOPE,
+		parent:    nil,
+		variables: map[string]values.RuntimeValue{},
+		types:     map[string]types.ValidType{},
+		kind:      GLOBAL_SCOPE,
 	}
 
 	return &env
@@ -39,7 +39,7 @@ func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
 		parent:    parent,
 		variables: map[string]values.RuntimeValue{},
-		structs:     parent.structs,
+		types:   parent.types,
 		kind:      kind,
 	}
 }
@@ -93,12 +93,12 @@ func (env *Environment) FindFunctionScope() *Environment {
 	return env.parent.FindFunctionScope()
 }
 
-func (env *Environment) DeclareStruct(structDecl *ast.StructDeclaration) {
-	env.structs[structDecl.Name] = *structDecl
+func (env *Environment) AddType(name string, dataType types.ValidType) {
+	env.types[name] = dataType
 }
 
-func (env *Environment) GetStruct(name string) ast.StructDeclaration {
-	return env.structs[name]
+func (env *Environment) GetType(name string) types.ValidType {
+	return env.types[name]
 }
 
 func (env *Environment) Exists(name string) bool {

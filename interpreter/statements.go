@@ -4,6 +4,7 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func evaluateExpressionStatement(exprStmt *ast.ExpressionStatement, env *environment.Environment) values.RuntimeValue {
@@ -24,10 +25,25 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, env *environme
 
 func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environment.Environment) values.RuntimeValue {
 	params := []string{}
+	paramTypes := []types.ValidType{}
 
-	// Only need names
 	for _, param := range funcDec.Parameters {
 		params = append(params, param.Name)
+		paramTypes = append(paramTypes, types.FromAst(param.Type, env))
+	}
+	returnType := types.FromAst(funcDec.ReturnType, env)
+
+	functionType := &types.Function{
+		Parameters: paramTypes,
+		ReturnType: returnType,
+		Name:       funcDec.Name,
+	}
+
+	if funcDec.MethodOf != nil {
+		parentType := types.FromAst(funcDec.MethodOf, env)
+		functionType.MethodOf = parentType
+
+		types.AddMethod(funcDec.Name, functionType)
 	}
 
 	fn := &values.FunctionValue{
@@ -35,6 +51,7 @@ func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environm
 		Parameters:             params,
 		DeclarationEnvironment: env,
 		Body:                   funcDec.Body,
+		BaseValue:              values.BaseValue{DataType: functionType},
 	}
 
 	return env.DeclareVariable(funcDec.Name, fn)
@@ -51,7 +68,9 @@ func evaluateIfStatement(ifStatement *ast.IfStatement, env *environment.Environm
 	condition := evaluateExpression(ifStatement.Condition, env)
 
 	if !condition.Truthy() {
-		if ifStatement.Else == nil { return values.MakeNull() }
+		if ifStatement.Else == nil {
+			return values.MakeNull()
+		}
 		if elseStatement, isElse := ifStatement.Else.(*ast.ElseStatement); isElse {
 			return evaluateElseStatement(elseStatement, env)
 		}
@@ -104,6 +123,24 @@ func evaluateForLoop(forLoop *ast.ForLoop, env *environment.Environment) values.
 		}
 		evaluate(forLoop.Update, loopEnv)
 	}
+
+	return values.MakeNull()
+}
+
+func evaluateStructDeclaration(structDecl *ast.StructDeclaration, env *environment.Environment) values.RuntimeValue {
+	members := map[string]types.ValidType{}
+
+	for memberName, memberType := range structDecl.Members {
+		dataType := types.FromAst(memberType, env)
+
+		members[memberName] = dataType
+	}
+
+	structType := &types.Struct{
+		Name:    structDecl.Name,
+		Members: members,
+	}
+	env.AddType(structDecl.Name, structType)
 
 	return values.MakeNull()
 }

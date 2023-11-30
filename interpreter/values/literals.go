@@ -6,6 +6,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type IntegerLiteral struct {
@@ -14,12 +15,12 @@ type IntegerLiteral struct {
 }
 
 func MakeInteger(value int) *IntegerLiteral {
-	return &IntegerLiteral{Value: value}
+	return &IntegerLiteral{Value: value, BaseValue: BaseValue{DataType: &types.IntLiteral{}}}
 }
 
-func (il *IntegerLiteral) Type() ValueType {
-	return "integer"
-}
+// func (il *IntegerLiteral) Type() ValueType {
+// return "integer"
+// }
 
 func (il *IntegerLiteral) ToString() string {
 	return fmt.Sprint(il.Value)
@@ -41,12 +42,12 @@ type FloatLiteral struct {
 }
 
 func MakeFloat(value float64) *FloatLiteral {
-	return &FloatLiteral{Value: value}
+	return &FloatLiteral{Value: value, BaseValue: BaseValue{DataType: &types.FloatLiteral{}}}
 }
 
-func (fl *FloatLiteral) Type() ValueType {
-	return "float"
-}
+// func (fl *FloatLiteral) Type() ValueType {
+// return "float"
+// }
 
 func (fl *FloatLiteral) ToString() string {
 	return fmt.Sprint(fl.Value)
@@ -68,12 +69,12 @@ type StringLiteral struct {
 }
 
 func MakeString(value string) *StringLiteral {
-	return &StringLiteral{Value: value}
+	return &StringLiteral{Value: value, BaseValue: BaseValue{DataType: &types.StringLiteral{}}}
 }
 
-func (str *StringLiteral) Type() ValueType {
-	return "string"
-}
+// func (str *StringLiteral) Type() ValueType {
+// return "string"
+// }
 
 func (str *StringLiteral) ToString() string {
 	return "\"" + str.Value + "\""
@@ -94,12 +95,12 @@ type NullLiteral struct {
 }
 
 func MakeNull() *NullLiteral {
-	return &NullLiteral{}
+	return &NullLiteral{BaseValue: BaseValue{DataType: &types.NullLiteral{}}}
 }
 
-func (nl *NullLiteral) Type() ValueType {
-	return "null"
-}
+// func (nl *NullLiteral) Type() ValueType {
+// return "null"
+// }
 
 func (nl *NullLiteral) ToString() string {
 	return "null"
@@ -120,12 +121,12 @@ type BooleanLiteral struct {
 }
 
 func MakeBoolean(value bool) *BooleanLiteral {
-	return &BooleanLiteral{Value: value}
+	return &BooleanLiteral{Value: value, BaseValue: BaseValue{DataType: &types.BoolLiteral{}}}
 }
 
-func (bl *BooleanLiteral) Type() ValueType {
-	return "boolean"
-}
+// func (bl *BooleanLiteral) Type() ValueType {
+// return "boolean"
+// }
 
 func (bl *BooleanLiteral) ToString() string {
 	return fmt.Sprint(bl.Value)
@@ -146,9 +147,9 @@ type ListLiteral struct {
 	Elements []RuntimeValue
 }
 
-func (list *ListLiteral) Type() ValueType {
-	return "list"
-}
+// func (list *ListLiteral) Type() ValueType {
+// return "list"
+// }
 
 func (list *ListLiteral) ToString() string {
 	result := "["
@@ -229,9 +230,9 @@ type MapLiteral struct {
 	Elements map[RuntimeValue]RuntimeValue
 }
 
-func (maplit *MapLiteral) Type() ValueType {
-	return "map"
-}
+// func (maplit *MapLiteral) Type() ValueType {
+// return "map"
+// }
 
 func (maplit *MapLiteral) ToString() string {
 	result := "{"
@@ -296,9 +297,9 @@ type FunctionValue struct {
 	This                   RuntimeValue
 }
 
-func (fn *FunctionValue) Type() ValueType {
-	return "function"
-}
+// func (fn *FunctionValue) Type() ValueType {
+// return "function"
+// }
 
 func (fn *FunctionValue) ToString() string {
 	result := "fn ("
@@ -333,9 +334,9 @@ type StructLiteral struct {
 	Members map[string]RuntimeValue
 }
 
-func (sl *StructLiteral) Type() ValueType {
-	return "struct"
-}
+// func (sl *StructLiteral) Type() ValueType {
+// return "struct"
+// }
 
 func (sl *StructLiteral) ToString() string {
 	result := "{ "

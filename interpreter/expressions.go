@@ -7,6 +7,7 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func evaluateExpression(expr ast.Expression, env *environment.Environment) values.RuntimeValue {
@@ -52,7 +53,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 
 	case *ast.IndexExpression:
 		return evaluateIndexExpression(expression, env)
-	
+
 	case *ast.MemberExpression:
 		return evaluateMemberExpression(*expression, env)
 
@@ -83,12 +84,12 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 	switch assignee := assignment.Assignee.(type) {
 	case *ast.Identifier:
 		return env.AssignVariable(assignee.Symbol, value)
-	
+
 	case *ast.IndexExpression:
 		leftValue := evaluateExpression(assignee.Left, env)
 		indexValue := evaluateExpression(assignee.Index, env)
 		return leftValue.SetIndex(indexValue, value)
-	
+
 	case *ast.MemberExpression:
 		leftValue := evaluateExpression(assignee.Left, env)
 		return leftValue.SetMember(assignee.Member, value)
@@ -136,27 +137,79 @@ func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) 
 
 func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.RuntimeValue {
 	evaluatedValues := []values.RuntimeValue{}
+	listTypes := []types.ValidType{}
 
 	for _, elem := range list.Elements {
-		evaluatedValues = append(evaluatedValues, evaluateExpression(elem, env))
+		elemValue := evaluateExpression(elem, env)
+		newType := true
+		for _, listType := range listTypes {
+			if listType.Valid(elemValue.Type()) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
+			listTypes = append(listTypes, elemValue.Type())
+		}
+		evaluatedValues = append(evaluatedValues, elemValue)
 	}
 
 	return &values.ListLiteral{
 		Elements: evaluatedValues,
+		BaseValue: values.BaseValue{
+			DataType: &types.ArrayLiteral{
+				ElemType: types.MakeUnion(listTypes...),
+				Length:   len(list.Elements),
+				CanInfer: true,
+			},
+		},
 	}
 }
 
 func evaluateMap(maplit *ast.MapLiteral, env *environment.Environment) values.RuntimeValue {
+	keyTypes := []types.ValidType{}
+	valueTypes := []types.ValidType{}
 	evaluatedValues := map[values.RuntimeValue]values.RuntimeValue{}
 
 	for key, value := range maplit.Elements {
 		keyValue := evaluateExpression(key, env)
+		keyType := keyValue.Type()
+		newType := true
+		for _, dataType := range keyTypes {
+			if dataType.Valid(keyType) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
+			keyTypes = append(keyTypes, keyType)
+		}
+
 		valueValue := evaluateExpression(value, env)
 		evaluatedValues[keyValue] = valueValue
+
+		valueType := valueValue.Type()
+		newType = true
+		for _, dataType := range valueTypes {
+			if dataType.Valid(valueType) {
+				newType = false
+				break
+			}
+		}
+
+		if newType {
+			valueTypes = append(valueTypes, valueType)
+		}
 	}
 
 	return &values.MapLiteral{
 		Elements: evaluatedValues,
+		BaseValue: values.BaseValue{DataType: &types.MapLiteral{
+			KeyType:   types.MakeUnion(keyTypes...),
+			ValueType: types.MakeUnion(valueTypes...),
+		}},
 	}
 }
 
@@ -187,7 +240,7 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.
 
 func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {
 	members := map[string]values.RuntimeValue{}
-	structType := env.GetStruct(structExpr.Name)
+	structType := env.GetType(structExpr.Name).(*types.Struct)
 
 	for name, dataType := range structType.Members {
 		if value, hasMember := structExpr.Members[name]; hasMember {
@@ -198,7 +251,8 @@ func evaluateStructExpression(structExpr ast.StructExpression, env *environment.
 	}
 
 	return &values.StructLiteral{
-		Name:    structExpr.Name,
-		Members: members,
+		Name:      structExpr.Name,
+		Members:   members,
+		BaseValue: values.BaseValue{DataType: structType},
 	}
 }

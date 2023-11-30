@@ -1,9 +1,11 @@
 package values
 
+import "github.com/gearsdatapacks/libra/type_checker/types"
+
 type ValueType string
 
 type RuntimeValue interface {
-	Type() ValueType
+	// Type() ValueType
 	ToString() string
 	Truthy() bool
 	EqualTo(RuntimeValue) bool
@@ -13,10 +15,12 @@ type RuntimeValue interface {
 	SetIndex(index RuntimeValue, value RuntimeValue) RuntimeValue
 	Member(string) RuntimeValue
 	SetMember(member string, value RuntimeValue) RuntimeValue
+	Type() types.ValidType
 }
 
 type BaseValue struct {
-	varname string
+	varname  string
+	DataType types.ValidType
 }
 
 func (b *BaseValue) Varname() string {
@@ -41,6 +45,10 @@ func (b *BaseValue) Member(string) RuntimeValue {
 
 func (b *BaseValue) SetMember(string, RuntimeValue) RuntimeValue {
 	return MakeNull()
+}
+
+func (b *BaseValue) Type() types.ValidType {
+	return b.DataType
 }
 
 // func MakeValue(v any) RuntimeValue {
