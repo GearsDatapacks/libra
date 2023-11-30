@@ -1,7 +1,9 @@
 package interpreter
 
 import (
+	"fmt"
 	"math"
+	"os"
 
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
@@ -379,11 +381,7 @@ func registerOperators() {
 		},
 	)
 
-	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-		return values.MakeBoolean(!value.Truthy())
-	})
-
-	RegisterUnaryOperator("-", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	RegisterUnaryOperator("-", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
 		if intValue, isInt := value.(*values.IntegerLiteral); isInt {
 			intVal := intValue.Value
 			return values.MakeInteger(-intVal)
@@ -393,7 +391,7 @@ func registerOperators() {
 		return values.MakeFloat(-floatVal)
 	})
 
-	RegisterUnaryOperator("++", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	RegisterUnaryOperator("++", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
 		intValue, isInt := value.(*values.IntegerLiteral)
 		if isInt {
 			intValue.Value++
@@ -406,7 +404,7 @@ func registerOperators() {
 		// return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue + 1.0))
 	})
 
-	RegisterUnaryOperator("--", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	RegisterUnaryOperator("--", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
 		intValue, isInt := value.(*values.IntegerLiteral)
 		if isInt {
 			intValue.Value--
@@ -419,11 +417,18 @@ func registerOperators() {
 		// return env.AssignVariable(value.Varname(), values.MakeFloat(floatValue - 1.0))
 	})
 
-	RegisterUnaryOperator("!", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
-		return values.MakeBoolean(!value.Truthy())
+	RegisterUnaryOperator("!", func(value values.RuntimeValue, postfix bool, env *environment.Environment) values.RuntimeValue {
+		if !postfix {
+			return values.MakeBoolean(!value.Truthy())
+		}
+		if errorType.Valid(value.Type()) {
+			fmt.Println(value.ToString())
+			os.Exit(1)
+		}
+		return value
 	})
 
-	RegisterUnaryOperator("?", func(value values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	RegisterUnaryOperator("?", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
 		if errorType.Valid(value.Type()) {
 			functionScope := env.FindFunctionScope()
 			functionScope.ReturnValue = value
