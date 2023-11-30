@@ -39,13 +39,6 @@ func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environm
 		Name:       funcDec.Name,
 	}
 
-	if funcDec.MethodOf != nil {
-		parentType := types.FromAst(funcDec.MethodOf, env)
-		functionType.MethodOf = parentType
-
-		types.AddMethod(funcDec.Name, functionType)
-	}
-
 	fn := &values.FunctionValue{
 		Name:                   funcDec.Name,
 		Parameters:             params,
@@ -54,7 +47,16 @@ func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environm
 		BaseValue:              values.BaseValue{DataType: functionType},
 	}
 
-	return env.DeclareVariable(funcDec.Name, fn)
+	if funcDec.MethodOf != nil {
+		parentType := types.FromAst(funcDec.MethodOf, env)
+		functionType.MethodOf = parentType
+
+		types.AddMethod(funcDec.Name, functionType)
+		env.AddMethod(funcDec.Name, fn)
+		return fn
+	} else {
+		return env.DeclareVariable(funcDec.Name, fn)
+	}
 }
 
 func evaluateReturnStatement(ret *ast.ReturnStatement, env *environment.Environment) values.RuntimeValue {

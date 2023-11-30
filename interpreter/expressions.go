@@ -227,12 +227,11 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.
 		return memberValue
 	}
 
-	if env.Exists(memberExpr.Member) {
-		variable := env.GetVariable(memberExpr.Member)
-		if fn, ok := variable.(*values.FunctionValue); ok {
-			fn.This = value
-			return fn
-		}
+	
+	method := env.GetMethod(memberExpr.Member, value.Type())
+	if method != nil {
+		method.This = value
+		return method
 	}
 
 	return values.MakeNull()

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gearsdatapacks/libra/errors"
-	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type scopeKind int
@@ -22,14 +22,15 @@ type Environment struct {
 	types       map[string]types.ValidType
 	kind        scopeKind
 	ReturnValue values.RuntimeValue
+	methods     map[string][]*values.FunctionValue
 }
 
 func New() *Environment {
 	env := Environment{
-		parent:    nil,
-		variables: map[string]values.RuntimeValue{},
-		types:     map[string]types.ValidType{},
-		kind:      GLOBAL_SCOPE,
+		variables:   map[string]values.RuntimeValue{},
+		types:       map[string]types.ValidType{},
+		kind:        GLOBAL_SCOPE,
+		methods:     map[string][]*values.FunctionValue{},
 	}
 
 	return &env
@@ -37,10 +38,11 @@ func New() *Environment {
 
 func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
-		parent:    parent,
-		variables: map[string]values.RuntimeValue{},
-		types:   parent.types,
-		kind:      kind,
+		parent:      parent,
+		variables:   map[string]values.RuntimeValue{},
+		types:       parent.types,
+		kind:        kind,
+		methods:     parent.methods,
 	}
 }
 
@@ -103,4 +105,28 @@ func (env *Environment) GetType(name string) types.ValidType {
 
 func (env *Environment) Exists(name string) bool {
 	return env.resolve(name) != nil
+}
+
+func (env *Environment) GetMethod(name string, methodOf types.ValidType) *values.FunctionValue {
+	overloads, ok := env.methods[name]
+	if !ok {
+		return nil
+	}
+
+	for _, overload := range overloads {
+		if methodOf.Valid(overload.Type().(*types.Function).MethodOf) {
+			return overload
+		}
+	}
+
+	return nil
+}
+
+func (env *Environment) AddMethod(name string, method *values.FunctionValue) {
+	overloads, ok := env.methods[name]
+	if !ok {
+		env.methods[name] = []*values.FunctionValue{method}
+	}
+	overloads = append(overloads, method)
+	env.methods[name] = overloads
 }
