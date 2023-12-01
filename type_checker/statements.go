@@ -155,6 +155,10 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		}
 	}
 
+	if !childTable.HasReturn() {
+		return types.Error(fmt.Sprintf("Missing return from function %q", funcDec.Name), funcDec)
+	}
+
 	return functionType
 }
 
@@ -175,6 +179,7 @@ func typeCheckReturnStatement(ret *ast.ReturnStatement, symbolTable *symbols.Sym
 		return types.Error(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType), ret)
 	}
 
+	functionScope.AddReturn()
 	return expressionType
 }
 

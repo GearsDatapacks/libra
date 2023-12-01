@@ -23,6 +23,7 @@ type SymbolTable struct {
 	types      map[string]types.ValidType
 	kind       scopeKind
 	returnType types.ValidType
+	hasReturn  bool
 }
 
 func New() *SymbolTable {
@@ -109,6 +110,22 @@ func (st *SymbolTable) ReturnType() types.ValidType {
 	}
 
 	return st.returnType
+}
+
+func (st *SymbolTable) HasReturn() bool {
+	if !st.isFunctionScope() {
+		log.Fatal(errors.DevError("Cannot get return value of non-function scope"))
+	}
+
+	return st.hasReturn
+}
+
+func (st *SymbolTable) AddReturn() {
+	if !st.isFunctionScope() {
+		log.Fatal(errors.DevError("Cannot get return value of non-function scope"))
+	}
+
+	st.hasReturn = true
 }
 
 func (st *SymbolTable) FindFunctionScope() *SymbolTable {
