@@ -155,7 +155,7 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		}
 	}
 
-	if !childTable.HasReturn() {
+	if !returnType.Valid(&types.Void{}) && !childTable.HasReturn() {
 		return types.Error(fmt.Sprintf("Missing return from function %q", funcDec.Name), funcDec)
 	}
 
