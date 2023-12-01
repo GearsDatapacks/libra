@@ -178,6 +178,12 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 		elemType := &ast.InferType{BaseNode: &ast.BaseNode{Token: p.next()}}
 		tok := p.next()
 		return p.parseArrayType(elemType, tok)
+	
+	case token.LOGICAL_NOT:
+		return &ast.ErrorType{
+			BaseNode:   &ast.BaseNode{ Token: p.consume() },
+			ResultType: &ast.VoidType{},
+		}, nil
 		
 	default:
 		return nil, p.error(fmt.Sprintf("Expected type, got %q", p.next().Value), p.next())
