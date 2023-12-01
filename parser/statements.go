@@ -33,6 +33,8 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseStructDeclaration()
 	} else if p.isKeyword("interface") {
 		statement, err = p.parseInterfaceDeclaration()
+	} else if p.isKeyword("type") {
+		statement, err = p.parseTypeDeclaration()
 	} else {
 		statement, err = p.parseExpressionStatement()
 	}
@@ -418,5 +420,28 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 		BaseNode: &ast.BaseNode{Token: tok},
 		Name:     name.Value,
 		Members:  members,
+	}, nil
+}
+
+func (p *parser) parseTypeDeclaration() (ast.Statement, error) {
+	tok := p.consume()
+	name, err := p.expect(token.IDENTIFIER, "Expected type name, got %q")
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.expect(token.ASSIGN, "Expected initialiser for type declaration")
+	if err != nil {
+		return nil, err
+	}
+
+	dataType, err := p.parseType()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.TypeDeclaration{
+		BaseNode:     &ast.BaseNode{ Token: tok },
+		Name:         name.Value,
+		DataType:     dataType,
 	}, nil
 }

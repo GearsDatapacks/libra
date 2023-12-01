@@ -39,6 +39,9 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 	case *ast.InterfaceDeclaration:
 		return typeCheckInterfaceDeclaration(statement, symbolTable)
 
+	case *ast.TypeDeclaration:
+		return typeCheckTypeDeclataion(statement, symbolTable)
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
 		return nil
@@ -324,4 +327,17 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTabl
 	}
 
 	return interfaceType
+}
+
+func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	dataType := types.FromAst(typeDecl.DataType, symbolTable)
+	if dataType.String() == "TypeError" {
+		return dataType
+	}
+
+	err := symbolTable.AddType(typeDecl.Name, dataType)
+	if err != nil {
+		return err
+	}
+	return dataType
 }

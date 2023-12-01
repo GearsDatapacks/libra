@@ -7,6 +7,7 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func Evaluate(program ast.Program, env *environment.Environment) values.RuntimeValue {
@@ -46,6 +47,10 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return evaluateStructDeclaration(statement, env)
 	
 	case *ast.InterfaceDeclaration:
+		return values.MakeNull()
+	
+	case *ast.TypeDeclaration:
+		env.AddType(statement.Name, types.FromAst(statement.DataType, env))
 		return values.MakeNull()
 
 	default:

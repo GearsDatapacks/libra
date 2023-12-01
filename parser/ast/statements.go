@@ -254,3 +254,16 @@ func (intDecl *InterfaceDeclaration) Type() NodeType { return "InterfaceDeclarat
 func (intDecl *InterfaceDeclaration) String() string {
 	return "interface {}"
 }
+
+type TypeDeclaration struct {
+	*BaseNode
+	*BaseStatment
+	Name string
+	DataType TypeExpression
+}
+func (typeDecl *TypeDeclaration) Type() NodeType { return "TypeDeclaration" }
+
+func (typeDecl *TypeDeclaration) String() string {
+	return "type " + typeDecl.Name + " = " + typeDecl.DataType.String()
+}
+
