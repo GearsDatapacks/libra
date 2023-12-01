@@ -15,6 +15,8 @@ const (
 	GLOBAL_SCOPE = iota
 	GENERIC_SCOPE
 	FUNCTION_SCOPE
+	CONDITIONAL_SCOPE
+	FALLBACK_SCOPE
 )
 
 type SymbolTable struct {
@@ -24,6 +26,7 @@ type SymbolTable struct {
 	kind       scopeKind
 	returnType types.ValidType
 	hasReturn  bool
+	hasConditionalReturn bool
 }
 
 func New() *SymbolTable {
@@ -36,6 +39,9 @@ func New() *SymbolTable {
 }
 
 func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
+	if kind == CONDITIONAL_SCOPE {
+		parent.removeConditionalReturn()
+	}
 	return &SymbolTable{
 		parent:    parent,
 		variables: map[string]types.ValidType{},
@@ -100,45 +106,78 @@ func (st *SymbolTable) resolveVariable(varName string) *SymbolTable {
 	return st.parent.resolveVariable(varName)
 }
 
-func (st *SymbolTable) isFunctionScope() bool {
-	return st.kind == FUNCTION_SCOPE
-}
-
 func (st *SymbolTable) ReturnType() types.ValidType {
-	if !st.isFunctionScope() {
+	scope := st.FindFunctionScope()
+	if scope == nil {
 		log.Fatal(errors.DevError("Cannot get return type of non-function scope"))
 	}
 
-	return st.returnType
+	return scope.returnType
 }
 
 func (st *SymbolTable) HasReturn() bool {
-	if !st.isFunctionScope() {
-		log.Fatal(errors.DevError("Cannot get return value of non-function scope"))
+	scope := st.FindFunctionScope()
+	if scope == nil {
+		log.Fatal(errors.DevError("Cannot check return value of non-function scope"))
 	}
 
-	return st.hasReturn
+	return scope.hasReturn
 }
 
 func (st *SymbolTable) AddReturn() {
-	if !st.isFunctionScope() {
-		log.Fatal(errors.DevError("Cannot get return value of non-function scope"))
+	scope, conditional, fallback := st.findFunctionScope(false, false)
+	if scope == nil {
+		log.Fatal(errors.DevError("Cannot set return value of non-function scope"))
+	}
+	
+	if !conditional && !fallback {
+		scope.hasReturn = true
+		return
 	}
 
-	st.hasReturn = true
+	if conditional {
+		scope.hasConditionalReturn = true
+	}
+
+	if fallback && scope.hasConditionalReturn {
+		scope.hasReturn = true
+	}
+}
+
+func (st *SymbolTable) removeConditionalReturn() {
+	scope := st.FindFunctionScope()
+	if scope == nil {
+		return
+	}
+	
+	scope.hasConditionalReturn = false
 }
 
 func (st *SymbolTable) FindFunctionScope() *SymbolTable {
-	if st.isFunctionScope() {
-		return st
+	scope, _, _ := st.findFunctionScope(false, false)
+	return scope
+}
+
+func (st *SymbolTable) findFunctionScope(conditional, fallback bool) (table *SymbolTable, isConditional bool, isFallback bool) {
+	if st.kind == FUNCTION_SCOPE {
+		return st, conditional, fallback
+	}
+
+	if st.kind == CONDITIONAL_SCOPE {
+		conditional = true
+	}
+
+	if st.kind == FALLBACK_SCOPE {
+		fallback = true
 	}
 
 	if st.parent == nil {
-		return nil
+		return nil, false, false
 	}
 
-	return st.parent.FindFunctionScope()
+	return st.parent.findFunctionScope(conditional, fallback)
 }
+
 
 func (st *SymbolTable) AddType(name string, dataType types.ValidType) *types.TypeError {
 	_, hasType := st.types[name]

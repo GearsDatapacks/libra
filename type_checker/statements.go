@@ -173,13 +173,13 @@ func typeCheckReturnStatement(ret *ast.ReturnStatement, symbolTable *symbols.Sym
 		return types.Error("Cannot use return statement outside of a function", ret)
 	}
 
-	expectedType := functionScope.ReturnType()
+	expectedType := symbolTable.ReturnType()
 
 	if !expectedType.Valid(expressionType) {
 		return types.Error(fmt.Sprintf("Invalid return type. Expected type %q, got %q", expectedType, expressionType), ret)
 	}
 
-	functionScope.AddReturn()
+	symbolTable.AddReturn()
 	return expressionType
 }
 
@@ -189,7 +189,7 @@ func typeCheckIfStatement(ifStatement *ast.IfStatement, symbolTable *symbols.Sym
 		return err
 	}
 
-	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+	newScope := symbols.NewChild(symbolTable, symbols.CONDITIONAL_SCOPE)
 
 	for _, statement := range ifStatement.Body {
 		err := typeCheckStatement(statement, newScope)
@@ -210,7 +210,7 @@ func typeCheckIfStatement(ifStatement *ast.IfStatement, symbolTable *symbols.Sym
 }
 
 func typeCheckElseStatement(elseStatement *ast.ElseStatement, symbolTable *symbols.SymbolTable) types.ValidType {
-	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+	newScope := symbols.NewChild(symbolTable, symbols.FALLBACK_SCOPE)
 
 	for _, statement := range elseStatement.Body {
 		err := typeCheckStatement(statement, newScope)
@@ -225,7 +225,7 @@ func typeCheckElseStatement(elseStatement *ast.ElseStatement, symbolTable *symbo
 func typeCheckWhileLoop(while *ast.WhileLoop, symbolTable *symbols.SymbolTable) types.ValidType {
 	typeCheckExpression(while.Condition, symbolTable)
 
-	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+	newScope := symbols.NewChild(symbolTable, symbols.CONDITIONAL_SCOPE)
 
 	for _, statement := range while.Body {
 		err := typeCheckStatement(statement, newScope)
@@ -238,7 +238,7 @@ func typeCheckWhileLoop(while *ast.WhileLoop, symbolTable *symbols.SymbolTable) 
 }
 
 func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) types.ValidType {
-	newScope := symbols.NewChild(symbolTable, symbols.GENERIC_SCOPE)
+	newScope := symbols.NewChild(symbolTable, symbols.CONDITIONAL_SCOPE)
 	err := typeCheckStatement(forLoop.Initial, newScope)
 	if err.String() == "TypeError" {
 		return err
