@@ -189,6 +189,16 @@ func (st *SymbolTable) AddType(name string, dataType types.ValidType) *types.Typ
 	return nil
 }
 
+func (st *SymbolTable) UpdateType(name string, dataType types.ValidType) *types.TypeError {
+	_, hasType := st.types[name]
+	if !hasType {
+		errors.DevError(fmt.Sprintf("Cannot update type %q, it does not exist", name))
+	}
+
+	st.types[name] = dataType
+	return nil
+}
+
 func (st *SymbolTable) GetType(name string) types.ValidType {
 	table := st.resolveType(name)
 	if table == nil {

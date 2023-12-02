@@ -34,6 +34,29 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 		return typeCheckForLoop(statement, symbolTable)
 
 	case *ast.StructDeclaration:
+		// return typeCheckStructDeclaration(statement, symbolTable)
+		return &types.Void{}
+
+	case *ast.InterfaceDeclaration:
+		// return typeCheckInterfaceDeclaration(statement, symbolTable)
+		return &types.Void{}
+
+	case *ast.TypeDeclaration:
+		// return typeCheckTypeDeclataion(statement, symbolTable)
+		return &types.Void{}
+
+	default:
+		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
+		return nil
+	}
+}
+
+func typeCheckGlobalStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) types.ValidType {
+	switch statement := stmt.(type) {
+	case *ast.FunctionDeclaration:
+		return registerFunctionDeclaration(statement, symbolTable)
+
+	case *ast.StructDeclaration:
 		return typeCheckStructDeclaration(statement, symbolTable)
 
 	case *ast.InterfaceDeclaration:
@@ -41,10 +64,23 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 
 	case *ast.TypeDeclaration:
 		return typeCheckTypeDeclataion(statement, symbolTable)
-
 	default:
-		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
-		return nil
+		return &types.Void{}
+	}
+}
+
+func registerTypeStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) types.ValidType {
+	switch statement := stmt.(type) {
+	case *ast.StructDeclaration:
+		return registerStructDeclaration(statement, symbolTable)
+
+	case *ast.InterfaceDeclaration:
+		return registerInterfaceDeclaration(statement, symbolTable)
+
+	case *ast.TypeDeclaration:
+		return registerTypeDeclataion(statement, symbolTable)
+	default:
+		return &types.Void{}
 	}
 }
 
@@ -103,19 +139,17 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, symbolTable *
 }
 
 func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
-	params := []types.ValidType{}
-	returnType := types.FromAst(funcDec.ReturnType, symbolTable)
-	if returnType.String() == "TypeError" {
-		return returnType
+	var fn *types.Function
+	if funcDec.MethodOf == nil {
+		fn = symbolTable.GetSymbol(funcDec.Name).(*types.Function)
+	} else {
+		parentType := types.FromAst(funcDec.MethodOf, symbolTable)
+		fn = types.Member(parentType, funcDec.Name).(*types.Function)
 	}
 
-	childTable := symbols.NewFunction(symbolTable, returnType)
-	for _, param := range funcDec.Parameters {
-		paramType := types.FromAst(param.Type, symbolTable)
-		if paramType.String() == "TypeError" {
-			return paramType
-		}
-		params = append(params, paramType)
+	childTable := symbols.NewFunction(symbolTable, fn.ReturnType)
+	for i, param := range funcDec.Parameters {
+		paramType := fn.Parameters[i]
 		err := childTable.RegisterSymbol(param.Name, paramType, false)
 		if err != nil {
 			err.Line = funcDec.Token.Line
@@ -124,20 +158,52 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		}
 	}
 
+	if fn.MethodOf != nil {
+		childTable.RegisterSymbol("this", fn.MethodOf, true)
+	}
+
+	for _, statement := range funcDec.Body {
+		err := typeCheckStatement(statement, childTable)
+		if err.String() == "TypeError" {
+			return err
+		}
+	}
+
+	if !fn.ReturnType.Valid(&types.Void{}) && !childTable.HasReturn() {
+		return types.Error(fmt.Sprintf("Missing return from function %q", funcDec.Name), funcDec)
+	}
+
+	return fn
+}
+
+func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	params := []types.ValidType{}
+	returnType := types.FromAst(funcDec.ReturnType, symbolTable)
+	if returnType.String() == "TypeError" {
+		return returnType
+	}
+
+	for _, param := range funcDec.Parameters {
+		paramType := types.FromAst(param.Type, symbolTable)
+		if paramType.String() == "TypeError" {
+			return paramType
+		}
+		params = append(params, paramType)
+	}
+
 	functionType := &types.Function{
 		Parameters: params,
 		ReturnType: returnType,
-		Name: funcDec.Name,
+		Name:       funcDec.Name,
 	}
 
 	if funcDec.MethodOf != nil {
-		parentType := types.FromAst(funcDec.MethodOf, childTable)
+		parentType := types.FromAst(funcDec.MethodOf, symbolTable)
 		if parentType.String() == "TypeError" {
 			return parentType
 		}
 		functionType.MethodOf = parentType
 
-		childTable.RegisterSymbol("this", parentType, true)
 		types.AddMethod(funcDec.Name, functionType)
 	} else {
 		err := symbolTable.RegisterSymbol(funcDec.Name, functionType, true)
@@ -146,17 +212,6 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 			err.Column = funcDec.Token.Column
 			return err
 		}
-	}
-	
-	for _, statement := range funcDec.Body {
-		err := typeCheckStatement(statement, childTable)
-		if err.String() == "TypeError" {
-			return err
-		}
-	}
-
-	if !returnType.Valid(&types.Void{}) && !childTable.HasReturn() {
-		return types.Error(fmt.Sprintf("Missing return from function %q", funcDec.Name), funcDec)
 	}
 
 	return functionType
@@ -263,7 +318,7 @@ func typeCheckForLoop(forLoop *ast.ForLoop, symbolTable *symbols.SymbolTable) ty
 }
 
 func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
-	members := map[string]types.ValidType{}
+	structType := symbolTable.GetType(structDecl.Name).(*types.Struct)
 
 	for memberName, memberType := range structDecl.Members {
 		dataType := types.FromAst(memberType, symbolTable)
@@ -271,23 +326,14 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *
 			return dataType
 		}
 
-		members[memberName] = dataType
-	}
-
-	structType := &types.Struct{
-		Name:    structDecl.Name,
-		Members: members,
-	}
-	err := symbolTable.AddType(structDecl.Name, structType)
-	if err != nil {
-		return err
+		structType.Members[memberName] = dataType
 	}
 
 	return structType
 }
 
 func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
-	members := map[string]types.ValidType{}
+	interfaceType := symbolTable.GetType(intDecl.Name).(*types.Interface)
 
 	for _, member := range intDecl.Members {
 		if !member.IsFunction {
@@ -296,7 +342,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTabl
 				return dataType
 			}
 
-			members[member.Name] = dataType
+			interfaceType.Members[member.Name] = dataType
 			continue
 		}
 
@@ -319,8 +365,43 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTabl
 			fnType.Parameters = append(fnType.Parameters, paramType)
 		}
 
-		members[member.Name] = fnType
+		interfaceType.Members[member.Name] = fnType
 	}
+
+	return interfaceType
+}
+
+func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	dataType := types.FromAst(typeDecl.DataType, symbolTable)
+	if dataType.String() == "TypeError" {
+		return dataType
+	}
+
+	err := symbolTable.UpdateType(typeDecl.Name, dataType)
+	if err != nil {
+		return err
+	}
+	return dataType
+}
+
+func registerStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := map[string]types.ValidType{}
+
+	structType := &types.Struct{
+		Name:    structDecl.Name,
+		Members: members,
+	}
+
+	err := symbolTable.AddType(structDecl.Name, structType)
+	if err != nil {
+		return err
+	}
+
+	return structType
+}
+
+func registerInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := map[string]types.ValidType{}
 
 	interfaceType := &types.Interface{
 		Name:    intDecl.Name,
@@ -334,12 +415,8 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTabl
 	return interfaceType
 }
 
-func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
-	dataType := types.FromAst(typeDecl.DataType, symbolTable)
-	if dataType.String() == "TypeError" {
-		return dataType
-	}
-
+func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	dataType := &types.Void{}
 	err := symbolTable.AddType(typeDecl.Name, dataType)
 	if err != nil {
 		return err

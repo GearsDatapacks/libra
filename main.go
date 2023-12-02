@@ -47,7 +47,7 @@ func repl() {
 			fmt.Println(err)
 			continue
 		}
-		err = typechecker.TypeCheck(ast)
+		err = typechecker.TypeCheck(&ast)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -81,7 +81,7 @@ func run(file string) {
 		os.Exit(1)
 	}
 	
-	err = typechecker.TypeCheck(ast)
+	err = typechecker.TypeCheck(&ast)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

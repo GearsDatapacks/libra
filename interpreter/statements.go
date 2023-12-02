@@ -23,7 +23,7 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, env *environme
 	return env.DeclareVariable(varDec.Name, value)
 }
 
-func evaluateFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environment.Environment) values.RuntimeValue {
+func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environment.Environment) values.RuntimeValue {
 	params := []string{}
 	paramTypes := []types.ValidType{}
 

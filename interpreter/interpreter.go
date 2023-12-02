@@ -14,6 +14,10 @@ func Evaluate(program ast.Program, env *environment.Environment) values.RuntimeV
 	var lastValue values.RuntimeValue
 
 	for _, statement := range program.Body {
+		register(statement, env)
+	}
+
+	for _, statement := range program.Body {
 		lastValue = evaluate(statement, env)
 	}
 
@@ -29,26 +33,27 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return evaluateVariableDeclaration(statement, env)
 
 	case *ast.FunctionDeclaration:
-		return evaluateFunctionDeclaration(statement, env)
-	
+		// return registerFunctionDeclaration(statement, env)
+		return values.MakeNull()
+
 	case *ast.ReturnStatement:
 		return evaluateReturnStatement(statement, env)
-	
+
 	case *ast.IfStatement:
 		return evaluateIfStatement(statement, env)
-	
+
 	case *ast.WhileLoop:
 		return evaluateWhileLoop(statement, env)
 
 	case *ast.ForLoop:
 		return evaluateForLoop(statement, env)
-	
+
 	case *ast.StructDeclaration:
 		return evaluateStructDeclaration(statement, env)
-	
+
 	case *ast.InterfaceDeclaration:
 		return values.MakeNull()
-	
+
 	case *ast.TypeDeclaration:
 		env.AddType(statement.Name, types.FromAst(statement.DataType, env))
 		return values.MakeNull()
@@ -56,5 +61,20 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode))
 		return nil
+	}
+}
+
+func register(astNode ast.Statement, env *environment.Environment) {
+	switch statement := astNode.(type) {
+	case *ast.ExpressionStatement:
+	case *ast.FunctionDeclaration:
+		registerFunctionDeclaration(statement, env)
+
+	case *ast.StructDeclaration:
+		evaluateStructDeclaration(statement, env)
+
+	case *ast.TypeDeclaration:
+		env.AddType(statement.Name, types.FromAst(statement.DataType, env))
+		// return values.MakeNull()
 	}
 }
