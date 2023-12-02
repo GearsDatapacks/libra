@@ -60,6 +60,9 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 
 	case *ast.StructExpression:
 		return typeCheckStructExpression(expression, symbolTable)
+	
+	case *ast.TupleExpression:
+		return typeCheckTuple(expression, symbolTable)
 
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
@@ -312,4 +315,17 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *sy
 	}
 
 	return structType
+}
+
+func typeCheckTuple(tuple *ast.TupleExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := []types.ValidType{}
+	for _, member := range tuple.Members {
+		memberType := typeCheckExpression(member, symbolTable)
+		if memberType.String() == "TypeError" {
+			return memberType
+		}
+		members = append(members, memberType)
+	}
+
+	return &types.Tuple{Members: members}
 }

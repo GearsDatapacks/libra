@@ -257,7 +257,30 @@ type StructExpression struct {
 	Members map[string]Expression
 }
 
-func (structExpr *StructExpression) Type() NodeType { return "StructExpression" }
+func (tuple *StructExpression) Type() NodeType { return "StructExpression" }
+
+func (tuple *TupleExpression) String() string {
+	result := "("
+
+	for i, member := range tuple.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += member.String()
+	}
+
+	result += ")"
+
+	return result
+}
+
+type TupleExpression struct {
+	*BaseNode
+	*BaseExpression
+	Members []Expression
+}
+
+func (structExpr *TupleExpression) Type() NodeType { return "TupleExpression" }
 
 func (structExpr *StructExpression) String() string {
 	result := structExpr.Name

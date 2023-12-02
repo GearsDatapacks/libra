@@ -391,3 +391,48 @@ func (sl *StructLiteral) SetMember(member string, value RuntimeValue) RuntimeVal
 
 	return value
 }
+
+type TupleValue struct {
+	BaseValue
+	Members []RuntimeValue
+}
+
+func (tv *TupleValue) ToString() string {
+	result := "("
+
+	for i, expr := range tv.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += expr.ToString()
+	}
+
+	result += ")"
+
+	return result
+}
+
+func (tv *TupleValue) Truthy() bool {
+	return len(tv.Members) != 0
+}
+
+func (tv *TupleValue) EqualTo(value RuntimeValue) bool {
+	tuple, ok := value.(*TupleValue)
+	if !ok {
+		return false
+	}
+
+	if len(tv.Members) != len(tuple.Members) {
+		return false
+	}
+
+	for i, member := range tv.Members {
+		value := tuple.Members[i]
+
+		if !member.EqualTo(value) {
+			return false
+		}
+	}
+
+	return true
+}

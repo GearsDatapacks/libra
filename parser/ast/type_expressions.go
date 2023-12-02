@@ -124,3 +124,25 @@ func (e *ErrorType) String() string {
 	}
 	return e.ResultType.String() + "!"
 }
+
+type TupleType struct {
+	*BaseNode
+	*BaseType
+	Members []TypeExpression
+}
+
+func (*TupleType) Type() NodeType { return "Tuple" }
+func (tuple *TupleType) String() string {
+	result := "("
+
+	for i, member := range tuple.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += member.String()
+	}
+
+	result += ")"
+
+	return result
+}

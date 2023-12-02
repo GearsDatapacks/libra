@@ -354,7 +354,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		}
 
 	case token.LEFT_PAREN:
-		p.consume()
+		tok := p.consume()
 		p.bracketLevel++
 		noBraces := p.noBraces
 		p.noBraces = false
@@ -363,7 +363,20 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 			return nil, err
 		}
 
-		_, err = p.expect(token.RIGHT_PAREN, "Unexpected %q, expecting ')'")
+		if p.next().Type == token.COMMA {
+			members := []ast.Expression{expression}
+			for p.next().Type == token.COMMA {
+				p.consume()
+				nextExpr, err := p.parseExpression()
+				if err != nil {
+					return nil, err
+				}
+				members = append(members, nextExpr)
+			}
+			expression = &ast.TupleExpression{Members: members, BaseNode: &ast.BaseNode{Token: tok}}
+		}
+
+		_, err = p.expect(token.RIGHT_PAREN, "Expected comma or end of tuple")
 		if err != nil {
 			return nil, err
 		}

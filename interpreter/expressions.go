@@ -60,6 +60,9 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.StructExpression:
 		return evaluateStructExpression(*expression, env)
 
+	case *ast.TupleExpression:
+		return evaluateTuple(expression, env)
+
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
 
@@ -254,4 +257,14 @@ func evaluateStructExpression(structExpr ast.StructExpression, env *environment.
 		Members:   members,
 		BaseValue: values.BaseValue{DataType: structType},
 	}
+}
+
+func evaluateTuple(tuple *ast.TupleExpression, env *environment.Environment) values.RuntimeValue {
+	members := []values.RuntimeValue{}
+
+	for _, member := range tuple.Members {
+		members = append(members, evaluateExpression(member, env))
+	}
+
+	return &values.TupleValue{Members: members}
 }

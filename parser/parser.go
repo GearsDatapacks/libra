@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -38,7 +39,11 @@ func (p *parser) expect(tokenType token.Type, fString string) (token.Token, erro
 	nextToken := p.consume()
 
 	if nextToken.Type != tokenType {
-		return token.Token{}, p.error(fmt.Sprintf(fString, nextToken.Value), nextToken)
+		err := fString
+		if strings.Contains(err, "%") {
+			err = fmt.Sprintf(fString, nextToken.Value)
+		}
+		return token.Token{}, p.error(err, nextToken)
 	}
 
 	return nextToken, nil

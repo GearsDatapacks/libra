@@ -237,3 +237,43 @@ func Error(message string, errorNodes ...ast.Node) *TypeError {
 		Message: message,
 	}
 }
+
+type Tuple struct {
+	BaseType
+	Members []ValidType
+}
+
+func (t *Tuple) Valid(dataType ValidType) bool {
+	tuple, isTuple := dataType.(*Tuple)
+	if !isTuple {
+		return false
+	}
+
+	if len(tuple.Members) != len(t.Members) {
+		return false
+	}
+
+	for i, member := range tuple.Members {
+		memberType := t.Members[i]
+		if !memberType.Valid(member) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tuple *Tuple) String() string {
+	result := "("
+
+	for i, member := range tuple.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += member.String()
+	}
+
+	result += ")"
+
+	return result
+}

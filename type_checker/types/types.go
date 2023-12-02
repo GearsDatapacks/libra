@@ -118,6 +118,18 @@ func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
 		}
 
 		return &ErrorType{ResultType: resultType}
+	
+	case *ast.TupleType:
+		members := []ValidType{}
+		for _, member := range typeExpr.Members {
+			resultType := FromAst(member, table)
+			if resultType.String() == "TypeError" {
+				return resultType
+			}
+			members = append(members, resultType)
+		}
+
+		return &Tuple{Members: members}
 
 	case *ast.VoidType:
 		return &Void{}
