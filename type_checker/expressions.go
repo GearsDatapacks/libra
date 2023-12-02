@@ -96,7 +96,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 			return leftType
 		}
 
-		dataType = types.Member(leftType, member.Member)
+		dataType = types.Member(leftType, member.Member, member.IsNumberMember)
 	} else {
 		return types.Error("Can only assign values to variables", assignment)
 	}
@@ -280,7 +280,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *sy
 		return leftType
 	}
 
-	resultType := types.Member(leftType, memberExpr.Member)
+	resultType := types.Member(leftType, memberExpr.Member, memberExpr.IsNumberMember)
 	if resultType == nil {
 		return types.Error(fmt.Sprintf("Type %q does not have member %q", leftType.String(), memberExpr.Member), memberExpr)
 	}

@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -134,15 +135,28 @@ func (p *parser) parseCallMemberExpression() (ast.Expression, error) {
 
 func (p *parser) parseMemberExpression(left ast.Expression) (ast.Expression, error) {
 	p.consume()
-	memberName, err := p.expect(token.IDENTIFIER, "Invalid member name %q")
-	if err != nil {
-		return nil, err
+	isNumberMember := false
+	memberName := p.consume()
+	if memberName.Type == token.INTEGER {
+		isNumberMember = true
+		} else if memberName.Type == token.FLOAT {
+		isNumberMember = true
+		left = &ast.MemberExpression{
+			Left:     left,
+			Member:    strings.Split(memberName.Value, ".")[0],
+			BaseNode: ast.BaseNode{Token: left.GetToken()},
+			IsNumberMember: true,
+		}
+		memberName.Value = strings.Split(memberName.Value, ".")[1]
+	} else if memberName.Type != token.IDENTIFIER {
+		return nil, p.error(fmt.Sprintf("Invalid member name %q", memberName.Value), memberName)
 	}
 
 	return &ast.MemberExpression{
 		Left:     left,
 		Member:    memberName.Value,
 		BaseNode: ast.BaseNode{Token: left.GetToken()},
+		IsNumberMember: isNumberMember,
 	}, nil
 }
 

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -146,7 +147,7 @@ type Interface struct {
 func (i *Interface) Valid(dataType ValidType) bool {
 	for name, member := range i.Members {
 
-		memberType := Member(dataType, name)
+		memberType := Member(dataType, name, false)
 		if memberType == nil {
 			return false
 		}
@@ -276,4 +277,12 @@ func (tuple *Tuple) String() string {
 	result += ")"
 
 	return result
+}
+
+func (tuple *Tuple) numberMember(member string) ValidType {
+	number, _ := strconv.ParseInt(member, 10, 32)
+	if int(number) < len(tuple.Members) {
+		return tuple.Members[number]
+	}
+	return nil
 }

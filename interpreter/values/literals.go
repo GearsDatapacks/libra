@@ -2,6 +2,7 @@ package values
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/errors"
@@ -435,4 +436,17 @@ func (tv *TupleValue) EqualTo(value RuntimeValue) bool {
 	}
 
 	return true
+}
+
+func (tv *TupleValue) Member(member string) RuntimeValue {
+	number, _ := strconv.ParseInt(member, 10, 32)
+
+	return tv.Members[number]
+}
+
+func (tv *TupleValue) SetMember(member string, value RuntimeValue) RuntimeValue {
+	number, _ := strconv.ParseInt(member, 10, 32)
+	tv.Members[number] = value
+
+	return value
 }

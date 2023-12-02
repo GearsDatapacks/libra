@@ -242,6 +242,7 @@ type MemberExpression struct {
 	BaseExpression
 	Left   Expression
 	Member string
+	IsNumberMember bool
 }
 
 func (member *MemberExpression) Type() NodeType { return "MemberExpression" }

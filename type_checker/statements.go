@@ -144,7 +144,7 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable 
 		fn = symbolTable.GetSymbol(funcDec.Name).(*types.Function)
 	} else {
 		parentType := types.FromAst(funcDec.MethodOf, symbolTable)
-		fn = types.Member(parentType, funcDec.Name).(*types.Function)
+		fn = types.Member(parentType, funcDec.Name, false).(*types.Function)
 	}
 
 	childTable := symbols.NewFunction(symbolTable, fn.ReturnType)

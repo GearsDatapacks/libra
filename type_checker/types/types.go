@@ -21,6 +21,10 @@ type hasMembers interface {
 	member(string) ValidType
 }
 
+type hasNumberMembers interface {
+	numberMember(string) ValidType
+}
+
 type BaseType struct {
 	wasVariable bool
 	constant    bool
@@ -165,16 +169,24 @@ func FromString(typeString string, table TypeTable) ValidType {
 	return dataType
 }
 
-func Member(memberOf ValidType, name string) ValidType {
+func Member(memberOf ValidType, name string, isNumberMember bool) ValidType {
 	method := getMethod(memberOf, name)
 	if method != nil {
 		return method
 	}
 
-	hasMembers, ok := memberOf.(hasMembers)
-	if ok {
-		return hasMembers.member(name)
+	if !isNumberMember {
+		hasMembers, ok := memberOf.(hasMembers)
+		if ok {
+			return hasMembers.member(name)
+		}
+	} else {
+		hasNumberMembers, ok := memberOf.(hasNumberMembers)
+		if ok {
+			return hasNumberMembers.numberMember(name)
+		}
 	}
+
 	return nil
 }
 
