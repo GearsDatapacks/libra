@@ -33,7 +33,7 @@ func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
 		Assignee:  assignee,
 		Value:     value,
 		Operation: operation.Value,
-		BaseNode:  &ast.BaseNode{Token: assignee.GetToken()},
+		BaseNode:  ast.BaseNode{Token: assignee.GetToken()},
 	}, nil
 }
 
@@ -65,7 +65,7 @@ func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error)
 			Left:     left,
 			Operator: op,
 			Right:    right,
-			BaseNode: &ast.BaseNode{Token: left.GetToken()},
+			BaseNode: ast.BaseNode{Token: left.GetToken()},
 		}
 	}
 
@@ -86,7 +86,7 @@ func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 	return &ast.UnaryOperation{
 		Operator: operator.Value,
 		Value:    value,
-		BaseNode: &ast.BaseNode{Token: operator},
+		BaseNode: ast.BaseNode{Token: operator},
 		Postfix:  false,
 	}, nil
 }
@@ -101,7 +101,7 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 		value = &ast.UnaryOperation{
 			Value:    value,
 			Operator: p.consume().Value,
-			BaseNode: &ast.BaseNode{Token: value.GetToken()},
+			BaseNode: ast.BaseNode{Token: value.GetToken()},
 			Postfix:  true,
 		}
 	}
@@ -142,7 +142,7 @@ func (p *parser) parseMemberExpression(left ast.Expression) (ast.Expression, err
 	return &ast.MemberExpression{
 		Left:     left,
 		Member:    memberName.Value,
-		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		BaseNode: ast.BaseNode{Token: left.GetToken()},
 	}, nil
 }
 
@@ -160,7 +160,7 @@ func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, erro
 	return &ast.IndexExpression{
 		Left:     left,
 		Index:    index,
-		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		BaseNode: ast.BaseNode{Token: left.GetToken()},
 	}, nil
 }
 
@@ -173,7 +173,7 @@ func (p *parser) parseFunctionCall(left ast.Expression) (ast.Expression, error) 
 	return &ast.FunctionCall{
 		Left:     left,
 		Args:     args,
-		BaseNode: &ast.BaseNode{Token: left.GetToken()},
+		BaseNode: ast.BaseNode{Token: left.GetToken()},
 	}, nil
 }
 
@@ -212,7 +212,7 @@ func (p *parser) parseStructExpression() (ast.Expression, error) {
 	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
 
 	return &ast.StructExpression{
-		BaseNode: &ast.BaseNode{Token: name},
+		BaseNode: ast.BaseNode{Token: name},
 		Name:     name.Value,
 		Members:  members,
 	}, nil
@@ -244,7 +244,7 @@ func (p *parser) parseList() (ast.Expression, error) {
 
 	return &ast.ListLiteral{
 		Elements: values,
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -286,7 +286,7 @@ func (p *parser) parseMap() (ast.Expression, error) {
 
 	return &ast.MapLiteral{
 		Elements: values,
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -295,7 +295,7 @@ func (p *parser) parseIdentifier() (ast.Expression, error) {
 		tok := p.consume()
 		return &ast.BooleanLiteral{
 			Value:    true,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 	}
 
@@ -303,21 +303,21 @@ func (p *parser) parseIdentifier() (ast.Expression, error) {
 		tok := p.consume()
 		return &ast.BooleanLiteral{
 			Value:    false,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 	}
 
 	if p.isKeyword("null") {
 		tok := p.consume()
 		return &ast.NullLiteral{
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 	}
 
 	tok := p.consume()
 	return &ast.Identifier{
 		Symbol:   tok.Value,
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -328,7 +328,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		value, _ := strconv.ParseInt(tok.Value, 10, 32)
 		return &ast.IntegerLiteral{
 			Value:    int(value),
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 
 	case token.FLOAT:
@@ -336,14 +336,14 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		value, _ := strconv.ParseFloat(tok.Value, 64)
 		return &ast.FloatLiteral{
 			Value:    value,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 
 	case token.STRING:
 		tok := p.consume()
 		return &ast.StringLiteral{
 			Value:    tok.Value,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}, nil
 
 	case token.IDENTIFIER:
@@ -373,7 +373,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 				}
 				members = append(members, nextExpr)
 			}
-			expression = &ast.TupleExpression{Members: members, BaseNode: &ast.BaseNode{Token: tok}}
+			expression = &ast.TupleExpression{Members: members, BaseNode: ast.BaseNode{Token: tok}}
 		}
 
 		_, err = p.expect(token.RIGHT_PAREN, "Expected comma or end of tuple")

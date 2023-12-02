@@ -7,13 +7,13 @@ import (
 	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
-type BaseType struct {}
+type BaseType struct{}
 
 func (bt *BaseType) typeNode() {}
 
 type TypeName struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	Name string
 }
 
@@ -26,8 +26,8 @@ func (tn *TypeName) String() string {
 }
 
 type Union struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	ValidTypes []TypeExpression
 }
 
@@ -46,8 +46,8 @@ func (u *Union) String() string {
 }
 
 type ListType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	ElementType TypeExpression
 }
 
@@ -61,10 +61,10 @@ func (lt *ListType) String() string {
 }
 
 type ArrayType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	ElementType TypeExpression
-	Length int
+	Length      int
 }
 
 func (at *ArrayType) Type() NodeType { return "ArrayType" }
@@ -82,9 +82,9 @@ func (at *ArrayType) String() string {
 }
 
 type MapType struct {
-	*BaseNode
-	*BaseType
-	KeyType TypeExpression
+	BaseNode
+	BaseType
+	KeyType   TypeExpression
 	ValueType TypeExpression
 }
 
@@ -95,25 +95,25 @@ func (mt *MapType) String() string {
 }
 
 type InferType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 }
 
 func (i *InferType) Type() NodeType { return "Infer" }
 func (i *InferType) String() string { return "" }
 
 type VoidType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 }
 
-func (v *VoidType) Type() NodeType { return "Void" }
-func (v *VoidType) String() string { return "void" }
+func (v *VoidType) Type() NodeType        { return "Void" }
+func (v *VoidType) String() string        { return "void" }
 func (v *VoidType) GetToken() token.Token { return token.Token{Value: "void"} }
 
 type ErrorType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	ResultType TypeExpression
 }
 
@@ -126,8 +126,8 @@ func (e *ErrorType) String() string {
 }
 
 type TupleType struct {
-	*BaseNode
-	*BaseType
+	BaseNode
+	BaseType
 	Members []TypeExpression
 }
 

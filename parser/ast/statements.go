@@ -1,12 +1,12 @@
 package ast
 
-type BaseStatment struct {}
+type BaseStatment struct{}
 
 func (stmt *BaseStatment) statementNode() {}
 
 type ExpressionStatement struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Expression Expression
 }
 
@@ -17,11 +17,11 @@ func (es *ExpressionStatement) String() string {
 }
 
 type VariableDeclaration struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Constant bool
-	Name string
-	Value Expression
+	Name     string
+	Value    Expression
 	DataType TypeExpression
 }
 
@@ -30,7 +30,11 @@ func (varDec *VariableDeclaration) Type() NodeType { return "VariableDeclaration
 func (varDec *VariableDeclaration) String() string {
 	result := ""
 
-	if varDec.Constant { result += "const" } else { result += "var" }
+	if varDec.Constant {
+		result += "const"
+	} else {
+		result += "var"
+	}
 	result += " "
 	result += varDec.Name
 	result += " = "
@@ -45,13 +49,13 @@ type Parameter struct {
 }
 
 type FunctionDeclaration struct {
-	*BaseNode
-	*BaseStatment
-	Name string
-	MethodOf TypeExpression
+	BaseNode
+	BaseStatment
+	Name       string
+	MethodOf   TypeExpression
 	Parameters []Parameter
 	ReturnType TypeExpression
-	Body []Statement
+	Body       []Statement
 }
 
 func (funcDec *FunctionDeclaration) Type() NodeType { return "FunctionDeclaration" }
@@ -67,7 +71,7 @@ func (funcDec *FunctionDeclaration) String() string {
 		result += " "
 		result += parameter.Type.String()
 
-		if i != len(funcDec.Parameters) - 1 {
+		if i != len(funcDec.Parameters)-1 {
 			result += ", "
 		}
 	}
@@ -86,8 +90,8 @@ func (funcDec *FunctionDeclaration) String() string {
 }
 
 type ReturnStatement struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Value Expression
 }
 
@@ -97,14 +101,14 @@ func (ret *ReturnStatement) String() string {
 	return "return " + ret.Value.String()
 }
 
-type IfElseStatement interface { ifElse() }
+type IfElseStatement interface{ ifElse() }
 
 type IfStatement struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Condition Expression
-	Body []Statement
-	Else IfElseStatement
+	Body      []Statement
+	Else      IfElseStatement
 }
 
 func (ifs *IfStatement) Type() NodeType { return "IfStatement" }
@@ -128,8 +132,8 @@ func (ifs *IfStatement) String() string {
 func (ifs *IfStatement) ifElse() {}
 
 type ElseStatement struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Body []Statement
 }
 
@@ -151,12 +155,11 @@ func (elses *ElseStatement) String() string {
 
 func (elses *ElseStatement) ifElse() {}
 
-
 type WhileLoop struct {
-	*BaseNode
-	*BaseStatment
+	BaseNode
+	BaseStatment
 	Condition Expression
-	Body []Statement
+	Body      []Statement
 }
 
 func (while *WhileLoop) Type() NodeType { return "WhileLoop" }
@@ -178,12 +181,12 @@ func (while *WhileLoop) String() string {
 }
 
 type ForLoop struct {
-	*BaseNode
-	*BaseStatment
-	Initial Statement
+	BaseNode
+	BaseStatment
+	Initial   Statement
 	Condition Expression
-	Update Statement
-	Body []Statement
+	Update    Statement
+	Body      []Statement
 }
 
 func (forLoop *ForLoop) Type() NodeType { return "ForLoop" }
@@ -209,9 +212,9 @@ func (forLoop *ForLoop) String() string {
 }
 
 type StructDeclaration struct {
-	*BaseNode
-	*BaseStatment
-	Name string
+	BaseNode
+	BaseStatment
+	Name    string
 	Members map[string]TypeExpression
 }
 
@@ -236,16 +239,16 @@ func (structDec *StructDeclaration) String() string {
 }
 
 type InterfaceMember struct {
-	Name string
+	Name       string
 	IsFunction bool
 	Parameters []TypeExpression
 	ResultType TypeExpression
 }
 
 type InterfaceDeclaration struct {
-	*BaseNode
-	*BaseStatment
-	Name string
+	BaseNode
+	BaseStatment
+	Name    string
 	Members []InterfaceMember
 }
 
@@ -256,14 +259,14 @@ func (intDecl *InterfaceDeclaration) String() string {
 }
 
 type TypeDeclaration struct {
-	*BaseNode
-	*BaseStatment
-	Name string
+	BaseNode
+	BaseStatment
+	Name     string
 	DataType TypeExpression
 }
+
 func (typeDecl *TypeDeclaration) Type() NodeType { return "TypeDeclaration" }
 
 func (typeDecl *TypeDeclaration) String() string {
 	return "type " + typeDecl.Name + " = " + typeDecl.DataType.String()
 }
-

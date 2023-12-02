@@ -36,7 +36,7 @@ func (p *parser) parseUnion() (ast.TypeExpression, error) {
 
 	return &ast.Union{
 		ValidTypes: types,
-		BaseNode: &ast.BaseNode{ Token: types[0].GetToken() },
+		BaseNode: ast.BaseNode{ Token: types[0].GetToken() },
 	}, nil
 }
 
@@ -58,7 +58,7 @@ func (p *parser) parseSuffixType() (ast.TypeExpression, error) {
 			p.consume()
 			leftType = &ast.ErrorType{
 				ResultType: leftType,
-				BaseNode:   &ast.BaseNode{Token: leftType.GetToken()},
+				BaseNode:   ast.BaseNode{Token: leftType.GetToken()},
 			}
 
 		default:
@@ -86,7 +86,7 @@ func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (a
 			p.consume()
 			elemType = &ast.ListType{
 				ElementType: elemType,
-				BaseNode: &ast.BaseNode{Token: tok},
+				BaseNode: ast.BaseNode{Token: tok},
 			}
 			continue
 		}
@@ -100,7 +100,7 @@ func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (a
 			elemType = &ast.ArrayType{
 				ElementType: elemType,
 				Length: -1,
-				BaseNode: &ast.BaseNode{Token: tok},
+				BaseNode: ast.BaseNode{Token: tok},
 			}
 			continue
 		}
@@ -119,7 +119,7 @@ func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (a
 		elemType = &ast.ArrayType{
 			ElementType: elemType,
 			Length: intLength,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 		}
 	}
 
@@ -150,7 +150,7 @@ func (p *parser) parseMapType() (ast.TypeExpression, error) {
 	}
 
 	return &ast.MapType{
-		BaseNode:  &ast.BaseNode{Token: tok},
+		BaseNode:  ast.BaseNode{Token: tok},
 		KeyType:   keyType,
 		ValueType: valueType,
 	}, nil
@@ -160,7 +160,7 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 	switch p.next().Type {
 	case token.IDENTIFIER:
 		tok := p.consume()
-		return &ast.TypeName{ Name: tok.Value, BaseNode: &ast.BaseNode{ Token: tok } }, nil
+		return &ast.TypeName{ Name: tok.Value, BaseNode: ast.BaseNode{ Token: tok } }, nil
 
 	case token.LEFT_PAREN:
 		tok := p.consume()
@@ -179,7 +179,7 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 				}
 				members = append(members, nextExpr)
 			}
-			expr = &ast.TupleType{Members: members, BaseNode: &ast.BaseNode{Token: tok}}
+			expr = &ast.TupleType{Members: members, BaseNode: ast.BaseNode{Token: tok}}
 		}
 
 		_, err = p.expect(token.RIGHT_PAREN, "Expected comma or end of tuple type")
@@ -189,13 +189,13 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 		return p.parseMapType()
 	
 	case token.LEFT_SQUARE:
-		elemType := &ast.InferType{BaseNode: &ast.BaseNode{Token: p.next()}}
+		elemType := &ast.InferType{BaseNode: ast.BaseNode{Token: p.next()}}
 		tok := p.next()
 		return p.parseArrayType(elemType, tok)
 	
 	case token.LOGICAL_NOT:
 		return &ast.ErrorType{
-			BaseNode:   &ast.BaseNode{ Token: p.consume() },
+			BaseNode:   ast.BaseNode{ Token: p.consume() },
 			ResultType: &ast.VoidType{},
 		}, nil
 		

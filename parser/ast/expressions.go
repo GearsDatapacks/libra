@@ -12,8 +12,8 @@ type BaseExpression struct{}
 func (exp *BaseExpression) expressionNode() {}
 
 type IntegerLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Value int
 }
 
@@ -24,8 +24,8 @@ func (il *IntegerLiteral) String() string {
 }
 
 type FloatLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Value float64
 }
 
@@ -36,8 +36,8 @@ func (fl *FloatLiteral) String() string {
 }
 
 type StringLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Value string
 }
 
@@ -48,8 +48,8 @@ func (sl *StringLiteral) String() string {
 }
 
 type BooleanLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Value bool
 }
 
@@ -60,8 +60,8 @@ func (bl *BooleanLiteral) String() string {
 }
 
 type NullLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 }
 
 func (nl *NullLiteral) Type() NodeType { return "Null" }
@@ -69,8 +69,8 @@ func (nl *NullLiteral) Type() NodeType { return "Null" }
 func (nl *NullLiteral) String() string { return "null" }
 
 type VoidValue struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 }
 
 func (nl *VoidValue) Type() NodeType       { return "Void" }
@@ -78,8 +78,8 @@ func (nl *VoidValue) String() string       { return "void" }
 func (v *VoidValue) GetToken() token.Token { return token.Token{Value: "void"} }
 
 type Identifier struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Symbol string
 }
 
@@ -90,8 +90,8 @@ func (ident *Identifier) String() string {
 }
 
 type ListLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Elements []Expression
 }
 
@@ -112,8 +112,8 @@ func (list *ListLiteral) String() string {
 }
 
 type MapLiteral struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Elements map[Expression]Expression
 }
 
@@ -136,8 +136,8 @@ func (maplit *MapLiteral) String() string {
 }
 
 type FunctionCall struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Left Expression
 	Args []Expression
 }
@@ -162,8 +162,8 @@ func (fn *FunctionCall) String() string {
 }
 
 type BinaryOperation struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Left     Expression
 	Operator string
 	Right    Expression
@@ -186,8 +186,8 @@ func (binOp *BinaryOperation) String() string {
 }
 
 type UnaryOperation struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Value    Expression
 	Operator string
 	Postfix  bool
@@ -203,8 +203,8 @@ func (unOp *UnaryOperation) String() string {
 }
 
 type AssignmentExpression struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Assignee  Expression
 	Value     Expression
 	Operation string
@@ -225,9 +225,9 @@ func (ae *AssignmentExpression) String() string {
 }
 
 type IndexExpression struct {
-	*BaseNode
-	*BaseExpression
-	Left Expression
+	BaseNode
+	BaseExpression
+	Left  Expression
 	Index Expression
 }
 
@@ -238,9 +238,9 @@ func (index *IndexExpression) String() string {
 }
 
 type MemberExpression struct {
-	*BaseNode
-	*BaseExpression
-	Left Expression
+	BaseNode
+	BaseExpression
+	Left   Expression
 	Member string
 }
 
@@ -251,9 +251,9 @@ func (member *MemberExpression) String() string {
 }
 
 type StructExpression struct {
-	*BaseNode
-	*BaseExpression
-	Name string
+	BaseNode
+	BaseExpression
+	Name    string
 	Members map[string]Expression
 }
 
@@ -275,8 +275,8 @@ func (tuple *TupleExpression) String() string {
 }
 
 type TupleExpression struct {
-	*BaseNode
-	*BaseExpression
+	BaseNode
+	BaseExpression
 	Members []Expression
 }
 

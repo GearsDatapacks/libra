@@ -59,7 +59,7 @@ func (p *parser) parseExpressionStatement() (ast.Statement, error) {
 
 	return &ast.ExpressionStatement{
 		Expression: expr,
-		BaseNode:   &ast.BaseNode{Token: expr.GetToken()},
+		BaseNode:   ast.BaseNode{Token: expr.GetToken()},
 	}, nil
 }
 
@@ -95,7 +95,7 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 		return &ast.VariableDeclaration{
 			Constant: isConstant,
 			Name:     name.Value,
-			BaseNode: &ast.BaseNode{Token: tok},
+			BaseNode: ast.BaseNode{Token: tok},
 			Value:    nil,
 			DataType: dataType,
 		}, nil
@@ -119,7 +119,7 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 	return &ast.VariableDeclaration{
 		Constant: isConstant,
 		Name:     name.Value,
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 		Value:    value,
 		DataType: dataType,
 	}, nil
@@ -182,7 +182,7 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 		Parameters: parameters,
 		Body:       code,
 		ReturnType: returnType,
-		BaseNode:   &ast.BaseNode{Token: tok},
+		BaseNode:   ast.BaseNode{Token: tok},
 		MethodOf: methodOf,
 	}, nil
 }
@@ -202,7 +202,7 @@ func (p *parser) parseReturnStatement() (ast.Statement, error) {
 
 	return &ast.ReturnStatement{
 		Value:    value,
-		BaseNode: &ast.BaseNode{Token: token},
+		BaseNode: ast.BaseNode{Token: token},
 	}, nil
 }
 
@@ -233,7 +233,7 @@ func (p *parser) parseIfStatement() (*ast.IfStatement, error) {
 			}
 			elseStatement = &ast.ElseStatement{
 				Body:     code,
-				BaseNode: &ast.BaseNode{Token: elseToken},
+				BaseNode: ast.BaseNode{Token: elseToken},
 			}
 		} else {
 			elseStatement, err = p.parseIfStatement()
@@ -247,7 +247,7 @@ func (p *parser) parseIfStatement() (*ast.IfStatement, error) {
 	return &ast.IfStatement{
 		Condition: condition,
 		Body:      body,
-		BaseNode:  &ast.BaseNode{Token: tok},
+		BaseNode:  ast.BaseNode{Token: tok},
 		Else:      elseStatement,
 	}, nil
 }
@@ -267,7 +267,7 @@ func (p *parser) parseWhileLoop() (ast.Statement, error) {
 	return &ast.WhileLoop{
 		Condition: condition,
 		Body:      body,
-		BaseNode:  &ast.BaseNode{Token: tok},
+		BaseNode:  ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -313,7 +313,7 @@ func (p *parser) parseForLoop() (ast.Statement, error) {
 		Condition: condition,
 		Update:    update,
 		Body:      body,
-		BaseNode:  &ast.BaseNode{Token: tok},
+		BaseNode:  ast.BaseNode{Token: tok},
 	}, nil
 }
 
@@ -352,7 +352,7 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
 
 	return &ast.StructDeclaration{
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 		Name:     name.Value,
 		Members:  members,
 	}, nil
@@ -417,7 +417,7 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
 
 	return &ast.InterfaceDeclaration{
-		BaseNode: &ast.BaseNode{Token: tok},
+		BaseNode: ast.BaseNode{Token: tok},
 		Name:     name.Value,
 		Members:  members,
 	}, nil
@@ -440,7 +440,7 @@ func (p *parser) parseTypeDeclaration() (ast.Statement, error) {
 	}
 
 	return &ast.TypeDeclaration{
-		BaseNode:     &ast.BaseNode{ Token: tok },
+		BaseNode:     ast.BaseNode{ Token: tok },
 		Name:         name.Value,
 		DataType:     dataType,
 	}, nil

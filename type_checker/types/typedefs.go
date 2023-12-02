@@ -59,10 +59,10 @@ func (u *Union) String() string {
 
 type Function struct {
 	BaseType
-	Name string
+	Name       string
 	Parameters []ValidType
 	ReturnType ValidType
-	MethodOf ValidType
+	MethodOf   ValidType
 }
 
 func (fn *Function) Valid(dataType ValidType) bool {
@@ -105,7 +105,7 @@ func (a *Any) String() string {
 
 type Struct struct {
 	BaseType
-	Name string
+	Name    string
 	Members map[string]ValidType
 }
 
@@ -139,7 +139,7 @@ func (s *Struct) member(member string) ValidType {
 
 type Interface struct {
 	BaseType
-	Name string
+	Name    string
 	Members map[string]ValidType
 }
 
@@ -172,8 +172,8 @@ func (i *Interface) member(member string) ValidType {
 }
 
 var ErrorInterface = &Interface{
-	Name:     "error",
-	Members:  map[string]ValidType{
+	Name: "error",
+	Members: map[string]ValidType{
 		"error": &Function{
 			Name:       "error",
 			Parameters: []ValidType{},
@@ -183,7 +183,7 @@ var ErrorInterface = &Interface{
 }
 
 type ErrorType struct {
-	*BaseType
+	BaseType
 	ResultType ValidType
 }
 
@@ -200,10 +200,10 @@ func (e *ErrorType) String() string {
 }
 
 type TypeError struct {
-	*BaseType
+	BaseType
 	Message string
-	Line int
-	Column int
+	Line    int
+	Column  int
 }
 
 func (err TypeError) Error() string {
@@ -224,16 +224,16 @@ func (*TypeError) String() string {
 func Error(message string, errorNodes ...ast.Node) *TypeError {
 	if len(errorNodes) == 0 {
 		return &TypeError{
-			Line: -1,
-			Column: -1,
+			Line:    -1,
+			Column:  -1,
 			Message: message,
 		}
 	}
 
 	errorNode := errorNodes[0]
 	return &TypeError{
-		Line: errorNode.GetToken().Line,
-		Column: errorNode.GetToken().Column,
+		Line:    errorNode.GetToken().Line,
+		Column:  errorNode.GetToken().Column,
 		Message: message,
 	}
 }
