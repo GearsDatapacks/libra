@@ -114,7 +114,7 @@ func (env *Environment) GetMethod(name string, methodOf types.ValidType) *values
 	}
 
 	for _, overload := range overloads {
-		if methodOf.Valid(overload.Type().(*types.Function).MethodOf) {
+		if overload.Type().(*types.Function).MethodOf.Valid(methodOf) {
 			return overload
 		}
 	}
