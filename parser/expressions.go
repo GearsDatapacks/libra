@@ -39,7 +39,7 @@ func (p *parser) parseAssignmentExpression() (ast.Expression, error) {
 }
 
 func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error) {
-	left, err := p.parsePrefixOperation()
+	left, err := p.parseTypeCheckExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +67,29 @@ func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error)
 			Operator: op,
 			Right:    right,
 			BaseNode: ast.BaseNode{Token: left.GetToken()},
+		}
+	}
+
+	return left, nil
+}
+
+func (p *parser) parseTypeCheckExpression() (ast.Expression, error) {
+	left, err := p.parsePrefixOperation()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.isKeyword("is") {
+		p.consume()
+		ty, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.TypeCheckExpression{
+			BaseNode:       ast.BaseNode{Token: left.GetToken()},
+			Left:           left,
+			DataType:       ty,
 		}
 	}
 
@@ -111,7 +134,7 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 }
 
 func (p *parser) parseCallMemberExpression() (ast.Expression, error) {
-	left, err := p.parseLiteral()
+	left, err := p.parseCastExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -333,6 +356,29 @@ func (p *parser) parseIdentifier() (ast.Expression, error) {
 		Symbol:   tok.Value,
 		BaseNode: ast.BaseNode{Token: tok},
 	}, nil
+}
+
+func (p *parser) parseCastExpression() (ast.Expression, error) {
+	left, err := p.parseLiteral()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.next().Type == token.ARROW {
+		p.consume()
+		ty, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+
+		left = &ast.CastExpression{
+			BaseNode:       ast.BaseNode{Token: left.GetToken()},
+			Left:           left,
+			DataType:       ty,
+		}
+	}
+
+	return left, nil
 }
 
 func (p *parser) parseLiteral() (ast.Expression, error) {

@@ -11,11 +11,13 @@ type IntLiteral struct{ BaseType }
 
 func (i *IntLiteral) Valid(t ValidType) bool { return isA[*IntLiteral](t) }
 func (i *IntLiteral) String() string         { return "int" }
+func (i *IntLiteral) CanCast(t ValidType) bool {return i.Valid(t) || (&FloatLiteral{}).Valid(t)}
 
 type FloatLiteral struct{ BaseType }
 
 func (f *FloatLiteral) String() string         { return "float" }
 func (f *FloatLiteral) Valid(t ValidType) bool { return isA[*FloatLiteral](t) }
+func (f *FloatLiteral) CanCast(t ValidType) bool {return f.Valid(t) || (&IntLiteral{}).Valid(t)}
 
 type BoolLiteral struct{ BaseType }
 

@@ -63,6 +63,12 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	case *ast.TupleExpression:
 		return evaluateTuple(expression, env)
 
+	case *ast.CastExpression:
+		return evaluateCastExpression(expression, env)
+
+	case *ast.TypeCheckExpression:
+		return evaluateTypeCheckExpression(expression, env)
+
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
 
@@ -284,4 +290,19 @@ func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.
 		Members: members,
 		Name: tupleExpr.Left.String(),
 	}
+}
+
+func evaluateCastExpression(cast *ast.CastExpression, env *environment.Environment) values.RuntimeValue {
+	left := evaluateExpression(cast.Left, env)
+	ty := types.FromAst(cast.DataType, env)
+	if !ty.Valid(left.Type()) {
+		errors.LogError(fmt.Sprintf("%q is type %q, not %q", left.ToString(), left.Type(), ty))
+	}
+	return left
+}
+
+func evaluateTypeCheckExpression(expr *ast.TypeCheckExpression, env *environment.Environment) values.RuntimeValue {
+	left := evaluateExpression(expr.Left, env)
+	ty := types.FromAst(expr.DataType, env)
+	return values.MakeBoolean(ty.Valid(left.Type()))
 }

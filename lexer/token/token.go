@@ -30,7 +30,7 @@ const (
 	DOT          = "DOT"
 	SEMICOLON    = "SEMICOLON"
 	COLON        = "COLON"
-	QUESTION        = "QUESTION"
+	QUESTION     = "QUESTION"
 
 	ASSIGN     = "ASSIGN"
 	ADD_ASSIGN = "ADD_ASSIGN"
@@ -67,6 +67,7 @@ const (
 	LOGICAL_NOT = "LOGICAL_NOT"
 
 	BITWISE_OR = "BITWISE_OR"
+	ARROW      = "ARROW"
 )
 
 var Symbols = map[string]Type{
@@ -114,6 +115,7 @@ var Symbols = map[string]Type{
 	"++": INCREMENT,
 	"--": DECREMENT,
 	"!":  LOGICAL_NOT,
+	"->": ARROW,
 }
 
 var AssignmentOperator = []Type{

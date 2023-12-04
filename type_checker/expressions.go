@@ -64,6 +64,12 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	case *ast.TupleExpression:
 		return typeCheckTuple(expression, symbolTable)
 
+	case *ast.CastExpression:
+		return typeCheckCastExpression(expression, symbolTable)
+
+	case *ast.TypeCheckExpression:
+		return typeCheckTypeCheckExpression(expression, symbolTable)
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
 		return nil
@@ -350,4 +356,40 @@ func typeCheckTuple(tuple *ast.TupleExpression, symbolTable *symbols.SymbolTable
 	}
 
 	return &types.Tuple{Members: members}
+}
+
+func typeCheckCastExpression(cast *ast.CastExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+	leftType := typeCheckExpression(cast.Left, symbolTable)
+	if leftType.String() == "TypeError" {
+		return leftType
+	}
+
+	castTo := types.FromAst(cast.DataType, symbolTable)
+	if castTo.String() == "TypeError" {
+		return castTo
+	}
+
+	if !types.CanCast(leftType, castTo) {
+		return types.Error(fmt.Sprintf("Cannot cast type %q to type %q", leftType, castTo), cast)
+	}
+
+	return castTo
+}
+
+func typeCheckTypeCheckExpression(expr *ast.TypeCheckExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+	leftType := typeCheckExpression(expr.Left, symbolTable)
+	if leftType.String() == "TypeError" {
+		return leftType
+	}
+
+	compType := types.FromAst(expr.DataType, symbolTable)
+	if compType.String() == "TypeError" {
+		return compType
+	}
+
+	if !leftType.Valid(compType) {
+		return types.Error(fmt.Sprintf("Type %q can never be type %q", leftType, compType), expr)
+	}
+
+	return &types.BoolLiteral{}
 }

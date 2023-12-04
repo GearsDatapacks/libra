@@ -298,3 +298,29 @@ func (structExpr *StructExpression) String() string {
 
 	return result
 }
+
+type TypeCheckExpression struct {
+	BaseNode
+	BaseExpression
+	Left Expression
+	DataType TypeExpression
+}
+
+func (*TypeCheckExpression) Type() NodeType { return "TypeCheckExpression" }
+
+func (typeCheck *TypeCheckExpression) String() string {
+	return typeCheck.Left.String() + " is " + typeCheck.DataType.String()
+}
+
+type CastExpression struct {
+	BaseNode
+	BaseExpression
+	Left Expression
+	DataType TypeExpression
+}
+
+func (*CastExpression) Type() NodeType { return "CastExpression" }
+
+func (typeCast *CastExpression) String() string {
+	return typeCast.Left.String() + " -> " + typeCast.DataType.String()
+}

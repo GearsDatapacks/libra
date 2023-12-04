@@ -50,6 +50,18 @@ func (*BaseType) IndexBy(ValidType) ValidType {
 	return nil
 }
 
+type CustomCastable interface {
+	CanCast(ValidType) bool
+}
+
+func CanCast(from, to ValidType) bool {
+	if castable, ok := from.(CustomCastable); ok {
+		return castable.CanCast(to)
+	}
+
+	return from.Valid(to)
+}
+
 type PartialType interface {
 	ValidType
 	Infer(ValidType) (ValidType, bool)
