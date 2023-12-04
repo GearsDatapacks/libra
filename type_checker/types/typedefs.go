@@ -318,18 +318,7 @@ func (t *TupleStruct) Valid(dataType ValidType) bool {
 }
 
 func (tuple *TupleStruct) String() string {
-	result := tuple.Name + "("
-
-	for i, member := range tuple.Members {
-		if i != 0 {
-			result += ", "
-		}
-		result += member.String()
-	}
-
-	result += ")"
-
-	return result
+	return tuple.Name
 }
 
 func (tuple *TupleStruct) numberMember(member string) ValidType {
