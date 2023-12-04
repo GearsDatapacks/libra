@@ -212,6 +212,10 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, symbolTable *
 		if parentType.String() == "TypeError" {
 			return parentType
 		}
+
+		if types.Member(parentType, funcDec.Name, false) != nil {
+			return types.Error(fmt.Sprintf("Type %q already has member %q", parentType.String(), funcDec.Name), funcDec);
+		}
 		functionType.MethodOf = parentType
 
 		types.AddMethod(funcDec.Name, functionType)

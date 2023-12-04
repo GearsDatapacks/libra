@@ -161,7 +161,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	function, ok := callVar.(*types.Function)
 
 	if !ok {
-		return types.Error(fmt.Sprintf("%q is not a function", call.String()), call)
+		return types.Error(fmt.Sprintf("%q is not a function", call.Left.String()), call)
 	}
 
 	name := function.Name
