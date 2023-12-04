@@ -27,4 +27,6 @@ func registerBuiltins() {
 	registerBuiltin("toString", params{&types.Any{}}, stringType)
 	registerBuiltin("parseInt", params{stringType}, intType)
 	registerBuiltin("parseFloat", params{stringType}, floatType)
+	registerBuiltin("readFile", params{stringType}, &types.ErrorType{ResultType: stringType})
+	registerBuiltin("writeFile", params{stringType, stringType}, &types.ErrorType{ResultType: &types.Void{}})
 }

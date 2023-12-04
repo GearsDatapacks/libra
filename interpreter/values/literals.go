@@ -453,7 +453,7 @@ func (tv *TupleValue) SetMember(member string, value RuntimeValue) RuntimeValue 
 
 type TupleStructValue struct {
 	BaseValue
-	Name string
+	Name    string
 	Members []RuntimeValue
 }
 
@@ -508,4 +508,27 @@ func (tv *TupleStructValue) SetMember(member string, value RuntimeValue) Runtime
 	tv.Members[number] = value
 
 	return value
+}
+
+type RuntimeError struct {
+	BaseValue
+	Msg string
+}
+
+func (err *RuntimeError) ToString() string {
+	return err.Msg
+}
+
+func (sl *RuntimeError) Truthy() bool {
+	return true
+}
+
+func (*RuntimeError) EqualTo(value RuntimeValue) bool {
+	return true
+}
+
+func MakeError(msg string) RuntimeValue {
+	return &RuntimeError{
+		Msg: msg,
+	}
 }

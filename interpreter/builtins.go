@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 )
@@ -51,7 +50,7 @@ func parseInt(args []values.RuntimeValue, env *environment.Environment) values.R
 	intValue, err := strconv.ParseInt(stringValue, 10, 32)
 
 	if err != nil {
-		errors.LogError(fmt.Sprintf("parseInt: Invalid integer syntax: %q", stringValue))
+		return values.MakeError(fmt.Sprintf("parseInt: Invalid integer syntax: %q", stringValue))
 	}
 
 	return values.MakeInteger(int(intValue))
@@ -62,8 +61,29 @@ func parseFloat(args []values.RuntimeValue, env *environment.Environment) values
 	floatValue, err := strconv.ParseFloat(stringValue, 32)
 
 	if err != nil {
-		errors.LogError(fmt.Sprintf("parseFloat: Invalid float syntax: %q", stringValue))
+		return values.MakeError(fmt.Sprintf("parseFloat: Invalid float syntax: %q", stringValue))
 	}
 
 	return values.MakeFloat(floatValue)
+}
+
+func readFile(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	fileName := args[0].(*values.StringLiteral).Value
+	file, err := os.ReadFile(fileName)
+	if err != nil {
+		return values.MakeError(err.Error())
+	}
+
+	return values.MakeString(string(file))
+}
+
+func writeFile(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+	fileName := args[0].(*values.StringLiteral).Value
+	contents := args[1].(*values.StringLiteral).Value
+	err := os.WriteFile(fileName, []byte(contents), 0666)
+	if err != nil {
+		return values.MakeError(err.Error())
+	}
+
+	return values.MakeNull()
 }

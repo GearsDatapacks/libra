@@ -421,7 +421,7 @@ func registerOperators() {
 		if !postfix {
 			return values.MakeBoolean(!value.Truthy())
 		}
-		if errorType.Valid(value.Type()) {
+		if isError(value) {
 			fmt.Println(value.ToString())
 			os.Exit(1)
 		}
@@ -429,13 +429,21 @@ func registerOperators() {
 	})
 
 	RegisterUnaryOperator("?", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
-		if errorType.Valid(value.Type()) {
+		if isError(value) {
 			functionScope := env.FindFunctionScope()
 			functionScope.ReturnValue = value
 			return values.MakeNull()
 		}
 		return value
 	})
+}
+
+func isError(value values.RuntimeValue) bool {
+	if _, isRuntimeErr := value.(*values.RuntimeError); isRuntimeErr {
+		return true
+	}
+
+	return errorType.Valid(value.Type())
 }
 
 type builtin func([]values.RuntimeValue, *environment.Environment) values.RuntimeValue
@@ -449,4 +457,6 @@ func registerBuiltins() {
 	builtins["toString"] = toString
 	builtins["parseInt"] = parseInt
 	builtins["parseFloat"] = parseFloat
+	builtins["readFile"] = readFile
+	builtins["writeFile"] = writeFile
 }
