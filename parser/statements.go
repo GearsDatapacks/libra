@@ -183,7 +183,7 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 		Body:       code,
 		ReturnType: returnType,
 		BaseNode:   ast.BaseNode{Token: tok},
-		MethodOf: methodOf,
+		MethodOf:   methodOf,
 	}, nil
 }
 
@@ -325,6 +325,10 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 		return nil, err
 	}
 
+	if p.next().Type == token.LEFT_PAREN {
+		return p.parseTupleStructDeclaration(tok, name.Value)
+	}
+
 	_, err = p.expect(token.LEFT_BRACE, "Expected struct body")
 	if err != nil {
 		return nil, err
@@ -354,6 +358,33 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 	return &ast.StructDeclaration{
 		BaseNode: ast.BaseNode{Token: tok},
 		Name:     name.Value,
+		Members:  members,
+	}, nil
+}
+
+func (p *parser) parseTupleStructDeclaration(tok token.Token, name string) (ast.Statement, error) {
+	p.consume()
+
+	members := []ast.TypeExpression{}
+
+	for p.next().Type != token.RIGHT_PAREN {
+		expr, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, expr)
+		if p.next().Type != token.RIGHT_PAREN {
+			_, err := p.expect(token.COMMA, "Expected comma or end of tuple struct body")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	p.consume()
+	return &ast.TupleStructDeclaration{
+		BaseNode: ast.BaseNode{Token: tok},
+		Name:     name,
 		Members:  members,
 	}, nil
 }
@@ -440,8 +471,8 @@ func (p *parser) parseTypeDeclaration() (ast.Statement, error) {
 	}
 
 	return &ast.TypeDeclaration{
-		BaseNode:     ast.BaseNode{ Token: tok },
-		Name:         name.Value,
-		DataType:     dataType,
+		BaseNode: ast.BaseNode{Token: tok},
+		Name:     name.Value,
+		DataType: dataType,
 	}, nil
 }

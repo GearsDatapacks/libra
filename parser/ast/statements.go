@@ -1,12 +1,12 @@
 package ast
 
-type BaseStatment struct{}
+type BaseStatement struct{}
 
-func (stmt *BaseStatment) statementNode() {}
+func (stmt *BaseStatement) statementNode() {}
 
 type ExpressionStatement struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Expression Expression
 }
 
@@ -18,7 +18,7 @@ func (es *ExpressionStatement) String() string {
 
 type VariableDeclaration struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Constant bool
 	Name     string
 	Value    Expression
@@ -50,7 +50,7 @@ type Parameter struct {
 
 type FunctionDeclaration struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Name       string
 	MethodOf   TypeExpression
 	Parameters []Parameter
@@ -91,7 +91,7 @@ func (funcDec *FunctionDeclaration) String() string {
 
 type ReturnStatement struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Value Expression
 }
 
@@ -105,7 +105,7 @@ type IfElseStatement interface{ ifElse() }
 
 type IfStatement struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Condition Expression
 	Body      []Statement
 	Else      IfElseStatement
@@ -133,7 +133,7 @@ func (ifs *IfStatement) ifElse() {}
 
 type ElseStatement struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Body []Statement
 }
 
@@ -157,7 +157,7 @@ func (elses *ElseStatement) ifElse() {}
 
 type WhileLoop struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Condition Expression
 	Body      []Statement
 }
@@ -182,7 +182,7 @@ func (while *WhileLoop) String() string {
 
 type ForLoop struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Initial   Statement
 	Condition Expression
 	Update    Statement
@@ -213,7 +213,7 @@ func (forLoop *ForLoop) String() string {
 
 type StructDeclaration struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Name    string
 	Members map[string]TypeExpression
 }
@@ -238,6 +238,33 @@ func (structDec *StructDeclaration) String() string {
 	return result
 }
 
+type TupleStructDeclaration struct {
+	BaseNode
+	BaseStatement
+	Name    string
+	Members []TypeExpression
+}
+
+func (structDec *TupleStructDeclaration) Type() NodeType { return "TupleStructDeclaration" }
+
+func (structDec *TupleStructDeclaration) String() string {
+	result := "struct "
+
+	result += structDec.Name
+	result += "("
+
+	for i, dataType := range structDec.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += dataType.String()
+	}
+
+	result += ")"
+
+	return result
+}
+
 type InterfaceMember struct {
 	Name       string
 	IsFunction bool
@@ -247,7 +274,7 @@ type InterfaceMember struct {
 
 type InterfaceDeclaration struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Name    string
 	Members []InterfaceMember
 }
@@ -260,7 +287,7 @@ func (intDecl *InterfaceDeclaration) String() string {
 
 type TypeDeclaration struct {
 	BaseNode
-	BaseStatment
+	BaseStatement
 	Name     string
 	DataType TypeExpression
 }

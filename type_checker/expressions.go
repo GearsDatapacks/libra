@@ -125,6 +125,11 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
 	if ident, ok := call.Left.(*ast.Identifier); ok {
 		name := ident.Symbol
+
+		if structType, isStruct := symbolTable.GetType(name).(*types.TupleStruct); isStruct {
+			return typeCheckTupleStructExpression(structType, call, symbolTable)
+		}
+
 		if builtin, ok := registry.Builtins[name]; ok {
 			if len(builtin.Parameters) != len(call.Args) {
 				if len(call.Args) < len(builtin.Parameters) {
@@ -180,6 +185,23 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	}
 
 	return function.ReturnType
+}
+
+func typeCheckTupleStructExpression(tuple *types.TupleStruct, instance *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+	if len(tuple.Members) != len(instance.Args) {
+		return types.Error("Tuple struct expression incompatible with type", instance)
+	}
+	for i, arg := range instance.Args {
+		argType := typeCheckExpression(arg, symbolTable)
+		if argType.String() == "TypeError" {
+			return argType
+		}
+		if !tuple.Members[i].Valid(argType) {
+			return types.Error("Tuple struct expression incompatible with type", instance)
+		}
+	}
+
+	return tuple
 }
 
 func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) types.ValidType {

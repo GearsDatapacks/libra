@@ -286,3 +286,56 @@ func (tuple *Tuple) numberMember(member string) ValidType {
 	}
 	return nil
 }
+
+type TupleStruct struct {
+	BaseType
+	Name string
+	Members []ValidType
+}
+
+func (t *TupleStruct) Valid(dataType ValidType) bool {
+	tuple, isTuple := dataType.(*TupleStruct)
+	if !isTuple {
+		return false
+	}
+
+	if tuple.Name != t.Name {
+		return false
+	}
+
+	if len(tuple.Members) != len(t.Members) {
+		return false
+	}
+
+	for i, member := range tuple.Members {
+		memberType := t.Members[i]
+		if !memberType.Valid(member) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tuple *TupleStruct) String() string {
+	result := tuple.Name + "("
+
+	for i, member := range tuple.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += member.String()
+	}
+
+	result += ")"
+
+	return result
+}
+
+func (tuple *TupleStruct) numberMember(member string) ValidType {
+	number, _ := strconv.ParseInt(member, 10, 32)
+	if int(number) < len(tuple.Members) {
+		return tuple.Members[number]
+	}
+	return nil
+}

@@ -49,7 +49,11 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return evaluateForLoop(statement, env)
 
 	case *ast.StructDeclaration:
-		return evaluateStructDeclaration(statement, env)
+		// return evaluateStructDeclaration(statement, env)
+		return values.MakeNull()
+	
+	case *ast.TupleStructDeclaration:
+		return values.MakeNull()
 
 	case *ast.InterfaceDeclaration:
 		return values.MakeNull()
@@ -72,6 +76,9 @@ func register(astNode ast.Statement, env *environment.Environment) {
 
 	case *ast.StructDeclaration:
 		evaluateStructDeclaration(statement, env)
+
+	case *ast.TupleStructDeclaration:
+		evaluateTupleStructDeclaration(statement, env)
 
 	case *ast.TypeDeclaration:
 		env.AddType(statement.Name, types.FromAst(statement.DataType, env))

@@ -146,3 +146,21 @@ func evaluateStructDeclaration(structDecl *ast.StructDeclaration, env *environme
 
 	return values.MakeNull()
 }
+
+func evaluateTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, env *environment.Environment) values.RuntimeValue {
+	members := []types.ValidType{}
+
+	for _, memberType := range structDecl.Members {
+		dataType := types.FromAst(memberType, env)
+
+		members = append(members, dataType)
+	}
+
+	structType := &types.TupleStruct{
+		Name:    structDecl.Name,
+		Members: members,
+	}
+	env.AddType(structDecl.Name, structType)
+
+	return values.MakeNull()
+}

@@ -450,3 +450,62 @@ func (tv *TupleValue) SetMember(member string, value RuntimeValue) RuntimeValue 
 
 	return value
 }
+
+type TupleStructValue struct {
+	BaseValue
+	Name string
+	Members []RuntimeValue
+}
+
+func (sl *TupleStructValue) ToString() string {
+	result := "("
+
+	for i, expr := range sl.Members {
+		if i != 0 {
+			result += ", "
+		}
+		result += expr.ToString()
+	}
+
+	result += ")"
+
+	return result
+}
+
+func (sl *TupleStructValue) Truthy() bool {
+	return true
+}
+
+func (ts *TupleStructValue) EqualTo(value RuntimeValue) bool {
+	struc, ok := value.(*TupleStructValue)
+	if !ok || ts.Name != struc.Name {
+		return false
+	}
+
+	if len(ts.Members) != len(struc.Members) {
+		return false
+	}
+
+	for i, member := range ts.Members {
+		value := struc.Members[i]
+
+		if !member.EqualTo(value) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tv *TupleStructValue) Member(member string) RuntimeValue {
+	number, _ := strconv.ParseInt(member, 10, 32)
+
+	return tv.Members[number]
+}
+
+func (tv *TupleStructValue) SetMember(member string, value RuntimeValue) RuntimeValue {
+	number, _ := strconv.ParseInt(member, 10, 32)
+	tv.Members[number] = value
+
+	return value
+}

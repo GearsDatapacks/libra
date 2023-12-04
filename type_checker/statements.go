@@ -37,6 +37,10 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 		// return typeCheckStructDeclaration(statement, symbolTable)
 		return &types.Void{}
 
+	case *ast.TupleStructDeclaration:
+		// return typeCheckStructDeclaration(statement, symbolTable)
+		return &types.Void{}
+
 	case *ast.InterfaceDeclaration:
 		// return typeCheckInterfaceDeclaration(statement, symbolTable)
 		return &types.Void{}
@@ -46,7 +50,7 @@ func typeCheckStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable) ty
 		return &types.Void{}
 
 	default:
-		log.Fatal(errors.DevError("(Type checker) Unexpected statment type: " + statement.String()))
+		log.Fatal(errors.DevError("(Type checker) Unexpected statement type: " + statement.String()))
 		return nil
 	}
 }
@@ -58,6 +62,9 @@ func typeCheckGlobalStatement(stmt ast.Statement, symbolTable *symbols.SymbolTab
 
 	case *ast.StructDeclaration:
 		return typeCheckStructDeclaration(statement, symbolTable)
+
+	case *ast.TupleStructDeclaration:
+		return typeCheckTupleStructDeclaration(statement, symbolTable)
 
 	case *ast.InterfaceDeclaration:
 		return typeCheckInterfaceDeclaration(statement, symbolTable)
@@ -73,6 +80,9 @@ func registerTypeStatement(stmt ast.Statement, symbolTable *symbols.SymbolTable)
 	switch statement := stmt.(type) {
 	case *ast.StructDeclaration:
 		return registerStructDeclaration(statement, symbolTable)
+
+	case *ast.TupleStructDeclaration:
+		return registerTupleStructDeclaration(statement, symbolTable)
 
 	case *ast.InterfaceDeclaration:
 		return registerInterfaceDeclaration(statement, symbolTable)
@@ -332,6 +342,21 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *
 	return structType
 }
 
+func typeCheckTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	structType := symbolTable.GetType(structDecl.Name).(*types.TupleStruct)
+
+	for _, memberType := range structDecl.Members {
+		dataType := types.FromAst(memberType, symbolTable)
+		if dataType.String() == "TypeError" {
+			return dataType
+		}
+
+		structType.Members = append(structType.Members, dataType)
+	}
+
+	return structType
+}
+
 func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
 	interfaceType := symbolTable.GetType(intDecl.Name).(*types.Interface)
 
@@ -388,6 +413,22 @@ func registerStructDeclaration(structDecl *ast.StructDeclaration, symbolTable *s
 	members := map[string]types.ValidType{}
 
 	structType := &types.Struct{
+		Name:    structDecl.Name,
+		Members: members,
+	}
+
+	err := symbolTable.AddType(structDecl.Name, structType)
+	if err != nil {
+		return err
+	}
+
+	return structType
+}
+
+func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, symbolTable *symbols.SymbolTable) types.ValidType {
+	members := []types.ValidType{}
+
+	structType := &types.TupleStruct{
 		Name:    structDecl.Name,
 		Members: members,
 	}

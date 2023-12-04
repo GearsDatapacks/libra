@@ -103,6 +103,10 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 
 func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
 	if ident, ok := call.Left.(*ast.Identifier); ok {
+		if structType, isStruct := env.GetType(ident.Symbol).(*types.TupleStruct); isStruct {
+			return evaluateTupleStructExpression(structType, call, env)
+		}
+
 		if builtin, ok := builtins[ident.Symbol]; ok {
 			args := []values.RuntimeValue{}
 
@@ -225,16 +229,16 @@ func evaluateIndexExpression(indexExpr *ast.IndexExpression, env *environment.En
 
 func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.Environment) values.RuntimeValue {
 	value := evaluateExpression(memberExpr.Left, env)
-	memberValue := value.Member(memberExpr.Member)
-	if memberValue != nil {
-		return memberValue
-	}
 
-	
 	method := env.GetMethod(memberExpr.Member, value.Type())
 	if method != nil {
 		method.This = value
 		return method
+	}
+
+	memberValue := value.Member(memberExpr.Member)
+	if memberValue != nil {
+		return memberValue
 	}
 
 	return values.MakeNull()
@@ -267,4 +271,17 @@ func evaluateTuple(tuple *ast.TupleExpression, env *environment.Environment) val
 	}
 
 	return &values.TupleValue{Members: members}
+}
+
+func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
+	members := []values.RuntimeValue{}
+	for _, arg := range tupleExpr.Args {
+		members = append(members, evaluateExpression(arg, env))
+	}
+
+	return &values.TupleStructValue{
+		BaseValue: values.BaseValue{DataType: tupleType},
+		Members: members,
+		Name: tupleExpr.Left.String(),
+	}
 }
