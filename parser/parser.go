@@ -84,6 +84,7 @@ func (p *parser) Parse(tokens []token.Token) (ast.Program, error) {
 
 	program := ast.Program{}
 	p.usedSymbols = []string{}
+	p.requireNewline = false
 
 	for !p.eof() {
 		nextStatement, err := p.parseStatement()
