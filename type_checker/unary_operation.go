@@ -15,10 +15,25 @@ func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.Symb
 		return valueType
 	}
 
+	not_exit_error := types.Error(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
+
+	if unOp.Operator == "?" {
+		if errType, ok := valueType.(*types.ErrorType); ok {
+			if !symbolTable.IsInFunctionScope() {
+				return types.Error("Cannot use operator \"?\" outside of a function", unOp)
+			}
+			if _, ok := symbolTable.ReturnType().(*types.ErrorType); !ok {
+				return types.Error("Can only use operator \"?\" in a function that returns an error type", unOp)
+			}
+			return errType.ResultType
+		}
+		return not_exit_error
+	}
+
 	checkerFn, exists := registry.UnaryOperators[unOp.Operator]
 
 	if !exists {
-		return types.Error(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp)
+		return not_exit_error
 	}
 
 	resultType := checkerFn(valueType, unOp.Postfix)

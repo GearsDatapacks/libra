@@ -153,6 +153,10 @@ func (st *SymbolTable) removeConditionalReturn() {
 	scope.hasConditionalReturn = false
 }
 
+func (st *SymbolTable) IsInFunctionScope() bool {
+	return st.FindFunctionScope() != nil
+}
+
 func (st *SymbolTable) FindFunctionScope() *SymbolTable {
 	scope, _, _ := st.findFunctionScope(false, false)
 	return scope

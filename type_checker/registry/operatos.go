@@ -173,13 +173,6 @@ func notOperator(dataType types.ValidType, postfix bool) types.ValidType {
 	return nil
 }
 
-func unwrapOperator(dataType types.ValidType, _ bool) types.ValidType {
-	if errType, ok := dataType.(*types.ErrorType); ok {
-		return errType.ResultType
-	}
-	return nil
-}
-
 func registerOperators() {
 	registerBinaryOperator("+", plusOperator)
 	registerBinaryOperator("-", arithmeticOperator)
@@ -204,6 +197,6 @@ func registerOperators() {
 	registerUnaryOperator("++", func(v types.ValidType, _ bool) types.ValidType { return incDecOperator(v, "++") })
 	registerUnaryOperator("--", func(v types.ValidType, _ bool) types.ValidType { return incDecOperator(v, "--") })
 	registerUnaryOperator("!", notOperator)
-	registerUnaryOperator("?", unwrapOperator)
+	// registerUnaryOperator("?", unwrapOperator)
 	registerUnaryOperator("-", negateOperator)
 }
