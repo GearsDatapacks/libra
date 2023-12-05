@@ -116,36 +116,25 @@ func (p *parser) parsePrefixOperation() (ast.Expression, error) {
 }
 
 func (p *parser) parsePostfixOperation() (ast.Expression, error) {
-	value, err := p.parseCallMemberExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for p.next().Is(token.PostfixOperator) {
-		value = &ast.UnaryOperation{
-			Value:    value,
-			Operator: p.consume().Value,
-			BaseNode: ast.BaseNode{Token: value.GetToken()},
-			Postfix:  true,
-		}
-	}
-
-	return value, nil
-}
-
-func (p *parser) parseCallMemberExpression() (ast.Expression, error) {
 	left, err := p.parseCastExpression()
 	if err != nil {
 		return nil, err
 	}
 
-	for p.next().Type == token.LEFT_PAREN || p.next().Type == token.LEFT_SQUARE || p.next().Type == token.DOT {
+	for p.next().Is(token.PostfixOperator) || p.next().Type == token.LEFT_PAREN || p.next().Type == token.LEFT_SQUARE || p.next().Type == token.DOT {
 		if p.next().Type == token.LEFT_PAREN {
 			left, err = p.parseFunctionCall(left)
 		} else if p.next().Type == token.LEFT_SQUARE {
 			left, err = p.parseIndexExpression(left)
 		} else if p.next().Type == token.DOT {
 			left, err = p.parseMemberExpression(left)
+		} else {
+			left = &ast.UnaryOperation{
+				Value:    left,
+				Operator: p.consume().Value,
+				BaseNode: ast.BaseNode{Token: left.GetToken()},
+				Postfix:  true,
+			}
 		}
 
 		if err != nil {
