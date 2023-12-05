@@ -147,6 +147,42 @@ func evaluateStructDeclaration(structDecl *ast.StructDeclaration, env *environme
 	return values.MakeNull()
 }
 
+func evaluateInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, env *environment.Environment) values.RuntimeValue {
+	members := map[string]types.ValidType{}
+
+	for _, member := range intDecl.Members {
+		if !member.IsFunction {
+			dataType := types.FromAst(member.ResultType, env)
+
+			members[member.Name] = dataType
+			continue
+		}
+
+		fnType := &types.Function{}
+		fnType.Name = member.Name
+
+		returnType := types.FromAst(member.ResultType, env)
+		fnType.ReturnType = returnType
+
+		fnType.Parameters = []types.ValidType{}
+		for _, param := range member.Parameters {
+			paramType := types.FromAst(param, env)
+
+			fnType.Parameters = append(fnType.Parameters, paramType)
+		}
+
+		members[member.Name] = fnType
+	}
+
+	interfaceType := &types.Interface{
+		Name:    intDecl.Name,
+		Members: members,
+	}
+
+	env.AddType(intDecl.Name, interfaceType)
+	return values.MakeNull()
+}
+
 func evaluateTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, env *environment.Environment) values.RuntimeValue {
 	members := []types.ValidType{}
 

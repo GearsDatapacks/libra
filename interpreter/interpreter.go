@@ -59,7 +59,7 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return values.MakeNull()
 
 	case *ast.TypeDeclaration:
-		env.AddType(statement.Name, types.FromAst(statement.DataType, env))
+		// env.AddType(statement.Name, types.FromAst(statement.DataType, env))
 		return values.MakeNull()
 
 	default:
@@ -76,6 +76,9 @@ func register(astNode ast.Statement, env *environment.Environment) {
 
 	case *ast.StructDeclaration:
 		evaluateStructDeclaration(statement, env)
+
+	case *ast.InterfaceDeclaration:
+		evaluateInterfaceDeclaration(statement, env)
 
 	case *ast.TupleStructDeclaration:
 		evaluateTupleStructDeclaration(statement, env)
