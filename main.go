@@ -12,6 +12,7 @@ import (
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
 
 func repl() {
@@ -19,6 +20,7 @@ func repl() {
 	reader := bufio.NewReader(os.Stdin)
 
 	parser := parser.New()
+	symbolTable := symbols.New()
 	env := environment.New()
 
 	for {
@@ -47,7 +49,7 @@ func repl() {
 			fmt.Println(err)
 			continue
 		}
-		err = typechecker.TypeCheck(&ast)
+		err = typechecker.TypeCheck(&ast, symbolTable)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -68,6 +70,7 @@ func run(file string) {
 	lexer := lexer.New(code)
 	parser := parser.New()
 	env := environment.New()
+	symbolTable := symbols.New()
 
 	tokens, err := lexer.Tokenise()
 	if err != nil {
@@ -81,7 +84,7 @@ func run(file string) {
 		os.Exit(1)
 	}
 	
-	err = typechecker.TypeCheck(&ast)
+	err = typechecker.TypeCheck(&ast, symbolTable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

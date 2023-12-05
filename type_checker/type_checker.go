@@ -6,9 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func TypeCheck(program *ast.Program) error {
-	symbolTable := symbols.New()
-
+func TypeCheck(program *ast.Program, symbolTable *symbols.SymbolTable) error {
 	err := typeCheckGlobalScope(program, symbolTable)
 	if err != nil {
 		return err
