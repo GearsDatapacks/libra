@@ -12,7 +12,7 @@ func isWhitespace(char rune) bool {
 }
 
 func isNewline(char rune) bool {
-	return char == '\n' || char == '\r'
+	return char == '\n' || char == '\r' || char == ';'
 }
 
 func isAlphabetic(char rune) bool {

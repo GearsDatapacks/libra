@@ -28,7 +28,7 @@ const (
 	RIGHT_SQUARE
 	COMMA
 	DOT
-	SEMICOLON
+	// SEMICOLON
 	COLON
 	QUESTION
 
@@ -79,7 +79,7 @@ var Symbols = map[string]Type{
 	"]": RIGHT_SQUARE,
 	",": COMMA,
 	".": DOT,
-	";": SEMICOLON,
+	// ";": SEMICOLON,
 	":": COLON,
 	"?": QUESTION,
 

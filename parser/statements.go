@@ -282,21 +282,26 @@ func (p *parser) parseForLoop() (ast.Statement, error) {
 		return nil, err
 	}
 
-	_, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
-	if err != nil {
-		return nil, err
+	// _, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	if !p.eof() && !p.next().LeadingNewline {
+		return nil, p.error(fmt.Sprintf("Expected new line after statement, got %q", p.next().Value), p.next())
 	}
 
 	condition, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
-	if err != nil {
-		return nil, err
-	}
 
-	update, err := p.parseStatement(true)
+	// _, err = p.expect(token.SEMICOLON, "Unexpected %q, expecting ';'")
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	update, err := p.parseStatement()
 	if err != nil {
 		return nil, err
 	}
