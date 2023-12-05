@@ -2,7 +2,7 @@ package token
 
 import "github.com/gearsdatapacks/libra/utils"
 
-type Type string
+type Type int
 
 type Token struct {
 	Type           Type
@@ -13,61 +13,61 @@ type Token struct {
 }
 
 const (
-	EOF = "EOF"
+	EOF = iota
 
-	INTEGER    = "INTEGER"
-	FLOAT      = "FLOAT"
-	STRING     = "STRING"
-	IDENTIFIER = "IDENTIFIER"
+	INTEGER
+	FLOAT
+	STRING
+	IDENTIFIER
 
-	LEFT_PAREN   = "LEFT_PAREN"
-	RIGHT_PAREN  = "RIGHT_PAREN"
-	LEFT_BRACE   = "LEFT_BRACE"
-	RIGHT_BRACE  = "RIGHT_BRACE"
-	LEFT_SQUARE  = "LEFT_SQUARE"
-	RIGHT_SQUARE = "RIGHT_SQUARE"
-	COMMA        = "COMMA"
-	DOT          = "DOT"
-	SEMICOLON    = "SEMICOLON"
-	COLON        = "COLON"
-	QUESTION     = "QUESTION"
+	LEFT_PAREN
+	RIGHT_PAREN
+	LEFT_BRACE
+	RIGHT_BRACE
+	LEFT_SQUARE
+	RIGHT_SQUARE
+	COMMA
+	DOT
+	SEMICOLON
+	COLON
+	QUESTION
 
-	ASSIGN     = "ASSIGN"
-	ADD_ASSIGN = "ADD_ASSIGN"
-	SUB_ASSIGN = "SUB_ASSIGN"
-	MUL_ASSIGN = "MUL_ASSIGN"
-	DIV_ASSIGN = "DIV_ASSIGN"
-	MOD_ASSIGN = "MOD_ASSIGN"
+	EQUALS
+	PLUS_EQUALS
+	MINUS_EQUALS
+	STAR_EQUALS
+	SLAHS_EQUALS
+	PERCENT_EQUALS
 
-	LOGICAL_AND = "LOGICAL_AND"
-	LOGICAL_OR  = "LOGICAL_OR"
+	DOUBLE_AMPERSAND
+	DOUBLE_PIPE
 
-	LESS_THAN       = "LESS_THAN"
-	GREATER_THAN    = "GREATER_THAN"
-	LESS_THAN_EQ    = "LESS_THAN_EQ"
-	GREATER_THAN_EQ = "GREATER_THAN_EQ"
-	EQUAL           = "EQUAL"
-	NOT_EQUAL       = "NOT_EQUAL"
+	LEFT_ANGLE
+	RIGHT_ANGLE
+	LEFT_ANGLE_EQUALS
+	RIGHT_ANGLE_EQUALS
+	DOUBLE_EQUALS
+	BANG_EQUALS
 
-	LEFT_SHIFT  = "LEFT_SHIFT"
-	RIGHT_SHIFT = "RIGHT_SHIFT"
+	DOUBLE_LEFT_ANGLE
+	DOUBLE_RIGHT_ANGLE
 
-	ADD      = "ADD"
-	SUBTRACT = "SUBTRACT"
+	PLUS
+	MINUS
 
-	MULTIPLY = "MULTIPLY"
-	DIVIDE   = "DIVIDE"
-	MODULO   = "MODULO"
+	STAR
+	SLASH
+	PERCENT
 
-	POWER = "POWER"
+	DOUBLE_STAR
 
-	INCREMENT = "INCREMENT"
-	DECREMENT = "DECREMENT"
+	DOUBLE_PLUS
+	DOUBLE_MINUS
 
-	LOGICAL_NOT = "LOGICAL_NOT"
+	BANG
 
-	BITWISE_OR = "BITWISE_OR"
-	ARROW      = "ARROW"
+	PIPE
+	ARROW
 )
 
 var Symbols = map[string]Type{
@@ -83,87 +83,87 @@ var Symbols = map[string]Type{
 	":": COLON,
 	"?": QUESTION,
 
-	"+":  ADD,
-	"-":  SUBTRACT,
-	"*":  MULTIPLY,
-	"/":  DIVIDE,
-	"%":  MODULO,
-	"**": POWER,
+	"+":  PLUS,
+	"-":  MINUS,
+	"*":  STAR,
+	"/":  SLASH,
+	"%":  PERCENT,
+	"**": DOUBLE_STAR,
 
-	"=":  ASSIGN,
-	"+=": ADD_ASSIGN,
-	"-=": SUB_ASSIGN,
-	"*=": MUL_ASSIGN,
-	"/=": DIV_ASSIGN,
-	"%=": MOD_ASSIGN,
+	"=":  EQUALS,
+	"+=": PLUS_EQUALS,
+	"-=": MINUS_EQUALS,
+	"*=": STAR_EQUALS,
+	"/=": SLAHS_EQUALS,
+	"%=": PERCENT_EQUALS,
 
-	"<<": LEFT_SHIFT,
-	">>": RIGHT_SHIFT,
+	"<<": DOUBLE_LEFT_ANGLE,
+	">>": DOUBLE_RIGHT_ANGLE,
 
-	"<":  LESS_THAN,
-	"<=": LESS_THAN_EQ,
-	">":  GREATER_THAN,
-	">=": GREATER_THAN_EQ,
-	"==": EQUAL,
-	"!=": NOT_EQUAL,
+	"<":  LEFT_ANGLE,
+	"<=": LEFT_ANGLE_EQUALS,
+	">":  RIGHT_ANGLE,
+	">=": RIGHT_ANGLE_EQUALS,
+	"==": DOUBLE_EQUALS,
+	"!=": BANG_EQUALS,
 
-	"|": BITWISE_OR,
+	"|": PIPE,
 
-	"||": LOGICAL_OR,
-	"&&": LOGICAL_AND,
+	"||": DOUBLE_PIPE,
+	"&&": DOUBLE_AMPERSAND,
 
-	"++": INCREMENT,
-	"--": DECREMENT,
-	"!":  LOGICAL_NOT,
+	"++": DOUBLE_PLUS,
+	"--": DOUBLE_MINUS,
+	"!":  BANG,
 	"->": ARROW,
 }
 
 var AssignmentOperator = []Type{
-	ASSIGN,
-	ADD_ASSIGN,
-	SUB_ASSIGN,
-	MUL_ASSIGN,
-	DIV_ASSIGN,
-	MOD_ASSIGN,
+	EQUALS,
+	PLUS_EQUALS,
+	MINUS_EQUALS,
+	STAR_EQUALS,
+	SLAHS_EQUALS,
+	PERCENT_EQUALS,
 }
 
 var PrefixOperator = []Type{
-	SUBTRACT,
-	LOGICAL_NOT,
+	MINUS,
+	BANG,
 }
 
 var PostfixOperator = []Type{
-	INCREMENT,
-	DECREMENT,
+	DOUBLE_PLUS,
+	DOUBLE_MINUS,
 	QUESTION,
-	LOGICAL_NOT,
+	BANG,
 }
 
 var BinOpInfo = map[Type]struct {
 	Precedence       int
 	RightAssociative bool
 }{
-	LOGICAL_AND: {Precedence: 1},
-	LOGICAL_OR:  {Precedence: 1},
+	DOUBLE_AMPERSAND: {Precedence: 1},
+	DOUBLE_PIPE:  {Precedence: 1},
 
-	LESS_THAN:       {Precedence: 2},
-	LESS_THAN_EQ:    {Precedence: 2},
-	GREATER_THAN:    {Precedence: 2},
-	GREATER_THAN_EQ: {Precedence: 2},
-	EQUAL:           {Precedence: 2},
-	NOT_EQUAL:       {Precedence: 2},
+	LEFT_ANGLE:       {Precedence: 2},
+	LEFT_ANGLE_EQUALS:    {Precedence: 2},
+	RIGHT_ANGLE:    {Precedence: 2},
+	RIGHT_ANGLE_EQUALS: {Precedence: 2},
+	DOUBLE_EQUALS:           {Precedence: 2},
+	BANG_EQUALS:       {Precedence: 2},
 
-	LEFT_SHIFT:  {Precedence: 3},
-	RIGHT_SHIFT: {Precedence: 3, RightAssociative: true},
+	DOUBLE_LEFT_ANGLE:  {Precedence: 3},
+	DOUBLE_RIGHT_ANGLE: {Precedence: 3, RightAssociative: true},
 
-	ADD:      {Precedence: 4},
-	SUBTRACT: {Precedence: 4},
+	PLUS:  {Precedence: 4},
+	MINUS: {Precedence: 4},
 
-	MULTIPLY: {Precedence: 5},
-	DIVIDE:   {Precedence: 5},
-	MODULO:   {Precedence: 5},
+	STAR:    {Precedence: 5},
+	SLASH:   {Precedence: 5},
+	PERCENT: {Precedence: 5},
 
-	POWER: {Precedence: 6, RightAssociative: true},
+	DOUBLE_STAR: {Precedence: 6, RightAssociative: true},
 }
 
 func (tokenType Type) Is(opGroup []Type) bool {
