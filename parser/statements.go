@@ -35,6 +35,10 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseInterfaceDeclaration()
 	} else if p.isKeyword("type") {
 		statement, err = p.parseTypeDeclaration()
+	} else if p.isKeyword("import") {
+		statement, err = p.parseImportStatement()
+	} else if p.isKeyword("export") {
+		statement, err = p.parseExportStatement()
 	} else {
 		statement, err = p.parseExpressionStatement()
 	}
@@ -480,4 +484,38 @@ func (p *parser) parseTypeDeclaration() (ast.Statement, error) {
 		Name:     name.Value,
 		DataType: dataType,
 	}, nil
+}
+
+func (p *parser) parseImportStatement() (ast.Statement, error) {
+	tok := p.consume()
+
+	mod, err := p.expect(token.STRING, "Invalid import module %q")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.ImportStatement{
+		BaseNode:      ast.BaseNode{Token: tok},
+		Module:        mod.Value,
+	}, nil
+}
+
+func (p *parser) parseExportStatement() (ast.Statement, error) {
+	p.consume()
+
+	stmt, err := p.parseStatement()
+	if err != nil {
+		return nil, err
+	}
+
+	if stmt.IsExport() {
+		return nil, p.error("Cannot double-export a statement", stmt.GetToken())
+	}
+
+	if _, isExportable := stmt.(ast.Exportable); !isExportable {
+		return nil, p.error(fmt.Sprintf("Cannot export statement of type %q", stmt.Type()), stmt.GetToken())
+	}
+
+	stmt.MarkExport()
+	return stmt, nil
 }

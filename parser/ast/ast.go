@@ -8,42 +8,23 @@ type NodeType string
 
 type BaseNode struct {
 	Token       token.Token
-	isStatement bool
 }
 
 func (n *BaseNode) GetToken() token.Token {
 	return n.Token
 }
 
-func (n *BaseNode) IsStatement() bool {
-	return n.isStatement
-}
-
-func (n *BaseNode) IsExpression() bool {
-	return !n.isStatement
-}
-
-func (n *BaseNode) MarkStatement() {
-	n.isStatement = true
-}
-
-func (n *BaseNode) MarkExpression() {
-	n.isStatement = false
-}
-
 type Node interface {
 	GetToken() token.Token
 	Type() NodeType
 	String() string
-	IsExpression() bool
-	IsStatement() bool
-	MarkStatement()
-	MarkExpression()
 }
 
 type Statement interface {
 	Node
 	statementNode()
+	MarkExport()
+	IsExport() bool
 }
 
 type Expression interface {

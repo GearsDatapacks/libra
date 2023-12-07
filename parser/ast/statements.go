@@ -1,8 +1,25 @@
 package ast
 
-type BaseStatement struct{}
+type BaseStatement struct {
+	Exported bool
+}
 
 func (stmt *BaseStatement) statementNode() {}
+func (stmt *BaseStatement) MarkExport() {
+	stmt.Exported = true
+}
+
+func (stmt *BaseStatement) IsExport() bool {
+	return stmt.Exported
+}
+
+type Exportable interface {
+	export()
+}
+
+type canExport struct{}
+
+func (canExport) export() {}
 
 type ExpressionStatement struct {
 	BaseNode
@@ -51,6 +68,7 @@ type Parameter struct {
 type FunctionDeclaration struct {
 	BaseNode
 	BaseStatement
+	canExport
 	Name       string
 	MethodOf   TypeExpression
 	Parameters []Parameter
@@ -214,6 +232,7 @@ func (forLoop *ForLoop) String() string {
 type StructDeclaration struct {
 	BaseNode
 	BaseStatement
+	canExport
 	Name    string
 	Members map[string]TypeExpression
 }
@@ -241,6 +260,7 @@ func (structDec *StructDeclaration) String() string {
 type TupleStructDeclaration struct {
 	BaseNode
 	BaseStatement
+	canExport
 	Name    string
 	Members []TypeExpression
 }
@@ -275,6 +295,7 @@ type InterfaceMember struct {
 type InterfaceDeclaration struct {
 	BaseNode
 	BaseStatement
+	canExport
 	Name    string
 	Members []InterfaceMember
 }
@@ -288,6 +309,7 @@ func (intDecl *InterfaceDeclaration) String() string {
 type TypeDeclaration struct {
 	BaseNode
 	BaseStatement
+	canExport
 	Name     string
 	DataType TypeExpression
 }
@@ -296,4 +318,16 @@ func (typeDecl *TypeDeclaration) Type() NodeType { return "TypeDeclaration" }
 
 func (typeDecl *TypeDeclaration) String() string {
 	return "type " + typeDecl.Name + " = " + typeDecl.DataType.String()
+}
+
+type ImportStatement struct {
+	BaseNode
+	BaseStatement
+	Module string
+}
+
+func (*ImportStatement) Type() NodeType { return "ImportStatement" }
+
+func (imp *ImportStatement) String() string {
+	return "import \"" + imp.Module + "\""
 }
