@@ -10,7 +10,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func Evaluate(program ast.Program, env *environment.Environment) values.RuntimeValue {
+func Evaluate(program *ast.Program, env *environment.Environment) values.RuntimeValue {
 	var lastValue values.RuntimeValue
 
 	for _, statement := range program.Body {

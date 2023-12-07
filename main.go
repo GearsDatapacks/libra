@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/interpreter"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/lexer"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
@@ -55,36 +55,23 @@ func repl() {
 			continue
 		}
 
-		result := interpreter.Evaluate(ast, env)
+		result := interpreter.Evaluate(&ast, env)
 		fmt.Println(result.ToString())
 	}
 }
 
 func run(file string) {
-	code, err := os.ReadFile(file)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	lexer := lexer.New(code)
-	parser := parser.New()
-	env := environment.New()
-	symbolTable := symbols.New()
-
-	tokens, err := lexer.Tokenise()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	ast, err := parser.Parse(tokens)
+	mod, err := modules.Get(file)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	
-	err = typechecker.TypeCheck(&ast, symbolTable)
+	env := environment.New()
+	symbolTable := symbols.New()
+	ast := &mod.Ast
+	
+	err = typechecker.TypeCheck(ast, symbolTable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
