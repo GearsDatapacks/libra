@@ -3,19 +3,19 @@ package typechecker
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/registry"
-	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckBinaryOperation(binOp *ast.BinaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(binOp.Left, symbolTable)
+func typeCheckBinaryOperation(binOp *ast.BinaryOperation, manager *modules.ModuleManager) types.ValidType {
+	leftType := typeCheckExpression(binOp.Left, manager)
 	if leftType.String() == "TypeError" {
 		return leftType
 	}
 
-	rightType := typeCheckExpression(binOp.Right, symbolTable)
+	rightType := typeCheckExpression(binOp.Right, manager)
 	if rightType.String() == "TypeError" {
 		return rightType
 	}

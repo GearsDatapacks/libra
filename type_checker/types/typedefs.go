@@ -328,3 +328,25 @@ func (tuple *TupleStruct) numberMember(member string) ValidType {
 	}
 	return nil
 }
+
+type Module struct {
+	BaseType
+	Name    string
+	Exports map[string]ValidType
+}
+
+func (m *Module) Valid(dataType ValidType) bool {
+	return false
+}
+
+func (m *Module) String() string {
+	return m.Name
+}
+
+func (s *Module) member(member string) ValidType {
+	memberType := s.Exports[member]
+	if s.constant && memberType != nil {
+		memberType.MarkConstant()
+	}
+	return memberType
+}

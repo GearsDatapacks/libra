@@ -20,21 +20,23 @@ const (
 )
 
 type SymbolTable struct {
-	parent     *SymbolTable
-	variables  map[string]types.ValidType
-	types      map[string]types.ValidType
-	kind       scopeKind
-	returnType types.ValidType
-	hasReturn  bool
+	Parent               *SymbolTable
+	variables            map[string]types.ValidType
+	types                map[string]types.ValidType
+	kind                 scopeKind
+	returnType           types.ValidType
+	hasReturn            bool
 	hasConditionalReturn bool
+	Exports              map[string]types.ValidType
 }
 
 func New() *SymbolTable {
 	return &SymbolTable{
-		parent:    nil,
+		Parent:    nil,
 		variables: map[string]types.ValidType{},
 		types:     map[string]types.ValidType{},
 		kind:      GLOBAL_SCOPE,
+		Exports:   map[string]types.ValidType{},
 	}
 }
 
@@ -43,7 +45,7 @@ func NewChild(parent *SymbolTable, kind scopeKind) *SymbolTable {
 		parent.removeConditionalReturn()
 	}
 	return &SymbolTable{
-		parent:    parent,
+		Parent:    parent,
 		variables: map[string]types.ValidType{},
 		types:     map[string]types.ValidType{},
 		kind:      kind,
@@ -99,11 +101,11 @@ func (st *SymbolTable) resolveVariable(varName string) *SymbolTable {
 		return st
 	}
 
-	if st.parent == nil {
+	if st.Parent == nil {
 		return nil
 	}
 
-	return st.parent.resolveVariable(varName)
+	return st.Parent.resolveVariable(varName)
 }
 
 func (st *SymbolTable) ReturnType() types.ValidType {
@@ -129,7 +131,7 @@ func (st *SymbolTable) AddReturn() {
 	if scope == nil {
 		log.Fatal(errors.DevError("Cannot set return value of non-function scope"))
 	}
-	
+
 	if !conditional && !fallback {
 		scope.hasReturn = true
 		return
@@ -149,7 +151,7 @@ func (st *SymbolTable) removeConditionalReturn() {
 	if scope == nil {
 		return
 	}
-	
+
 	scope.hasConditionalReturn = false
 }
 
@@ -175,13 +177,12 @@ func (st *SymbolTable) findFunctionScope(conditional, fallback bool) (table *Sym
 		fallback = true
 	}
 
-	if st.parent == nil {
+	if st.Parent == nil {
 		return nil, false, false
 	}
 
-	return st.parent.findFunctionScope(conditional, fallback)
+	return st.Parent.findFunctionScope(conditional, fallback)
 }
-
 
 func (st *SymbolTable) AddType(name string, dataType types.ValidType) *types.TypeError {
 	_, hasType := st.types[name]
@@ -216,8 +217,16 @@ func (st *SymbolTable) resolveType(name string) *SymbolTable {
 	if _, ok := st.types[name]; ok {
 		return st
 	}
-	if st.parent == nil {
+	if st.Parent == nil {
 		return nil
 	}
-	return st.parent.resolveType(name)
+	return st.Parent.resolveType(name)
+}
+
+func (st *SymbolTable) GlobalScope() *SymbolTable {
+	if st.Parent == nil {
+		return st
+	}
+
+	return st.Parent.GlobalScope()
 }

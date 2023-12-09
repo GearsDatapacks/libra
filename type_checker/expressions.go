@@ -5,13 +5,13 @@ import (
 	"log"
 
 	"github.com/gearsdatapacks/libra/errors"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/registry"
-	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return &types.IntLiteral{}
@@ -27,7 +27,7 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return &types.Void{}
 
 	case *ast.Identifier:
-		dataType := symbolTable.GetSymbol(expression.Symbol)
+		dataType := manager.SymbolTable.GetSymbol(expression.Symbol)
 		if err, isErr := dataType.(*types.TypeError); isErr {
 			err.Line = expression.Token.Line
 			err.Column = expression.Token.Column
@@ -35,40 +35,40 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 		return dataType
 
 	case *ast.BinaryOperation:
-		return typeCheckBinaryOperation(expression, symbolTable)
+		return typeCheckBinaryOperation(expression, manager)
 
 	case *ast.UnaryOperation:
-		return typeCheckUnaryOperation(expression, symbolTable)
+		return typeCheckUnaryOperation(expression, manager)
 
 	case *ast.AssignmentExpression:
-		return typeCheckAssignmentExpression(expression, symbolTable)
+		return typeCheckAssignmentExpression(expression, manager)
 
 	case *ast.FunctionCall:
-		return typeCheckFunctionCall(expression, symbolTable)
+		return typeCheckFunctionCall(expression, manager)
 
 	case *ast.ListLiteral:
-		return typeCheckList(expression, symbolTable)
+		return typeCheckList(expression, manager)
 
 	case *ast.MapLiteral:
-		return typeCheckMap(expression, symbolTable)
+		return typeCheckMap(expression, manager)
 
 	case *ast.IndexExpression:
-		return typeCheckIndexExpression(expression, symbolTable)
-	
+		return typeCheckIndexExpression(expression, manager)
+
 	case *ast.MemberExpression:
-		return typeCheckMemberExpression(expression, symbolTable)
+		return typeCheckMemberExpression(expression, manager)
 
 	case *ast.StructExpression:
-		return typeCheckStructExpression(expression, symbolTable)
-	
+		return typeCheckStructExpression(expression, manager)
+
 	case *ast.TupleExpression:
-		return typeCheckTuple(expression, symbolTable)
+		return typeCheckTuple(expression, manager)
 
 	case *ast.CastExpression:
-		return typeCheckCastExpression(expression, symbolTable)
+		return typeCheckCastExpression(expression, manager)
 
 	case *ast.TypeCheckExpression:
-		return typeCheckTypeCheckExpression(expression, symbolTable)
+		return typeCheckTypeCheckExpression(expression, manager)
 
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
@@ -76,28 +76,28 @@ func typeCheckExpression(expr ast.Expression, symbolTable *symbols.SymbolTable) 
 	}
 }
 
-func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, manager *modules.ModuleManager) types.ValidType {
 	var dataType types.ValidType
 	if assignment.Assignee.Type() == "Identifier" {
 		symbolName := assignment.Assignee.(*ast.Identifier).Symbol
-	
-		dataType = symbolTable.GetSymbol(symbolName)
-		
+
+		dataType = manager.SymbolTable.GetSymbol(symbolName)
+
 	} else if assignment.Assignee.Type() == "IndexExpression" {
 		index := assignment.Assignee.(*ast.IndexExpression)
-		leftType := typeCheckExpression(index.Left, symbolTable)
+		leftType := typeCheckExpression(index.Left, manager)
 		if leftType.String() == "TypeError" {
 			return leftType
 		}
-		indexType := typeCheckExpression(index.Index, symbolTable)
+		indexType := typeCheckExpression(index.Index, manager)
 		if indexType.String() == "TypeError" {
 			return indexType
 		}
 
 		dataType = leftType.IndexBy(indexType)
-	}  else if assignment.Assignee.Type() == "MemberExpression" {
+	} else if assignment.Assignee.Type() == "MemberExpression" {
 		member := assignment.Assignee.(*ast.MemberExpression)
-		leftType := typeCheckExpression(member.Left, symbolTable)
+		leftType := typeCheckExpression(member.Left, manager)
 		if leftType.String() == "TypeError" {
 			return leftType
 		}
@@ -115,7 +115,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 		return types.Error("Cannot assign data to constant value", assignment)
 	}
 
-	expressionType := typeCheckExpression(assignment.Value, symbolTable)
+	expressionType := typeCheckExpression(assignment.Value, manager)
 	if expressionType.String() == "TypeError" {
 		return expressionType
 	}
@@ -128,13 +128,9 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, symbolT
 	return types.Error(fmt.Sprintf("Type %q is not assignable to type %q", expressionType, dataType), assignment)
 }
 
-func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager) types.ValidType {
 	if ident, ok := call.Left.(*ast.Identifier); ok {
 		name := ident.Symbol
-
-		if structType, isStruct := symbolTable.GetType(name).(*types.TupleStruct); isStruct {
-			return typeCheckTupleStructExpression(structType, call, symbolTable)
-		}
 
 		if builtin, ok := registry.Builtins[name]; ok {
 			if len(builtin.Parameters) != len(call.Args) {
@@ -146,7 +142,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 			}
 
 			for i, param := range builtin.Parameters {
-				arg := typeCheckExpression(call.Args[i], symbolTable)
+				arg := typeCheckExpression(call.Args[i], manager)
 				if arg.String() == "TypeError" {
 					return arg
 				}
@@ -159,9 +155,13 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 		}
 	}
 
-	callVar := typeCheckExpression(call.Left, symbolTable)
+	callVar := typeCheckExpression(call.Left, manager)
 	if callVar.String() == "TypeError" {
 		return callVar
+	}
+
+	if structType, isStruct := callVar.(*types.TupleStruct); isStruct {
+		return typeCheckTupleStructExpression(structType, call, manager)
 	}
 
 	function, ok := callVar.(*types.Function)
@@ -181,7 +181,7 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	}
 
 	for i, param := range function.Parameters {
-		arg := typeCheckExpression(call.Args[i], symbolTable)
+		arg := typeCheckExpression(call.Args[i], manager)
 		if arg.String() == "TypeError" {
 			return arg
 		}
@@ -193,12 +193,12 @@ func typeCheckFunctionCall(call *ast.FunctionCall, symbolTable *symbols.SymbolTa
 	return function.ReturnType
 }
 
-func typeCheckTupleStructExpression(tuple *types.TupleStruct, instance *ast.FunctionCall, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckTupleStructExpression(tuple *types.TupleStruct, instance *ast.FunctionCall, manager *modules.ModuleManager) types.ValidType {
 	if len(tuple.Members) != len(instance.Args) {
 		return types.Error("Tuple struct expression incompatible with type", instance)
 	}
 	for i, arg := range instance.Args {
-		argType := typeCheckExpression(arg, symbolTable)
+		argType := typeCheckExpression(arg, manager)
 		if argType.String() == "TypeError" {
 			return argType
 		}
@@ -210,11 +210,11 @@ func typeCheckTupleStructExpression(tuple *types.TupleStruct, instance *ast.Func
 	return tuple
 }
 
-func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckList(list *ast.ListLiteral, manager *modules.ModuleManager) types.ValidType {
 	listTypes := []types.ValidType{}
 
 	for _, elem := range list.Elements {
-		elemType := typeCheckExpression(elem, symbolTable)
+		elemType := typeCheckExpression(elem, manager)
 		if elemType.String() == "TypeError" {
 			return elemType
 		}
@@ -238,12 +238,12 @@ func typeCheckList(list *ast.ListLiteral, symbolTable *symbols.SymbolTable) type
 	}
 }
 
-func typeCheckMap(maplit *ast.MapLiteral, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckMap(maplit *ast.MapLiteral, manager *modules.ModuleManager) types.ValidType {
 	keyTypes := []types.ValidType{}
 	valueTypes := []types.ValidType{}
 
 	for key, value := range maplit.Elements {
-		keyType := typeCheckExpression(key, symbolTable)
+		keyType := typeCheckExpression(key, manager)
 		if keyType.String() == "TypeError" {
 			return keyType
 		}
@@ -259,7 +259,7 @@ func typeCheckMap(maplit *ast.MapLiteral, symbolTable *symbols.SymbolTable) type
 			keyTypes = append(keyTypes, keyType)
 		}
 
-		valueType := typeCheckExpression(value, symbolTable)
+		valueType := typeCheckExpression(value, manager)
 		if valueType.String() == "TypeError" {
 			return valueType
 		}
@@ -283,13 +283,13 @@ func typeCheckMap(maplit *ast.MapLiteral, symbolTable *symbols.SymbolTable) type
 	}
 }
 
-func typeCheckIndexExpression(indexExpr *ast.IndexExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(indexExpr.Left, symbolTable)
+func typeCheckIndexExpression(indexExpr *ast.IndexExpression, manager *modules.ModuleManager) types.ValidType {
+	leftType := typeCheckExpression(indexExpr.Left, manager)
 	if leftType.String() == "TypeError" {
 		return leftType
 	}
 
-	indexType := typeCheckExpression(indexExpr.Index, symbolTable)
+	indexType := typeCheckExpression(indexExpr.Index, manager)
 	if indexType.String() == "TypeError" {
 		return indexType
 	}
@@ -302,8 +302,8 @@ func typeCheckIndexExpression(indexExpr *ast.IndexExpression, symbolTable *symbo
 	return resultType
 }
 
-func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(memberExpr.Left, symbolTable)
+func typeCheckMemberExpression(memberExpr *ast.MemberExpression, manager *modules.ModuleManager) types.ValidType {
+	leftType := typeCheckExpression(memberExpr.Left, manager)
 	if leftType.String() == "TypeError" {
 		return leftType
 	}
@@ -316,8 +316,8 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, symbolTable *sy
 	return resultType
 }
 
-func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	definedType := symbolTable.GetType(structExpr.Name)
+func typeCheckStructExpression(structExpr *ast.StructExpression, manager *modules.ModuleManager) types.ValidType {
+	definedType := manager.SymbolTable.GetType(structExpr.Name)
 	if definedType.String() == "TypeError" {
 		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.Name), structExpr)
 	}
@@ -325,7 +325,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *sy
 	members := map[string]types.ValidType{}
 
 	for name, member := range structExpr.Members {
-		dataType := typeCheckExpression(member, symbolTable)
+		dataType := typeCheckExpression(member, manager)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
@@ -345,10 +345,10 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, symbolTable *sy
 	return structType
 }
 
-func typeCheckTuple(tuple *ast.TupleExpression, symbolTable *symbols.SymbolTable) types.ValidType {
+func typeCheckTuple(tuple *ast.TupleExpression, manager *modules.ModuleManager) types.ValidType {
 	members := []types.ValidType{}
 	for _, member := range tuple.Members {
-		memberType := typeCheckExpression(member, symbolTable)
+		memberType := typeCheckExpression(member, manager)
 		if memberType.String() == "TypeError" {
 			return memberType
 		}
@@ -358,13 +358,13 @@ func typeCheckTuple(tuple *ast.TupleExpression, symbolTable *symbols.SymbolTable
 	return &types.Tuple{Members: members}
 }
 
-func typeCheckCastExpression(cast *ast.CastExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(cast.Left, symbolTable)
+func typeCheckCastExpression(cast *ast.CastExpression, manager *modules.ModuleManager) types.ValidType {
+	leftType := typeCheckExpression(cast.Left, manager)
 	if leftType.String() == "TypeError" {
 		return leftType
 	}
 
-	castTo := types.FromAst(cast.DataType, symbolTable)
+	castTo := types.FromAst(cast.DataType, manager.SymbolTable)
 	if castTo.String() == "TypeError" {
 		return castTo
 	}
@@ -376,13 +376,13 @@ func typeCheckCastExpression(cast *ast.CastExpression, symbolTable *symbols.Symb
 	return castTo
 }
 
-func typeCheckTypeCheckExpression(expr *ast.TypeCheckExpression, symbolTable *symbols.SymbolTable) types.ValidType {
-	leftType := typeCheckExpression(expr.Left, symbolTable)
+func typeCheckTypeCheckExpression(expr *ast.TypeCheckExpression, manager *modules.ModuleManager) types.ValidType {
+	leftType := typeCheckExpression(expr.Left, manager)
 	if leftType.String() == "TypeError" {
 		return leftType
 	}
 
-	compType := types.FromAst(expr.DataType, symbolTable)
+	compType := types.FromAst(expr.DataType, manager.SymbolTable)
 	if compType.String() == "TypeError" {
 		return compType
 	}

@@ -3,14 +3,14 @@ package typechecker
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/registry"
-	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.SymbolTable) types.ValidType {
-	valueType := typeCheckExpression(unOp.Value, symbolTable)
+func typeCheckUnaryOperation(unOp *ast.UnaryOperation, manager *modules.ModuleManager) types.ValidType {
+	valueType := typeCheckExpression(unOp.Value, manager)
 	if valueType.String() == "TypeError" {
 		return valueType
 	}
@@ -19,10 +19,10 @@ func typeCheckUnaryOperation(unOp *ast.UnaryOperation, symbolTable *symbols.Symb
 
 	if unOp.Operator == "?" {
 		if errType, ok := valueType.(*types.ErrorType); ok {
-			if !symbolTable.IsInFunctionScope() {
+			if !manager.SymbolTable.IsInFunctionScope() {
 				return types.Error("Cannot use operator \"?\" outside of a function", unOp)
 			}
-			if _, ok := symbolTable.ReturnType().(*types.ErrorType); !ok {
+			if _, ok := manager.SymbolTable.ReturnType().(*types.ErrorType); !ok {
 				return types.Error("Can only use operator \"?\" in a function that returns an error type", unOp)
 			}
 			return errType.ResultType
