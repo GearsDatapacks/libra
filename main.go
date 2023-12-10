@@ -20,9 +20,11 @@ func repl() {
 	reader := bufio.NewReader(os.Stdin)
 
 	parser := parser.New()
-	manager, _ := modules.NewManager("", symbols.New(), environment.New())
+	manager := modules.NewDetatched(symbols.New(), environment.New())
 
 	for {
+		manager.TypeCheckStage = 0
+		manager.InterpretStage = 0
 		fmt.Print("> ")
 
 		input, err := reader.ReadBytes('\n')

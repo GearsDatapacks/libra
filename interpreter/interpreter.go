@@ -17,15 +17,13 @@ const (
 )
 
 func Evaluate(manager *modules.ModuleManager) values.RuntimeValue {
-	var lastValue values.RuntimeValue
+	
 
 	register(manager)
 
 	resolveImports(manager)
 
-	evaluateStatements(manager)
-
-	return lastValue
+	return evaluateStatements(manager)
 }
 
 func register(manager *modules.ModuleManager) {
@@ -62,9 +60,9 @@ func resolveImports(manager *modules.ModuleManager) {
 	}
 }
 
-func evaluateStatements(manager *modules.ModuleManager) {
+func evaluateStatements(manager *modules.ModuleManager) values.RuntimeValue {
 	if manager.InterpretStage > EVALUATE {
-		return
+		return nil
 	}
 	manager.InterpretStage++
 
@@ -72,9 +70,11 @@ func evaluateStatements(manager *modules.ModuleManager) {
 		evaluateStatements(mod)
 	}
 
+	var lastValue values.RuntimeValue
 	for _, stmt := range manager.Main.Ast.Body {
-		evaluate(stmt, manager)
+		lastValue = evaluate(stmt, manager)
 	}
+	return lastValue
 }
 
 func evaluate(astNode ast.Statement, manager *modules.ModuleManager) values.RuntimeValue {

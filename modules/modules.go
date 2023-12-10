@@ -89,6 +89,19 @@ func NewManager(file string, table *symbols.SymbolTable, env *environment.Enviro
 	return m, nil
 }
 
+func NewDetatched(table *symbols.SymbolTable, env *environment.Environment) *ModuleManager {
+	return &ModuleManager{
+		Name:           "main",
+		Main:           &Module{
+			Path: ".",
+			Ast:  ast.Program{},
+		},
+		SymbolTable:    table,
+		Env:            env,
+		Modules: map[string]*ModuleManager{},
+	}
+}
+
 func (m *ModuleManager) EnterScope(scope *symbols.SymbolTable) {
 	m.SymbolTable = scope
 }
