@@ -12,6 +12,19 @@ import (
 )
 
 func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
+	dataType := doTypeCheckExpression(expr, manager)
+	if dataType.String() == "TypeError" {
+		return dataType
+	}
+
+	if _, ok := dataType.(*types.Type); ok {
+		return types.Error(fmt.Sprintf("Cannot use %q as a value, it is a type", expr.String()), expr)
+	}
+
+	return dataType
+}
+
+func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return &types.IntLiteral{}
@@ -76,6 +89,22 @@ func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) ty
 	}
 }
 
+func typeCheckTypeExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
+	if name, ok := expr.(*ast.Identifier); ok {
+		return manager.SymbolTable.GetSymbol(name.Symbol)
+	}
+
+	dataType := doTypeCheckExpression(expr, manager)
+	if dataType.String() == "TypeError" {
+		return dataType
+	}
+
+	if ty, isType := dataType.(*types.Type); isType {
+		return ty.DataType
+	}
+	return types.Error(fmt.Sprintf("Cannot use %q as type, it is a value", expr.String()), expr)
+}
+
 func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, manager *modules.ModuleManager) types.ValidType {
 	var dataType types.ValidType
 	if assignment.Assignee.Type() == "Identifier" {
@@ -131,6 +160,10 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, manager
 func typeCheckFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager) types.ValidType {
 	if ident, ok := call.Left.(*ast.Identifier); ok {
 		name := ident.Symbol
+
+		if structType, isStruct := manager.SymbolTable.GetType(name).(*types.TupleStruct); isStruct {
+			return typeCheckTupleStructExpression(structType, call, manager)
+		}
 
 		if builtin, ok := registry.Builtins[name]; ok {
 			if len(builtin.Parameters) != len(call.Args) {
@@ -317,9 +350,14 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, manager *module
 }
 
 func typeCheckStructExpression(structExpr *ast.StructExpression, manager *modules.ModuleManager) types.ValidType {
-	definedType := manager.SymbolTable.GetType(structExpr.Name)
+	definedType := typeCheckTypeExpression(structExpr.InstanceOf, manager)
 	if definedType.String() == "TypeError" {
-		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.Name), structExpr)
+		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.InstanceOf), structExpr)
+	}
+
+	structType, isStruct := definedType.(*types.Struct)
+	if !isStruct {
+		return types.Error(fmt.Sprintf("Cannot instantiate %q, it is not a struct", definedType), structExpr)
 	}
 
 	members := map[string]types.ValidType{}
@@ -333,16 +371,16 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, manager *module
 		members[name] = dataType
 	}
 
-	structType := &types.Struct{
-		Name:    structExpr.Name,
+	instanceType := &types.Struct{
+		Name:    structType.Name,
 		Members: members,
 	}
 
-	if !definedType.Valid(structType) {
+	if !structType.Valid(instanceType) {
 		return types.Error("Struct expression incompatiable with type", structExpr)
 	}
 
-	return structType
+	return instanceType
 }
 
 func typeCheckTuple(tuple *ast.TupleExpression, manager *modules.ModuleManager) types.ValidType {

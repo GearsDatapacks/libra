@@ -87,9 +87,9 @@ func (p *parser) parseTypeCheckExpression() (ast.Expression, error) {
 		}
 
 		left = &ast.TypeCheckExpression{
-			BaseNode:       ast.BaseNode{Token: left.GetToken()},
-			Left:           left,
-			DataType:       ty,
+			BaseNode: ast.BaseNode{Token: left.GetToken()},
+			Left:     left,
+			DataType: ty,
 		}
 	}
 
@@ -121,20 +121,24 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.next().Is(token.PostfixOperator) || p.next().Type == token.LEFT_PAREN || p.next().Type == token.LEFT_SQUARE || p.next().Type == token.DOT {
+	for {
 		if p.next().Type == token.LEFT_PAREN {
 			left, err = p.parseFunctionCall(left)
 		} else if p.next().Type == token.LEFT_SQUARE {
 			left, err = p.parseIndexExpression(left)
 		} else if p.next().Type == token.DOT {
 			left, err = p.parseMemberExpression(left)
-		} else {
+		} else if p.next().Type == token.LEFT_BRACE && !p.noBraces {
+			left, err = p.parseStructExpression(left)
+		} else if p.next().Is(token.PostfixOperator) {
 			left = &ast.UnaryOperation{
 				Value:    left,
 				Operator: p.consume().Value,
 				BaseNode: ast.BaseNode{Token: left.GetToken()},
 				Postfix:  true,
 			}
+		} else {
+			break
 		}
 
 		if err != nil {
@@ -151,12 +155,12 @@ func (p *parser) parseMemberExpression(left ast.Expression) (ast.Expression, err
 	memberName := p.consume()
 	if memberName.Type == token.INTEGER {
 		isNumberMember = true
-		} else if memberName.Type == token.FLOAT {
+	} else if memberName.Type == token.FLOAT {
 		isNumberMember = true
 		left = &ast.MemberExpression{
-			Left:     left,
-			Member:    strings.Split(memberName.Value, ".")[0],
-			BaseNode: ast.BaseNode{Token: left.GetToken()},
+			Left:           left,
+			Member:         strings.Split(memberName.Value, ".")[0],
+			BaseNode:       ast.BaseNode{Token: left.GetToken()},
 			IsNumberMember: true,
 		}
 		memberName.Value = strings.Split(memberName.Value, ".")[1]
@@ -165,9 +169,9 @@ func (p *parser) parseMemberExpression(left ast.Expression) (ast.Expression, err
 	}
 
 	return &ast.MemberExpression{
-		Left:     left,
-		Member:    memberName.Value,
-		BaseNode: ast.BaseNode{Token: left.GetToken()},
+		Left:           left,
+		Member:         memberName.Value,
+		BaseNode:       ast.BaseNode{Token: left.GetToken()},
 		IsNumberMember: isNumberMember,
 	}, nil
 }
@@ -203,8 +207,7 @@ func (p *parser) parseFunctionCall(left ast.Expression) (ast.Expression, error) 
 	}, nil
 }
 
-func (p *parser) parseStructExpression() (ast.Expression, error) {
-	name := p.consume()
+func (p *parser) parseStructExpression(left ast.Expression) (ast.Expression, error) {
 	p.consume()
 
 	members := map[string]ast.Expression{}
@@ -238,9 +241,9 @@ func (p *parser) parseStructExpression() (ast.Expression, error) {
 	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
 
 	return &ast.StructExpression{
-		BaseNode: ast.BaseNode{Token: name},
-		Name:     name.Value,
-		Members:  members,
+		BaseNode:   ast.BaseNode{Token: left.GetToken()},
+		InstanceOf: left,
+		Members:    members,
 	}, nil
 }
 
@@ -361,9 +364,9 @@ func (p *parser) parseCastExpression() (ast.Expression, error) {
 		}
 
 		left = &ast.CastExpression{
-			BaseNode:       ast.BaseNode{Token: left.GetToken()},
-			Left:           left,
-			DataType:       ty,
+			BaseNode: ast.BaseNode{Token: left.GetToken()},
+			Left:     left,
+			DataType: ty,
 		}
 	}
 
@@ -396,11 +399,7 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 		}, nil
 
 	case token.IDENTIFIER:
-		if p.tokens[1].Type == token.LEFT_BRACE && !p.noBraces {
-			return p.parseStructExpression()
-		} else {
-			return p.parseIdentifier()
-		}
+		return p.parseIdentifier()
 
 	case token.LEFT_PAREN:
 		tok := p.consume()

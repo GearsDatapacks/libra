@@ -240,8 +240,8 @@ func (index *IndexExpression) String() string {
 type MemberExpression struct {
 	BaseNode
 	BaseExpression
-	Left   Expression
-	Member string
+	Left           Expression
+	Member         string
 	IsNumberMember bool
 }
 
@@ -254,11 +254,35 @@ func (member *MemberExpression) String() string {
 type StructExpression struct {
 	BaseNode
 	BaseExpression
-	Name    string
-	Members map[string]Expression
+	InstanceOf Expression
+	Members    map[string]Expression
 }
 
-func (tuple *StructExpression) Type() NodeType { return "StructExpression" }
+func (*StructExpression) Type() NodeType { return "StructExpression" }
+
+func (structExpr *StructExpression) String() string {
+	result := structExpr.String()
+	result += " {\n"
+
+	for memberName, memberValue := range structExpr.Members {
+		result += memberName
+		result += ": "
+		result += memberValue.String()
+		result += ",\n"
+	}
+
+	result += "}"
+
+	return result
+}
+
+type TupleExpression struct {
+	BaseNode
+	BaseExpression
+	Members []Expression
+}
+
+func (*TupleExpression) Type() NodeType { return "TupleExpression" }
 
 func (tuple *TupleExpression) String() string {
 	result := "("
@@ -275,34 +299,10 @@ func (tuple *TupleExpression) String() string {
 	return result
 }
 
-type TupleExpression struct {
-	BaseNode
-	BaseExpression
-	Members []Expression
-}
-
-func (structExpr *TupleExpression) Type() NodeType { return "TupleExpression" }
-
-func (structExpr *StructExpression) String() string {
-	result := structExpr.Name
-	result += " {\n"
-
-	for memberName, memberValue := range structExpr.Members {
-		result += memberName
-		result += ": "
-		result += memberValue.String()
-		result += ",\n"
-	}
-
-	result += "}"
-
-	return result
-}
-
 type TypeCheckExpression struct {
 	BaseNode
 	BaseExpression
-	Left Expression
+	Left     Expression
 	DataType TypeExpression
 }
 
@@ -315,7 +315,7 @@ func (typeCheck *TypeCheckExpression) String() string {
 type CastExpression struct {
 	BaseNode
 	BaseExpression
-	Left Expression
+	Left     Expression
 	DataType TypeExpression
 }
 

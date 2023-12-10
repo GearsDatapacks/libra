@@ -350,3 +350,17 @@ func (s *Module) member(member string) ValidType {
 	}
 	return memberType
 }
+
+// Marks a type rather than a value of type x
+type Type struct {
+	BaseType
+	DataType ValidType
+}
+
+func (t *Type) Valid(dataType ValidType) bool {
+	return t.DataType.Valid(dataType)
+}
+
+func (t *Type) String() string {
+	return t.DataType.String()
+}

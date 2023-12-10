@@ -252,7 +252,7 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.
 
 func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {
 	members := map[string]values.RuntimeValue{}
-	structType := env.GetType(structExpr.Name).(*types.Struct)
+	structType := env.GetType(structExpr.InstanceOf.String()).(*types.Struct)
 
 	for name, dataType := range structType.Members {
 		if value, hasMember := structExpr.Members[name]; hasMember {
@@ -263,7 +263,7 @@ func evaluateStructExpression(structExpr ast.StructExpression, env *environment.
 	}
 
 	return &values.StructLiteral{
-		Name:      structExpr.Name,
+		Name:      structExpr.InstanceOf.String(),
 		Members:   members,
 		BaseValue: values.BaseValue{DataType: structType},
 	}
@@ -287,8 +287,8 @@ func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.
 
 	return &values.TupleStructValue{
 		BaseValue: values.BaseValue{DataType: tupleType},
-		Members: members,
-		Name: tupleExpr.Left.String(),
+		Members:   members,
+		Name:      tupleExpr.Left.String(),
 	}
 }
 

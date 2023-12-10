@@ -365,7 +365,7 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, manager *modu
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = structType
+		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = &types.Type{DataType: structType}
 	}
 
 	return structType
@@ -384,7 +384,7 @@ func typeCheckTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, man
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = structType
+		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = &types.Type{DataType: structType}
 	}
 
 	return structType
@@ -427,7 +427,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 	}
 
 	if intDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[intDecl.Name] = interfaceType
+		manager.SymbolTable.GlobalScope().Exports[intDecl.Name] = &types.Type{DataType: interfaceType}
 	}
 
 	return interfaceType
@@ -445,7 +445,7 @@ func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Mod
 	}
 
 	if typeDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[typeDecl.Name] = dataType
+		manager.SymbolTable.GlobalScope().Exports[typeDecl.Name] = &types.Type{DataType: dataType}
 	}
 
 	return dataType
