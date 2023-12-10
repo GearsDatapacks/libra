@@ -3,7 +3,6 @@ package typechecker
 import (
 	"fmt"
 	"log"
-	"path"
 
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/modules"
@@ -520,13 +519,11 @@ func typeCheckImportStatement(importStatement *ast.ImportStatement, manager *mod
 		return err.(*types.TypeError)
 	}
 
-	_, modName := path.Split(modPath)
-
 	importedMod := &types.Module{
-		Name:    modName,
+		Name:    mod.Name,
 		Exports: mod.SymbolTable.Exports,
 	}
 
-	manager.SymbolTable.RegisterSymbol(modName, importedMod, true)
+	manager.SymbolTable.RegisterSymbol(mod.Name, importedMod, true)
 	return importedMod
 }

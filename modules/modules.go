@@ -41,6 +41,7 @@ func Get(file string) (*Module, error) {
 }
 
 type ModuleManager struct {
+	Name string
 	Main    *Module
 	SymbolTable *symbols.SymbolTable
 	Modules map[string]*ModuleManager
@@ -54,10 +55,12 @@ func NewManager(file string, table *symbols.SymbolTable) (*ModuleManager, error)
 	if err != nil {
 		return nil, err
 	}
+	_, name := path.Split(path.Dir(file))
 	m := &ModuleManager{
 		Main:    mod,
 		SymbolTable: table,
 		Modules: map[string]*ModuleManager{},
+		Name: name,
 	}
 	fetchedModules[file] = m
 
