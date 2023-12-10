@@ -49,7 +49,8 @@ func repl() {
 			fmt.Println(err)
 			continue
 		}
-		err = typechecker.TypeCheck(&ast, manager)
+		manager.Main.Ast = ast
+		err = typechecker.TypeCheck(manager)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -70,7 +71,7 @@ func run(file string) {
 	env := environment.New()
 	ast := &mods.Main.Ast
 
-	err = typechecker.TypeCheck(ast, mods)
+	err = typechecker.TypeCheck(mods)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

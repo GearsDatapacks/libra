@@ -45,7 +45,7 @@ type ModuleManager struct {
 	Main    *Module
 	SymbolTable *symbols.SymbolTable
 	Modules map[string]*ModuleManager
-	TypeChecked bool
+	TypeCheckStage int
 }
 
 var fetchedModules = map[string]*ModuleManager{}

@@ -402,7 +402,7 @@ func typeCheckCastExpression(cast *ast.CastExpression, manager *modules.ModuleMa
 		return leftType
 	}
 
-	castTo := types.FromAst(cast.DataType, manager.SymbolTable)
+	castTo := typeCheckType(cast.DataType, manager)
 	if castTo.String() == "TypeError" {
 		return castTo
 	}
@@ -420,7 +420,7 @@ func typeCheckTypeCheckExpression(expr *ast.TypeCheckExpression, manager *module
 		return leftType
 	}
 
-	compType := types.FromAst(expr.DataType, manager.SymbolTable)
+	compType := typeCheckType(expr.DataType, manager)
 	if compType.String() == "TypeError" {
 		return compType
 	}

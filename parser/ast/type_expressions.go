@@ -146,3 +146,15 @@ func (tuple *TupleType) String() string {
 
 	return result
 }
+
+type MemberType struct {
+	BaseNode
+	BaseType
+	Left TypeExpression
+	Member string
+}
+
+func (*MemberType) Type() NodeType { return "MemberType" }
+func (m *MemberType) String() string {
+	return m.Left.String() + "." + m.Member
+}

@@ -61,6 +61,12 @@ func (p *parser) parseSuffixType() (ast.TypeExpression, error) {
 				BaseNode:   ast.BaseNode{Token: leftType.GetToken()},
 			}
 
+		case token.DOT:
+			leftType, err = p.parseMemberType(leftType)
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return leftType, nil
 		}
@@ -68,9 +74,7 @@ func (p *parser) parseSuffixType() (ast.TypeExpression, error) {
 }
 
 func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (ast.TypeExpression, error) {
-	if p.next().Type == token.LEFT_SQUARE {
-
-	} else {
+	if p.next().Type != token.LEFT_SQUARE {
 		var err error = nil
 		elemType, err = p.parsePrimaryType()
 		if err != nil {
@@ -124,6 +128,26 @@ func (p *parser) parseArrayType(elemType ast.TypeExpression, tok token.Token) (a
 	}
 
 	return elemType, nil
+}
+
+func (p *parser) parseMemberType(left ast.TypeExpression) (ast.TypeExpression, error) {
+	if _, ok := left.(*ast.TypeName); !ok {
+		if _, ok := left.(*ast.MemberType); !ok {
+			return nil, p.error("Invalid left hand side of member type", left.GetToken())
+		}
+	}
+
+	p.consume()
+
+	name, err := p.expect(token.IDENTIFIER, "Expected identifier for member")
+	if err != nil {
+		return nil, err
+	}
+	return &ast.MemberType{
+		BaseNode: ast.BaseNode{Token: left.GetToken()},
+		Left:     left,
+		Member:   name.Value,
+	}, nil
 }
 
 func (p *parser) parseMapType() (ast.TypeExpression, error) {
