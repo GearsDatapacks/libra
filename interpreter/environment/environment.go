@@ -17,20 +17,22 @@ const (
 )
 
 type Environment struct {
-	parent      *Environment
+	Parent      *Environment
 	variables   map[string]values.RuntimeValue
-	types       map[string]types.ValidType
+	// types       map[string]types.ValidType
 	kind        scopeKind
 	ReturnValue values.RuntimeValue
 	methods     map[string][]*values.FunctionValue
+	Exports map[string]values.RuntimeValue
 }
 
 func New() *Environment {
 	env := Environment{
 		variables:   map[string]values.RuntimeValue{},
-		types:       map[string]types.ValidType{},
+		// types:       map[string]types.ValidType{},
 		kind:        GLOBAL_SCOPE,
 		methods:     map[string][]*values.FunctionValue{},
+		Exports: map[string]values.RuntimeValue{},
 	}
 
 	return &env
@@ -38,9 +40,9 @@ func New() *Environment {
 
 func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
-		parent:      parent,
+		Parent:      parent,
 		variables:   map[string]values.RuntimeValue{},
-		types:       parent.types,
+		// types:       parent.types,
 		kind:        kind,
 		methods:     parent.methods,
 	}
@@ -74,11 +76,11 @@ func (env *Environment) resolve(varName string) *Environment {
 		return env
 	}
 
-	if env.parent == nil {
+	if env.Parent == nil {
 		return nil
 	}
 
-	return env.parent.resolve(varName)
+	return env.Parent.resolve(varName)
 }
 
 func (env *Environment) isFunctionScope() bool {
@@ -89,12 +91,12 @@ func (env *Environment) FindFunctionScope() *Environment {
 	if env.isFunctionScope() {
 		return env
 	}
-	if env.parent == nil {
+	if env.Parent == nil {
 		errors.LogError(errors.DevError("Cannot use return statement outside of a function"))
 	}
-	return env.parent.FindFunctionScope()
+	return env.Parent.FindFunctionScope()
 }
-
+/*
 func (env *Environment) AddType(name string, dataType types.ValidType) {
 	env.types[name] = dataType
 }
@@ -102,7 +104,7 @@ func (env *Environment) AddType(name string, dataType types.ValidType) {
 func (env *Environment) GetType(name string) types.ValidType {
 	return env.types[name]
 }
-
+*/
 func (env *Environment) Exists(name string) bool {
 	return env.resolve(name) != nil
 }
@@ -129,4 +131,12 @@ func (env *Environment) AddMethod(name string, method *values.FunctionValue) {
 	}
 	overloads = append(overloads, method)
 	env.methods[name] = overloads
+}
+
+func (env *Environment) GlobalScope() *Environment {
+	if env.Parent == nil {
+		return env
+	}
+
+	return env.Parent.GlobalScope()
 }

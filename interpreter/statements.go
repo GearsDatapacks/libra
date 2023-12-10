@@ -3,35 +3,37 @@ package interpreter
 import (
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func evaluateExpressionStatement(exprStmt *ast.ExpressionStatement, env *environment.Environment) values.RuntimeValue {
-	return evaluateExpression(exprStmt.Expression, env)
+func evaluateExpressionStatement(exprStmt *ast.ExpressionStatement, manager *modules.ModuleManager) values.RuntimeValue {
+	return evaluateExpression(exprStmt.Expression, manager)
 }
 
-func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, env *environment.Environment) values.RuntimeValue {
+func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	var value values.RuntimeValue
 
 	if varDec.Value == nil {
 		value = values.GetZeroValue(varDec.DataType.String())
 	} else {
-		value = evaluateExpression(varDec.Value, env)
+		value = evaluateExpression(varDec.Value, manager)
 	}
 
-	return env.DeclareVariable(varDec.Name, value)
+	return manager.Env.DeclareVariable(varDec.Name, value)
 }
 
-func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environment.Environment) values.RuntimeValue {
+func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	params := []string{}
 	paramTypes := []types.ValidType{}
 
 	for _, param := range funcDec.Parameters {
 		params = append(params, param.Name)
-		paramTypes = append(paramTypes, types.FromAst(param.Type, env))
+		paramTypes = append(paramTypes, typechecker.TypeCheckType(param.Type, manager))
 	}
-	returnType := types.FromAst(funcDec.ReturnType, env)
+	returnType := typechecker.TypeCheckType(funcDec.ReturnType, manager)
 
 	functionType := &types.Function{
 		Parameters: paramTypes,
@@ -42,98 +44,129 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, env *environm
 	fn := &values.FunctionValue{
 		Name:                   funcDec.Name,
 		Parameters:             params,
-		DeclarationEnvironment: env,
+		Env: manager.Env,
+		Manager: manager,
 		Body:                   funcDec.Body,
 		BaseValue:              values.BaseValue{DataType: functionType},
 	}
 
 	if funcDec.MethodOf != nil {
-		parentType := types.FromAst(funcDec.MethodOf, env)
+		parentType := typechecker.TypeCheckType(funcDec.MethodOf, manager)
 		functionType.MethodOf = parentType
 
 		types.AddMethod(funcDec.Name, functionType)
-		env.AddMethod(funcDec.Name, fn)
+		manager.Env.AddMethod(funcDec.Name, fn)
 		return fn
 	} else {
-		return env.DeclareVariable(funcDec.Name, fn)
+
+		if funcDec.IsExport() {
+			manager.Env.GlobalScope().Exports[fn.Name] = fn
+		}
+		return manager.Env.DeclareVariable(funcDec.Name, fn)
 	}
 }
 
-func evaluateReturnStatement(ret *ast.ReturnStatement, env *environment.Environment) values.RuntimeValue {
-	value := evaluateExpression(ret.Value, env)
-	functionScope := env.FindFunctionScope()
+func evaluateReturnStatement(ret *ast.ReturnStatement, manager *modules.ModuleManager) values.RuntimeValue {
+	value := evaluateExpression(ret.Value, manager)
+	functionScope := manager.Env.FindFunctionScope()
 	functionScope.ReturnValue = value
 	return value
 }
 
-func evaluateIfStatement(ifStatement *ast.IfStatement, env *environment.Environment) values.RuntimeValue {
-	condition := evaluateExpression(ifStatement.Condition, env)
+func evaluateIfStatement(ifStatement *ast.IfStatement, manager *modules.ModuleManager) values.RuntimeValue {
+	condition := evaluateExpression(ifStatement.Condition, manager)
 
 	if !condition.Truthy() {
 		if ifStatement.Else == nil {
 			return values.MakeNull()
 		}
 		if elseStatement, isElse := ifStatement.Else.(*ast.ElseStatement); isElse {
-			return evaluateElseStatement(elseStatement, env)
+			return evaluateElseStatement(elseStatement, manager)
 		}
 		if nextIf, isIf := ifStatement.Else.(*ast.IfStatement); isIf {
-			return evaluateIfStatement(nextIf, env)
+			return evaluateIfStatement(nextIf, manager)
 		}
 	}
 
-	newScope := environment.NewChild(env, environment.GENERIC_SCOPE)
+	newScope := environment.NewChild(manager.Env, environment.GENERIC_SCOPE)
+	manager.EnterEnv(newScope)
 
 	for _, statement := range ifStatement.Body {
-		evaluate(statement, newScope)
+		evaluate(statement, manager)
 	}
+
+	manager.ExitEnv()
 
 	return values.MakeNull()
 }
 
-func evaluateElseStatement(elseStatement *ast.ElseStatement, env *environment.Environment) values.RuntimeValue {
-	newScope := environment.NewChild(env, environment.GENERIC_SCOPE)
+func evaluateElseStatement(elseStatement *ast.ElseStatement, manager *modules.ModuleManager) values.RuntimeValue {
+	newScope := environment.NewChild(manager.Env, environment.GENERIC_SCOPE)
+	manager.EnterEnv(newScope)
 
 	for _, statement := range elseStatement.Body {
-		evaluate(statement, newScope)
+		evaluate(statement, manager)
 	}
+	manager.ExitEnv()
 
 	return values.MakeNull()
 }
 
-func evaluateWhileLoop(while *ast.WhileLoop, env *environment.Environment) values.RuntimeValue {
-	for evaluateExpression(while.Condition, env).Truthy() {
-		newEnv := environment.NewChild(env, environment.GENERIC_SCOPE)
+func evaluateWhileLoop(while *ast.WhileLoop, manager *modules.ModuleManager) values.RuntimeValue {
+	for evaluateExpression(while.Condition, manager).Truthy() {
+		newEnv := environment.NewChild(manager.Env, environment.GENERIC_SCOPE)
+		manager.EnterEnv(newEnv)
 
 		for _, statement := range while.Body {
-			evaluate(statement, newEnv)
+			evaluate(statement, manager)
 		}
+		manager.ExitEnv()
 	}
 
 	return values.MakeNull()
 }
 
-func evaluateForLoop(forLoop *ast.ForLoop, env *environment.Environment) values.RuntimeValue {
-	loopEnv := environment.NewChild(env, environment.GENERIC_SCOPE)
+func evaluateForLoop(forLoop *ast.ForLoop, manager *modules.ModuleManager) values.RuntimeValue {
+	loopEnv := environment.NewChild(manager.Env, environment.GENERIC_SCOPE)
+	manager.EnterEnv(loopEnv)
 
-	evaluate(forLoop.Initial, loopEnv)
+	evaluate(forLoop.Initial, manager)
 
-	for evaluateExpression(forLoop.Condition, loopEnv).Truthy() {
+	for evaluateExpression(forLoop.Condition, manager).Truthy() {
 		newEnv := environment.NewChild(loopEnv, environment.GENERIC_SCOPE)
+		manager.EnterEnv(newEnv)
 
 		for _, statement := range forLoop.Body {
-			evaluate(statement, newEnv)
+			evaluate(statement, manager)
 		}
-		evaluate(forLoop.Update, loopEnv)
+		manager.ExitEnv()
+		evaluate(forLoop.Update, manager)
 	}
+
+	manager.ExitEnv()
 
 	return values.MakeNull()
 }
 
-func evaluateStructDeclaration(structDecl *ast.StructDeclaration, env *environment.Environment) values.RuntimeValue {
+func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modules.ModuleManager) values.RuntimeValue {
+	modPath := importStatement.Module
+	mod := manager.Modules[modPath]
+
+	importedMod := &values.Module{
+		Name:    mod.Name,
+		Exports: mod.Env.Exports,
+	}
+
+	manager.Env.DeclareVariable(mod.Name, importedMod)
+	return importedMod
+}
+
+/*
+func evaluateStructDeclaration(structDecl *ast.StructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	members := map[string]types.ValidType{}
 
 	for memberName, memberType := range structDecl.Members {
-		dataType := types.FromAst(memberType, env)
+		dataType := typechecker.TypeCheckType(memberType, manager)
 
 		members[memberName] = dataType
 	}
@@ -142,17 +175,17 @@ func evaluateStructDeclaration(structDecl *ast.StructDeclaration, env *environme
 		Name:    structDecl.Name,
 		Members: members,
 	}
-	env.AddType(structDecl.Name, structType)
+	manager.Env.AddType(structDecl.Name, structType)
 
 	return values.MakeNull()
 }
 
-func evaluateInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, env *environment.Environment) values.RuntimeValue {
+func evaluateInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	members := map[string]types.ValidType{}
 
 	for _, member := range intDecl.Members {
 		if !member.IsFunction {
-			dataType := types.FromAst(member.ResultType, env)
+			dataType := typechecker.TypeCheckType(member.ResultType, manager)
 
 			members[member.Name] = dataType
 			continue
@@ -161,12 +194,12 @@ func evaluateInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, env *enviro
 		fnType := &types.Function{}
 		fnType.Name = member.Name
 
-		returnType := types.FromAst(member.ResultType, env)
+		returnType := typechecker.TypeCheckType(member.ResultType, manager)
 		fnType.ReturnType = returnType
 
 		fnType.Parameters = []types.ValidType{}
 		for _, param := range member.Parameters {
-			paramType := types.FromAst(param, env)
+			paramType := typechecker.TypeCheckType(param, manager)
 
 			fnType.Parameters = append(fnType.Parameters, paramType)
 		}
@@ -179,15 +212,15 @@ func evaluateInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, env *enviro
 		Members: members,
 	}
 
-	env.AddType(intDecl.Name, interfaceType)
+	manager.Env.AddType(intDecl.Name, interfaceType)
 	return values.MakeNull()
 }
 
-func evaluateTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, env *environment.Environment) values.RuntimeValue {
+func evaluateTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	members := []types.ValidType{}
 
 	for _, memberType := range structDecl.Members {
-		dataType := types.FromAst(memberType, env)
+		dataType := typechecker.TypeCheckType(memberType, manager)
 
 		members = append(members, dataType)
 	}
@@ -196,7 +229,8 @@ func evaluateTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, env 
 		Name:    structDecl.Name,
 		Members: members,
 	}
-	env.AddType(structDecl.Name, structType)
+	manager.Env.AddType(structDecl.Name, structType)
 
 	return values.MakeNull()
 }
+*/

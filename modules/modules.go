@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -11,8 +12,8 @@ import (
 )
 
 type Module struct {
-	Path    string
-	Ast     ast.Program
+	Path string
+	Ast  ast.Program
 }
 
 func Get(file string) (*Module, error) {
@@ -35,32 +36,35 @@ func Get(file string) (*Module, error) {
 	}
 
 	return &Module{
-		Ast:     program,
-		Path:    file,
+		Ast:  program,
+		Path: file,
 	}, nil
 }
 
 type ModuleManager struct {
-	Name string
-	Main    *Module
-	SymbolTable *symbols.SymbolTable
-	Modules map[string]*ModuleManager
+	Name           string
+	Main           *Module
+	SymbolTable    *symbols.SymbolTable
+	Env            *environment.Environment
+	Modules        map[string]*ModuleManager
 	TypeCheckStage int
+	InterpretStage int
 }
 
 var fetchedModules = map[string]*ModuleManager{}
 
-func NewManager(file string, table *symbols.SymbolTable) (*ModuleManager, error) {
+func NewManager(file string, table *symbols.SymbolTable, env *environment.Environment) (*ModuleManager, error) {
 	mod, err := Get(file)
 	if err != nil {
 		return nil, err
 	}
 	_, name := path.Split(path.Dir(file))
 	m := &ModuleManager{
-		Main:    mod,
+		Main:        mod,
 		SymbolTable: table,
-		Modules: map[string]*ModuleManager{},
-		Name: name,
+		Env:         env,
+		Modules:     map[string]*ModuleManager{},
+		Name:        name,
 	}
 	fetchedModules[file] = m
 
@@ -74,7 +78,7 @@ func NewManager(file string, table *symbols.SymbolTable) (*ModuleManager, error)
 				continue
 			}
 
-			modManager, err := NewManager(modPath, symbols.New())
+			modManager, err := NewManager(modPath, symbols.New(), environment.New())
 			if err != nil {
 				return nil, err
 			}
@@ -94,4 +98,15 @@ func (m *ModuleManager) ExitScope() {
 		panic("Cannot exit global scope")
 	}
 	m.SymbolTable = m.SymbolTable.Parent
+}
+
+func (m *ModuleManager) EnterEnv(env *environment.Environment) {
+	m.Env = env
+}
+
+func (m *ModuleManager) ExitEnv() {
+	if m.Env.Parent == nil {
+		panic("Cannot exit global scope")
+	}
+	m.Env = m.Env.Parent
 }

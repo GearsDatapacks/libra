@@ -136,7 +136,7 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 	return nil
 }
 
-func typeCheckType(ty ast.TypeExpression, manager *modules.ModuleManager) types.ValidType {
+func TypeCheckType(ty ast.TypeExpression, manager *modules.ModuleManager) types.ValidType {
 	if member, ok := ty.(*ast.MemberType); ok {
 		return typeCheckMemberType(member, manager)
 	}

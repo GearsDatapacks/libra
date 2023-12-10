@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
@@ -17,8 +18,8 @@ func RegisterUnaryOperator(op string, operation unOpFn) {
 	unaryOperators[op] = operation
 }
 
-func evaluateUnaryOperation(unOp *ast.UnaryOperation, env *environment.Environment) values.RuntimeValue {
-	value := evaluateExpression(unOp.Value, env)
+func evaluateUnaryOperation(unOp *ast.UnaryOperation, manager *modules.ModuleManager) values.RuntimeValue {
+	value := evaluateExpression(unOp.Value, manager)
 
 	operation, ok := unaryOperators[unOp.Operator]
 
@@ -26,5 +27,5 @@ func evaluateUnaryOperation(unOp *ast.UnaryOperation, env *environment.Environme
 		errors.LogError(errors.DevError(fmt.Sprintf("Operator %q does not exist", unOp.Operator), unOp))
 	}
 
-	return operation(value, unOp.Postfix, env)
+	return operation(value, unOp.Postfix, manager.Env)
 }

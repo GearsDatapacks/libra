@@ -89,9 +89,9 @@ func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) 
 	}
 }
 
-func typeCheckTypeExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
+func TypeCheckTypeExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
 	if name, ok := expr.(*ast.Identifier); ok {
-		return manager.SymbolTable.GetSymbol(name.Symbol)
+		return manager.SymbolTable.GetType(name.Symbol)
 	}
 
 	dataType := doTypeCheckExpression(expr, manager)
@@ -350,7 +350,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, manager *module
 }
 
 func typeCheckStructExpression(structExpr *ast.StructExpression, manager *modules.ModuleManager) types.ValidType {
-	definedType := typeCheckTypeExpression(structExpr.InstanceOf, manager)
+	definedType := TypeCheckTypeExpression(structExpr.InstanceOf, manager)
 	if definedType.String() == "TypeError" {
 		return types.Error(fmt.Sprintf("Struct %q is undefined", structExpr.InstanceOf), structExpr)
 	}
@@ -402,7 +402,7 @@ func typeCheckCastExpression(cast *ast.CastExpression, manager *modules.ModuleMa
 		return leftType
 	}
 
-	castTo := typeCheckType(cast.DataType, manager)
+	castTo := TypeCheckType(cast.DataType, manager)
 	if castTo.String() == "TypeError" {
 		return castTo
 	}
@@ -420,7 +420,7 @@ func typeCheckTypeCheckExpression(expr *ast.TypeCheckExpression, manager *module
 		return leftType
 	}
 
-	compType := typeCheckType(expr.DataType, manager)
+	compType := TypeCheckType(expr.DataType, manager)
 	if compType.String() == "TypeError" {
 		return compType
 	}

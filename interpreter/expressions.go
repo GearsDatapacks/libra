@@ -6,11 +6,13 @@ import (
 	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
-func evaluateExpression(expr ast.Expression, env *environment.Environment) values.RuntimeValue {
+func evaluateExpression(expr ast.Expression, manager *modules.ModuleManager) values.RuntimeValue {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
 		return values.MakeInteger(expression.Value)
@@ -31,43 +33,43 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 		return values.MakeNull()
 
 	case *ast.Identifier:
-		return env.GetVariable(expression.Symbol)
+		return manager.Env.GetVariable(expression.Symbol)
 
 	case *ast.ListLiteral:
-		return evaluateList(expression, env)
+		return evaluateList(expression, manager)
 
 	case *ast.MapLiteral:
-		return evaluateMap(expression, env)
+		return evaluateMap(expression, manager)
 
 	case *ast.AssignmentExpression:
-		return evaluateAssignmentExpression(expression, env)
+		return evaluateAssignmentExpression(expression, manager)
 
 	case *ast.BinaryOperation:
-		return evaluateBinaryOperation(expression, env)
+		return evaluateBinaryOperation(expression, manager)
 
 	case *ast.UnaryOperation:
-		return evaluateUnaryOperation(expression, env)
+		return evaluateUnaryOperation(expression, manager)
 
 	case *ast.FunctionCall:
-		return evaluateFunctionCall(expression, env)
+		return evaluateFunctionCall(expression, manager)
 
 	case *ast.IndexExpression:
-		return evaluateIndexExpression(expression, env)
+		return evaluateIndexExpression(expression, manager)
 
 	case *ast.MemberExpression:
-		return evaluateMemberExpression(*expression, env)
+		return evaluateMemberExpression(*expression, manager)
 
 	case *ast.StructExpression:
-		return evaluateStructExpression(*expression, env)
+		return evaluateStructExpression(*expression, manager)
 
 	case *ast.TupleExpression:
-		return evaluateTuple(expression, env)
+		return evaluateTuple(expression, manager)
 
 	case *ast.CastExpression:
-		return evaluateCastExpression(expression, env)
+		return evaluateCastExpression(expression, manager)
 
 	case *ast.TypeCheckExpression:
-		return evaluateTypeCheckExpression(expression, env)
+		return evaluateTypeCheckExpression(expression, manager)
 
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unexpected expression type %q", expression.String()), expr))
@@ -76,7 +78,7 @@ func evaluateExpression(expr ast.Expression, env *environment.Environment) value
 	}
 }
 
-func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *environment.Environment) values.RuntimeValue {
+func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	var value values.RuntimeValue
 
 	if assignment.Operation != "=" {
@@ -85,51 +87,52 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, env *env
 			Left:     assignment.Assignee,
 			Right:    assignment.Value,
 			Operator: operator,
-		}, env)
+		}, manager)
 	} else {
-		value = evaluateExpression(assignment.Value, env)
+		value = evaluateExpression(assignment.Value, manager)
 	}
 
 	switch assignee := assignment.Assignee.(type) {
 	case *ast.Identifier:
-		return env.AssignVariable(assignee.Symbol, value)
+		return manager.Env.AssignVariable(assignee.Symbol, value)
 
 	case *ast.IndexExpression:
-		leftValue := evaluateExpression(assignee.Left, env)
-		indexValue := evaluateExpression(assignee.Index, env)
+		leftValue := evaluateExpression(assignee.Left, manager)
+		indexValue := evaluateExpression(assignee.Index, manager)
 		return leftValue.SetIndex(indexValue, value)
 
 	case *ast.MemberExpression:
-		leftValue := evaluateExpression(assignee.Left, env)
+		leftValue := evaluateExpression(assignee.Left, manager)
 		return leftValue.SetMember(assignee.Member, value)
 	}
 
 	return value
 }
 
-func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
+func evaluateFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager) values.RuntimeValue {
 	if ident, ok := call.Left.(*ast.Identifier); ok {
-		if structType, isStruct := env.GetType(ident.Symbol).(*types.TupleStruct); isStruct {
-			return evaluateTupleStructExpression(structType, call, env)
+		if structType, isStruct := manager.SymbolTable.GetType(ident.Symbol).(*types.TupleStruct); isStruct {
+			return evaluateTupleStructExpression(structType, call, manager)
 		}
 
 		if builtin, ok := builtins[ident.Symbol]; ok {
 			args := []values.RuntimeValue{}
 
 			for _, arg := range call.Args {
-				args = append(args, evaluateExpression(arg, env))
+				args = append(args, evaluateExpression(arg, manager))
 			}
 
-			return builtin(args, env)
+			return builtin(args, manager.Env)
 		}
 	}
 
-	function := evaluateExpression(call.Left, env).(*values.FunctionValue)
-	declarationEnvironment := function.DeclarationEnvironment.(*environment.Environment)
-	scope := environment.NewChild(declarationEnvironment, environment.FUNCTION_SCOPE)
+	function := evaluateExpression(call.Left, manager).(*values.FunctionValue)
+	declarationEnv := function.Env.(*environment.Environment)
+	mod := function.Manager.(*modules.ModuleManager)
+	scope := environment.NewChild(declarationEnv, environment.FUNCTION_SCOPE)
 
 	for i, param := range function.Parameters {
-		arg := evaluateExpression(call.Args[i], env)
+		arg := evaluateExpression(call.Args[i], manager)
 		scope.DeclareVariable(param, arg)
 	}
 
@@ -137,23 +140,27 @@ func evaluateFunctionCall(call *ast.FunctionCall, env *environment.Environment) 
 		scope.DeclareVariable("this", function.This)
 	}
 
+	mod.EnterEnv(scope)
+
 	for _, statement := range function.Body {
-		evaluate(statement, scope)
+		evaluate(statement, mod)
 
 		if scope.ReturnValue != nil {
 			return scope.ReturnValue
 		}
 	}
 
+	mod.ExitEnv()
+
 	return values.MakeNull()
 }
 
-func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.RuntimeValue {
+func evaluateList(list *ast.ListLiteral, manager *modules.ModuleManager) values.RuntimeValue {
 	evaluatedValues := []values.RuntimeValue{}
 	listTypes := []types.ValidType{}
 
 	for _, elem := range list.Elements {
-		elemValue := evaluateExpression(elem, env)
+		elemValue := evaluateExpression(elem, manager)
 		newType := true
 		for _, listType := range listTypes {
 			if listType.Valid(elemValue.Type()) {
@@ -180,13 +187,13 @@ func evaluateList(list *ast.ListLiteral, env *environment.Environment) values.Ru
 	}
 }
 
-func evaluateMap(maplit *ast.MapLiteral, env *environment.Environment) values.RuntimeValue {
+func evaluateMap(maplit *ast.MapLiteral, manager *modules.ModuleManager) values.RuntimeValue {
 	keyTypes := []types.ValidType{}
 	valueTypes := []types.ValidType{}
 	evaluatedValues := map[values.RuntimeValue]values.RuntimeValue{}
 
 	for key, value := range maplit.Elements {
-		keyValue := evaluateExpression(key, env)
+		keyValue := evaluateExpression(key, manager)
 		keyType := keyValue.Type()
 		newType := true
 		for _, dataType := range keyTypes {
@@ -200,7 +207,7 @@ func evaluateMap(maplit *ast.MapLiteral, env *environment.Environment) values.Ru
 			keyTypes = append(keyTypes, keyType)
 		}
 
-		valueValue := evaluateExpression(value, env)
+		valueValue := evaluateExpression(value, manager)
 		evaluatedValues[keyValue] = valueValue
 
 		valueType := valueValue.Type()
@@ -226,17 +233,17 @@ func evaluateMap(maplit *ast.MapLiteral, env *environment.Environment) values.Ru
 	}
 }
 
-func evaluateIndexExpression(indexExpr *ast.IndexExpression, env *environment.Environment) values.RuntimeValue {
-	leftValue := evaluateExpression(indexExpr.Left, env)
-	indexValue := evaluateExpression(indexExpr.Index, env)
+func evaluateIndexExpression(indexExpr *ast.IndexExpression, manager *modules.ModuleManager) values.RuntimeValue {
+	leftValue := evaluateExpression(indexExpr.Left, manager)
+	indexValue := evaluateExpression(indexExpr.Index, manager)
 
 	return leftValue.Index(indexValue)
 }
 
-func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.Environment) values.RuntimeValue {
-	value := evaluateExpression(memberExpr.Left, env)
+func evaluateMemberExpression(memberExpr ast.MemberExpression, manager *modules.ModuleManager) values.RuntimeValue {
+	value := evaluateExpression(memberExpr.Left, manager)
 
-	method := env.GetMethod(memberExpr.Member, value.Type())
+	method := manager.Env.GetMethod(memberExpr.Member, value.Type())
 	if method != nil {
 		method.This = value
 		return method
@@ -250,13 +257,13 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, env *environment.
 	return values.MakeNull()
 }
 
-func evaluateStructExpression(structExpr ast.StructExpression, env *environment.Environment) values.RuntimeValue {
+func evaluateStructExpression(structExpr ast.StructExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	members := map[string]values.RuntimeValue{}
-	structType := env.GetType(structExpr.InstanceOf.String()).(*types.Struct)
+	structType := typechecker.TypeCheckTypeExpression(structExpr.InstanceOf, manager).(*types.Struct)
 
 	for name, dataType := range structType.Members {
 		if value, hasMember := structExpr.Members[name]; hasMember {
-			members[name] = evaluateExpression(value, env)
+			members[name] = evaluateExpression(value, manager)
 			continue
 		}
 		members[name] = values.GetZeroValue(dataType.String())
@@ -269,20 +276,20 @@ func evaluateStructExpression(structExpr ast.StructExpression, env *environment.
 	}
 }
 
-func evaluateTuple(tuple *ast.TupleExpression, env *environment.Environment) values.RuntimeValue {
+func evaluateTuple(tuple *ast.TupleExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	members := []values.RuntimeValue{}
 
 	for _, member := range tuple.Members {
-		members = append(members, evaluateExpression(member, env))
+		members = append(members, evaluateExpression(member, manager))
 	}
 
 	return &values.TupleValue{Members: members}
 }
 
-func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.FunctionCall, env *environment.Environment) values.RuntimeValue {
+func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.FunctionCall, manager *modules.ModuleManager) values.RuntimeValue {
 	members := []values.RuntimeValue{}
 	for _, arg := range tupleExpr.Args {
-		members = append(members, evaluateExpression(arg, env))
+		members = append(members, evaluateExpression(arg, manager))
 	}
 
 	return &values.TupleStructValue{
@@ -292,17 +299,17 @@ func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.
 	}
 }
 
-func evaluateCastExpression(cast *ast.CastExpression, env *environment.Environment) values.RuntimeValue {
-	left := evaluateExpression(cast.Left, env)
-	ty := types.FromAst(cast.DataType, env)
+func evaluateCastExpression(cast *ast.CastExpression, manager *modules.ModuleManager) values.RuntimeValue {
+	left := evaluateExpression(cast.Left, manager)
+	ty := typechecker.TypeCheckType(cast.DataType, manager)
 	if !ty.Valid(left.Type()) {
 		errors.LogError(fmt.Sprintf("%q is type %q, not %q", left.ToString(), left.Type(), ty))
 	}
 	return left
 }
 
-func evaluateTypeCheckExpression(expr *ast.TypeCheckExpression, env *environment.Environment) values.RuntimeValue {
-	left := evaluateExpression(expr.Left, env)
-	ty := types.FromAst(expr.DataType, env)
+func evaluateTypeCheckExpression(expr *ast.TypeCheckExpression, manager *modules.ModuleManager) values.RuntimeValue {
+	left := evaluateExpression(expr.Left, manager)
+	ty := typechecker.TypeCheckType(expr.DataType, manager)
 	return values.MakeBoolean(ty.Valid(left.Type()))
 }

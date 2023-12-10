@@ -12,9 +12,9 @@ import (
 
 func toPrintString(value values.RuntimeValue) string {
 	printStr := value.ToString()
-	
+
 	if _, ok := value.(*values.StringLiteral); ok {
-		printStr = printStr[1:len(printStr)-1]
+		printStr = printStr[1 : len(printStr)-1]
 	}
 
 	return printStr
@@ -33,6 +33,7 @@ func printil(args []values.RuntimeValue, env *environment.Environment) values.Ru
 }
 
 var reader = bufio.NewReader(os.Stdin)
+
 func prompt(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	fmt.Print(toPrintString(args[0]))
 

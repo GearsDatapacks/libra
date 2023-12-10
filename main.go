@@ -20,8 +20,7 @@ func repl() {
 	reader := bufio.NewReader(os.Stdin)
 
 	parser := parser.New()
-	manager, _ := modules.NewManager("", symbols.New())
-	env := environment.New()
+	manager, _ := modules.NewManager("", symbols.New(), environment.New())
 
 	for {
 		fmt.Print("> ")
@@ -56,20 +55,17 @@ func repl() {
 			continue
 		}
 
-		result := interpreter.Evaluate(&ast, env)
+		result := interpreter.Evaluate(manager)
 		fmt.Println(result.ToString())
 	}
 }
 
 func run(file string) {
-	mods, err := modules.NewManager(file, symbols.New())
+	mods, err := modules.NewManager(file, symbols.New(), environment.New())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	env := environment.New()
-	ast := &mods.Main.Ast
 
 	err = typechecker.TypeCheck(mods)
 	if err != nil {
@@ -77,7 +73,7 @@ func run(file string) {
 		os.Exit(1)
 	}
 
-	interpreter.Evaluate(ast, env)
+	interpreter.Evaluate(mods)
 	// fmt.Println(result.ToString())
 }
 

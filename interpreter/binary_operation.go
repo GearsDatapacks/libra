@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gearsdatapacks/libra/errors"
-	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
@@ -17,27 +17,27 @@ func RegisterBinaryOperator(op string, operation binOpFn) {
 	binaryOperators[op] = operation
 }
 
-func evaluateBinaryOperation(binOp *ast.BinaryOperation, env *environment.Environment) values.RuntimeValue {
+func evaluateBinaryOperation(binOp *ast.BinaryOperation, manager *modules.ModuleManager) values.RuntimeValue {
 	if binOp.Operator == "||" {
-		left := evaluateExpression(binOp.Left, env)
+		left := evaluateExpression(binOp.Left, manager)
 		if left.Truthy() {
 			return left
 		}
 
-		return evaluateExpression(binOp.Right, env)
+		return evaluateExpression(binOp.Right, manager)
 	}
 
 	if binOp.Operator == "&&" {
-		left := evaluateExpression(binOp.Left, env)
+		left := evaluateExpression(binOp.Left, manager)
 		if !left.Truthy() {
 			return left
 		}
 
-		return evaluateExpression(binOp.Right, env)
+		return evaluateExpression(binOp.Right, manager)
 	}
 
-	left := evaluateExpression(binOp.Left, env)
-	right := evaluateExpression(binOp.Right, env)
+	left := evaluateExpression(binOp.Left, manager)
+	right := evaluateExpression(binOp.Right, manager)
 
 	operation, ok := binaryOperators[binOp.Operator]
 

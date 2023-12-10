@@ -439,7 +439,7 @@ func registerOperators() {
 }
 
 func isError(value values.RuntimeValue) bool {
-	if _, isRuntimeErr := value.(*values.RuntimeError); isRuntimeErr {
+	if _, isRuntimeErr := value.(*values.Error); isRuntimeErr {
 		return true
 	}
 

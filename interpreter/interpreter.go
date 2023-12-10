@@ -4,54 +4,107 @@ import (
 	"fmt"
 
 	"github.com/gearsdatapacks/libra/errors"
-	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
+	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
-	"github.com/gearsdatapacks/libra/type_checker/types"
+	// typechecker "github.com/gearsdatapacks/libra/type_checker"
 )
 
-func Evaluate(program *ast.Program, env *environment.Environment) values.RuntimeValue {
+const (
+	REGISTER = iota
+	IMPORT
+	EVALUATE
+)
+
+func Evaluate(manager *modules.ModuleManager) values.RuntimeValue {
 	var lastValue values.RuntimeValue
 
-	for _, statement := range program.Body {
-		register(statement, env)
-	}
+	register(manager)
 
-	for _, statement := range program.Body {
-		lastValue = evaluate(statement, env)
-	}
+	resolveImports(manager)
+
+	evaluateStatements(manager)
 
 	return lastValue
 }
 
-func evaluate(astNode ast.Statement, env *environment.Environment) values.RuntimeValue {
+func register(manager *modules.ModuleManager) {
+	if manager.InterpretStage > REGISTER {
+		return
+	}
+	manager.InterpretStage++
+
+	for _, mod := range manager.Modules {
+		register(mod)
+	}
+
+	for _, stmt := range manager.Main.Ast.Body {
+		if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
+			registerFunctionDeclaration(fn, manager)
+		}
+	}
+}
+
+func resolveImports(manager *modules.ModuleManager) {
+	if manager.InterpretStage > IMPORT {
+		return
+	}
+	manager.InterpretStage++
+
+	for _, mod := range manager.Modules {
+		resolveImports(mod)
+	}
+
+	for _, stmt := range manager.Main.Ast.Body {
+		if imp, ok := stmt.(*ast.ImportStatement); ok {
+			evaluateImportStatement(imp, manager)
+		}
+	}
+}
+
+func evaluateStatements(manager *modules.ModuleManager) {
+	if manager.InterpretStage > EVALUATE {
+		return
+	}
+	manager.InterpretStage++
+
+	for _, mod := range manager.Modules {
+		evaluateStatements(mod)
+	}
+
+	for _, stmt := range manager.Main.Ast.Body {
+		evaluate(stmt, manager)
+	}
+}
+
+func evaluate(astNode ast.Statement, manager *modules.ModuleManager) values.RuntimeValue {
 	switch statement := astNode.(type) {
 	case *ast.ExpressionStatement:
-		return evaluateExpressionStatement(statement, env)
+		return evaluateExpressionStatement(statement, manager)
 
 	case *ast.VariableDeclaration:
-		return evaluateVariableDeclaration(statement, env)
+		return evaluateVariableDeclaration(statement, manager)
 
 	case *ast.FunctionDeclaration:
-		// return registerFunctionDeclaration(statement, env)
+		// return registerFunctionDeclaration(statement, manager)
 		return values.MakeNull()
 
 	case *ast.ReturnStatement:
-		return evaluateReturnStatement(statement, env)
+		return evaluateReturnStatement(statement, manager)
 
 	case *ast.IfStatement:
-		return evaluateIfStatement(statement, env)
+		return evaluateIfStatement(statement, manager)
 
 	case *ast.WhileLoop:
-		return evaluateWhileLoop(statement, env)
+		return evaluateWhileLoop(statement, manager)
 
 	case *ast.ForLoop:
-		return evaluateForLoop(statement, env)
+		return evaluateForLoop(statement, manager)
 
 	case *ast.StructDeclaration:
-		// return evaluateStructDeclaration(statement, env)
+		// return evaluateStructDeclaration(statement, manager)
 		return values.MakeNull()
-	
+
 	case *ast.TupleStructDeclaration:
 		return values.MakeNull()
 
@@ -59,32 +112,14 @@ func evaluate(astNode ast.Statement, env *environment.Environment) values.Runtim
 		return values.MakeNull()
 
 	case *ast.TypeDeclaration:
-		// env.AddType(statement.Name, types.FromAst(statement.DataType, env))
+		// env.AddType(statement.Name, typechecker.TypeCheckType(statement.DataType, env))
+		return values.MakeNull()
+
+	case *ast.ImportStatement:
 		return values.MakeNull()
 
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode))
 		return nil
-	}
-}
-
-func register(astNode ast.Statement, env *environment.Environment) {
-	switch statement := astNode.(type) {
-	case *ast.ExpressionStatement:
-	case *ast.FunctionDeclaration:
-		registerFunctionDeclaration(statement, env)
-
-	case *ast.StructDeclaration:
-		evaluateStructDeclaration(statement, env)
-
-	case *ast.InterfaceDeclaration:
-		evaluateInterfaceDeclaration(statement, env)
-
-	case *ast.TupleStructDeclaration:
-		evaluateTupleStructDeclaration(statement, env)
-
-	case *ast.TypeDeclaration:
-		env.AddType(statement.Name, types.FromAst(statement.DataType, env))
-		// return values.MakeNull()
 	}
 }

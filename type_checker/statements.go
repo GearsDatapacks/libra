@@ -106,7 +106,7 @@ func registerTypeStatement(stmt ast.Statement, manager *modules.ModuleManager) t
 }
 
 func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, manager *modules.ModuleManager) types.ValidType {
-	dataType := typeCheckType(varDec.DataType, manager)
+	dataType := TypeCheckType(varDec.DataType, manager)
 	if dataType.String() == "TypeError" {
 		return dataType
 	}
@@ -164,7 +164,7 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *mod
 	if funcDec.MethodOf == nil {
 		fn = manager.SymbolTable.GetSymbol(funcDec.Name).(*types.Function)
 	} else {
-		parentType := typeCheckType(funcDec.MethodOf, manager)
+		parentType := TypeCheckType(funcDec.MethodOf, manager)
 		fn = types.Member(parentType, funcDec.Name, false).(*types.Function)
 	}
 
@@ -214,21 +214,21 @@ func typeCheckFunctionParams(funcDec *ast.FunctionDeclaration, manager *modules.
 	}
 
 	for _, param := range funcDec.Parameters {
-		paramType := typeCheckType(param.Type, manager)
+		paramType := TypeCheckType(param.Type, manager)
 		if paramType.String() == "TypeError" {
 			return paramType
 		}
 		fnType.Parameters = append(fnType.Parameters, paramType)
 	}
 
-	returnType := typeCheckType(funcDec.ReturnType, manager)
+	returnType := TypeCheckType(funcDec.ReturnType, manager)
 	if returnType.String() == "TypeError" {
 		return returnType
 	}
 	fnType.ReturnType = returnType
 
 	if funcDec.MethodOf != nil {
-		parentType := typeCheckType(funcDec.MethodOf, manager)
+		parentType := TypeCheckType(funcDec.MethodOf, manager)
 		if parentType.String() == "TypeError" {
 			return parentType
 		}
@@ -378,7 +378,7 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, manager *modu
 	structType := manager.SymbolTable.GetType(structDecl.Name).(*types.Struct)
 
 	for memberName, memberType := range structDecl.Members {
-		dataType := typeCheckType(memberType, manager)
+		dataType := TypeCheckType(memberType, manager)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
@@ -397,7 +397,7 @@ func typeCheckTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, man
 	structType := manager.SymbolTable.GetType(structDecl.Name).(*types.TupleStruct)
 
 	for _, memberType := range structDecl.Members {
-		dataType := typeCheckType(memberType, manager)
+		dataType := TypeCheckType(memberType, manager)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
@@ -417,7 +417,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 
 	for _, member := range intDecl.Members {
 		if !member.IsFunction {
-			dataType := typeCheckType(member.ResultType, manager)
+			dataType := TypeCheckType(member.ResultType, manager)
 			if dataType.String() == "TypeError" {
 				return dataType
 			}
@@ -429,7 +429,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 		fnType := &types.Function{}
 		fnType.Name = member.Name
 
-		returnType := typeCheckType(member.ResultType, manager)
+		returnType := TypeCheckType(member.ResultType, manager)
 		if returnType.String() == "TypeError" {
 			return returnType
 		}
@@ -437,7 +437,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 
 		fnType.Parameters = []types.ValidType{}
 		for _, param := range member.Parameters {
-			paramType := typeCheckType(param, manager)
+			paramType := TypeCheckType(param, manager)
 			if paramType.String() == "TypeError" {
 				return paramType
 			}
@@ -456,7 +456,7 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 }
 
 func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.ModuleManager) types.ValidType {
-	dataType := typeCheckType(typeDecl.DataType, manager)
+	dataType := TypeCheckType(typeDecl.DataType, manager)
 	if dataType.String() == "TypeError" {
 		return dataType
 	}

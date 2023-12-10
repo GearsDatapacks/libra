@@ -293,7 +293,8 @@ type FunctionValue struct {
 	BaseValue
 	Name                   string
 	Parameters             []string
-	DeclarationEnvironment any
+	Env any
+	Manager any
 	Body                   []ast.Statement
 	This                   RuntimeValue
 }
@@ -510,25 +511,47 @@ func (tv *TupleStructValue) SetMember(member string, value RuntimeValue) Runtime
 	return value
 }
 
-type RuntimeError struct {
+type Error struct {
 	BaseValue
 	Msg string
 }
 
-func (err *RuntimeError) ToString() string {
+func (err *Error) ToString() string {
 	return err.Msg
 }
 
-func (sl *RuntimeError) Truthy() bool {
+func (sl *Error) Truthy() bool {
 	return true
 }
 
-func (*RuntimeError) EqualTo(value RuntimeValue) bool {
+func (*Error) EqualTo(value RuntimeValue) bool {
 	return true
 }
 
 func MakeError(msg string) RuntimeValue {
-	return &RuntimeError{
+	return &Error{
 		Msg: msg,
 	}
+}
+
+type Module struct {
+	BaseValue
+	Name    string
+	Exports map[string]RuntimeValue
+}
+
+func (m *Module) ToString() string {
+	return m.Name
+}
+
+func (*Module) Truthy() bool {
+	return true
+}
+
+func (*Module) EqualTo(value RuntimeValue) bool {
+	return true
+}
+
+func (m *Module) Member(member string) RuntimeValue {
+	return m.Exports[member]
 }
