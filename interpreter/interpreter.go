@@ -17,7 +17,6 @@ const (
 )
 
 func Evaluate(manager *modules.ModuleManager) values.RuntimeValue {
-	
 
 	register(manager)
 
@@ -32,13 +31,15 @@ func register(manager *modules.ModuleManager) {
 	}
 	manager.InterpretStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		register(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
-			registerFunctionDeclaration(fn, manager)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
+				registerFunctionDeclaration(fn, manager)
+			}
 		}
 	}
 }
@@ -49,15 +50,17 @@ func resolveImports(manager *modules.ModuleManager) {
 	}
 	manager.InterpretStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		resolveImports(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		if imp, ok := stmt.(*ast.ImportStatement); ok {
-			evaluateImportStatement(imp, manager)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			if imp, ok := stmt.(*ast.ImportStatement); ok {
+				evaluateImportStatement(imp, manager)
+			}
 		}
-	}
+}
 }
 
 func evaluateStatements(manager *modules.ModuleManager) values.RuntimeValue {
@@ -66,13 +69,15 @@ func evaluateStatements(manager *modules.ModuleManager) values.RuntimeValue {
 	}
 	manager.InterpretStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		evaluateStatements(mod)
 	}
 
 	var lastValue values.RuntimeValue
-	for _, stmt := range manager.Main.Ast.Body {
-		lastValue = evaluate(stmt, manager)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			lastValue = evaluate(stmt, manager)
+		}
 	}
 	return lastValue
 }

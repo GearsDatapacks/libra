@@ -531,7 +531,7 @@ func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Modu
 
 func typeCheckImportStatement(importStatement *ast.ImportStatement, manager *modules.ModuleManager) types.ValidType {
 	modPath := importStatement.Module
-	mod, exists := manager.Modules[modPath]
+	mod, exists := manager.Imported[modPath]
 	if !exists {
 		return types.Error(fmt.Sprintf("Cannot import module %q, it does not exist", modPath), importStatement)
 	}

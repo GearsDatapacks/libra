@@ -42,12 +42,12 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 	}
 
 	fn := &values.FunctionValue{
-		Name:                   funcDec.Name,
-		Parameters:             params,
-		Env: manager.Env,
-		Manager: manager,
-		Body:                   funcDec.Body,
-		BaseValue:              values.BaseValue{DataType: functionType},
+		Name:       funcDec.Name,
+		Parameters: params,
+		Env:        manager.Env,
+		Manager:    manager,
+		Body:       funcDec.Body,
+		BaseValue:  values.BaseValue{DataType: functionType},
 	}
 
 	if funcDec.MethodOf != nil {
@@ -150,7 +150,7 @@ func evaluateForLoop(forLoop *ast.ForLoop, manager *modules.ModuleManager) value
 
 func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modules.ModuleManager) values.RuntimeValue {
 	modPath := importStatement.Module
-	mod := manager.Modules[modPath]
+	mod := manager.Imported[modPath]
 
 	importedMod := &values.Module{
 		Name:    mod.Name,

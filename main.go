@@ -50,7 +50,7 @@ func repl() {
 			fmt.Println(err)
 			continue
 		}
-		manager.Main.Ast = ast
+		manager.Files[0].Ast = ast
 		err = typechecker.TypeCheck(manager)
 		if err != nil {
 			fmt.Println(err)

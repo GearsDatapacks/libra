@@ -43,14 +43,16 @@ func typeCheck(manager *modules.ModuleManager) error {
 	}
 	manager.TypeCheckStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		typeCheck(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		nextType := typeCheckStatement(stmt, manager)
-		if nextType.String() == "TypeError" {
-			return nextType.(*types.TypeError)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			nextType := typeCheckStatement(stmt, manager)
+			if nextType.String() == "TypeError" {
+				return nextType.(*types.TypeError)
+			}
 		}
 	}
 	return nil
@@ -62,14 +64,16 @@ func registerStatements(manager *modules.ModuleManager) error {
 	}
 	manager.TypeCheckStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		registerStatements(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		nextType := registerTypeStatement(stmt, manager)
-		if nextType.String() == "TypeError" {
-			return nextType.(*types.TypeError)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			nextType := registerTypeStatement(stmt, manager)
+			if nextType.String() == "TypeError" {
+				return nextType.(*types.TypeError)
+			}
 		}
 	}
 	return nil
@@ -81,14 +85,16 @@ func typeCheckGlobalStatements(manager *modules.ModuleManager) error {
 	}
 	manager.TypeCheckStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		typeCheckGlobalStatements(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		nextType := typeCheckGlobalStatement(stmt, manager)
-		if nextType.String() == "TypeError" {
-			return nextType.(*types.TypeError)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			nextType := typeCheckGlobalStatement(stmt, manager)
+			if nextType.String() == "TypeError" {
+				return nextType.(*types.TypeError)
+			}
 		}
 	}
 	return nil
@@ -100,15 +106,17 @@ func typeCheckImportStatements(manager *modules.ModuleManager) error {
 	}
 	manager.TypeCheckStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		typeCheckImportStatements(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		if importStmt, ok := stmt.(*ast.ImportStatement); ok {
-			nextType := typeCheckImportStatement(importStmt, manager)
-			if nextType.String() == "TypeError" {
-				return nextType.(*types.TypeError)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
+				nextType := typeCheckImportStatement(importStmt, manager)
+				if nextType.String() == "TypeError" {
+					return nextType.(*types.TypeError)
+				}
 			}
 		}
 	}
@@ -121,15 +129,17 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 	}
 	manager.TypeCheckStage++
 
-	for _, mod := range manager.Modules {
+	for _, mod := range manager.Imported {
 		typeCheckFunctions(mod)
 	}
 
-	for _, stmt := range manager.Main.Ast.Body {
-		if funcDec, ok := stmt.(*ast.FunctionDeclaration); ok {
-			nextType := typeCheckFunctionParams(funcDec, manager)
-			if nextType.String() == "TypeError" {
-				return nextType.(*types.TypeError)
+	for _, file := range manager.Files {
+		for _, stmt := range file.Ast.Body {
+			if funcDec, ok := stmt.(*ast.FunctionDeclaration); ok {
+				nextType := typeCheckFunctionParams(funcDec, manager)
+				if nextType.String() == "TypeError" {
+					return nextType.(*types.TypeError)
+				}
 			}
 		}
 	}

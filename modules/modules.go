@@ -16,9 +16,8 @@ type Module struct {
 	Ast  ast.Program
 }
 
-func Get(file string) (*Module, error) {
+func modFromFile(file string) (*Module, error) {
 	code, err := os.ReadFile(file)
-
 	if err != nil {
 		return nil, err
 	}
@@ -41,12 +40,45 @@ func Get(file string) (*Module, error) {
 	}, nil
 }
 
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+func Get(file string) ([]Module, error) {
+	if !isDir(file) {
+		mod, err := modFromFile(file)
+		if err != nil {
+			return nil, err
+		}
+		return []Module{*mod}, nil
+	}
+
+	dir, err := os.ReadDir(file)
+	if err != nil {
+		return nil, err
+	}
+	mods := []Module{}
+	for _, entry := range dir {
+		if entry.IsDir() {
+			continue
+		}
+		mod, err := modFromFile(path.Join(file, entry.Name()))
+		if err != nil {
+			continue
+		}
+		mods = append(mods, *mod)
+	}
+
+	return mods, nil
+}
+
 type ModuleManager struct {
 	Name           string
-	Main           *Module
+	Files          []Module
 	SymbolTable    *symbols.SymbolTable
 	Env            *environment.Environment
-	Modules        map[string]*ModuleManager
+	Imported       map[string]*ModuleManager
 	TypeCheckStage int
 	InterpretStage int
 }
@@ -54,35 +86,43 @@ type ModuleManager struct {
 var fetchedModules = map[string]*ModuleManager{}
 
 func NewManager(file string, table *symbols.SymbolTable, env *environment.Environment) (*ModuleManager, error) {
-	mod, err := Get(file)
+	mods, err := Get(file)
 	if err != nil {
 		return nil, err
 	}
-	_, name := path.Split(path.Dir(file))
+
+	var basePath string
+	if isDir(file) {
+		basePath = file
+	} else {
+		basePath = path.Dir(file)
+	}
+
+	_, name := path.Split(basePath)
 	m := &ModuleManager{
-		Main:        mod,
+		Files:       mods,
 		SymbolTable: table,
 		Env:         env,
-		Modules:     map[string]*ModuleManager{},
+		Imported:    map[string]*ModuleManager{},
 		Name:        name,
 	}
 	fetchedModules[file] = m
 
-	basePath, _ := path.Split(file)
+	for _, file := range m.Files {
+		for _, stmt := range file.Ast.Body {
+			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
+				modPath := path.Clean(path.Join(basePath, importStmt.Module))
+				if modManager, loaded := fetchedModules[modPath]; loaded {
+					m.Imported[importStmt.Module] = modManager
+					continue
+				}
 
-	for _, stmt := range m.Main.Ast.Body {
-		if importStmt, ok := stmt.(*ast.ImportStatement); ok {
-			modPath := path.Clean(basePath + "/" + importStmt.Module + "/main.lb")
-			if modManager, loaded := fetchedModules[modPath]; loaded {
-				m.Modules[importStmt.Module] = modManager
-				continue
+				modManager, err := NewManager(modPath, symbols.New(), environment.New())
+				if err != nil {
+					return nil, err
+				}
+				m.Imported[importStmt.Module] = modManager
 			}
-
-			modManager, err := NewManager(modPath, symbols.New(), environment.New())
-			if err != nil {
-				return nil, err
-			}
-			m.Modules[importStmt.Module] = modManager
 		}
 	}
 
@@ -91,14 +131,14 @@ func NewManager(file string, table *symbols.SymbolTable, env *environment.Enviro
 
 func NewDetatched(table *symbols.SymbolTable, env *environment.Environment) *ModuleManager {
 	return &ModuleManager{
-		Name:           "main",
-		Main:           &Module{
+		Name: "main",
+		Files: []Module{{
 			Path: ".",
 			Ast:  ast.Program{},
-		},
-		SymbolTable:    table,
-		Env:            env,
-		Modules: map[string]*ModuleManager{},
+		}},
+		SymbolTable: table,
+		Env:         env,
+		Imported:    map[string]*ModuleManager{},
 	}
 }
 
