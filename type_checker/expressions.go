@@ -228,7 +228,14 @@ func typeCheckFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManage
 		if arg.String() == "TypeError" {
 			return arg
 		}
-		if !param.Valid(arg) {
+
+		var correctType = param.Valid(arg)
+
+		if partial, ok := param.(types.PartialType); ok {
+			param, correctType = partial.Infer(arg)
+		}
+
+		if !correctType {
 			return types.Error(fmt.Sprintf("Invalid arguments passed to function %q: Type %q is not a valid argument for parameter of type %q", name, arg, param), call)
 		}
 	}
