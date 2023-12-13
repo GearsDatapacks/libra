@@ -227,3 +227,7 @@ func getMethod(methodOf ValidType, name string) *Function {
 
 	return nil
 }
+
+type PseudoType interface {
+	ToReal() ValidType
+}

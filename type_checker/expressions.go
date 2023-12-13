@@ -27,9 +27,19 @@ func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) ty
 func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return &types.IntLiteral{}
+		return &types.UntypedNumber{
+			Default:         &types.IntLiteral{},
+			IsIntAssignable: true,
+		}
 	case *ast.FloatLiteral:
-		return &types.FloatLiteral{}
+		var possibleInt bool
+		if expression.Value == float64(int64(expression.Value)) {
+			possibleInt = true
+		}
+		return &types.UntypedNumber{
+			Default:         &types.FloatLiteral{},
+			IsIntAssignable: possibleInt,
+		}
 	case *ast.StringLiteral:
 		return &types.StringLiteral{}
 	case *ast.NullLiteral:

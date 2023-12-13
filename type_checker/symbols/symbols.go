@@ -71,6 +71,10 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 		array.CanInfer = false
 	}
 
+	if pseudo, ok := dataType.(types.PseudoType); ok {
+		dataType = pseudo.ToReal()
+	}
+
 	if constant {
 		dataType.MarkConstant()
 	}
