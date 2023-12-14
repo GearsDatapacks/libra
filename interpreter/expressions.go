@@ -302,10 +302,12 @@ func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.
 func evaluateCastExpression(cast *ast.CastExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	left := evaluateExpression(cast.Left, manager)
 	ty := typechecker.TypeCheckType(cast.DataType, manager)
-	if !ty.Valid(left.Type()) {
+	castable, ok := ty.(types.CustomCastable)
+	if !ty.Valid(left.Type()) && !(ok && castable.CanCast(left.Type())) {
 		errors.LogError(fmt.Sprintf("%q is type %q, not %q", left.ToString(), left.Type(), ty))
 	}
-	return left
+
+	return values.Cast(left, ty)
 }
 
 func evaluateTypeCheckExpression(expr *ast.TypeCheckExpression, manager *modules.ModuleManager) values.RuntimeValue {

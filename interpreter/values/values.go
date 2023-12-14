@@ -51,6 +51,17 @@ func (b *BaseValue) Type() types.ValidType {
 	return b.DataType
 }
 
+type castable interface {
+	castTo(types.ValidType) RuntimeValue
+}
+
+func Cast(value RuntimeValue, ty types.ValidType) RuntimeValue {
+	if cast, ok := value.(castable); ok {
+		return cast.castTo(ty)
+	}
+	return value
+}
+
 // func MakeValue(v any) RuntimeValue {
 // 	switch value := v.(type) {
 // 	case int:

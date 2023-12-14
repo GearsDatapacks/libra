@@ -142,7 +142,7 @@ func typeCheckVariableDeclaration(varDec *ast.VariableDeclaration, manager *modu
 
 	correctType := dataType.Valid(expressionType)
 
-	if partial, ok := dataType.(types.PartialType); ok {
+	if partial, ok := dataType.(types.PartialType); !correctType && ok {
 		dataType, correctType = partial.Infer(expressionType)
 	}
 

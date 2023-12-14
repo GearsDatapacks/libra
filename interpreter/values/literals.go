@@ -37,6 +37,13 @@ func (il *IntegerLiteral) EqualTo(value RuntimeValue) bool {
 	return ok && integer.Value == il.Value
 }
 
+func (il *IntegerLiteral) castTo(ty types.ValidType) RuntimeValue {
+	if _, ok := ty.(*types.FloatLiteral); ok {
+		return MakeFloat(float64(il.Value))
+	}
+	return il
+}
+
 type FloatLiteral struct {
 	BaseValue
 	Value float64
@@ -62,6 +69,13 @@ func (fl *FloatLiteral) EqualTo(value RuntimeValue) bool {
 	float, ok := value.(*FloatLiteral)
 
 	return ok && float.Value == fl.Value
+}
+
+func (fl *FloatLiteral) castTo(ty types.ValidType) RuntimeValue {
+	if _, ok := ty.(*types.IntLiteral); ok {
+		return MakeInteger(int(fl.Value))
+	}
+	return fl
 }
 
 type StringLiteral struct {
