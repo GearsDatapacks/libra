@@ -15,10 +15,10 @@ import (
 func evaluateExpression(expr ast.Expression, manager *modules.ModuleManager) values.RuntimeValue {
 	switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return values.MakeInteger(expression.Value)
+		return values.MakeUntypedNumber(float64(expression.Value), false)
 
 	case *ast.FloatLiteral:
-		return values.MakeFloat(expression.Value)
+		return values.MakeUntypedNumber(expression.Value, true)
 
 	case *ast.StringLiteral:
 		return values.MakeString(expression.Value)
@@ -94,7 +94,8 @@ func evaluateAssignmentExpression(assignment *ast.AssignmentExpression, manager 
 
 	switch assignee := assignment.Assignee.(type) {
 	case *ast.Identifier:
-		return manager.Env.AssignVariable(assignee.Symbol, value)
+		leftValue := manager.Env.GetVariable(assignee.Symbol)
+		return manager.Env.AssignVariable(assignee.Symbol, leftValue.Type(), value)
 
 	case *ast.IndexExpression:
 		leftValue := evaluateExpression(assignee.Left, manager)
@@ -133,11 +134,11 @@ func evaluateFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager
 
 	for i, param := range function.Parameters {
 		arg := evaluateExpression(call.Args[i], manager)
-		scope.DeclareVariable(param, arg)
+		scope.DeclareVariable(param.Name, param.Type, arg)
 	}
 
 	if function.This != nil {
-		scope.DeclareVariable("this", function.This)
+		scope.DeclareVariable("this", function.This.Type(), function.This)
 	}
 
 	mod.EnterEnv(scope)

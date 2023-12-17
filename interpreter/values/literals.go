@@ -10,6 +10,54 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
+type UntypedNumber struct {
+	BaseValue
+	Value float64
+}
+
+func MakeUntypedNumber(value float64, isFloat bool) *UntypedNumber {
+	isIntAssignable := value == float64(int64(value))
+	var defaultType types.ValidType = &types.IntLiteral{}
+	if isFloat {
+		defaultType = &types.FloatLiteral{}
+	}
+	return &UntypedNumber{Value: value, BaseValue: BaseValue{DataType: &types.UntypedNumber{
+		Default:         defaultType,
+		IsIntAssignable: isIntAssignable,
+	}}}
+}
+
+// func (un *UntypedNumber) Type() ValueType {
+// return "number"
+// }
+
+func (un *UntypedNumber) ToString() string {
+	return fmt.Sprint(un.Value)
+}
+
+func (un *UntypedNumber) Truthy() bool {
+	return un.Value != 0
+}
+
+func (un *UntypedNumber) EqualTo(value RuntimeValue) bool {
+	number, ok := value.(*UntypedNumber)
+
+	return ok && number.Value == un.Value
+}
+
+func (un *UntypedNumber) AutoCast(ty types.ValidType) RuntimeValue {
+	return un.castTo(ty)
+}
+
+func (un *UntypedNumber) castTo(ty types.ValidType) RuntimeValue {
+	if _, ok := ty.(*types.FloatLiteral); ok {
+		return MakeFloat(un.Value)
+	}
+	if _, ok := ty.(*types.IntLiteral); ok {
+		return MakeInteger(int(un.Value))
+	}
+	return un
+}
 type IntegerLiteral struct {
 	BaseValue
 	Value int
@@ -303,10 +351,16 @@ func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) 
 	return value
 }
 
+type Parameter struct {
+	Name string
+	Type types.ValidType
+}
+
+
 type FunctionValue struct {
 	BaseValue
 	Name                   string
-	Parameters             []string
+	Parameters             []Parameter
 	Env any
 	Manager any
 	Body                   []ast.Statement
@@ -320,7 +374,12 @@ type FunctionValue struct {
 func (fn *FunctionValue) ToString() string {
 	result := "fn ("
 
-	result += strings.Join(fn.Parameters, ", ")
+	for i, param := range fn.Parameters {
+		if i != 0 {
+			result += ", "
+		}
+		result += param.Name
+	}
 	result += ") {"
 
 	for _, statement := range fn.Body {

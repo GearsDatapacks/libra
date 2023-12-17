@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/interpreter/environment"
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/type_checker/types"
@@ -66,17 +67,58 @@ func modulo(a, b float64) float64 {
 	return a
 }
 
+type numericType int
+
+const (
+	INT numericType = iota
+	FLOAT
+	UNTYPED
+)
+
+func extractNumericValue(val values.RuntimeValue) float64 {
+	if intVal, isInt := val.(*values.IntegerLiteral); isInt {
+		return float64(intVal.Value)
+	}
+
+	if floatVal, isFloat := val.(*values.FloatLiteral); isFloat {
+		return floatVal.Value
+	}
+
+	if untypedVal, isUntyped := val.(*values.UntypedNumber); isUntyped {
+		return untypedVal.Value
+	}
+
+	errors.DevError(fmt.Sprintf("Type %T is not numeric", val))
+	return 0.0
+}
+
+func is[T values.RuntimeValue](a values.RuntimeValue) bool {
+	_, ok := a.(T)
+	return ok
+}
+
+func numericOperator(a, b values.RuntimeValue, op func(float64, float64) float64) values.RuntimeValue {
+	aVal := extractNumericValue(a)
+	bVal := extractNumericValue(b)
+
+	result := op(aVal, bVal)
+
+	if is[*values.FloatLiteral](a) || is[*values.FloatLiteral](b) {
+		return values.MakeFloat(result)
+	}
+
+	if is[*values.UntypedNumber](a) || is[*values.UntypedNumber](b) {
+		isFloat := result == float64(int(result))
+		return values.MakeUntypedNumber(result, isFloat)
+	}
+
+	return values.MakeInteger(int(result))
+}
+
 func registerOperators() {
 	RegisterBinaryOperator(
 		"+",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			aInt, isAInt := a.(*values.IntegerLiteral)
-			bInt, isBInt := b.(*values.IntegerLiteral)
-
-			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value + bInt.Value)
-			}
-
 			aString, isAString := a.(*values.StringLiteral)
 			bString, isBString := b.(*values.StringLiteral)
 
@@ -84,80 +126,21 @@ func registerOperators() {
 				return values.MakeString(aString.Value + bString.Value)
 			}
 
-			var valueA float64
-			var valueB float64
-
-			if isAInt {
-				valueA = float64(aInt.Value)
-			} else {
-				valueA = a.(*values.FloatLiteral).Value
-			}
-
-			if isBInt {
-				valueB = float64(bInt.Value)
-			} else {
-				valueB = b.(*values.FloatLiteral).Value
-			}
-
-			return values.MakeFloat(valueA + valueB)
+			return numericOperator(a, b, func(a, b float64) float64 { return a + b })
 		},
 	)
 
 	RegisterBinaryOperator(
 		"-",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			aInt, isAInt := a.(*values.IntegerLiteral)
-			bInt, isBInt := b.(*values.IntegerLiteral)
-
-			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value - bInt.Value)
-			}
-
-			var valueA float64
-			var valueB float64
-
-			if isAInt {
-				valueA = float64(aInt.Value)
-			} else {
-				valueA = a.(*values.FloatLiteral).Value
-			}
-
-			if isBInt {
-				valueB = float64(bInt.Value)
-			} else {
-				valueB = b.(*values.FloatLiteral).Value
-			}
-
-			return values.MakeFloat(valueA - valueB)
+			return numericOperator(a, b, func(a, b float64) float64 { return a - b })
 		},
 	)
 
 	RegisterBinaryOperator(
 		"*",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			aInt, isAInt := a.(*values.IntegerLiteral)
-			bInt, isBInt := b.(*values.IntegerLiteral)
-
-			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value * bInt.Value)
-			}
-
-			var valueA float64
-			var valueB float64
-
-			if isAInt {
-				valueA = float64(aInt.Value)
-			} else {
-				valueA = a.(*values.FloatLiteral).Value
-			}
-
-			if isBInt {
-				valueB = float64(bInt.Value)
-			} else {
-				valueB = b.(*values.FloatLiteral).Value
-			}
-
-			return values.MakeFloat(valueA * valueB)
+			return numericOperator(a, b, func(a, b float64) float64 { return a * b })
 		},
 	)
 
@@ -207,29 +190,7 @@ func registerOperators() {
 	RegisterBinaryOperator(
 		"%",
 		func(a, b values.RuntimeValue) values.RuntimeValue {
-			aInt, isAInt := a.(*values.IntegerLiteral)
-			bInt, isBInt := b.(*values.IntegerLiteral)
-
-			if isAInt && isBInt {
-				return values.MakeInteger(aInt.Value % bInt.Value)
-			}
-
-			var valueA float64
-			var valueB float64
-
-			if isAInt {
-				valueA = float64(aInt.Value)
-			} else {
-				valueA = a.(*values.FloatLiteral).Value
-			}
-
-			if isBInt {
-				valueB = float64(bInt.Value)
-			} else {
-				valueB = b.(*values.FloatLiteral).Value
-			}
-
-			return values.MakeFloat(modulo(valueA, valueB))
+			return numericOperator(a, b, func(a, b float64) float64 { return modulo(a, b) })
 		},
 	)
 

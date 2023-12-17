@@ -22,16 +22,18 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, manager *modul
 		value = evaluateExpression(varDec.Value, manager)
 	}
 
-	return manager.Env.DeclareVariable(varDec.Name, value)
+	return manager.Env.DeclareVariable(varDec.Name, types.FromAst(varDec.DataType, manager.SymbolTable), value)
 }
 
 func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
-	params := []string{}
+	params := []values.Parameter{}
 	paramTypes := []types.ValidType{}
 
 	for _, param := range funcDec.Parameters {
-		params = append(params, param.Name)
-		paramTypes = append(paramTypes, typechecker.TypeCheckType(param.Type, manager))
+		params = append(params, values.Parameter{
+			Name:  param.Name,
+			Type:  types.FromAst(param.Type, manager.SymbolTable),
+		})
 	}
 	returnType := typechecker.TypeCheckType(funcDec.ReturnType, manager)
 
@@ -62,7 +64,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 		if funcDec.IsExport() {
 			manager.Env.GlobalScope().Exports[fn.Name] = fn
 		}
-		return manager.Env.DeclareVariable(funcDec.Name, fn)
+		return manager.Env.DeclareVariable(funcDec.Name, fn.Type(), fn)
 	}
 }
 
@@ -155,9 +157,15 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 	importedMod := &values.Module{
 		Name:    mod.Name,
 		Exports: mod.Env.Exports,
+		BaseValue: values.BaseValue{
+			DataType: &types.Module{
+				Name: mod.Name,
+				Exports: mod.SymbolTable.Exports,
+			},
+		},
 	}
 
-	manager.Env.DeclareVariable(mod.Name, importedMod)
+	manager.Env.DeclareVariable(mod.Name, importedMod.DataType, importedMod)
 	return importedMod
 }
 

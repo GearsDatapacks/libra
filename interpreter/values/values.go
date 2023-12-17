@@ -62,6 +62,11 @@ func Cast(value RuntimeValue, ty types.ValidType) RuntimeValue {
 	return value
 }
 
+type AutoCastable interface {
+	AutoCast(types.ValidType) RuntimeValue
+}
+
+
 // func MakeValue(v any) RuntimeValue {
 // 	switch value := v.(type) {
 // 	case int:

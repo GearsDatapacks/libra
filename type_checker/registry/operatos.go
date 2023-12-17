@@ -51,7 +51,18 @@ func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
 		return floatType
 	}
 
-	return intType
+	if leftType.Valid(untypedNumberType) {
+		untyped, _ := leftType.(*types.UntypedNumber)
+		if !untyped.IsIntAssignable {
+			return leftType
+		}
+	}
+
+	if rightType.Valid(untypedNumberType) {
+		return rightType 
+	}
+
+	return leftType
 }
 
 func plusOperator(leftType, rightType types.ValidType) types.ValidType {
@@ -67,11 +78,7 @@ func powerOperator(leftType, rightType types.ValidType) types.ValidType {
 		return nil
 	}
 
-	if leftType.Valid(floatType) {
-		return floatType
-	}
-
-	return intType
+	return leftType
 }
 
 func logicalOperator(leftType, rightType types.ValidType) types.ValidType {

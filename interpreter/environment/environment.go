@@ -48,18 +48,23 @@ func NewChild(parent *Environment, kind scopeKind) *Environment {
 	}
 }
 
-func (env *Environment) DeclareVariable(name string, value values.RuntimeValue) values.RuntimeValue {
-	value.SetVarname(name)
-	env.variables[name] = value
-
-	return value
+func (env *Environment) DeclareVariable(name string, varType types.ValidType, value values.RuntimeValue) values.RuntimeValue {
+	return env.setVariable(name, varType, value)
 }
 
-func (env *Environment) AssignVariable(name string, value values.RuntimeValue) values.RuntimeValue {
+func (env *Environment) AssignVariable(name string, varType types.ValidType, value values.RuntimeValue) values.RuntimeValue {
 	declaredenvironment := env.resolve(name)
 
+	return declaredenvironment.setVariable(name, varType, value)
+}
+
+func (env *Environment) setVariable(name string, varType types.ValidType, value values.RuntimeValue) values.RuntimeValue {
+	if castable, ok := value.(values.AutoCastable); ok {
+		value = castable.AutoCast(varType)
+	}
+	
+	env.variables[name] = value
 	value.SetVarname(name)
-	declaredenvironment.variables[name] = value
 	return value
 }
 
