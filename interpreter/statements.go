@@ -22,7 +22,7 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, manager *modul
 		value = evaluateExpression(varDec.Value, manager)
 	}
 
-	return manager.Env.DeclareVariable(varDec.Name, types.FromAst(varDec.DataType, manager.SymbolTable), value)
+	return manager.Env.DeclareVariable(varDec.Name, typechecker.TypeCheckType(varDec.DataType, manager), value)
 }
 
 func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
@@ -32,7 +32,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 	for _, param := range funcDec.Parameters {
 		params = append(params, values.Parameter{
 			Name:  param.Name,
-			Type:  types.FromAst(param.Type, manager.SymbolTable),
+			Type:  typechecker.TypeCheckType(param.Type, manager),
 		})
 	}
 	returnType := typechecker.TypeCheckType(funcDec.ReturnType, manager)
