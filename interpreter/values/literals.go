@@ -252,7 +252,8 @@ func (list *ListLiteral) Truthy() bool {
 }
 
 func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
-	index := indexValue.(*IntegerLiteral).Value
+	
+	index := Expect(indexValue, &types.IntLiteral{}).(*IntegerLiteral).Value
 	indexSize := index
 	// negative indexing
 	if index < 0 {

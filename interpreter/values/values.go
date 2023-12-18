@@ -66,6 +66,13 @@ type AutoCastable interface {
 	AutoCast(types.ValidType) RuntimeValue
 }
 
+func Expect(value RuntimeValue, ty types.ValidType) RuntimeValue {
+	if cast, ok := value.(AutoCastable); ok {
+		return cast.AutoCast(ty)
+	}
+
+	return value
+}
 
 // func MakeValue(v any) RuntimeValue {
 // 	switch value := v.(type) {
