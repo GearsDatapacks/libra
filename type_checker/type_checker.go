@@ -13,11 +13,11 @@ func TypeCheck(manager *modules.ModuleManager) error {
 	if err != nil {
 		return err
 	}
-	err = typeCheckGlobalStatements(manager)
+	err = typeCheckImportStatements(manager)
 	if err != nil {
 		return err
 	}
-	err = typeCheckImportStatements(manager)
+	err = typeCheckGlobalStatements(manager)
 	if err != nil {
 		return err
 	}
@@ -31,8 +31,8 @@ func TypeCheck(manager *modules.ModuleManager) error {
 
 const (
 	REGISTER = iota
-	GLOBAL
 	IMPORT
+	GLOBAL
 	FUNCTION
 	STATEMENT
 )
@@ -44,7 +44,10 @@ func typeCheck(manager *modules.ModuleManager) error {
 	manager.TypeCheckStage++
 
 	for _, mod := range manager.Imported {
-		typeCheck(mod)
+		err := typeCheck(mod)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, file := range manager.Files {
@@ -65,7 +68,10 @@ func registerStatements(manager *modules.ModuleManager) error {
 	manager.TypeCheckStage++
 
 	for _, mod := range manager.Imported {
-		registerStatements(mod)
+		err := registerStatements(mod)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, file := range manager.Files {
@@ -86,7 +92,10 @@ func typeCheckGlobalStatements(manager *modules.ModuleManager) error {
 	manager.TypeCheckStage++
 
 	for _, mod := range manager.Imported {
-		typeCheckGlobalStatements(mod)
+		err := typeCheckGlobalStatements(mod)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, file := range manager.Files {
@@ -107,7 +116,10 @@ func typeCheckImportStatements(manager *modules.ModuleManager) error {
 	manager.TypeCheckStage++
 
 	for _, mod := range manager.Imported {
-		typeCheckImportStatements(mod)
+		err := typeCheckImportStatements(mod)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, file := range manager.Files {
@@ -130,7 +142,10 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 	manager.TypeCheckStage++
 
 	for _, mod := range manager.Imported {
-		typeCheckFunctions(mod)
+		err := typeCheckFunctions(mod)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, file := range manager.Files {
