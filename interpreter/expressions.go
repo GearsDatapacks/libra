@@ -127,6 +127,11 @@ func evaluateFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager
 		}
 	}
 
+	ty := typechecker.TypeCheckTypeExpression(call.Left, manager)
+	if structType, isStruct := ty.(*types.TupleStruct); isStruct {
+		return evaluateTupleStructExpression(structType, call, manager)
+	}
+
 	function := evaluateExpression(call.Left, manager).(*values.FunctionValue)
 	declarationEnv := function.Env.(*environment.Environment)
 	mod := function.Manager.(*modules.ModuleManager)

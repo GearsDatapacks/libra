@@ -198,13 +198,14 @@ func typeCheckFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManage
 		}
 	}
 
+	ty := TypeCheckTypeExpression(call.Left, manager)
+	if structType, isStruct := ty.(*types.TupleStruct); isStruct {
+		return typeCheckTupleStructExpression(structType, call, manager)
+	}
+
 	callVar := typeCheckExpression(call.Left, manager)
 	if callVar.String() == "TypeError" {
 		return callVar
-	}
-
-	if structType, isStruct := callVar.(*types.TupleStruct); isStruct {
-		return typeCheckTupleStructExpression(structType, call, manager)
 	}
 
 	function, ok := callVar.(*types.Function)
