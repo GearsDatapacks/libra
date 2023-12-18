@@ -30,7 +30,12 @@ func (n *UntypedNumber) ToReal() ValidType {
 
 type IntLiteral struct{ BaseType }
 
-func (i *IntLiteral) Valid(t ValidType) bool { return isA[*IntLiteral](t) }
+func (i *IntLiteral) Valid(t ValidType) bool {
+	if untyped, ok := t.(*UntypedNumber); ok {
+		return untyped.IsIntAssignable
+	}
+	return isA[*IntLiteral](t)
+}
 func (i *IntLiteral) String() string         { return "int" }
 func (i *IntLiteral) Infer(dataType ValidType) (ValidType, bool) {
 	if n, ok := dataType.(*UntypedNumber); ok {
@@ -44,7 +49,12 @@ func (i *IntLiteral) CanCast(t ValidType) bool { return i.Valid(t) || (&FloatLit
 type FloatLiteral struct{ BaseType }
 
 func (f *FloatLiteral) String() string           { return "float" }
-func (f *FloatLiteral) Valid(t ValidType) bool   { return isA[*FloatLiteral](t) }
+func (f *FloatLiteral) Valid(t ValidType) bool   { 
+	if _, ok := t.(*UntypedNumber); ok {
+		return true
+	}
+	return isA[*FloatLiteral](t)
+}
 func (f *FloatLiteral) Infer(dataType ValidType) (ValidType, bool) {
 	if _, ok := dataType.(*UntypedNumber); ok {
 		return f, true
