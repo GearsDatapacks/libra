@@ -397,7 +397,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, manager *module
 		return types.Error("Struct expression incompatiable with type", structExpr)
 	}
 
-	return instanceType
+	return structType 
 }
 
 func typeCheckTuple(tuple *ast.TupleExpression, manager *modules.ModuleManager) types.ValidType {
