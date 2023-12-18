@@ -281,8 +281,13 @@ func typeCheckList(list *ast.ListLiteral, manager *modules.ModuleManager) types.
 		}
 	}
 
+	var elemType types.ValidType = &types.Infer{}
+	if len(list.Elements) != 0 {
+		elemType = types.MakeUnion(listTypes...)
+	}
+
 	return &types.ArrayLiteral{
-		ElemType: types.MakeUnion(listTypes...),
+		ElemType: elemType,
 		Length:   len(list.Elements),
 		CanInfer: true,
 	}
