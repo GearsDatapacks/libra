@@ -386,10 +386,6 @@ func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, manager *modu
 		structType.Members[memberName] = dataType
 	}
 
-	if structDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = &types.Type{DataType: structType}
-	}
-
 	return structType
 }
 
@@ -403,10 +399,6 @@ func typeCheckTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, man
 		}
 
 		structType.Members = append(structType.Members, dataType)
-	}
-
-	if structDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[structDecl.Name] = &types.Type{DataType: structType}
 	}
 
 	return structType
@@ -448,10 +440,6 @@ func typeCheckInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *m
 		interfaceType.Members[member.Name] = fnType
 	}
 
-	if intDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[intDecl.Name] = &types.Type{DataType: interfaceType}
-	}
-
 	return interfaceType
 }
 
@@ -464,10 +452,6 @@ func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Mod
 	err := manager.SymbolTable.UpdateType(typeDecl.Name, dataType)
 	if err != nil {
 		return err
-	}
-
-	if typeDecl.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[typeDecl.Name] = &types.Type{DataType: dataType}
 	}
 
 	return dataType
@@ -486,6 +470,10 @@ func registerStructDeclaration(structDecl *ast.StructDeclaration, manager *modul
 		return err
 	}
 
+	if structDecl.IsExport() {
+		manager.SymbolTable.Exports[structDecl.Name] = &types.Type{DataType: structType}
+	}
+
 	return structType
 }
 
@@ -500,6 +488,10 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	err := manager.SymbolTable.AddType(structDecl.Name, structType)
 	if err != nil {
 		return err
+	}
+
+	if structDecl.IsExport() {
+		manager.SymbolTable.Exports[structDecl.Name] = &types.Type{DataType: structType}
 	}
 
 	return structType
@@ -517,6 +509,10 @@ func registerInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *mo
 		return err
 	}
 
+	if intDecl.IsExport() {
+		manager.SymbolTable.Exports[intDecl.Name] = &types.Type{DataType: interfaceType}
+	}
+
 	return interfaceType
 }
 
@@ -525,6 +521,9 @@ func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Modu
 	err := manager.SymbolTable.AddType(typeDecl.Name, dataType)
 	if err != nil {
 		return err
+	}
+	if typeDecl.IsExport() {
+		manager.SymbolTable.Exports[typeDecl.Name] = &types.Type{DataType: dataType}
 	}
 	return dataType
 }
@@ -536,11 +535,27 @@ func typeCheckImportStatement(importStatement *ast.ImportStatement, manager *mod
 		return types.Error(fmt.Sprintf("Cannot import module %q, it does not exist", modPath), importStatement)
 	}
 
+	if importStatement.ImportAll {
+		for name, symbol := range mod.SymbolTable.Exports {
+			if ty, ok := symbol.(*types.Type); ok {
+				manager.SymbolTable.AddType(name, ty.DataType)
+				continue
+			}
+			manager.SymbolTable.RegisterSymbol(name, symbol, true)
+		}
+		return &types.Void{}
+	}
+
+	name := mod.Name
+	if importStatement.Alias != "" {
+		name = importStatement.Alias
+	}
+
 	importedMod := &types.Module{
-		Name:    mod.Name,
+		Name:    name,
 		Exports: mod.SymbolTable.Exports,
 	}
 
-	manager.SymbolTable.RegisterSymbol(mod.Name, importedMod, true)
+	manager.SymbolTable.RegisterSymbol(name, importedMod, true)
 	return importedMod
 }

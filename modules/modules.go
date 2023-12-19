@@ -65,7 +65,7 @@ func Get(file string) ([]Module, error) {
 		}
 		mod, err := modFromFile(path.Join(file, entry.Name()))
 		if err != nil {
-			continue
+			return nil, err
 		}
 		mods = append(mods, *mod)
 	}

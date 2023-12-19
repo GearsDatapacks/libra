@@ -488,15 +488,41 @@ func (p *parser) parseTypeDeclaration() (ast.Statement, error) {
 
 func (p *parser) parseImportStatement() (ast.Statement, error) {
 	tok := p.consume()
+	importAll := false
+
+	if p.next().Type == token.STAR {
+		importAll = true
+		p.consume()
+		_, err := p.expectKeyword("from", "Expected from keyword after `import *`")
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	mod, err := p.expect(token.STRING, "Invalid import module %q")
 	if err != nil {
 		return nil, err
 	}
 
+	alias := ""
+	if p.isKeyword("as") {
+		if importAll {
+			return nil, p.error("Cannot use alias import in conjunction with importing all items", p.next())
+		}
+
+		p.consume()
+		name, err := p.expect(token.IDENTIFIER, "Expected import alias")
+		if err != nil {
+			return nil, err
+		}
+		alias = name.Value
+	}
+
 	return &ast.ImportStatement{
-		BaseNode:      ast.BaseNode{Token: tok},
-		Module:        mod.Value,
+		BaseNode:  ast.BaseNode{Token: tok},
+		Module:    mod.Value,
+		ImportAll: importAll,
+		Alias:     alias,
 	}, nil
 }
 

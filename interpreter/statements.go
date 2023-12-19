@@ -154,18 +154,30 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 	modPath := importStatement.Module
 	mod := manager.Imported[modPath]
 
+	if importStatement.ImportAll {
+		for name, variable := range mod.Env.Exports {
+			manager.Env.DeclareVariable(name, variable.Type(), variable)
+		}
+		return values.MakeNull()
+	}
+
+	name := mod.Name
+	if importStatement.Alias != "" {
+		name = importStatement.Alias
+	}
+
 	importedMod := &values.Module{
-		Name:    mod.Name,
+		Name:    name,
 		Exports: mod.Env.Exports,
 		BaseValue: values.BaseValue{
 			DataType: &types.Module{
-				Name: mod.Name,
+				Name: name,
 				Exports: mod.SymbolTable.Exports,
 			},
 		},
 	}
 
-	manager.Env.DeclareVariable(mod.Name, importedMod.DataType, importedMod)
+	manager.Env.DeclareVariable(name, importedMod.DataType, importedMod)
 	return importedMod
 }
 

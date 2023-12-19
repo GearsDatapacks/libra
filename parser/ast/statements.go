@@ -324,10 +324,18 @@ type ImportStatement struct {
 	BaseNode
 	BaseStatement
 	Module string
+	Alias  string
+	ImportAll bool
 }
 
 func (*ImportStatement) Type() NodeType { return "ImportStatement" }
 
 func (imp *ImportStatement) String() string {
+	if imp.ImportAll {
+		return "import * from \"" + imp.Module + "\""
+	}
+	if imp.Alias != "" {
+		return "import \"" + imp.Module + "\" as " + imp.Alias
+	}
 	return "import \"" + imp.Module + "\""
 }

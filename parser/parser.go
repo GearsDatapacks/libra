@@ -55,14 +55,17 @@ func (p *parser) isKeyword(keyword string) bool {
 	return isKeyword && notUsed
 }
 
-/*
-func (p *parser) expectKeyword(keyword string, fString string) token.Token {
-	if !p.isKeyword(keyword) {
-		log.Fatalf(fString, p.next().Value)
-	}
 
-	return p.consume()
-} */
+func (p *parser) expectKeyword(keyword string, fString string) (token.Token, error) {
+	if p.isKeyword(keyword) {
+		return p.consume(), nil
+	}
+	
+	if strings.Contains(fString, "%") {
+		fString = fmt.Sprintf(fString, p.next().Value)
+	}
+	return p.next(), p.error(fString, p.next())
+}
 
 // Only continue parsing if there is not a newline, or we're in an expression
 func (p *parser) canContinue() bool {
