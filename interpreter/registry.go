@@ -415,9 +415,9 @@ func registerBuiltins() {
 	builtins["print"] = print
 	builtins["printil"] = printil
 	builtins["prompt"] = prompt
-	builtins["toString"] = toString
-	builtins["parseInt"] = parseInt
-	builtins["parseFloat"] = parseFloat
-	builtins["readFile"] = readFile
-	builtins["writeFile"] = writeFile
+	builtins["to_string"] = to_string
+	builtins["parse_int"] = parse_int
+	builtins["parse_float"] = parse_float
+	builtins["read_file"] = read_file
+	builtins["write_file"] = write_file
 }

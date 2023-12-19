@@ -42,33 +42,33 @@ func prompt(args []values.RuntimeValue, env *environment.Environment) values.Run
 	return values.MakeString(string(result))
 }
 
-func toString(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+func to_string(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	return values.MakeString(args[0].ToString())
 }
 
-func parseInt(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+func parse_int(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	stringValue := args[0].(*values.StringLiteral).Value
 	intValue, err := strconv.ParseInt(stringValue, 10, 32)
 
 	if err != nil {
-		return values.MakeError(fmt.Sprintf("parseInt: Invalid integer syntax: %q", stringValue))
+		return values.MakeError(fmt.Sprintf("parse_int: Invalid integer syntax: %q", stringValue))
 	}
 
 	return values.MakeInteger(int(intValue))
 }
 
-func parseFloat(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+func parse_float(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	stringValue := args[0].(*values.StringLiteral).Value
 	floatValue, err := strconv.ParseFloat(stringValue, 32)
 
 	if err != nil {
-		return values.MakeError(fmt.Sprintf("parseFloat: Invalid float syntax: %q", stringValue))
+		return values.MakeError(fmt.Sprintf("parse_float: Invalid float syntax: %q", stringValue))
 	}
 
 	return values.MakeFloat(floatValue)
 }
 
-func readFile(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+func read_file(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	fileName := args[0].(*values.StringLiteral).Value
 	file, err := os.ReadFile(fileName)
 	if err != nil {
@@ -78,7 +78,7 @@ func readFile(args []values.RuntimeValue, env *environment.Environment) values.R
 	return values.MakeString(string(file))
 }
 
-func writeFile(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
+func write_file(args []values.RuntimeValue, env *environment.Environment) values.RuntimeValue {
 	fileName := args[0].(*values.StringLiteral).Value
 	contents := args[1].(*values.StringLiteral).Value
 	err := os.WriteFile(fileName, []byte(contents), 0666)
