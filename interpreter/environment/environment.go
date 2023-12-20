@@ -61,6 +61,8 @@ func (env *Environment) AssignVariable(name string, varType types.ValidType, val
 func (env *Environment) setVariable(name string, varType types.ValidType, value values.RuntimeValue) values.RuntimeValue {
 	if castable, ok := value.(values.AutoCastable); ok {
 		value = castable.AutoCast(varType)
+	} else {
+		value = value.Copy()
 	}
 	
 	env.variables[name] = value

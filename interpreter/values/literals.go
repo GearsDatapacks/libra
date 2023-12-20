@@ -58,6 +58,12 @@ func (un *UntypedNumber) castTo(ty types.ValidType) RuntimeValue {
 	}
 	return un
 }
+
+func (un *UntypedNumber) Copy() RuntimeValue {
+	temp := *un
+	return &temp
+}
+
 type IntegerLiteral struct {
 	BaseValue
 	Value int
@@ -90,6 +96,11 @@ func (il *IntegerLiteral) castTo(ty types.ValidType) RuntimeValue {
 		return MakeFloat(float64(il.Value))
 	}
 	return il
+}
+
+func (il *IntegerLiteral) Copy() RuntimeValue {
+	temp := *il
+	return &temp
 }
 
 type FloatLiteral struct {
@@ -126,6 +137,11 @@ func (fl *FloatLiteral) castTo(ty types.ValidType) RuntimeValue {
 	return fl
 }
 
+func (fl *FloatLiteral) Copy() RuntimeValue {
+	temp := *fl
+	return &temp
+}
+
 type StringLiteral struct {
 	BaseValue
 	Value string
@@ -153,6 +169,11 @@ func (str *StringLiteral) EqualTo(value RuntimeValue) bool {
 	return ok && s.Value == str.Value
 }
 
+func (str *StringLiteral) Copy() RuntimeValue {
+	temp := *str
+	return &temp
+}
+
 type NullLiteral struct {
 	BaseValue
 }
@@ -176,6 +197,11 @@ func (nl *NullLiteral) Truthy() bool {
 func (nl *NullLiteral) EqualTo(value RuntimeValue) bool {
 	_, ok := value.(*NullLiteral)
 	return ok
+}
+
+func (nl *NullLiteral) Copy() RuntimeValue {
+	temp := *nl
+	return &temp
 }
 
 type BooleanLiteral struct {
@@ -203,6 +229,11 @@ func (bl *BooleanLiteral) EqualTo(value RuntimeValue) bool {
 	boolean, ok := value.(*BooleanLiteral)
 
 	return ok && boolean.Value == bl.Value
+}
+
+func (bl *BooleanLiteral) Copy() RuntimeValue {
+	temp := *bl
+	return &temp
 }
 
 type ListLiteral struct {
@@ -252,7 +283,7 @@ func (list *ListLiteral) Truthy() bool {
 }
 
 func (list *ListLiteral) Index(indexValue RuntimeValue) RuntimeValue {
-	
+
 	index := Expect(indexValue, &types.IntLiteral{}).(*IntegerLiteral).Value
 	indexSize := index
 	// negative indexing
@@ -287,6 +318,17 @@ func (list *ListLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) R
 	}
 	list.Elements[index] = value
 	return value
+}
+
+func (list *ListLiteral) Copy() RuntimeValue {
+	elements := []RuntimeValue{}
+	for _, elem := range list.Elements {
+		elements = append(elements, elem.Copy())
+	}
+	return &ListLiteral{
+		Elements:  elements,
+		BaseValue: list.BaseValue,
+	}
 }
 
 type MapLiteral struct {
@@ -352,20 +394,30 @@ func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) 
 	return value
 }
 
+func (maplit *MapLiteral) Copy() RuntimeValue {
+	elements := map[RuntimeValue]RuntimeValue{}
+	for key, value := range maplit.Elements {
+		elements[key] = value.Copy()
+	}
+	return &MapLiteral{
+		Elements:  elements,
+		BaseValue: maplit.BaseValue,
+	}
+}
+
 type Parameter struct {
 	Name string
 	Type types.ValidType
 }
 
-
 type FunctionValue struct {
 	BaseValue
-	Name                   string
-	Parameters             []Parameter
-	Env any
-	Manager any
-	Body                   []ast.Statement
-	This                   RuntimeValue
+	Name       string
+	Parameters []Parameter
+	Env        any
+	Manager    any
+	Body       []ast.Statement
+	This       RuntimeValue
 }
 
 // func (fn *FunctionValue) Type() ValueType {
@@ -402,6 +454,11 @@ func (fn *FunctionValue) EqualTo(value RuntimeValue) bool {
 	function, ok := value.(*FunctionValue)
 
 	return ok && function.Name == fn.Name
+}
+
+func (fn *FunctionValue) Copy() RuntimeValue {
+	temp := *fn
+	return &temp
 }
 
 type StructLiteral struct {
@@ -468,6 +525,19 @@ func (sl *StructLiteral) SetMember(member string, value RuntimeValue) RuntimeVal
 	return value
 }
 
+func (sl *StructLiteral) Copy() RuntimeValue {
+	members := map[string]RuntimeValue{}
+	for name, member := range sl.Members {
+		members[name] = member.Copy()
+	}
+
+	return &StructLiteral{
+		BaseValue: sl.BaseValue,
+		Name:      sl.Name,
+		Members:   members,
+	}
+}
+
 type TupleValue struct {
 	BaseValue
 	Members []RuntimeValue
@@ -524,6 +594,17 @@ func (tv *TupleValue) SetMember(member string, value RuntimeValue) RuntimeValue 
 	tv.Members[number] = value
 
 	return value
+}
+
+func (tv *TupleValue) Copy() RuntimeValue {
+	members := []RuntimeValue{}
+	for _, member := range tv.Members {
+		members = append(members, member.Copy())
+	}
+	return &TupleValue{
+		Members:   members,
+		BaseValue: tv.BaseValue,
+	}
 }
 
 type TupleStructValue struct {
@@ -585,6 +666,18 @@ func (tv *TupleStructValue) SetMember(member string, value RuntimeValue) Runtime
 	return value
 }
 
+func (tv *TupleStructValue) Copy() RuntimeValue {
+	members := []RuntimeValue{}
+	for _, member := range tv.Members {
+		members = append(members, member.Copy())
+	}
+	return &TupleStructValue{
+		BaseValue: tv.BaseValue,
+		Name:      tv.Name,
+		Members:   members,
+	}
+}
+
 type Error struct {
 	BaseValue
 	Msg string
@@ -600,6 +693,11 @@ func (sl *Error) Truthy() bool {
 
 func (*Error) EqualTo(value RuntimeValue) bool {
 	return true
+}
+
+func (e *Error) Copy() RuntimeValue {
+	temp := *e
+	return &temp
 }
 
 func MakeError(msg string) RuntimeValue {
@@ -628,4 +726,9 @@ func (*Module) EqualTo(value RuntimeValue) bool {
 
 func (m *Module) Member(member string) RuntimeValue {
 	return m.Exports[member]
+}
+
+func (m *Module) Copy() RuntimeValue {
+	temp := *m
+	return &temp
 }

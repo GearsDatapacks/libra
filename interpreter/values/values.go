@@ -16,6 +16,7 @@ type RuntimeValue interface {
 	Member(string) RuntimeValue
 	SetMember(member string, value RuntimeValue) RuntimeValue
 	Type() types.ValidType
+	Copy() RuntimeValue
 }
 
 type BaseValue struct {
