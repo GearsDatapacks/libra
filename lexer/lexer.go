@@ -8,12 +8,12 @@ import (
 )
 
 type lexer struct {
-	code   []byte
-	pos    int
+	code      []byte
+	pos       int
 	oldLine   int
 	oldColumn int
-	line   int
-	column int
+	line      int
+	column    int
 }
 
 func New(code []byte) *lexer {
@@ -58,14 +58,20 @@ func (l *lexer) parseToken() (token.Token, error) {
 
 	if isNumeric(nextChar) {
 		number := []rune{}
-		for !l.eof() && isNumeric(l.next()) {
-			number = append(number, l.consume())
+		for !l.eof() && isNumeric(l.next()) || l.next() == '_' {
+			if l.next() != '_' {
+				number = append(number, l.next())
+			}
+			l.consume()
 		}
 
-		if l.next() == '.' && isNumeric(rune(l.code[l.pos + 1])) {
+		if l.next() == '.' && isNumeric(rune(l.code[l.pos+1])) {
 			number = append(number, l.consume())
-			for !l.eof() && isNumeric(l.next()) {
-				number = append(number, l.consume())
+			for !l.eof() && isNumeric(l.next()) || l.next() == '_' {
+				if l.next() != '_' {
+					number = append(number, l.next())
+				}
+				l.consume()
 			}
 
 			return l.createToken(token.FLOAT, number, leadingNewline), nil
@@ -119,13 +125,13 @@ func (l *lexer) skip() bool {
 
 	for l.isSkippable() {
 		leadingNewline = l.skipWhitespace()
-		
+
 		if l.next() == '#' {
 			for !l.eof() && l.next() != '\n' {
 				l.consume()
 			}
 		}
-		
+
 		if l.startsWith("//") {
 			for !l.eof() && !l.startsWith("\\\\") {
 				l.consume()
@@ -174,7 +180,7 @@ func (l *lexer) createToken(tokenType token.Type, value []rune, leadingNewline b
 
 	l.oldLine = l.line
 	l.oldColumn = l.column
-	
+
 	return tok
 }
 
