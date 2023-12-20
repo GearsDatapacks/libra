@@ -499,6 +499,33 @@ func (p *parser) parseImportStatement() (ast.Statement, error) {
 		}
 	}
 
+	var importedSymbols []string
+	if p.next().Type == token.LEFT_BRACE {
+		if importAll {
+			return nil, p.error("Cannot list imported symbols and import all symbols", p.next())
+		}
+		p.consume()
+		importedSymbols = []string{}
+		for p.next().Type != token.RIGHT_BRACE {
+			symbol, err := p.expect(token.IDENTIFIER, "Invalid imported symbol name %q")
+			if err != nil {
+				return nil, err
+			}
+			importedSymbols = append(importedSymbols, symbol.Value)
+			if p.next().Type != token.RIGHT_BRACE {
+				_, err := p.expect(token.COMMA, "Expected comma or end of imported symbol list")
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		p.consume()
+		_, err := p.expectKeyword("from", "Expected from keyword after listing imported symbols")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	mod, err := p.expect(token.STRING, "Invalid import module %q")
 	if err != nil {
 		return nil, err
@@ -507,7 +534,10 @@ func (p *parser) parseImportStatement() (ast.Statement, error) {
 	alias := ""
 	if p.isKeyword("as") {
 		if importAll {
-			return nil, p.error("Cannot use alias import in conjunction with importing all items", p.next())
+			return nil, p.error("Cannot use alias import in conjunction with importing all symbols", p.next())
+		}
+		if importedSymbols != nil {
+			return nil, p.error("Cannot use alias import in conjunction with listing imported symbols", p.next())
 		}
 
 		p.consume()
@@ -523,7 +553,8 @@ func (p *parser) parseImportStatement() (ast.Statement, error) {
 		Module:    mod.Value,
 		ImportAll: importAll,
 		Alias:     alias,
-	}, nil
+		ImportedSymbols: importedSymbols,
+		}, nil
 }
 
 func (p *parser) parseExportStatement() (ast.Statement, error) {

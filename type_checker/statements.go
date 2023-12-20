@@ -546,6 +546,21 @@ func typeCheckImportStatement(importStatement *ast.ImportStatement, manager *mod
 		return &types.Void{}
 	}
 
+	if importStatement.ImportedSymbols != nil {
+		for _, symbol := range importStatement.ImportedSymbols {
+			export, ok := mod.SymbolTable.Exports[symbol]
+			if !ok {
+				return types.Error(fmt.Sprintf("Symbol %q is not exported from module %q", symbol, mod.Name), importStatement)
+			}
+			if ty, ok := export.(*types.Type); ok {
+				manager.SymbolTable.AddType(symbol, ty.DataType)
+				continue
+			}
+			manager.SymbolTable.RegisterSymbol(symbol, export, true)
+		}
+		return &types.Void{}
+	}
+
 	name := mod.Name
 	if importStatement.Alias != "" {
 		name = importStatement.Alias

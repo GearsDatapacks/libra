@@ -161,6 +161,15 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 		return values.MakeNull()
 	}
 
+	if importStatement.ImportedSymbols != nil {
+		for _, symbol := range importStatement.ImportedSymbols {
+			value, ok := mod.Env.Exports[symbol]
+			if ok {
+				manager.Env.DeclareVariable(symbol, value.Type(), value)
+			}
+		}
+	}
+
 	name := mod.Name
 	if importStatement.Alias != "" {
 		name = importStatement.Alias

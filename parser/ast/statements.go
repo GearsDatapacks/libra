@@ -1,5 +1,7 @@
 package ast
 
+import "strings"
+
 type BaseStatement struct {
 	Exported bool
 }
@@ -326,6 +328,7 @@ type ImportStatement struct {
 	Module string
 	Alias  string
 	ImportAll bool
+	ImportedSymbols []string
 }
 
 func (*ImportStatement) Type() NodeType { return "ImportStatement" }
@@ -336,6 +339,9 @@ func (imp *ImportStatement) String() string {
 	}
 	if imp.Alias != "" {
 		return "import \"" + imp.Module + "\" as " + imp.Alias
+	}
+	if imp.ImportedSymbols != nil {
+		return "import {" + strings.Join(imp.ImportedSymbols, ", ") + "} from \"" + imp.Module + "\""
 	}
 	return "import \"" + imp.Module + "\""
 }
