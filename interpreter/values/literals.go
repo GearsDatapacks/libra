@@ -325,6 +325,11 @@ func (list *ListLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) R
 }
 
 func (list *ListLiteral) Copy() RuntimeValue {
+	// Lists are passed by reference, arrays are passed by value
+	if _, isList := list.DataType.(*types.ListLiteral); isList {
+		return list
+	}
+
 	elements := []RuntimeValue{}
 	for _, elem := range list.Elements {
 		elements = append(elements, elem.Copy())
@@ -399,14 +404,15 @@ func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) 
 }
 
 func (maplit *MapLiteral) Copy() RuntimeValue {
-	elements := map[RuntimeValue]RuntimeValue{}
-	for key, value := range maplit.Elements {
-		elements[key] = value.Copy()
-	}
-	return &MapLiteral{
-		Elements:  elements,
-		BaseValue: maplit.BaseValue,
-	}
+	return maplit
+	// elements := map[RuntimeValue]RuntimeValue{}
+	// for key, value := range maplit.Elements {
+	// 	elements[key] = value.Copy()
+	// }
+	// return &MapLiteral{
+	// 	Elements:  elements,
+	// 	BaseValue: maplit.BaseValue,
+	// }
 }
 
 type Parameter struct {
@@ -461,8 +467,7 @@ func (fn *FunctionValue) EqualTo(value RuntimeValue) bool {
 }
 
 func (fn *FunctionValue) Copy() RuntimeValue {
-	temp := *fn
-	return &temp
+	return fn
 }
 
 type StructLiteral struct {
@@ -733,6 +738,5 @@ func (m *Module) Member(member string) RuntimeValue {
 }
 
 func (m *Module) Copy() RuntimeValue {
-	temp := *m
-	return &temp
+	return m
 }
