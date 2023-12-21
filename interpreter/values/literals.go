@@ -46,6 +46,10 @@ func (un *UntypedNumber) EqualTo(value RuntimeValue) bool {
 }
 
 func (un *UntypedNumber) AutoCast(ty types.ValidType) RuntimeValue {
+	if _, infer := ty.(*types.Infer); infer {
+		return un.castTo(un.DataType.(*types.UntypedNumber).Default)
+	}
+
 	return un.castTo(ty)
 }
 
