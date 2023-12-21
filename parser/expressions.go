@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -377,7 +378,18 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 	switch p.next().Type {
 	case token.INTEGER:
 		tok := p.consume()
-		value, _ := strconv.ParseInt(tok.Value, 10, 32)
+		numStr := tok.Value
+		radix := 10
+
+		if len(tok.Value) > 2 && tok.Value[0] == '0' {
+			r := lexer.GetRadix(rune(tok.Value[1]))
+			if r != -1 {
+				radix = int(r)
+				numStr = tok.Value[2:]
+			}
+		}
+
+		value, _ := strconv.ParseInt(numStr, radix, 32)
 		return &ast.IntegerLiteral{
 			Value:    int(value),
 			BaseNode: ast.BaseNode{Token: tok},

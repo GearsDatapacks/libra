@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -56,28 +57,8 @@ func (l *lexer) parseToken() (token.Token, error) {
 
 	nextChar := l.next()
 
-	if isNumeric(nextChar) {
-		number := []rune{}
-		for !l.eof() && isNumeric(l.next()) || l.next() == '_' {
-			if l.next() != '_' {
-				number = append(number, l.next())
-			}
-			l.consume()
-		}
-
-		if l.next() == '.' && isNumeric(rune(l.code[l.pos+1])) {
-			number = append(number, l.consume())
-			for !l.eof() && isNumeric(l.next()) || l.next() == '_' {
-				if l.next() != '_' {
-					number = append(number, l.next())
-				}
-				l.consume()
-			}
-
-			return l.createToken(token.FLOAT, number, leadingNewline), nil
-		}
-
-		return l.createToken(token.INTEGER, number, leadingNewline), nil
+	if isNumeric(nextChar, 10) {
+		return l.parseNumber(leadingNewline), nil
 	} else if sym, ok := l.parseSymbol(); ok {
 		sym.LeadingNewline = leadingNewline
 		return sym, nil
@@ -118,6 +99,43 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	}
 
 	return token.Token{}, false
+}
+
+func (l *lexer) parseNumber(leadingNewline bool) token.Token {
+	number := []rune{}
+	var radix int32 = 10
+	if l.next() == '0' {
+		r := GetRadix(l.peek(1))
+		if r != -1 {
+			radix = r
+			number = append(number, l.consume(), l.consume())
+		}
+	}
+
+	if !isNumeric(l.next(), radix) {
+		log.Fatal("Invalid token: empty integer literal")
+	}
+
+	for !l.eof() && isNumeric(l.next(), radix) || l.next() == '_' {
+		if l.next() != '_' {
+			number = append(number, l.next())
+		}
+		l.consume()
+	}
+
+	if l.next() == '.' && isNumeric(l.peek(1), 10) && radix == 10 {
+		number = append(number, l.consume())
+		for !l.eof() && isNumeric(l.next(), radix) || l.next() == '_' {
+			if l.next() != '_' {
+				number = append(number, l.next())
+			}
+			l.consume()
+		}
+
+		return l.createToken(token.FLOAT, number, leadingNewline)
+	}
+
+	return l.createToken(token.INTEGER, number, leadingNewline)
 }
 
 func (l *lexer) skip() bool {
@@ -201,11 +219,15 @@ func (l *lexer) consume() rune {
 	return rune(nextByte)
 }
 
-func (l *lexer) next() rune {
-	if l.eof() {
+func (l *lexer) peek(offset int) rune {
+	if l.pos+offset >= len(l.code) {
 		return '\u0000'
 	}
-	return rune(l.code[l.pos])
+	return rune(l.code[l.pos+offset])
+}
+
+func (l *lexer) next() rune {
+	return l.peek(0)
 }
 
 func (l *lexer) startsWith(prefix string) bool {
