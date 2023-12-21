@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -58,7 +57,7 @@ func (l *lexer) parseToken() (token.Token, error) {
 	nextChar := l.next()
 
 	if isNumeric(nextChar, 10) {
-		return l.parseNumber(leadingNewline), nil
+		return l.parseNumber(leadingNewline)
 	} else if sym, ok := l.parseSymbol(); ok {
 		sym.LeadingNewline = leadingNewline
 		return sym, nil
@@ -69,13 +68,7 @@ func (l *lexer) parseToken() (token.Token, error) {
 		}
 		return l.createToken(token.IDENTIFIER, ident, leadingNewline), nil
 	} else if nextChar == '"' {
-		stringValue := []rune{}
-		l.consume()
-		for l.next() != '"' {
-			stringValue = append(stringValue, l.consume())
-		}
-		l.consume()
-		return l.createToken(token.STRING, stringValue, leadingNewline), nil
+		return l.parseString(leadingNewline)
 	} else {
 		return token.Token{}, l.error(fmt.Sprintf("Unexpected token: %q", nextChar))
 	}
@@ -101,7 +94,7 @@ func (l *lexer) parseSymbol() (token.Token, bool) {
 	return token.Token{}, false
 }
 
-func (l *lexer) parseNumber(leadingNewline bool) token.Token {
+func (l *lexer) parseNumber(leadingNewline bool) (token.Token, error) {
 	number := []rune{}
 	var radix int32 = 10
 	if l.next() == '0' {
@@ -113,7 +106,7 @@ func (l *lexer) parseNumber(leadingNewline bool) token.Token {
 	}
 
 	if !isNumeric(l.next(), radix) {
-		log.Fatal("Invalid token: empty integer literal")
+		return token.Token{}, l.error("Invalid token: empty integer literal")
 	}
 
 	for !l.eof() && isNumeric(l.next(), radix) || l.next() == '_' {
@@ -132,10 +125,30 @@ func (l *lexer) parseNumber(leadingNewline bool) token.Token {
 			l.consume()
 		}
 
-		return l.createToken(token.FLOAT, number, leadingNewline)
+		return l.createToken(token.FLOAT, number, leadingNewline), nil
 	}
 
-	return l.createToken(token.INTEGER, number, leadingNewline)
+	return l.createToken(token.INTEGER, number, leadingNewline), nil
+}
+
+func (l *lexer) parseString(leadingNewline bool) (token.Token, error) {
+	stringValue := []rune{}
+	l.consume()
+	for !l.eof() && l.next() != '"' {
+		next := l.consume()
+		if next == '\\' {
+			next = getEscapeSequence(l.consume())
+			if next == -1 {
+				return token.Token{}, l.error("Not a valid escape sequence: \\" + string(l.peek(-1)))
+			}
+		}
+		stringValue = append(stringValue, next)
+	}
+	if l.eof() {
+		return token.Token{}, l.error("Expected end of string literal, reached end of file")
+	}
+	l.consume()
+	return l.createToken(token.STRING, stringValue, leadingNewline), nil
 }
 
 func (l *lexer) skip() bool {

@@ -41,3 +41,28 @@ func GetRadix(char rune) int32 {
 		return -1
 	}
 }
+
+func getEscapeSequence(char rune) rune {
+	switch char {
+	case '\\':
+		return '\\'
+	case '"':
+		return '"'
+	case 'a':
+		return '\a'
+	case 'b':
+		return '\b'
+	case 'f':
+		return '\f'
+	case 'n':
+		return '\n'
+	case 'r':
+		return '\r'
+	case 't':
+		return '\t'
+	case 'v':
+		return '\v'
+	default:
+		return -1
+	}
+}
