@@ -399,6 +399,12 @@ func (maplit *MapLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 }
 
 func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) RuntimeValue {
+	for key, _ := range maplit.Elements {
+		if key.EqualTo(indexValue) {
+			maplit.Elements[key] = value
+			return value
+		}
+	}
 	maplit.Elements[indexValue] = value
 	return value
 }
