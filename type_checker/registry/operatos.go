@@ -59,7 +59,7 @@ func arithmeticOperator(leftType, rightType types.ValidType) types.ValidType {
 	}
 
 	if rightType.Valid(untypedNumberType) {
-		return rightType 
+		return rightType
 	}
 
 	return leftType
@@ -180,6 +180,18 @@ func notOperator(dataType types.ValidType, postfix bool) types.ValidType {
 	return nil
 }
 
+func referenceOperator(dataType types.ValidType, _ bool) types.ValidType {
+	return &types.Pointer{DataType: dataType}
+}
+
+func dereferenceOperator(dataType types.ValidType, _ bool) types.ValidType {
+	ptr, ok := dataType.(*types.Pointer)
+	if !ok {
+		return nil
+	}
+	return ptr.DataType
+}
+
 func registerOperators() {
 	registerBinaryOperator("+", plusOperator)
 	registerBinaryOperator("-", arithmeticOperator)
@@ -206,4 +218,6 @@ func registerOperators() {
 	registerUnaryOperator("!", notOperator)
 	// registerUnaryOperator("?", unwrapOperator)
 	registerUnaryOperator("-", negateOperator)
+	registerUnaryOperator("&", referenceOperator)
+	registerUnaryOperator("*", dereferenceOperator)
 }

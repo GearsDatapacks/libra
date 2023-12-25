@@ -150,11 +150,25 @@ func (tuple *TupleType) String() string {
 type MemberType struct {
 	BaseNode
 	BaseType
-	Left TypeExpression
+	Left   TypeExpression
 	Member string
 }
 
 func (*MemberType) Type() NodeType { return "MemberType" }
 func (m *MemberType) String() string {
 	return m.Left.String() + "." + m.Member
+}
+
+type PointerType struct {
+	BaseNode
+	BaseType
+	DataType TypeExpression
+}
+
+func (*PointerType) Type() NodeType { return "Pointer" }
+func (p *PointerType) String() string {
+	if p.DataType.Type() == "Union" {
+		return fmt.Sprintf("(%s)*", p.DataType.String())
+	}
+	return p.DataType.String() + "*"
 }

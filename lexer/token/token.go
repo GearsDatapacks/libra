@@ -67,6 +67,7 @@ const (
 	BANG
 
 	PIPE
+	AMPERSAND
 	ARROW
 )
 
@@ -108,6 +109,7 @@ var Symbols = map[string]Type{
 	"!=": BANG_EQUALS,
 
 	"|": PIPE,
+	"&": AMPERSAND,
 
 	"||": DOUBLE_PIPE,
 	"&&": DOUBLE_AMPERSAND,
@@ -130,6 +132,8 @@ var AssignmentOperator = []Type{
 var PrefixOperator = []Type{
 	MINUS,
 	BANG,
+	AMPERSAND,
+	STAR,
 }
 
 var PostfixOperator = []Type{

@@ -397,6 +397,14 @@ func registerOperators() {
 		}
 		return value
 	})
+
+	RegisterUnaryOperator("&", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
+		return values.MakePointer(value)
+	})
+
+	RegisterUnaryOperator("*", func(value values.RuntimeValue, _ bool, env *environment.Environment) values.RuntimeValue {
+		return value.(*values.Pointer).Value.Copy()
+	})
 }
 
 func isError(value values.RuntimeValue) bool {

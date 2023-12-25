@@ -237,6 +237,26 @@ func (maplit *MapLiteral) IndexBy(dataType ValidType) ValidType {
 	return maplit.ValueType
 }
 
+type Pointer struct {
+	BaseType
+	DataType ValidType
+}
+
+func (p *Pointer) String() string {
+	if isA[*Union](p.DataType) {
+		return fmt.Sprintf("(%s)*", p.DataType.String())
+	}
+	return p.DataType.String() + "*"
+}
+
+func (p *Pointer) Valid(t ValidType) bool {
+	ptr, ok := t.(*Pointer)
+	if !ok {
+		return false
+	}
+	return p.DataType.Valid(ptr.DataType)
+}
+
 type Void struct{ BaseType }
 
 func (v *Void) String() string         { return "void" }

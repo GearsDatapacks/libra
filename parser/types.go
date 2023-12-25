@@ -61,6 +61,13 @@ func (p *parser) parseSuffixType() (ast.TypeExpression, error) {
 				BaseNode:   ast.BaseNode{Token: leftType.GetToken()},
 			}
 
+		case token.STAR:
+			p.consume()
+			leftType = &ast.PointerType{
+				BaseNode: ast.BaseNode{Token: leftType.GetToken()},
+				DataType: leftType,
+			}
+
 		case token.DOT:
 			leftType, err = p.parseMemberType(leftType)
 			if err != nil {

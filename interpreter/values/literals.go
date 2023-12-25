@@ -399,7 +399,7 @@ func (maplit *MapLiteral) Index(indexValue RuntimeValue) RuntimeValue {
 }
 
 func (maplit *MapLiteral) SetIndex(indexValue RuntimeValue, value RuntimeValue) RuntimeValue {
-	for key, _ := range maplit.Elements {
+	for key := range maplit.Elements {
 		if key.EqualTo(indexValue) {
 			maplit.Elements[key] = value
 			return value
@@ -691,6 +691,35 @@ func (tv *TupleStructValue) Copy() RuntimeValue {
 		Name:      tv.Name,
 		Members:   members,
 	}
+}
+
+type Pointer struct {
+	BaseValue
+	Value RuntimeValue
+}
+
+func (p *Pointer) Truthy() bool {
+	return p.Value.Truthy()
+}
+
+func (p *Pointer) EqualTo(other RuntimeValue) bool {
+	ptr, ok := other.(*Pointer)
+	if !ok {
+		return false
+	}
+	return p.Value == ptr.Value
+}
+
+func (p *Pointer) Copy() RuntimeValue {
+	return p
+}
+
+func (p *Pointer) ToString() string {
+	return "&" + p.Value.ToString()
+}
+
+func MakePointer(value RuntimeValue) *Pointer {
+	return &Pointer{Value: value}
 }
 
 type Error struct {
