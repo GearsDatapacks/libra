@@ -45,7 +45,7 @@ func (p *parser) parseBinaryOperation(minPrecedence int) (ast.Expression, error)
 		return nil, err
 	}
 
-	for {
+	for p.canContinue() {
 		opInfo, isOp := token.BinOpInfo[p.next().Type]
 		if !isOp || opInfo.Precedence < minPrecedence {
 			break
@@ -122,7 +122,7 @@ func (p *parser) parsePostfixOperation() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for {
+	for p.canContinue() {
 		if p.next().Type == token.LEFT_PAREN {
 			left, err = p.parseFunctionCall(left)
 		} else if p.next().Type == token.LEFT_SQUARE {
@@ -213,7 +213,7 @@ func (p *parser) parseStructExpression(left ast.Expression) (ast.Expression, err
 
 	members := map[string]ast.Expression{}
 
-	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+	for !p.eof() && p.canContinue() && p.next().Type != token.RIGHT_BRACE {
 		memberName, err := p.expect(token.IDENTIFIER, "Invalid struct member name %q")
 		if err != nil {
 			return nil, err
@@ -357,7 +357,7 @@ func (p *parser) parseCastExpression() (ast.Expression, error) {
 		return nil, err
 	}
 
-	for p.next().Type == token.ARROW {
+	for p.canContinue() && p.next().Type == token.ARROW {
 		p.consume()
 		ty, err := p.parseType()
 		if err != nil {
