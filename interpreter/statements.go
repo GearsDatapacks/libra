@@ -31,8 +31,8 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 
 	for _, param := range funcDec.Parameters {
 		params = append(params, values.Parameter{
-			Name:  param.Name,
-			Type:  typechecker.TypeCheckType(param.Type, manager),
+			Name: param.Name,
+			Type: typechecker.TypeCheckType(param.Type, manager),
 		})
 	}
 	returnType := typechecker.TypeCheckType(funcDec.ReturnType, manager)
@@ -41,6 +41,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 		Parameters: paramTypes,
 		ReturnType: returnType,
 		Name:       funcDec.Name,
+		Exported:   funcDec.Exported,
 	}
 
 	fn := &values.FunctionValue{
@@ -57,7 +58,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 		functionType.MethodOf = parentType
 
 		types.AddMethod(funcDec.Name, functionType)
-		manager.Env.AddMethod(funcDec.Name, fn)
+		environment.AddMethod(funcDec.Name, fn)
 		return fn
 	} else {
 
@@ -180,7 +181,7 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 		Exports: mod.Env.Exports,
 		BaseValue: values.BaseValue{
 			DataType: &types.Module{
-				Name: name,
+				Name:    name,
 				Exports: mod.SymbolTable.Exports,
 			},
 		},

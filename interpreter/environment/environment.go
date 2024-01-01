@@ -17,21 +17,19 @@ const (
 )
 
 type Environment struct {
-	Parent      *Environment
-	variables   map[string]values.RuntimeValue
+	Parent    *Environment
+	variables map[string]values.RuntimeValue
 	// types       map[string]types.ValidType
 	kind        scopeKind
 	ReturnValue values.RuntimeValue
-	methods     map[string][]*values.FunctionValue
-	Exports map[string]values.RuntimeValue
+	Exports     map[string]values.RuntimeValue
 }
 
 func New() *Environment {
 	env := Environment{
-		variables:   map[string]values.RuntimeValue{},
+		variables: map[string]values.RuntimeValue{},
 		// types:       map[string]types.ValidType{},
-		kind:        GLOBAL_SCOPE,
-		methods:     map[string][]*values.FunctionValue{},
+		kind:    GLOBAL_SCOPE,
 		Exports: map[string]values.RuntimeValue{},
 	}
 
@@ -40,11 +38,10 @@ func New() *Environment {
 
 func NewChild(parent *Environment, kind scopeKind) *Environment {
 	return &Environment{
-		Parent:      parent,
-		variables:   map[string]values.RuntimeValue{},
+		Parent:    parent,
+		variables: map[string]values.RuntimeValue{},
 		// types:       parent.types,
-		kind:        kind,
-		methods:     parent.methods,
+		kind:    kind,
 	}
 }
 
@@ -64,7 +61,7 @@ func (env *Environment) setVariable(name string, varType types.ValidType, value 
 	} else {
 		value = value.Copy()
 	}
-	
+
 	env.variables[name] = value
 	value.SetVarname(name)
 	return value
@@ -103,21 +100,24 @@ func (env *Environment) FindFunctionScope() *Environment {
 	}
 	return env.Parent.FindFunctionScope()
 }
-/*
-func (env *Environment) AddType(name string, dataType types.ValidType) {
-	env.types[name] = dataType
-}
 
-func (env *Environment) GetType(name string) types.ValidType {
-	return env.types[name]
-}
+/*
+	func (env *Environment) AddType(name string, dataType types.ValidType) {
+		env.types[name] = dataType
+	}
+
+	func (env *Environment) GetType(name string) types.ValidType {
+		return env.types[name]
+	}
 */
 func (env *Environment) Exists(name string) bool {
 	return env.resolve(name) != nil
 }
 
-func (env *Environment) GetMethod(name string, methodOf types.ValidType) *values.FunctionValue {
-	overloads, ok := env.methods[name]
+var methods = map[string][]*values.FunctionValue{}
+
+func GetMethod(name string, methodOf types.ValidType) *values.FunctionValue {
+	overloads, ok := methods[name]
 	if !ok {
 		return nil
 	}
@@ -131,13 +131,13 @@ func (env *Environment) GetMethod(name string, methodOf types.ValidType) *values
 	return nil
 }
 
-func (env *Environment) AddMethod(name string, method *values.FunctionValue) {
-	overloads, ok := env.methods[name]
+func AddMethod(name string, method *values.FunctionValue) {
+	overloads, ok := methods[name]
 	if !ok {
-		env.methods[name] = []*values.FunctionValue{method}
+		methods[name] = []*values.FunctionValue{method}
 	}
 	overloads = append(overloads, method)
-	env.methods[name] = overloads
+	methods[name] = overloads
 }
 
 func (env *Environment) GlobalScope() *Environment {

@@ -210,6 +210,7 @@ func typeCheckFunctionParams(funcDec *ast.FunctionDeclaration, manager *modules.
 			Parameters: []types.ValidType{},
 			ReturnType: &types.Void{},
 			MethodOf:   nil,
+			Exported:   funcDec.Exported,
 		}
 	}
 
@@ -249,6 +250,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 		Parameters: []types.ValidType{},
 		ReturnType: &types.Void{},
 		Name:       funcDec.Name,
+		Exported:   funcDec.Exported,
 	}
 
 	if funcDec.MethodOf == nil {

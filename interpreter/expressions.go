@@ -249,7 +249,7 @@ func evaluateIndexExpression(indexExpr *ast.IndexExpression, manager *modules.Mo
 func evaluateMemberExpression(memberExpr ast.MemberExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	value := evaluateExpression(memberExpr.Left, manager)
 
-	method := manager.Env.GetMethod(memberExpr.Member, value.Type())
+	method := environment.GetMethod(memberExpr.Member, value.Type())
 	if method != nil {
 		method.This = value
 		return method

@@ -64,6 +64,7 @@ type Function struct {
 	Parameters []ValidType
 	ReturnType ValidType
 	MethodOf   ValidType
+	Exported   bool
 }
 
 func (fn *Function) Valid(dataType ValidType) bool {
@@ -110,7 +111,7 @@ func (f *Function) Copy() Exportable {
 }
 
 type StructField struct {
-	Type ValidType
+	Type     ValidType
 	Exported bool
 }
 
@@ -145,7 +146,7 @@ func (s *Struct) member(member string) ValidType {
 	if !ok {
 		return nil
 	}
-	
+
 	if s.constant {
 		memberType.Type.MarkConstant()
 	}
@@ -318,7 +319,7 @@ func (tuple *Tuple) numberMember(member string) ValidType {
 
 type TupleStruct struct {
 	BaseType
-	Name string
+	Name    string
 	Members []ValidType
 }
 

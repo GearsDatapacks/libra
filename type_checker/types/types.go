@@ -238,6 +238,9 @@ func getMethod(methodOf ValidType, name string) *Function {
 
 	for _, overload := range overloads {
 		if overload.MethodOf.Valid(methodOf) {
+			if methodOf.IsForeign() && !overload.Exported {
+				return nil
+			}
 			return overload
 		}
 	}
