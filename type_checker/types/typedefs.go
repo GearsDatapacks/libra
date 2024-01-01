@@ -389,7 +389,7 @@ func (s *Module) member(member string) ValidType {
 // Marks a type rather than a value of type x
 type Type struct {
 	BaseType
-	DataType Exportable
+	DataType ValidType
 }
 
 func (t *Type) Valid(dataType ValidType) bool {
@@ -406,5 +406,8 @@ func (t *Type) MarkForeign() {
 }
 
 func (t *Type) Copy() Exportable {
-	return &Type{DataType: t.DataType.Copy()}
+	if exportable, ok := t.DataType.(Exportable); ok {
+		return &Type{DataType: exportable.Copy()}
+	}
+	return &Type{DataType: t.DataType}
 }

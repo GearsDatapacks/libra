@@ -451,12 +451,15 @@ func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Mod
 		return dataType
 	}
 
-	err := manager.SymbolTable.UpdateType(typeDecl.Name, dataType)
-	if err != nil {
-		return err
-	}
+	// err := manager.SymbolTable.UpdateType(typeDecl.Name, dataType)
+	// if err != nil {
+	// 	return err
+	// }
 
-	return dataType
+	declaredType := manager.SymbolTable.GetType(typeDecl.Name).(*types.Type)
+	declaredType.DataType = dataType
+
+	return declaredType
 }
 
 func registerStructDeclaration(structDecl *ast.StructDeclaration, manager *modules.ModuleManager) types.ValidType {
@@ -519,13 +522,13 @@ func registerInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *mo
 }
 
 func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.ModuleManager) types.ValidType {
-	dataType := &types.Void{}
+	dataType := &types.Type{DataType: &types.Void{}}
 	err := manager.SymbolTable.AddType(typeDecl.Name, dataType)
 	if err != nil {
 		return err
 	}
 	if typeDecl.IsExport() {
-		manager.SymbolTable.AddExport(typeDecl.Name, &types.Type{DataType: dataType})
+		manager.SymbolTable.AddExport(typeDecl.Name, dataType)
 	}
 	return dataType
 }
