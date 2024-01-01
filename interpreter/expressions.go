@@ -272,7 +272,7 @@ func evaluateStructExpression(structExpr ast.StructExpression, manager *modules.
 			members[name] = evaluateExpression(value, manager)
 			continue
 		}
-		members[name] = values.GetZeroValue(dataType.String())
+		members[name] = values.GetZeroValue(dataType.Type.String())
 	}
 
 	return &values.StructLiteral{

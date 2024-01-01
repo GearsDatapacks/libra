@@ -104,10 +104,20 @@ func (a *Any) String() string {
 	return "any"
 }
 
+func (f *Function) Copy() Exportable {
+	temp := *f
+	return &temp
+}
+
+type StructField struct {
+	Type ValidType
+	Exported bool
+}
+
 type Struct struct {
 	BaseType
 	Name    string
-	Members map[string]ValidType
+	Members map[string]StructField
 }
 
 func (s *Struct) Valid(dataType ValidType) bool {
@@ -116,9 +126,9 @@ func (s *Struct) Valid(dataType ValidType) bool {
 		return false
 	}
 
-	for name, dataType := range struc.Members {
+	for name, field := range struc.Members {
 		member, hasMember := s.Members[name]
-		if !hasMember || !member.Valid(dataType) {
+		if !hasMember || !member.Type.Valid(field.Type) {
 			return false
 		}
 	}
@@ -131,11 +141,25 @@ func (s *Struct) String() string {
 }
 
 func (s *Struct) member(member string) ValidType {
-	memberType := s.Members[member]
-	if s.constant && memberType != nil {
-		memberType.MarkConstant()
+	memberType, ok := s.Members[member]
+	if !ok {
+		return nil
 	}
-	return memberType
+	
+	if s.constant {
+		memberType.Type.MarkConstant()
+	}
+
+	if s.IsForeign() && !memberType.Exported {
+		return nil
+	}
+
+	return memberType.Type
+}
+
+func (s *Struct) Copy() Exportable {
+	temp := *s
+	return &temp
 }
 
 type Interface struct {
@@ -170,6 +194,11 @@ func (i *Interface) member(member string) ValidType {
 		memberType.MarkConstant()
 	}
 	return memberType
+}
+
+func (i *Interface) Copy() Exportable {
+	temp := *i
+	return &temp
 }
 
 var ErrorInterface = &Interface{
@@ -329,6 +358,11 @@ func (tuple *TupleStruct) numberMember(member string) ValidType {
 	return nil
 }
 
+func (t *TupleStruct) Copy() Exportable {
+	temp := *t
+	return &temp
+}
+
 type Module struct {
 	BaseType
 	Name    string
@@ -354,7 +388,7 @@ func (s *Module) member(member string) ValidType {
 // Marks a type rather than a value of type x
 type Type struct {
 	BaseType
-	DataType ValidType
+	DataType Exportable
 }
 
 func (t *Type) Valid(dataType ValidType) bool {
@@ -363,4 +397,13 @@ func (t *Type) Valid(dataType ValidType) bool {
 
 func (t *Type) String() string {
 	return t.DataType.String()
+}
+
+func (t *Type) MarkForeign() {
+	t.foreign = true
+	t.DataType.MarkForeign()
+}
+
+func (t *Type) Copy() Exportable {
+	return &Type{DataType: t.DataType.Copy()}
 }

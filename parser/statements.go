@@ -37,7 +37,7 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseTypeDeclaration()
 	} else if p.isKeyword("import") {
 		statement, err = p.parseImportStatement()
-	} else if p.isKeyword("export") {
+	} else if p.isKeyword("pub") {
 		statement, err = p.parseExportStatement()
 	} else {
 		statement, err = p.parseExpressionStatement()
@@ -343,9 +343,15 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 		return nil, err
 	}
 
-	members := map[string]ast.TypeExpression{}
+	members := map[string]ast.StructField{}
 
 	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+		exported := false
+		if p.isKeyword("pub") {
+			p.consume()
+			exported = true
+		}
+
 		memberName, err := p.expect(token.IDENTIFIER, "Expected closing brace or struct member")
 		if err != nil {
 			return nil, err
@@ -355,7 +361,7 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 			return nil, err
 		}
 
-		members[memberName.Value] = memberType
+		members[memberName.Value] = ast.StructField{Type: memberType, Exported: exported}
 
 		if p.next().Type != token.RIGHT_BRACE && !p.next().LeadingNewline {
 			return nil, p.error("Expected newline or end of struct body", p.next())
@@ -549,12 +555,12 @@ func (p *parser) parseImportStatement() (ast.Statement, error) {
 	}
 
 	return &ast.ImportStatement{
-		BaseNode:  ast.BaseNode{Token: tok},
-		Module:    mod.Value,
-		ImportAll: importAll,
-		Alias:     alias,
+		BaseNode:        ast.BaseNode{Token: tok},
+		Module:          mod.Value,
+		ImportAll:       importAll,
+		Alias:           alias,
 		ImportedSymbols: importedSymbols,
-		}, nil
+	}, nil
 }
 
 func (p *parser) parseExportStatement() (ast.Statement, error) {

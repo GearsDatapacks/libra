@@ -261,7 +261,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 	}
 
 	if funcDec.IsExport() {
-		manager.SymbolTable.GlobalScope().Exports[funcDec.Name] = functionType
+		manager.SymbolTable.GlobalScope().AddExport(funcDec.Name, functionType)
 	}
 
 	return functionType
@@ -377,13 +377,13 @@ func typeCheckForLoop(forLoop *ast.ForLoop, manager *modules.ModuleManager) type
 func typeCheckStructDeclaration(structDecl *ast.StructDeclaration, manager *modules.ModuleManager) types.ValidType {
 	structType := manager.SymbolTable.GetType(structDecl.Name).(*types.Struct)
 
-	for memberName, memberType := range structDecl.Members {
-		dataType := TypeCheckType(memberType, manager)
+	for memberName, field := range structDecl.Members {
+		dataType := TypeCheckType(field.Type, manager)
 		if dataType.String() == "TypeError" {
 			return dataType
 		}
 
-		structType.Members[memberName] = dataType
+		structType.Members[memberName] = types.StructField{Type: dataType, Exported: field.Exported}
 	}
 
 	return structType
@@ -458,7 +458,7 @@ func typeCheckTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Mod
 }
 
 func registerStructDeclaration(structDecl *ast.StructDeclaration, manager *modules.ModuleManager) types.ValidType {
-	members := map[string]types.ValidType{}
+	members := map[string]types.StructField{}
 
 	structType := &types.Struct{
 		Name:    structDecl.Name,
@@ -471,7 +471,7 @@ func registerStructDeclaration(structDecl *ast.StructDeclaration, manager *modul
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.Exports[structDecl.Name] = &types.Type{DataType: structType}
+		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType})
 	}
 
 	return structType
@@ -491,7 +491,7 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.Exports[structDecl.Name] = &types.Type{DataType: structType}
+		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType})
 	}
 
 	return structType
@@ -510,7 +510,7 @@ func registerInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *mo
 	}
 
 	if intDecl.IsExport() {
-		manager.SymbolTable.Exports[intDecl.Name] = &types.Type{DataType: interfaceType}
+		manager.SymbolTable.AddExport(intDecl.Name, &types.Type{DataType: interfaceType})
 	}
 
 	return interfaceType
@@ -523,7 +523,7 @@ func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Modu
 		return err
 	}
 	if typeDecl.IsExport() {
-		manager.SymbolTable.Exports[typeDecl.Name] = &types.Type{DataType: dataType}
+		manager.SymbolTable.AddExport(typeDecl.Name, &types.Type{DataType: dataType})
 	}
 	return dataType
 }

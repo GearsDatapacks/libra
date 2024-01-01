@@ -366,7 +366,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, manager *module
 
 	resultType := types.Member(leftType, memberExpr.Member, memberExpr.IsNumberMember)
 	if resultType == nil {
-		return types.Error(fmt.Sprintf("Type %q does not have member %q", leftType.String(), memberExpr.Member), memberExpr)
+		return types.Error(fmt.Sprintf("Type %q does not have member %q, or it is private", leftType.String(), memberExpr.Member), memberExpr)
 	}
 
 	return resultType
@@ -383,7 +383,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, manager *module
 		return types.Error(fmt.Sprintf("Cannot instantiate %q, it is not a struct", definedType), structExpr)
 	}
 
-	members := map[string]types.ValidType{}
+	members := map[string]types.StructField{}
 
 	for name, member := range structExpr.Members {
 		dataType := typeCheckExpression(member, manager)
@@ -391,7 +391,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, manager *module
 			return dataType
 		}
 
-		members[name] = dataType
+		members[name] = types.StructField{Type: dataType}
 	}
 
 	instanceType := &types.Struct{

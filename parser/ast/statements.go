@@ -231,12 +231,17 @@ func (forLoop *ForLoop) String() string {
 	return result
 }
 
+type StructField struct {
+	Type     TypeExpression
+	Exported bool
+}
+
 type StructDeclaration struct {
 	BaseNode
 	BaseStatement
 	canExport
 	Name    string
-	Members map[string]TypeExpression
+	Members map[string]StructField
 }
 
 func (structDec *StructDeclaration) Type() NodeType { return "StructDeclaration" }
@@ -247,10 +252,10 @@ func (structDec *StructDeclaration) String() string {
 	result += structDec.Name
 	result += " {\n"
 
-	for name, dataType := range structDec.Members {
+	for name, field := range structDec.Members {
 		result += name
 		result += " "
-		result += dataType.String()
+		result += field.Type.String()
 		result += "\n"
 	}
 
@@ -325,14 +330,13 @@ func (typeDecl *TypeDeclaration) String() string {
 type ImportStatement struct {
 	BaseNode
 	BaseStatement
-	Module string
-	Alias  string
-	ImportAll bool
+	Module          string
+	Alias           string
+	ImportAll       bool
 	ImportedSymbols []string
 }
 
 func (*ImportStatement) Type() NodeType { return "ImportStatement" }
-
 func (imp *ImportStatement) String() string {
 	if imp.ImportAll {
 		return "import * from \"" + imp.Module + "\""

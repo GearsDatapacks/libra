@@ -15,7 +15,10 @@ type ValidType interface {
 	Constant() bool
 	MarkConstant()
 	IndexBy(ValidType) ValidType
+	IsForeign() bool
+	MarkForeign()
 }
+
 
 type hasMembers interface {
 	member(string) ValidType
@@ -28,6 +31,7 @@ type hasNumberMembers interface {
 type BaseType struct {
 	wasVariable bool
 	constant    bool
+	foreign bool
 }
 
 func (b *BaseType) WasVariable() bool {
@@ -48,6 +52,19 @@ func (b *BaseType) MarkConstant() {
 
 func (*BaseType) IndexBy(ValidType) ValidType {
 	return nil
+}
+
+func (b *BaseType) IsForeign() bool {
+	return b.foreign
+}
+
+func (b *BaseType) MarkForeign() {
+	b.foreign = true
+}
+
+type Exportable interface {
+	ValidType
+	Copy() Exportable
 }
 
 type CustomCastable interface {

@@ -234,3 +234,9 @@ func (st *SymbolTable) GlobalScope() *SymbolTable {
 
 	return st.Parent.GlobalScope()
 }
+
+func (st *SymbolTable) AddExport(name string, exportedType types.Exportable) {
+	exportedCopy := exportedType.Copy()
+	exportedCopy.MarkForeign()
+	st.Exports[name] = exportedCopy
+}
