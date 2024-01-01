@@ -27,7 +27,7 @@ type SymbolTable struct {
 	returnType           types.ValidType
 	hasReturn            bool
 	hasConditionalReturn bool
-	Exports              map[string]types.ValidType
+	Exports              map[string]types.Exportable
 }
 
 func New() *SymbolTable {
@@ -36,7 +36,7 @@ func New() *SymbolTable {
 		variables: map[string]types.ValidType{},
 		types:     map[string]types.ValidType{},
 		kind:      GLOBAL_SCOPE,
-		Exports:   map[string]types.ValidType{},
+		Exports:   map[string]types.Exportable{},
 	}
 }
 
@@ -236,7 +236,13 @@ func (st *SymbolTable) GlobalScope() *SymbolTable {
 }
 
 func (st *SymbolTable) AddExport(name string, exportedType types.Exportable) {
-	exportedCopy := exportedType.Copy()
-	exportedCopy.MarkForeign()
-	st.Exports[name] = exportedCopy
+	st.Exports[name] = exportedType
+}
+
+func (st *SymbolTable) FinaliseExports() {
+	for name, export := range st.Exports {
+		exportedCopy := export.Copy()
+		exportedCopy.MarkForeign()
+		st.Exports[name] = exportedCopy
+	}
 }

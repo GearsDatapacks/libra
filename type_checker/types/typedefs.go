@@ -367,7 +367,7 @@ func (t *TupleStruct) Copy() Exportable {
 type Module struct {
 	BaseType
 	Name    string
-	Exports map[string]ValidType
+	Exports map[string]Exportable
 }
 
 func (m *Module) Valid(dataType ValidType) bool {

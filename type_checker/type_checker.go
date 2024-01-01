@@ -158,6 +158,8 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 			}
 		}
 	}
+
+	manager.SymbolTable.FinaliseExports()
 	return nil
 }
 
