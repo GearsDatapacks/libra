@@ -213,7 +213,7 @@ func (p *parser) parseStructExpression(left ast.Expression) (ast.Expression, err
 
 	members := map[string]ast.Expression{}
 
-	for !p.eof() && p.canContinue() && p.next().Type != token.RIGHT_BRACE {
+	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
 		memberName, err := p.expect(token.IDENTIFIER, "Invalid struct member name %q")
 		if err != nil {
 			return nil, err
