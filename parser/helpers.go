@@ -96,6 +96,12 @@ func (p *parser) parseParameter() (ast.Parameter, error) {
 	if err != nil {
 		return ast.Parameter{}, err
 	}
+
+	_, err = p.expect(token.COLON, "Expected type anotation")
+	if err != nil {
+		return ast.Parameter{}, err
+	}
+
 	dataType, err := p.parseType()
 	if err != nil {
 		return ast.Parameter{}, err

@@ -80,7 +80,8 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, error) {
 
 	var dataType ast.TypeExpression = &ast.InferType{}
 
-	if p.canContinue() && p.next().Type != token.EQUALS {
+	if p.canContinue() && p.next().Type == token.COLON {
+		p.consume()
 		dataType, err = p.parseType()
 		if err != nil {
 			return nil, err
@@ -167,11 +168,16 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, error) {
 
 	var returnType ast.TypeExpression = &ast.VoidType{}
 
-	if p.next().Type != token.LEFT_BRACE {
+	if p.next().Type == token.COLON {
+		p.consume()
 		returnType, err = p.parseType()
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if p.next().Type != token.LEFT_BRACE {
+		return nil, p.error("Expected type annotation or function body", p.next())
 	}
 
 	code, err := p.parseCodeBlock()
@@ -356,6 +362,10 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
+		_, err = p.expect(token.COLON, "Expected type annotation")
+		if err != nil {
+			return nil, err
+		}
 		memberType, err := p.parseType()
 		if err != nil {
 			return nil, err
@@ -363,12 +373,18 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 
 		members[memberName.Value] = ast.StructField{Type: memberType, Exported: exported}
 
-		if p.next().Type != token.RIGHT_BRACE && !p.next().LeadingNewline {
-			return nil, p.error("Expected newline or end of struct body", p.next())
+		if p.next().Type != token.RIGHT_BRACE {
+			_, err = p.expect(token.COMMA, "Expected comma or end of struct body")
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	_, err = p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.StructDeclaration{
 		BaseNode: ast.BaseNode{Token: tok},
@@ -447,6 +463,10 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 			p.consume()
 		}
 
+		_, err = p.expect(token.COLON, "Expected type annotation")
+		if err != nil {
+			return nil, err
+		}
 		resultType, err := p.parseType()
 		if err != nil {
 			return nil, err
@@ -460,7 +480,10 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 		}
 	}
 
-	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	_, err = p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.InterfaceDeclaration{
 		BaseNode: ast.BaseNode{Token: tok},

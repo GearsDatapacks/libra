@@ -239,7 +239,10 @@ func (p *parser) parseStructExpression(left ast.Expression) (ast.Expression, err
 		}
 	}
 
-	p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	_, err := p.expect(token.RIGHT_BRACE, "Unexpected EOF, expected '}'")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.StructExpression{
 		BaseNode:   ast.BaseNode{Token: left.GetToken()},
