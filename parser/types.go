@@ -201,14 +201,21 @@ func (p *parser) parsePrimaryType() (ast.TypeExpression, error) {
 		}
 
 		if p.next().Type == token.COMMA {
+			p.consume()
 			members := []ast.TypeExpression{expr}
-			for p.next().Type == token.COMMA {
-				p.consume()
+			for p.next().Type != token.RIGHT_PAREN {
 				nextExpr, err := p.parseType()
 				if err != nil {
 					return nil, err
 				}
+
 				members = append(members, nextExpr)
+				if p.next().Type != token.RIGHT_PAREN {
+					_, err = p.expect(token.COMMA, "Expected comma or end of tuple type")
+					if err != nil {
+						return nil, err
+					}
+				}
 			}
 			expr = &ast.TupleType{Members: members, BaseNode: ast.BaseNode{Token: tok}}
 		}

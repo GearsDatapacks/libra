@@ -29,20 +29,21 @@ func (p *parser) parseArgumentList() ([]ast.Expression, error) {
 }
 
 func (p *parser) parseArgs() ([]ast.Expression, error) {
-	initialExpr, err := p.parseExpression()
-	if err != nil {
-		return nil, err
-	}
-	args := []ast.Expression{ initialExpr }
+	args := []ast.Expression{}
 
-	for p.next().Type == token.COMMA {
-		p.consume()
-
+	for !p.eof() && p.next().Type != token.RIGHT_PAREN {
 		nextExpr, err := p.parseExpression()
 		if err != nil {
 			return nil, err
 		}
 		args = append(args, nextExpr)
+
+		if p.next().Type != token.RIGHT_PAREN {
+	_, err = p.expect(token.COMMA, "Expected comma or end of argument list")
+	if err != nil {
+		return nil, err
+	}
+		}
 	}
 
 	return args, nil
@@ -72,20 +73,21 @@ func (p *parser) parseParameterList() ([]ast.Parameter, error) {
 }
 
 func (p *parser) parseParameters() ([]ast.Parameter, error) {
-	initialParam, err := p.parseParameter()
-	if err != nil {
-		return nil, err
-	}
-	params := []ast.Parameter{ initialParam }
+	params := []ast.Parameter{}
 
-	for p.next().Type == token.COMMA {
-		p.consume()
-
+	for !p.eof() && p.next().Type != token.RIGHT_PAREN {		
 		nextParam, err := p.parseParameter()
 		if err != nil {
 			return nil, err
 		}
 		params = append(params, nextParam)
+
+		if p.next().Type != token.RIGHT_PAREN {
+_, err = p.expect(token.COMMA, "Expected comma or end of parameter list")
+	if err != nil {
+		return nil, err
+	}
+		}
 	}
 
 	return params, nil

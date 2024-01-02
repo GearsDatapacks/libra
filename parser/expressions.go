@@ -428,8 +428,14 @@ func (p *parser) parseLiteral() (ast.Expression, error) {
 
 		if p.next().Type == token.COMMA {
 			members := []ast.Expression{expression}
-			for p.next().Type == token.COMMA {
-				p.consume()
+			for p.next().Type != token.RIGHT_PAREN && !p.eof() {
+				_, err = p.expect(token.COMMA, "Expected comma or end of tuple")
+				if err != nil {
+					return nil, err
+				}
+				if p.next().Type == token.RIGHT_PAREN {
+					break
+				}
 				nextExpr, err := p.parseExpression()
 				if err != nil {
 					return nil, err

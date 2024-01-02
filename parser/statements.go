@@ -475,8 +475,11 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 
 		members = append(members, currentMember)
 
-		if p.next().Type != token.RIGHT_BRACE && !p.next().LeadingNewline {
-			return nil, p.error("Expected newline or end of interface body", p.next())
+		if p.next().Type != token.RIGHT_BRACE{
+			_, err = p.expect(token.COMMA, "Expected comma or end of interface body")
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
