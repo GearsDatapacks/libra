@@ -81,11 +81,14 @@ type ModuleManager struct {
 	Imported       map[string]*ModuleManager
 	TypeCheckStage int
 	InterpretStage int
+	Id             int
 }
 
 var fetchedModules = map[string]*ModuleManager{}
+var id = 0
 
 func NewManager(file string, table *symbols.SymbolTable, env *environment.Environment) (*ModuleManager, error) {
+	id++
 	mods, err := Get(file)
 	if err != nil {
 		return nil, err
@@ -105,6 +108,7 @@ func NewManager(file string, table *symbols.SymbolTable, env *environment.Enviro
 		Env:         env,
 		Imported:    map[string]*ModuleManager{},
 		Name:        name,
+		Id: id,
 	}
 	fetchedModules[file] = m
 

@@ -141,7 +141,7 @@ func typeCheckAssignmentExpression(assignment *ast.AssignmentExpression, manager
 			return leftType
 		}
 
-		dataType = types.Member(leftType, member.Member, member.IsNumberMember)
+		dataType = types.Member(leftType, member.Member, member.IsNumberMember, manager.Id)
 	} else {
 		return types.Error("Can only assign values to variables", assignment)
 	}
@@ -364,7 +364,7 @@ func typeCheckMemberExpression(memberExpr *ast.MemberExpression, manager *module
 		return leftType
 	}
 
-	resultType := types.Member(leftType, memberExpr.Member, memberExpr.IsNumberMember)
+	resultType := types.Member(leftType, memberExpr.Member, memberExpr.IsNumberMember, manager.Id)
 	if resultType == nil {
 		return types.Error(fmt.Sprintf("Type %q does not have member %q, or it is private", leftType.String(), memberExpr.Member), memberExpr)
 	}

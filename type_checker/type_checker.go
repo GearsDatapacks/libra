@@ -159,7 +159,6 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 		}
 	}
 
-	manager.SymbolTable.FinaliseExports()
 	return nil
 }
 
@@ -182,7 +181,7 @@ func typeCheckMemberType(member *ast.MemberType, manager *modules.ModuleManager)
 		return left
 	}
 
-	memberType := types.Member(left, member.Member, false)
+	memberType := types.Member(left, member.Member, false, manager.Id)
 
 	if memberType == nil {
 		return types.Error(fmt.Sprintf("Type %q is undefined", member.String()), member)

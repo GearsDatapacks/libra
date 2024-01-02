@@ -15,13 +15,12 @@ type ValidType interface {
 	Constant() bool
 	MarkConstant()
 	IndexBy(ValidType) ValidType
-	IsForeign() bool
-	MarkForeign()
+	IsForeign(int) bool
+	SetModule(int)
 }
 
-
 type hasMembers interface {
-	member(string) ValidType
+	member(string, int) ValidType
 }
 
 type hasNumberMembers interface {
@@ -31,7 +30,7 @@ type hasNumberMembers interface {
 type BaseType struct {
 	wasVariable bool
 	constant    bool
-	foreign bool
+	module      int
 }
 
 func (b *BaseType) WasVariable() bool {
@@ -54,17 +53,17 @@ func (*BaseType) IndexBy(ValidType) ValidType {
 	return nil
 }
 
-func (b *BaseType) IsForeign() bool {
-	return b.foreign
+func (b *BaseType) IsForeign(moduleId int) bool {
+	// Allow bypassing of visibility system
+	if b.module == 0 || moduleId == 0 {
+		return false
+	}
+
+	return b.module != moduleId
 }
 
-func (b *BaseType) MarkForeign() {
-	b.foreign = true
-}
-
-type Exportable interface {
-	ValidType
-	Copy() Exportable
+func (b *BaseType) SetModule(moduleId int) {
+	b.module = moduleId
 }
 
 type CustomCastable interface {
@@ -151,7 +150,7 @@ func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
 		}
 
 		return &ErrorType{ResultType: resultType}
-	
+
 	case *ast.TupleType:
 		members := []ValidType{}
 		for _, member := range typeExpr.Members {
@@ -198,8 +197,8 @@ func FromString(typeString string, table TypeTable) ValidType {
 	return dataType
 }
 
-func Member(memberOf ValidType, name string, isNumberMember bool) ValidType {
-	method := getMethod(memberOf, name)
+func Member(memberOf ValidType, name string, isNumberMember bool, moduleId int) ValidType {
+	method := getMethod(memberOf, name, moduleId)
 	if method != nil {
 		return method
 	}
@@ -207,7 +206,7 @@ func Member(memberOf ValidType, name string, isNumberMember bool) ValidType {
 	if !isNumberMember {
 		hasMembers, ok := memberOf.(hasMembers)
 		if ok {
-			return hasMembers.member(name)
+			return hasMembers.member(name, moduleId)
 		}
 	} else {
 		hasNumberMembers, ok := memberOf.(hasNumberMembers)
@@ -230,7 +229,7 @@ func AddMethod(name string, method *Function) {
 	methods[name] = overloads
 }
 
-func getMethod(methodOf ValidType, name string) *Function {
+func getMethod(methodOf ValidType, name string, moduleId int) *Function {
 	overloads, ok := methods[name]
 	if !ok {
 		return nil
@@ -238,7 +237,7 @@ func getMethod(methodOf ValidType, name string) *Function {
 
 	for _, overload := range overloads {
 		if overload.MethodOf.Valid(methodOf) {
-			if methodOf.IsForeign() && !overload.Exported {
+			if methodOf.IsForeign(moduleId) && !overload.Exported {
 				return nil
 			}
 			return overload

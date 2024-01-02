@@ -105,11 +105,6 @@ func (a *Any) String() string {
 	return "any"
 }
 
-func (f *Function) Copy() Exportable {
-	temp := *f
-	return &temp
-}
-
 type StructField struct {
 	Type     ValidType
 	Exported bool
@@ -141,7 +136,7 @@ func (s *Struct) String() string {
 	return s.Name
 }
 
-func (s *Struct) member(member string) ValidType {
+func (s *Struct) member(member string, moduleId int) ValidType {
 	memberType, ok := s.Members[member]
 	if !ok {
 		return nil
@@ -151,16 +146,11 @@ func (s *Struct) member(member string) ValidType {
 		memberType.Type.MarkConstant()
 	}
 
-	if s.IsForeign() && !memberType.Exported {
+	if s.IsForeign(moduleId) && !memberType.Exported {
 		return nil
 	}
 
 	return memberType.Type
-}
-
-func (s *Struct) Copy() Exportable {
-	temp := *s
-	return &temp
 }
 
 type Interface struct {
@@ -172,7 +162,7 @@ type Interface struct {
 func (i *Interface) Valid(dataType ValidType) bool {
 	for name, member := range i.Members {
 
-		memberType := Member(dataType, name, false)
+		memberType := Member(dataType, name, false, 0)
 		if memberType == nil {
 			return false
 		}
@@ -189,17 +179,12 @@ func (i *Interface) String() string {
 	return i.Name
 }
 
-func (i *Interface) member(member string) ValidType {
+func (i *Interface) member(member string, moduleId int) ValidType {
 	memberType := i.Members[member]
 	if i.constant && memberType != nil {
 		memberType.MarkConstant()
 	}
 	return memberType
-}
-
-func (i *Interface) Copy() Exportable {
-	temp := *i
-	return &temp
 }
 
 var ErrorInterface = &Interface{
@@ -359,15 +344,10 @@ func (tuple *TupleStruct) numberMember(member string) ValidType {
 	return nil
 }
 
-func (t *TupleStruct) Copy() Exportable {
-	temp := *t
-	return &temp
-}
-
 type Module struct {
 	BaseType
 	Name    string
-	Exports map[string]Exportable
+	Exports map[string]ValidType
 }
 
 func (m *Module) Valid(dataType ValidType) bool {
@@ -378,7 +358,7 @@ func (m *Module) String() string {
 	return m.Name
 }
 
-func (s *Module) member(member string) ValidType {
+func (s *Module) member(member string, moduleId int) ValidType {
 	memberType := s.Exports[member]
 	if s.constant && memberType != nil {
 		memberType.MarkConstant()
@@ -400,14 +380,7 @@ func (t *Type) String() string {
 	return t.DataType.String()
 }
 
-func (t *Type) MarkForeign() {
-	t.foreign = true
-	t.DataType.MarkForeign()
-}
-
-func (t *Type) Copy() Exportable {
-	if exportable, ok := t.DataType.(Exportable); ok {
-		return &Type{DataType: exportable.Copy()}
-	}
-	return &Type{DataType: t.DataType}
+func (t *Type) SetModule(moduleId int) {
+	t.module = moduleId
+	t.DataType.SetModule(moduleId)
 }

@@ -262,10 +262,6 @@ type Void struct{ BaseType }
 func (v *Void) String() string         { return "void" }
 func (v *Void) Valid(t ValidType) bool { return isA[*Void](t) }
 
-func (v *Void) Copy() Exportable {
-	return v
-}
-
 type Infer struct{ BaseType }
 
 func (i *Infer) String() string         { return "Infer" }

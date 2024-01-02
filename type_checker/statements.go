@@ -165,7 +165,7 @@ func typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *mod
 		fn = manager.SymbolTable.GetSymbol(funcDec.Name).(*types.Function)
 	} else {
 		parentType := TypeCheckType(funcDec.MethodOf, manager)
-		fn = types.Member(parentType, funcDec.Name, false).(*types.Function)
+		fn = types.Member(parentType, funcDec.Name, false, manager.Id).(*types.Function)
 	}
 
 	childTable := symbols.NewFunction(manager.SymbolTable, fn.ReturnType)
@@ -234,7 +234,7 @@ func typeCheckFunctionParams(funcDec *ast.FunctionDeclaration, manager *modules.
 			return parentType
 		}
 
-		if types.Member(parentType, funcDec.Name, false) != nil {
+		if types.Member(parentType, funcDec.Name, false, manager.Id) != nil {
 			return types.Error(fmt.Sprintf("Type %q already has member %q", parentType.String(), funcDec.Name), funcDec)
 		}
 		fnType.MethodOf = parentType
@@ -263,7 +263,7 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 	}
 
 	if funcDec.IsExport() {
-		manager.SymbolTable.GlobalScope().AddExport(funcDec.Name, functionType)
+		manager.SymbolTable.GlobalScope().AddExport(funcDec.Name, functionType, manager.Id)
 	}
 
 	return functionType
@@ -476,7 +476,7 @@ func registerStructDeclaration(structDecl *ast.StructDeclaration, manager *modul
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType})
+		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType}, manager.Id)
 	}
 
 	return structType
@@ -496,7 +496,7 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	}
 
 	if structDecl.IsExport() {
-		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType})
+		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType}, manager.Id)
 	}
 
 	return structType
@@ -515,7 +515,7 @@ func registerInterfaceDeclaration(intDecl *ast.InterfaceDeclaration, manager *mo
 	}
 
 	if intDecl.IsExport() {
-		manager.SymbolTable.AddExport(intDecl.Name, &types.Type{DataType: interfaceType})
+		manager.SymbolTable.AddExport(intDecl.Name, &types.Type{DataType: interfaceType}, manager.Id)
 	}
 
 	return interfaceType
@@ -528,7 +528,7 @@ func registerTypeDeclataion(typeDecl *ast.TypeDeclaration, manager *modules.Modu
 		return err
 	}
 	if typeDecl.IsExport() {
-		manager.SymbolTable.AddExport(typeDecl.Name, dataType)
+		manager.SymbolTable.AddExport(typeDecl.Name, dataType, manager.Id)
 	}
 	return dataType
 }
