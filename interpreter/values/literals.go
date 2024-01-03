@@ -778,6 +778,7 @@ func (m *Module) Copy() RuntimeValue {
 
 type UnitStruct struct {
 	BaseValue
+	Id   int
 	Name string
 }
 
@@ -794,7 +795,7 @@ func (u *UnitStruct) EqualTo(value RuntimeValue) bool {
 	if !isUnit {
 		return false
 	}
-	return u.Name == unit.Name
+	return u.Id == unit.Id
 }
 
 func (u *UnitStruct) Copy() RuntimeValue {

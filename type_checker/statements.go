@@ -508,9 +508,13 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	return structType
 }
 
+var unitId = 0
+
 func registerUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) types.ValidType {
+	unitId++
 	structType := &types.UnitStruct{
-		Name:    structDecl.Name,
+		Id:   unitId,
+		Name: structDecl.Name,
 	}
 
 	err := manager.SymbolTable.AddType(structDecl.Name, structType)

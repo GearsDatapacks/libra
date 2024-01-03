@@ -156,11 +156,12 @@ func (s *Struct) member(member string, moduleId int) ValidType {
 type UnitStruct struct {
 	BaseType
 	Name string
+	Id   int
 }
 
 func (s *UnitStruct) Valid(dataType ValidType) bool {
 	struc, isStruct := dataType.(*UnitStruct)
-	if !isStruct || struc.Name != s.Name {
+	if !isStruct || struc.Id != s.Id {
 		return false
 	}
 

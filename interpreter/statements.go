@@ -191,10 +191,14 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 	return importedMod
 }
 
+var unitId = 0
+
 func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	ty := &types.UnitStruct{Name: structDecl.Name}
-	
+	unitId++
+
 	unit := &values.UnitStruct{
+		Id: unitId,
 		Name: structDecl.Name,
 		BaseValue: values.BaseValue{DataType: ty},
 	}
