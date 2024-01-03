@@ -256,11 +256,13 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, manager *modules.
 	}
 
 	memberValue := value.Member(memberExpr.Member)
-	if memberValue != nil {
-		return memberValue
+	if memberValue == nil {
+		return values.MakeNull()
 	}
 
-	return values.MakeNull()
+	
+	
+	return memberValue
 }
 
 func evaluateStructExpression(structExpr ast.StructExpression, manager *modules.ModuleManager) values.RuntimeValue {

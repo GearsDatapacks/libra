@@ -191,6 +191,22 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 	return importedMod
 }
 
+func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
+	ty := &types.UnitStruct{Name: structDecl.Name}
+	
+	unit := &values.UnitStruct{
+		Name: structDecl.Name,
+		BaseValue: values.BaseValue{DataType: ty},
+	}
+	manager.Env.DeclareVariable(structDecl.Name, ty, unit)
+
+	if structDecl.IsExport() {
+		manager.Env.Exports[structDecl.Name] = unit
+	}
+
+	return values.MakeNull()
+}
+
 /*
 func evaluateStructDeclaration(structDecl *ast.StructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	members := map[string]types.ValidType{}

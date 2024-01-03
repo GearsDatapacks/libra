@@ -775,3 +775,28 @@ func (m *Module) Member(member string) RuntimeValue {
 func (m *Module) Copy() RuntimeValue {
 	return m
 }
+
+type UnitStruct struct {
+	BaseValue
+	Name string
+}
+
+func (u *UnitStruct) ToString() string {
+	return u.Name
+}
+
+func (*UnitStruct) Truthy() bool {
+	return true
+}
+
+func (u *UnitStruct) EqualTo(value RuntimeValue) bool {
+	unit, isUnit := value.(*UnitStruct)
+	if !isUnit {
+		return false
+	}
+	return u.Name == unit.Name
+}
+
+func (u *UnitStruct) Copy() RuntimeValue {
+	return u
+}
