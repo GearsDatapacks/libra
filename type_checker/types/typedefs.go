@@ -153,6 +153,24 @@ func (s *Struct) member(member string, moduleId int) ValidType {
 	return memberType.Type
 }
 
+type UnitStruct struct {
+	BaseType
+	Name string
+}
+
+func (s *UnitStruct) Valid(dataType ValidType) bool {
+	struc, isStruct := dataType.(*UnitStruct)
+	if !isStruct || struc.Name != s.Name {
+		return false
+	}
+
+	return true
+}
+
+func (s *UnitStruct) String() string {
+	return s.Name
+}
+
 type Interface struct {
 	BaseType
 	Name    string

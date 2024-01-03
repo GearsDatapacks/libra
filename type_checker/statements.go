@@ -53,6 +53,9 @@ func typeCheckStatement(stmt ast.Statement, manager *modules.ModuleManager) type
 	case *ast.ImportStatement:
 		return &types.Void{}
 
+	case *ast.UnitStructDeclaration:
+		return &types.Void{}
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statement type: " + statement.String()))
 		return nil
@@ -99,6 +102,9 @@ func registerTypeStatement(stmt ast.Statement, manager *modules.ModuleManager) t
 
 	case *ast.FunctionDeclaration:
 		return registerFunctionDeclaration(statement, manager)
+
+	case *ast.UnitStructDeclaration:
+		return registerUnitStructDeclaration(statement, manager)
 
 	default:
 		return &types.Void{}
@@ -488,6 +494,23 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	structType := &types.TupleStruct{
 		Name:    structDecl.Name,
 		Members: members,
+	}
+
+	err := manager.SymbolTable.AddType(structDecl.Name, structType)
+	if err != nil {
+		return err
+	}
+
+	if structDecl.IsExport() {
+		manager.SymbolTable.AddExport(structDecl.Name, &types.Type{DataType: structType}, manager.Id)
+	}
+
+	return structType
+}
+
+func registerUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) types.ValidType {
+	structType := &types.UnitStruct{
+		Name:    structDecl.Name,
 	}
 
 	err := manager.SymbolTable.AddType(structDecl.Name, structType)

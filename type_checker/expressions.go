@@ -17,7 +17,11 @@ func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) ty
 		return dataType
 	}
 
-	if _, ok := dataType.(*types.Type); ok {
+	if ty, ok := dataType.(*types.Type); ok {
+		if unit, isUnit := ty.DataType.(*types.UnitStruct); isUnit {
+			return unit
+		}
+
 		return types.Error(fmt.Sprintf("Cannot use %q as a value, it is a type", expr.String()), expr)
 	}
 
@@ -50,12 +54,7 @@ func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) 
 		return &types.Void{}
 
 	case *ast.Identifier:
-		dataType := manager.SymbolTable.GetSymbol(expression.Symbol)
-		if err, isErr := dataType.(*types.TypeError); isErr {
-			err.Line = expression.Token.Line
-			err.Column = expression.Token.Column
-		}
-		return dataType
+		return typeCheckIdentifier(expression, manager)
 
 	case *ast.BinaryOperation:
 		return typeCheckBinaryOperation(expression, manager)
@@ -97,6 +96,23 @@ func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) 
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
 		return nil
 	}
+}
+
+func typeCheckIdentifier(ident *ast.Identifier, manager *modules.ModuleManager) types.ValidType {
+	dataType := manager.SymbolTable.GetSymbol(ident.Symbol)
+	if dataType.String() != "TypeError" {
+		return dataType
+	}
+
+	ty := manager.SymbolTable.GetType(ident.Symbol)
+	if unitType, isUnit := ty.(*types.UnitStruct); isUnit {
+		return unitType
+	}
+
+	err := dataType.(*types.TypeError)
+	err.Line = ident.Token.Line
+	err.Column = ident.Token.Column
+	return err
 }
 
 func TypeCheckTypeExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
@@ -403,7 +419,7 @@ func typeCheckStructExpression(structExpr *ast.StructExpression, manager *module
 		return types.Error("Struct expression incompatiable with type", structExpr)
 	}
 
-	return structType 
+	return structType
 }
 
 func typeCheckTuple(tuple *ast.TupleExpression, manager *modules.ModuleManager) types.ValidType {
