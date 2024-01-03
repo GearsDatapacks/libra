@@ -261,7 +261,7 @@ type StructExpression struct {
 func (*StructExpression) Type() NodeType { return "StructExpression" }
 
 func (structExpr *StructExpression) String() string {
-	result := structExpr.String()
+	result := structExpr.InstanceOf.String()
 	result += " {\n"
 
 	for memberName, memberValue := range structExpr.Members {

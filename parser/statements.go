@@ -340,6 +340,13 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 		return nil, err
 	}
 
+	if p.next().LeadingNewline {
+		return &ast.UnitStructDeclaration{
+			BaseNode: ast.BaseNode{Token: tok},
+			Name:     name.Value,
+		}, nil
+	}
+
 	if p.next().Type == token.LEFT_PAREN {
 		return p.parseTupleStructDeclaration(tok, name.Value)
 	}
@@ -475,7 +482,7 @@ func (p *parser) parseInterfaceDeclaration() (ast.Statement, error) {
 
 		members = append(members, currentMember)
 
-		if p.next().Type != token.RIGHT_BRACE{
+		if p.next().Type != token.RIGHT_BRACE {
 			_, err = p.expect(token.COMMA, "Expected comma or end of interface body")
 			if err != nil {
 				return nil, err

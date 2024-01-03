@@ -55,12 +55,11 @@ func (p *parser) isKeyword(keyword string) bool {
 	return isKeyword && notUsed
 }
 
-
 func (p *parser) expectKeyword(keyword string, fString string) (token.Token, error) {
 	if p.isKeyword(keyword) {
 		return p.consume(), nil
 	}
-	
+
 	if strings.Contains(fString, "%") {
 		fString = fmt.Sprintf(fString, p.next().Value)
 	}

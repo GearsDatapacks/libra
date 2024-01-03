@@ -292,6 +292,19 @@ func (structDec *TupleStructDeclaration) String() string {
 	return result
 }
 
+type UnitStructDeclaration struct {
+	BaseNode
+	BaseStatement
+	canExport
+	Name    string
+}
+
+func (structDec *UnitStructDeclaration) Type() NodeType { return "UnitStructDeclaration" }
+
+func (structDec *UnitStructDeclaration) String() string {
+	return "struct " + structDec.Name
+}
+
 type InterfaceMember struct {
 	Name       string
 	IsFunction bool
