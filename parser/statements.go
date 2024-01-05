@@ -39,6 +39,8 @@ func (p *parser) parseStatement(inline ...bool) (ast.Statement, error) {
 		statement, err = p.parseImportStatement()
 	} else if p.isKeyword("pub") {
 		statement, err = p.parseExportStatement()
+	} else if p.isKeyword("enum") || p.isKeyword("union") {
+		statement, err = p.parseEnumDeclaration()
 	} else {
 		statement, err = p.parseExpressionStatement()
 	}
@@ -359,26 +361,11 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 	members := map[string]ast.StructField{}
 
 	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
-		exported := false
-		if p.isKeyword("pub") {
-			p.consume()
-			exported = true
-		}
-
-		memberName, err := p.expect(token.IDENTIFIER, "Expected closing brace or struct member")
+		name, field, err := p.parseStructField()
 		if err != nil {
 			return nil, err
 		}
-		_, err = p.expect(token.COLON, "Expected type annotation")
-		if err != nil {
-			return nil, err
-		}
-		memberType, err := p.parseType()
-		if err != nil {
-			return nil, err
-		}
-
-		members[memberName.Value] = ast.StructField{Type: memberType, Exported: exported}
+		members[name] = field
 
 		if p.next().Type != token.RIGHT_BRACE {
 			_, err = p.expect(token.COMMA, "Expected comma or end of struct body")
@@ -398,6 +385,28 @@ func (p *parser) parseStructDeclaration() (ast.Statement, error) {
 		Name:     name.Value,
 		Members:  members,
 	}, nil
+}
+
+func (p *parser) parseStructField() (string, ast.StructField, error) {
+	exported := false
+	if p.isKeyword("pub") {
+		p.consume()
+		exported = true
+	}
+
+	memberName, err := p.expect(token.IDENTIFIER, "Expected closing brace or struct member")
+	if err != nil {
+		return "", ast.StructField{}, err
+	}
+	_, err = p.expect(token.COLON, "Expected type annotation")
+	if err != nil {
+		return "", ast.StructField{}, err
+	}
+	memberType, err := p.parseType()
+	if err != nil {
+		return "", ast.StructField{}, err
+	}
+	return memberName.Value, ast.StructField{Exported: exported, Type: memberType}, nil
 }
 
 func (p *parser) parseTupleStructDeclaration(tok token.Token, name string) (ast.Statement, error) {
@@ -614,4 +623,117 @@ func (p *parser) parseExportStatement() (ast.Statement, error) {
 
 	stmt.MarkExport()
 	return stmt, nil
+}
+
+func (p *parser) parseEnumDeclaration() (ast.Statement, error) {
+	tok := p.consume()
+	isUnion := tok.Value == "union"
+
+	name, err := p.expect(token.IDENTIFIER, "Expected "+tok.Value+" name")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.expect(token.LEFT_BRACE, "Expected "+tok.Value+" body")
+	if err != nil {
+		return nil, err
+	}
+
+	members := map[string]ast.EnumMember{}
+
+	for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+		member, err := p.parseEnumMember(tok.Value)
+		if err != nil {
+			return nil, err
+		}
+		members[member.Name] = member
+
+		if p.next().Type != token.RIGHT_BRACE {
+			_, err = p.expect(token.COMMA, "Expected comma or end of "+tok.Value+" body")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	_, err = p.expect(token.RIGHT_BRACE, "Expected end of "+tok.Value+" body, reached end of file")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.EnumDeclaration{
+		BaseNode: ast.BaseNode{Token: tok},
+		IsUnion:  isUnion,
+		Name:     name.Value,
+		Members:  members,
+	}, nil
+}
+
+func (p *parser) parseEnumMember(kind string) (ast.EnumMember, error) {
+	exported := false
+	if p.isKeyword("pub") {
+		p.consume()
+		exported = true
+	}
+
+	name, err := p.expect(token.IDENTIFIER, "Expected "+kind+" member")
+	if err != nil {
+		return ast.EnumMember{}, err
+	}
+
+	var types []ast.TypeExpression
+	var structMembers map[string]ast.StructField
+	if p.next().Type == token.LEFT_PAREN {
+		p.consume()
+		types = []ast.TypeExpression{}
+		for !p.eof() && p.next().Type != token.RIGHT_PAREN {
+			nextType, err := p.parseType()
+
+			if err != nil {
+				return ast.EnumMember{}, err
+			}
+			types = append(types, nextType)
+
+			if p.next().Type != token.RIGHT_PAREN {
+				_, err = p.expect(token.COMMA, "Expected comma or end of type list")
+				if err != nil {
+					return ast.EnumMember{}, err
+				}
+			}
+		}
+		_, err := p.expect(token.RIGHT_PAREN, "Unexpected eof")
+		if err != nil {
+			return ast.EnumMember{}, nil
+		}
+	} else if p.next().Type == token.LEFT_BRACE {
+		p.consume()
+		structMembers = map[string]ast.StructField{}
+
+		for !p.eof() && p.next().Type != token.RIGHT_BRACE {
+			name, member, err := p.parseStructField()
+			if err != nil {
+				return ast.EnumMember{}, err
+			}
+			structMembers[name] = member
+
+			if p.next().Type != token.RIGHT_BRACE {
+				_, err := p.expect(token.COMMA, "Expected comma or end of struct")
+				if err != nil {
+					return ast.EnumMember{}, err
+				}
+			}
+		}
+
+		_, err := p.expect(token.RIGHT_BRACE, "Unexpected eof")
+		if err != nil {
+			return ast.EnumMember{}, nil
+		}
+	}
+
+	return ast.EnumMember{
+		Name:          name.Value,
+		Exported:      exported,
+		Types:         types,
+		StructMembers: structMembers,
+	}, nil
 }

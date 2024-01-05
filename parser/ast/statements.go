@@ -296,7 +296,7 @@ type UnitStructDeclaration struct {
 	BaseNode
 	BaseStatement
 	canExport
-	Name    string
+	Name string
 }
 
 func (structDec *UnitStructDeclaration) Type() NodeType { return "UnitStructDeclaration" }
@@ -361,4 +361,24 @@ func (imp *ImportStatement) String() string {
 		return "import {" + strings.Join(imp.ImportedSymbols, ", ") + "} from \"" + imp.Module + "\""
 	}
 	return "import \"" + imp.Module + "\""
+}
+
+type EnumDeclaration struct {
+	BaseNode
+	BaseStatement
+	IsUnion bool
+	Name    string
+	Members map[string]EnumMember
+}
+
+type EnumMember struct {
+	Name          string
+	Exported      bool
+	Types         []TypeExpression
+	StructMembers map[string]StructField
+}
+
+func (*EnumDeclaration) Type() NodeType { return "EnumDeclaration" }
+func (enum *EnumDeclaration) String() string {
+	return "enum " + enum.Name
 }
