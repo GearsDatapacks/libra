@@ -58,6 +58,49 @@ func (u *Union) String() string {
 	return strings.Join(typeStrings, " | ")
 }
 
+type EnumMember struct {
+	DataType ValidType
+	Exported bool
+}
+
+type Enum struct {
+	BaseType
+	Name  string
+	Types map[string]*EnumMember
+}
+
+func (e *Enum) Valid(dataType ValidType) bool {
+	enum, isEnum := dataType.(*Enum)
+
+	if isEnum {
+		return e.Name == enum.Name
+	}
+
+	for _, member := range e.Types {
+		if member.DataType.Valid(dataType) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (e *Enum) String() string {
+	return e.Name
+}
+
+func (e *Enum) member(name string, moduleId int) ValidType {
+	member, ok := e.Types[name]
+	if !ok {
+		return nil
+	}
+	if moduleId != e.module && !member.Exported {
+		fmt.Println(member)
+		return nil
+	}
+	return member.DataType
+}
+
 type Function struct {
 	BaseType
 	Name       string
@@ -157,6 +200,16 @@ type UnitStruct struct {
 	BaseType
 	Name string
 	Id   int
+}
+
+var unitStructId = 0
+
+func MakeUnitStruct(name string) *UnitStruct {
+	unitStructId++
+	return &UnitStruct{
+		Name: name,
+		Id:   unitStructId,
+	}
 }
 
 func (s *UnitStruct) Valid(dataType ValidType) bool {
@@ -402,4 +455,42 @@ func (t *Type) String() string {
 func (t *Type) SetModule(moduleId int) {
 	t.module = moduleId
 	t.DataType.SetModule(moduleId)
+}
+
+func (t *Type) member(name string, moduleId int) ValidType {
+	return Member(t.DataType, name, false, moduleId)
+}
+
+type ExplicitType struct {
+	BaseType
+	Name     string
+	Id       int
+	DataType ValidType
+}
+
+var explicitTypeId = 0
+
+func MakeExplicitType(name string, dataType ValidType) *ExplicitType {
+	explicitTypeId++
+	return &ExplicitType{
+		Name:     name,
+		Id:       explicitTypeId,
+		DataType: dataType,
+	}
+}
+
+func (t *ExplicitType) Valid(dataType ValidType) bool {
+	explicit, ok := dataType.(*ExplicitType)
+	if !ok {
+		return false
+	}
+	return t.Id == explicit.Id
+}
+
+func (t *ExplicitType) String() string {
+	return t.Name
+}
+
+func (t *ExplicitType) CanCastFrom(dataType ValidType) bool {
+	return CanCast(dataType, t.DataType)
 }

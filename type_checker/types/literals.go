@@ -44,7 +44,7 @@ func (i *IntLiteral) Infer(dataType ValidType) (ValidType, bool) {
 
 	return i, false
 }
-func (i *IntLiteral) CanCast(t ValidType) bool { return i.Valid(t) || (&FloatLiteral{}).Valid(t) }
+func (i *IntLiteral) CanCastTo(t ValidType) bool { return i.Valid(t) || (&FloatLiteral{}).Valid(t) }
 
 type FloatLiteral struct{ BaseType }
 
@@ -62,7 +62,7 @@ func (f *FloatLiteral) Infer(dataType ValidType) (ValidType, bool) {
 
 	return f, false
 }
-func (f *FloatLiteral) CanCast(t ValidType) bool { return f.Valid(t) || (&IntLiteral{}).Valid(t) }
+func (f *FloatLiteral) CanCastTo(t ValidType) bool { return f.Valid(t) || (&IntLiteral{}).Valid(t) }
 
 type BoolLiteral struct{ BaseType }
 

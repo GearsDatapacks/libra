@@ -109,6 +109,12 @@ func typeCheckIdentifier(ident *ast.Identifier, manager *modules.ModuleManager) 
 		return unitType
 	}
 
+	if dataType, isType := ty.(*types.Type); isType {
+		if unitType, isUnit := dataType.DataType.(*types.UnitStruct); isUnit {
+			return unitType
+		}
+	}
+
 	err := dataType.(*types.TypeError)
 	err.Line = ident.Token.Line
 	err.Column = ident.Token.Column

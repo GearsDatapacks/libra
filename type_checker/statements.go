@@ -56,6 +56,9 @@ func typeCheckStatement(stmt ast.Statement, manager *modules.ModuleManager) type
 	case *ast.UnitStructDeclaration:
 		return &types.Void{}
 
+	case *ast.EnumDeclaration:
+		return &types.Void{}
+
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statement type: " + statement.String()))
 		return nil
@@ -78,6 +81,10 @@ func typeCheckGlobalStatement(stmt ast.Statement, manager *modules.ModuleManager
 
 	case *ast.TypeDeclaration:
 		return typeCheckTypeDeclataion(statement, manager)
+
+	case *ast.EnumDeclaration:
+		return typeCheckEnumDeclaration(statement, manager)
+
 	default:
 		return &types.Void{}
 	}
@@ -105,6 +112,9 @@ func registerTypeStatement(stmt ast.Statement, manager *modules.ModuleManager) t
 
 	case *ast.UnitStructDeclaration:
 		return registerUnitStructDeclaration(statement, manager)
+
+	case *ast.EnumDeclaration:
+		return registerEnumDeclaration(statement, manager)
 
 	default:
 		return &types.Void{}
@@ -508,14 +518,8 @@ func registerTupleStructDeclaration(structDecl *ast.TupleStructDeclaration, mana
 	return structType
 }
 
-var unitId = 0
-
 func registerUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) types.ValidType {
-	unitId++
-	structType := &types.UnitStruct{
-		Id:   unitId,
-		Name: structDecl.Name,
-	}
+	structType := types.MakeUnitStruct(structDecl.Name)
 
 	err := manager.SymbolTable.AddType(structDecl.Name, structType)
 	if err != nil {
@@ -605,4 +609,103 @@ func typeCheckImportStatement(importStatement *ast.ImportStatement, manager *mod
 
 	manager.SymbolTable.RegisterSymbol(name, importedMod, true)
 	return importedMod
+}
+
+func registerEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.ModuleManager) types.ValidType {
+	var dataType types.ValidType = &types.Void{}
+	if enumDec.IsUnion {
+		dataType = &types.Union{
+			Types: []types.ValidType{},
+		}
+	} else {
+		dataType = &types.Enum{
+			Name:  enumDec.Name,
+			Types: map[string]*types.EnumMember{},
+		}
+	}
+
+	for name, member := range enumDec.Members {
+		if enumDec.IsUnion {
+			memberType := &types.Type{DataType: &types.Void{}}
+			err := manager.SymbolTable.AddType(name, memberType)
+			if err != nil {
+				return err
+			}
+			dataType.(*types.Union).Types = append(dataType.(*types.Union).Types, memberType)
+		} else {
+			dataType.(*types.Enum).Types[name] = &types.EnumMember{
+				DataType: &types.Type{DataType: &types.Void{}},
+				Exported: member.Exported,
+			}
+		}
+	}
+
+	err := manager.SymbolTable.AddType(enumDec.Name, &types.Type{DataType: dataType})
+	if err != nil {
+		return err
+	}
+	if !enumDec.IsUnion {
+		err := manager.SymbolTable.RegisterSymbol(enumDec.Name, dataType, true, manager.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return &types.Void{}
+}
+
+func typeCheckEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.ModuleManager) types.ValidType {
+	declaredType := manager.SymbolTable.GetType(enumDec.Name)
+
+	for name, member := range enumDec.Members {
+		var dataType types.ValidType
+		if member.Types != nil {
+			if len(member.Types) == 1 {
+				memberType := TypeCheckType(member.Types[0], manager)
+				if memberType.String() == "TypeError" {
+					return memberType
+				}
+				dataType = types.MakeExplicitType(member.Name, memberType)
+			} else {
+				dataTypes := []types.ValidType{}
+				for _, memberType := range member.Types {
+					nextType := TypeCheckType(memberType, manager)
+					if nextType.String() == "TypeError" {
+						return nextType
+					}
+					dataTypes = append(dataTypes, nextType)
+				}
+				dataType = &types.TupleStruct{
+					Name:    member.Name,
+					Members: dataTypes,
+				}
+			}
+		} else if member.StructMembers != nil {
+			structMembers := map[string]types.StructField{}
+			for name, field := range member.StructMembers {
+				fieldType := TypeCheckType(field.Type, manager)
+				if fieldType.String() == "TypeError" {
+					return fieldType
+				}
+				structMembers[name] = types.StructField{
+					Type:     fieldType,
+					Exported: field.Exported,
+				}
+			}
+			dataType = &types.Struct{
+				Name:    name,
+				Members: structMembers,
+			}
+		} else {
+			dataType = types.MakeUnitStruct(name)
+		}
+		if enumDec.IsUnion {
+			manager.SymbolTable.UpdateType(name, dataType)
+		} else {
+			member := declaredType.(*types.Enum).Types[name]
+			member.DataType = &types.Type{DataType: dataType}
+		}
+	}
+
+	return &types.Void{}
 }

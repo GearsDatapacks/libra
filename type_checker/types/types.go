@@ -66,16 +66,28 @@ func (b *BaseType) SetModule(moduleId int) {
 	b.module = moduleId
 }
 
-type CustomCastable interface {
-	CanCast(ValidType) bool
+type CastableTo interface {
+	CanCastTo(ValidType) bool
+}
+
+type CastableFrom interface {
+	CanCastFrom(ValidType) bool
 }
 
 func CanCast(from, to ValidType) bool {
-	if castable, ok := from.(CustomCastable); ok {
-		return castable.CanCast(to)
+	if castable, ok := from.(CastableTo); ok {
+		if castable.CanCastTo(to) {
+			return true
+		}
 	}
 
-	return from.Valid(to)
+	if castable, ok := to.(CastableFrom); ok {
+		if castable.CanCastFrom(from) {
+			return true
+		}
+	}
+
+	return from.Valid(to) || to.Valid(from)
 }
 
 type PartialType interface {

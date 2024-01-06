@@ -58,7 +58,7 @@ func NewFunction(parent *SymbolTable, returnType types.ValidType) *SymbolTable {
 	return table
 }
 
-func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool) *types.TypeError {
+func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, constant bool, modeulId ...int) *types.TypeError {
 	if _, ok := st.variables[name]; ok {
 		return types.Error(fmt.Sprintf("Cannot redeclare variable %q, it is already defined", name))
 	}
@@ -79,6 +79,9 @@ func (st *SymbolTable) RegisterSymbol(name string, dataType types.ValidType, con
 		dataType.MarkConstant()
 	}
 
+	if len(modeulId) != 0 {
+		dataType.SetModule(modeulId[0])
+	}
 	dataType.MarkVariable()
 	st.variables[name] = dataType
 	return nil
@@ -199,12 +202,12 @@ func (st *SymbolTable) AddType(name string, dataType types.ValidType) *types.Typ
 }
 
 func (st *SymbolTable) UpdateType(name string, dataType types.ValidType) *types.TypeError {
-	_, hasType := st.types[name]
+	declaredType, hasType := st.types[name]
 	if !hasType {
 		errors.DevError(fmt.Sprintf("Cannot update type %q, it does not exist", name))
 	}
 
-	st.types[name] = dataType
+	declaredType.(*types.Type).DataType = dataType
 	return nil
 }
 
@@ -212,6 +215,10 @@ func (st *SymbolTable) GetType(name string) types.ValidType {
 	table := st.resolveType(name)
 	if table == nil {
 		return types.Error(fmt.Sprintf("Type %q is undefind", name))
+	}
+
+	if ty, isType := table.types[name].(*types.Type); isType {
+		return ty.DataType
 	}
 
 	return table.types[name]

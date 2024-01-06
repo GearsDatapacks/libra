@@ -260,8 +260,6 @@ func evaluateMemberExpression(memberExpr ast.MemberExpression, manager *modules.
 		return values.MakeNull()
 	}
 
-	
-	
 	return memberValue
 }
 
@@ -310,8 +308,8 @@ func evaluateTupleStructExpression(tupleType *types.TupleStruct, tupleExpr *ast.
 func evaluateCastExpression(cast *ast.CastExpression, manager *modules.ModuleManager) values.RuntimeValue {
 	left := evaluateExpression(cast.Left, manager)
 	ty := typechecker.TypeCheckType(cast.DataType, manager)
-	castable, ok := ty.(types.CustomCastable)
-	if !ty.Valid(left.Type()) && !(ok && castable.CanCast(left.Type())) {
+	castable, ok := ty.(types.CastableTo)
+	if !ty.Valid(left.Type()) && !(ok && castable.CanCastTo(left.Type())) {
 		errors.LogError(fmt.Sprintf("%q is type %q, not %q", left.ToString(), left.Type(), ty))
 	}
 
