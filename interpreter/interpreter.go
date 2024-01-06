@@ -18,28 +18,26 @@ const (
 
 func Evaluate(manager *modules.ModuleManager) values.RuntimeValue {
 
-	register(manager)
+	registerStatements(manager)
 
 	resolveImports(manager)
 
 	return evaluateStatements(manager)
 }
 
-func register(manager *modules.ModuleManager) {
+func registerStatements(manager *modules.ModuleManager) {
 	if manager.InterpretStage > REGISTER {
 		return
 	}
 	manager.InterpretStage++
 
 	for _, mod := range manager.Imported {
-		register(mod)
+		registerStatements(mod)
 	}
 
 	for _, file := range manager.Files {
 		for _, stmt := range file.Ast.Body {
-			if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
-				registerFunctionDeclaration(fn, manager)
-			}
+			register(stmt, manager)
 		}
 	}
 }
@@ -80,6 +78,19 @@ func evaluateStatements(manager *modules.ModuleManager) values.RuntimeValue {
 		}
 	}
 	return lastValue
+}
+
+func register(astNode ast.Statement, manager *modules.ModuleManager) {
+	switch statement := astNode.(type) {
+	case *ast.FunctionDeclaration:
+		registerFunctionDeclaration(statement, manager)
+
+	case *ast.UnitStructDeclaration:
+		evaluateUnitStructDeclaration(statement, manager)
+
+	case *ast.EnumDeclaration:
+		evaluateEnumDeclaration(statement, manager)	
+	}
 }
 
 func evaluate(astNode ast.Statement, manager *modules.ModuleManager) values.RuntimeValue {
@@ -124,10 +135,10 @@ func evaluate(astNode ast.Statement, manager *modules.ModuleManager) values.Runt
 		return values.MakeNull()
 
 	case *ast.UnitStructDeclaration:
-		return evaluateUnitStructDeclaration(statement, manager)
+		return values.MakeNull()
 
 	case *ast.EnumDeclaration:
-		return evaluateEnumDeclaration(statement, manager)
+		return values.MakeNull()
 
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode))
