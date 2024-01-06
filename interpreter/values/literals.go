@@ -769,7 +769,11 @@ func (*Module) EqualTo(value RuntimeValue) bool {
 }
 
 func (m *Module) Member(member string) RuntimeValue {
-	return m.Exports[member]
+	export, ok :=  m.Exports[member]
+	if !ok {
+		return MakeNull()
+	}
+	return export
 }
 
 func (m *Module) Copy() RuntimeValue {
@@ -780,6 +784,16 @@ type UnitStruct struct {
 	BaseValue
 	Id   int
 	Name string
+}
+
+func MakeUnitStruct(name string) *UnitStruct {
+	ty := types.MakeUnitStruct(name)
+
+	return &UnitStruct{
+		Id: ty.Id,
+		Name: name,
+		BaseValue: BaseValue{DataType: ty},
+	}
 }
 
 func (u *UnitStruct) ToString() string {
@@ -800,4 +814,35 @@ func (u *UnitStruct) EqualTo(value RuntimeValue) bool {
 
 func (u *UnitStruct) Copy() RuntimeValue {
 	return u
+}
+
+type Enum struct {
+	BaseValue
+	Name string
+	Members map[string]RuntimeValue
+}
+
+func (e *Enum) ToString() string {
+	return e.Name
+}
+
+func (*Enum) Truthy() bool {
+	return true
+}
+
+func (e *Enum) EqualTo(value RuntimeValue) bool {
+	enum, ok := value.(*Enum)
+	return ok && e.Name == enum.Name
+}
+
+func (e *Enum) Copy() RuntimeValue {
+	return e
+}
+
+func (e *Enum) Member(member string) RuntimeValue {
+	value, ok := e.Members[member]
+	if !ok {
+		return MakeNull()
+	}
+	return value
 }

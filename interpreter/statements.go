@@ -191,24 +191,32 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 	return importedMod
 }
 
-var unitId = 0
-
 func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
-	ty := &types.UnitStruct{Name: structDecl.Name}
-	unitId++
-
-	unit := &values.UnitStruct{
-		Id: unitId,
-		Name: structDecl.Name,
-		BaseValue: values.BaseValue{DataType: ty},
-	}
-	manager.Env.DeclareVariable(structDecl.Name, ty, unit)
+	unit := values.MakeUnitStruct(structDecl.Name)
+	manager.Env.DeclareVariable(structDecl.Name, unit.DataType, unit)
 
 	if structDecl.IsExport() {
 		manager.Env.Exports[structDecl.Name] = unit
 	}
 
 	return values.MakeNull()
+}
+
+func evaluateEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
+	members := map[string]values.RuntimeValue{}
+	for name, member := range enumDec.Members {
+		if member.Types == nil && member.StructMembers == nil {
+			unit := values.MakeUnitStruct(name)
+			members[name] = unit
+		}
+	}
+
+	enum := &values.Enum{
+		Name:      enumDec.Name,
+		Members:   members,
+	}
+	manager.Env.DeclareVariable(enum.Name, &types.Void{}, enum)
+	return enum
 }
 
 /*

@@ -126,6 +126,9 @@ func evaluate(astNode ast.Statement, manager *modules.ModuleManager) values.Runt
 	case *ast.UnitStructDeclaration:
 		return evaluateUnitStructDeclaration(statement, manager)
 
+	case *ast.EnumDeclaration:
+		return evaluateEnumDeclaration(statement, manager)
+
 	default:
 		errors.LogError(errors.DevError(fmt.Sprintf("(Interpreter) Unreconised AST node: %s", astNode.String()), astNode))
 		return nil
