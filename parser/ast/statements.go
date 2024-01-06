@@ -366,6 +366,7 @@ func (imp *ImportStatement) String() string {
 type EnumDeclaration struct {
 	BaseNode
 	BaseStatement
+	Exportable
 	IsUnion bool
 	Name    string
 	Members map[string]EnumMember
