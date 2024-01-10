@@ -658,6 +658,10 @@ func registerEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.Modu
 		}
 	}
 
+	if enumDec.IsExport() {
+		manager.SymbolTable.AddExport(enumDec.Name, &types.Type{DataType: dataType}, manager.Id)
+	}
+
 	return &types.Void{}
 }
 

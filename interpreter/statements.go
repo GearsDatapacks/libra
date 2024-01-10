@@ -204,7 +204,12 @@ func evaluateEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.Modu
 		Members:   members,
 		BaseValue: values.BaseValue{DataType: enumDec.GetType()},
 	}
+
 	manager.Env.DeclareVariable(enum.Name, enumDec.GetType(), enum)
+	if enumDec.IsExport() {
+		manager.Env.Exports[enumDec.Name] = enum
+	}
+
 	return enum
 }
 
