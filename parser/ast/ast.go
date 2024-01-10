@@ -2,21 +2,33 @@ package ast
 
 import (
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type NodeType string
 
 type BaseNode struct {
-	Token       token.Token
+	Token    token.Token
+	DataType types.ValidType
 }
 
 func (n *BaseNode) GetToken() token.Token {
 	return n.Token
 }
 
+func (n *BaseNode) SetType(dataType types.ValidType) {
+	n.DataType = dataType
+}
+
+func (n *BaseNode) GetType() types.ValidType {
+	return n.DataType
+}
+
 type Node interface {
 	GetToken() token.Token
 	Type() NodeType
+	SetType(types.ValidType)
+	GetType() types.ValidType
 	String() string
 }
 

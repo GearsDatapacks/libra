@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 type Union struct {
@@ -309,7 +309,11 @@ func (*TypeError) String() string {
 	return "TypeError"
 }
 
-func Error(message string, errorNodes ...ast.Node) *TypeError {
+type node interface {
+    GetToken() token.Token
+}
+
+func Error(message string, errorNodes ...node) *TypeError {
 	if len(errorNodes) == 0 {
 		return &TypeError{
 			Line:    -1,
@@ -494,3 +498,4 @@ func (t *ExplicitType) String() string {
 func (t *ExplicitType) CanCastFrom(dataType ValidType) bool {
 	return CanCast(dataType, t.DataType)
 }
+

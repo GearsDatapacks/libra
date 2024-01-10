@@ -5,7 +5,6 @@ import (
 	"github.com/gearsdatapacks/libra/interpreter/values"
 	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
-	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -22,27 +21,20 @@ func evaluateVariableDeclaration(varDec *ast.VariableDeclaration, manager *modul
 		value = evaluateExpression(varDec.Value, manager)
 	}
 
-	return manager.Env.DeclareVariable(varDec.Name, typechecker.TypeCheckType(varDec.DataType, manager), value)
+	return manager.Env.DeclareVariable(varDec.Name, varDec.DataType.GetType(), value)
 }
 
 func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	params := []values.Parameter{}
-	paramTypes := []types.ValidType{}
 
 	for _, param := range funcDec.Parameters {
 		params = append(params, values.Parameter{
 			Name: param.Name,
-			Type: typechecker.TypeCheckType(param.Type, manager),
+			Type: param.Type.GetType(),
 		})
 	}
-	returnType := typechecker.TypeCheckType(funcDec.ReturnType, manager)
 
-	functionType := &types.Function{
-		Parameters: paramTypes,
-		ReturnType: returnType,
-		Name:       funcDec.Name,
-		Exported:   funcDec.Exported,
-	}
+	functionType := funcDec.GetType().(*types.Function)
 
 	fn := &values.FunctionValue{
 		Name:       funcDec.Name,
@@ -54,14 +46,13 @@ func registerFunctionDeclaration(funcDec *ast.FunctionDeclaration, manager *modu
 	}
 
 	if funcDec.MethodOf != nil {
-		parentType := typechecker.TypeCheckType(funcDec.MethodOf, manager)
+		parentType := funcDec.MethodOf.GetType()
 		functionType.MethodOf = parentType
 
 		types.AddMethod(funcDec.Name, functionType)
 		environment.AddMethod(funcDec.Name, fn)
 		return fn
 	} else {
-
 		if funcDec.IsExport() {
 			manager.Env.GlobalScope().Exports[fn.Name] = fn
 		}
@@ -180,10 +171,7 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 		Name:    name,
 		Exports: mod.Env.Exports,
 		BaseValue: values.BaseValue{
-			DataType: &types.Module{
-				Name:    name,
-				Exports: mod.SymbolTable.Exports,
-			},
+			DataType: importStatement.GetType(),
 		},
 	}
 
@@ -192,7 +180,7 @@ func evaluateImportStatement(importStatement *ast.ImportStatement, manager *modu
 }
 
 func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
-	unit := values.MakeUnitStruct(structDecl.Name)
+	unit := values.MakeUnitStruct(structDecl.Name, structDecl.GetType().(*types.UnitStruct))
 	manager.Env.DeclareVariable(structDecl.Name, unit.DataType, unit)
 
 	if structDecl.IsExport() {
@@ -204,9 +192,9 @@ func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manage
 
 func evaluateEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
 	members := map[string]values.RuntimeValue{}
-	for name, member := range enumDec.Members {
-		if member.Types == nil && member.StructMembers == nil {
-			unit := values.MakeUnitStruct(name)
+	for name, member := range enumDec.GetType().(*types.Enum).Types {
+		if unitType, ok := member.DataType.(*types.Type).DataType.(*types.UnitStruct); ok {
+			unit := values.MakeUnitStruct(name, unitType)
 			members[name] = unit
 		}
 	}
@@ -214,8 +202,9 @@ func evaluateEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.Modu
 	enum := &values.Enum{
 		Name:      enumDec.Name,
 		Members:   members,
+		BaseValue: values.BaseValue{DataType: enumDec.GetType()},
 	}
-	manager.Env.DeclareVariable(enum.Name, &types.Void{}, enum)
+	manager.Env.DeclareVariable(enum.Name, enumDec.GetType(), enum)
 	return enum
 }
 

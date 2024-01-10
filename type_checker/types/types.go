@@ -1,12 +1,5 @@
 package types
 
-import (
-	"log"
-
-	"github.com/gearsdatapacks/libra/errors"
-	"github.com/gearsdatapacks/libra/parser/ast"
-)
-
 type ValidType interface {
 	Valid(ValidType) bool
 	String() string
@@ -95,97 +88,6 @@ type PartialType interface {
 	Infer(ValidType) (ValidType, bool)
 }
 
-func FromAst(node ast.TypeExpression, table TypeTable) ValidType {
-	switch typeExpr := node.(type) {
-	case *ast.TypeName:
-		dataType := FromString(typeExpr.Name, table)
-		if err, isErr := dataType.(*TypeError); isErr {
-			err.Line = node.GetToken().Line
-			err.Column = node.GetToken().Column
-		}
-		return dataType
-
-	case *ast.Union:
-		types := []ValidType{}
-
-		for _, dataType := range typeExpr.ValidTypes {
-			nextType := FromAst(dataType, table)
-			if nextType.String() == "TypeError" {
-				return nextType
-			}
-			types = append(types, nextType)
-		}
-
-		return MakeUnion(types...)
-
-	case *ast.ListType:
-		dataType := FromAst(typeExpr.ElementType, table)
-		if dataType.String() == "TypeError" {
-			return dataType
-		}
-
-		return &ListLiteral{
-			ElemType: dataType,
-		}
-
-	case *ast.ArrayType:
-		dataType := FromAst(typeExpr.ElementType, table)
-		if dataType.String() == "TypeError" {
-			return dataType
-		}
-
-		return &ArrayLiteral{
-			ElemType: dataType,
-			Length:   typeExpr.Length,
-		}
-
-	case *ast.MapType:
-		keyType := FromAst(typeExpr.KeyType, table)
-		if keyType.String() == "TypeError" {
-			return keyType
-		}
-
-		valueType := FromAst(typeExpr.ValueType, table)
-		if valueType.String() == "TypeError" {
-			return valueType
-		}
-
-		return &MapLiteral{
-			KeyType:   keyType,
-			ValueType: valueType,
-		}
-
-	case *ast.ErrorType:
-		resultType := FromAst(typeExpr.ResultType, table)
-		if resultType.String() == "TypeError" {
-			return resultType
-		}
-
-		return &ErrorType{ResultType: resultType}
-
-	case *ast.TupleType:
-		members := []ValidType{}
-		for _, member := range typeExpr.Members {
-			resultType := FromAst(member, table)
-			if resultType.String() == "TypeError" {
-				return resultType
-			}
-			members = append(members, resultType)
-		}
-
-		return &Tuple{Members: members}
-
-	case *ast.VoidType:
-		return &Void{}
-
-	case *ast.InferType:
-		return &Infer{}
-
-	default:
-		log.Fatal(errors.DevError("Unexpected type node: " + node.String()))
-		return nil
-	}
-}
 
 var typeTable = map[string]ValidType{
 	"int":      &IntLiteral{},

@@ -12,27 +12,28 @@ import (
 )
 
 func typeCheckStatement(stmt ast.Statement, manager *modules.ModuleManager) types.ValidType {
+	var dataType types.ValidType
 	switch statement := stmt.(type) {
 	case *ast.VariableDeclaration:
-		return typeCheckVariableDeclaration(statement, manager)
+		dataType = typeCheckVariableDeclaration(statement, manager)
 
 	case *ast.ExpressionStatement:
-		return typeCheckExpression(statement.Expression, manager)
+		dataType = typeCheckExpression(statement.Expression, manager)
 
 	case *ast.FunctionDeclaration:
-		return typeCheckFunctionDeclaration(statement, manager)
+		dataType = typeCheckFunctionDeclaration(statement, manager)
 
 	case *ast.ReturnStatement:
-		return typeCheckReturnStatement(statement, manager)
+		dataType = typeCheckReturnStatement(statement, manager)
 
 	case *ast.IfStatement:
-		return typeCheckIfStatement(statement, manager)
+		dataType = typeCheckIfStatement(statement, manager)
 
 	case *ast.WhileLoop:
-		return typeCheckWhileLoop(statement, manager)
+		dataType = typeCheckWhileLoop(statement, manager)
 
 	case *ast.ForLoop:
-		return typeCheckForLoop(statement, manager)
+		dataType = typeCheckForLoop(statement, manager)
 
 	case *ast.StructDeclaration:
 		// return typeCheckStructDeclaration(statement, manager)
@@ -61,33 +62,39 @@ func typeCheckStatement(stmt ast.Statement, manager *modules.ModuleManager) type
 
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected statement type: " + statement.String()))
-		return nil
 	}
+
+	stmt.SetType(dataType)
+	return dataType
 }
 
 func typeCheckGlobalStatement(stmt ast.Statement, manager *modules.ModuleManager) types.ValidType {
+	var dataType types.ValidType
 	switch statement := stmt.(type) {
 	// case *ast.FunctionDeclaration:
 	// 	return registerFunctionDeclaration(statement, manager)
 
 	case *ast.StructDeclaration:
-		return typeCheckStructDeclaration(statement, manager)
+		dataType = typeCheckStructDeclaration(statement, manager)
 
 	case *ast.TupleStructDeclaration:
-		return typeCheckTupleStructDeclaration(statement, manager)
+		dataType = typeCheckTupleStructDeclaration(statement, manager)
 
 	case *ast.InterfaceDeclaration:
-		return typeCheckInterfaceDeclaration(statement, manager)
+		dataType = typeCheckInterfaceDeclaration(statement, manager)
 
 	case *ast.TypeDeclaration:
-		return typeCheckTypeDeclataion(statement, manager)
+		dataType = typeCheckTypeDeclataion(statement, manager)
 
 	case *ast.EnumDeclaration:
-		return typeCheckEnumDeclaration(statement, manager)
+		dataType = typeCheckEnumDeclaration(statement, manager)
 
 	default:
 		return &types.Void{}
 	}
+
+	stmt.SetType(dataType)
+	return dataType
 }
 
 func registerTypeStatement(stmt ast.Statement, manager *modules.ModuleManager) types.ValidType {
@@ -707,5 +714,5 @@ func typeCheckEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.Mod
 		}
 	}
 
-	return &types.Void{}
+	return declaredType
 }

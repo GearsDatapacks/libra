@@ -786,9 +786,7 @@ type UnitStruct struct {
 	Name string
 }
 
-func MakeUnitStruct(name string) *UnitStruct {
-	ty := types.MakeUnitStruct(name)
-
+func MakeUnitStruct(name string, ty *types.UnitStruct) *UnitStruct {
 	return &UnitStruct{
 		Id: ty.Id,
 		Name: name,

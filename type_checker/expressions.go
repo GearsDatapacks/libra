@@ -29,9 +29,10 @@ func typeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) ty
 }
 
 func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) types.ValidType {
-	switch expression := expr.(type) {
+    var dataType types.ValidType
+    switch expression := expr.(type) {
 	case *ast.IntegerLiteral:
-		return &types.UntypedNumber{
+	    dataType = &types.UntypedNumber{
 			Default:         &types.IntLiteral{},
 			IsIntAssignable: true,
 		}
@@ -40,62 +41,64 @@ func doTypeCheckExpression(expr ast.Expression, manager *modules.ModuleManager) 
 		if expression.Value == float64(int64(expression.Value)) {
 			possibleInt = true
 		}
-		return &types.UntypedNumber{
+		dataType = &types.UntypedNumber{
 			Default:         &types.FloatLiteral{},
 			IsIntAssignable: possibleInt,
 		}
 	case *ast.StringLiteral:
-		return &types.StringLiteral{}
+		dataType = &types.StringLiteral{}
 	case *ast.NullLiteral:
-		return &types.NullLiteral{}
+		dataType = &types.NullLiteral{}
 	case *ast.BooleanLiteral:
-		return &types.BoolLiteral{}
+		dataType = &types.BoolLiteral{}
 	case *ast.VoidValue:
-		return &types.Void{}
+		dataType = &types.Void{}
 
 	case *ast.Identifier:
-		return typeCheckIdentifier(expression, manager)
+		dataType = typeCheckIdentifier(expression, manager)
 
 	case *ast.BinaryOperation:
-		return typeCheckBinaryOperation(expression, manager)
+		dataType = typeCheckBinaryOperation(expression, manager)
 
 	case *ast.UnaryOperation:
-		return typeCheckUnaryOperation(expression, manager)
+		dataType = typeCheckUnaryOperation(expression, manager)
 
 	case *ast.AssignmentExpression:
-		return typeCheckAssignmentExpression(expression, manager)
+		dataType = typeCheckAssignmentExpression(expression, manager)
 
 	case *ast.FunctionCall:
-		return typeCheckFunctionCall(expression, manager)
+		dataType = typeCheckFunctionCall(expression, manager)
 
 	case *ast.ListLiteral:
-		return typeCheckList(expression, manager)
+		dataType = typeCheckList(expression, manager)
 
 	case *ast.MapLiteral:
-		return typeCheckMap(expression, manager)
+		dataType = typeCheckMap(expression, manager)
 
 	case *ast.IndexExpression:
-		return typeCheckIndexExpression(expression, manager)
+		dataType = typeCheckIndexExpression(expression, manager)
 
 	case *ast.MemberExpression:
-		return typeCheckMemberExpression(expression, manager)
+		dataType = typeCheckMemberExpression(expression, manager)
 
 	case *ast.StructExpression:
-		return typeCheckStructExpression(expression, manager)
+		dataType = typeCheckStructExpression(expression, manager)
 
 	case *ast.TupleExpression:
-		return typeCheckTuple(expression, manager)
+		dataType = typeCheckTuple(expression, manager)
 
 	case *ast.CastExpression:
-		return typeCheckCastExpression(expression, manager)
+		dataType = typeCheckCastExpression(expression, manager)
 
 	case *ast.TypeCheckExpression:
-		return typeCheckTypeCheckExpression(expression, manager)
+		dataType = typeCheckTypeCheckExpression(expression, manager)
 
 	default:
 		log.Fatal(errors.DevError("(Type checker) Unexpected expression type: " + expr.String()))
-		return nil
 	}
+
+    expr.SetType(dataType)
+    return dataType
 }
 
 func typeCheckIdentifier(ident *ast.Identifier, manager *modules.ModuleManager) types.ValidType {

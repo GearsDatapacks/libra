@@ -163,79 +163,34 @@ func evaluateFunctionCall(call *ast.FunctionCall, manager *modules.ModuleManager
 
 func evaluateList(list *ast.ListLiteral, manager *modules.ModuleManager) values.RuntimeValue {
 	evaluatedValues := []values.RuntimeValue{}
-	listTypes := []types.ValidType{}
 
 	for _, elem := range list.Elements {
 		elemValue := evaluateExpression(elem, manager)
-		newType := true
-		for _, listType := range listTypes {
-			if listType.Valid(elemValue.Type()) {
-				newType = false
-				break
-			}
-		}
 
-		if newType {
-			listTypes = append(listTypes, elemValue.Type())
-		}
 		evaluatedValues = append(evaluatedValues, elemValue)
 	}
 
 	return &values.ListLiteral{
 		Elements: evaluatedValues,
 		BaseValue: values.BaseValue{
-			DataType: &types.ArrayLiteral{
-				ElemType: types.MakeUnion(listTypes...),
-				Length:   len(list.Elements),
-				CanInfer: true,
-			},
+			DataType: list.GetType(),
 		},
 	}
 }
 
 func evaluateMap(maplit *ast.MapLiteral, manager *modules.ModuleManager) values.RuntimeValue {
-	keyTypes := []types.ValidType{}
-	valueTypes := []types.ValidType{}
-	evaluatedValues := map[values.RuntimeValue]values.RuntimeValue{}
+	elements := map[values.RuntimeValue]values.RuntimeValue{}
 
 	for key, value := range maplit.Elements {
-		keyValue := evaluateExpression(key, manager)
-		keyType := keyValue.Type()
-		newType := true
-		for _, dataType := range keyTypes {
-			if dataType.Valid(keyType) {
-				newType = false
-				break
-			}
-		}
+		key := evaluateExpression(key, manager)
 
-		if newType {
-			keyTypes = append(keyTypes, keyType)
-		}
-
-		valueValue := evaluateExpression(value, manager)
-		evaluatedValues[keyValue] = valueValue
-
-		valueType := valueValue.Type()
-		newType = true
-		for _, dataType := range valueTypes {
-			if dataType.Valid(valueType) {
-				newType = false
-				break
-			}
-		}
-
-		if newType {
-			valueTypes = append(valueTypes, valueType)
-		}
+		value := evaluateExpression(value, manager)
+		elements[key] = value
 	}
 
 	return &values.MapLiteral{
-		Elements: evaluatedValues,
-		BaseValue: values.BaseValue{DataType: &types.MapLiteral{
-			KeyType:   types.MakeUnion(keyTypes...),
-			ValueType: types.MakeUnion(valueTypes...),
-		}},
+		Elements: elements,
+		BaseValue: values.BaseValue{DataType: maplit.GetType()},
 	}
 }
 

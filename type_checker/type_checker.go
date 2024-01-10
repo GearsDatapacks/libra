@@ -2,9 +2,12 @@ package typechecker
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/gearsdatapacks/libra/errors"
 	"github.com/gearsdatapacks/libra/modules"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -155,6 +158,7 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 				if nextType.String() == "TypeError" {
 					return nextType.(*types.TypeError)
 				}
+				funcDec.SetType(nextType)
 			}
 		}
 	}
@@ -163,10 +167,14 @@ func typeCheckFunctions(manager *modules.ModuleManager) error {
 }
 
 func TypeCheckType(ty ast.TypeExpression, manager *modules.ModuleManager) types.ValidType {
+	var dataType types.ValidType
 	if member, ok := ty.(*ast.MemberType); ok {
-		return typeCheckMemberType(member, manager)
+		dataType = typeCheckMemberType(member, manager)
+	} else {
+		dataType = FromAst(ty, manager.SymbolTable)
 	}
-	return types.FromAst(ty, manager.SymbolTable)
+	ty.SetType(dataType)
+	return dataType
 }
 
 func typeCheckMemberType(member *ast.MemberType, manager *modules.ModuleManager) types.ValidType {
@@ -190,4 +198,97 @@ func typeCheckMemberType(member *ast.MemberType, manager *modules.ModuleManager)
 		return ty.DataType
 	}
 	return types.Error(fmt.Sprintf("Cannot use %q as type, it is a value", member.String()), member)
+}
+
+
+func FromAst(node ast.TypeExpression, table *symbols.SymbolTable) types.ValidType {
+	switch typeExpr := node.(type) {
+	case *ast.TypeName:
+		dataType := types.FromString(typeExpr.Name, table)
+		if err, isErr := dataType.(*types.TypeError); isErr {
+			err.Line = node.GetToken().Line
+			err.Column = node.GetToken().Column
+		}
+		return dataType
+
+	case *ast.Union:
+		dataTypes := []types.ValidType{}
+
+		for _, dataType := range typeExpr.ValidTypes {
+			nextType := FromAst(dataType, table)
+			if nextType.String() == "TypeError" {
+				return nextType
+			}
+		    dataTypes = append(dataTypes, nextType)
+		}
+
+		return types.MakeUnion(dataTypes...)
+
+	case *ast.ListType:
+		dataType := FromAst(typeExpr.ElementType, table)
+		if dataType.String() == "TypeError" {
+			return dataType
+		}
+
+		return &types.ListLiteral{
+			ElemType: dataType,
+		}
+
+	case *ast.ArrayType:
+		dataType := FromAst(typeExpr.ElementType, table)
+		if dataType.String() == "TypeError" {
+			return dataType
+		}
+
+		return &types.ArrayLiteral{
+			ElemType: dataType,
+			Length:   typeExpr.Length,
+		}
+
+	case *ast.MapType:
+		keyType := FromAst(typeExpr.KeyType, table)
+		if keyType.String() == "TypeError" {
+			return keyType
+		}
+
+		valueType := FromAst(typeExpr.ValueType, table)
+		if valueType.String() == "TypeError" {
+			return valueType
+		}
+
+		return &types.MapLiteral{
+			KeyType:   keyType,
+			ValueType: valueType,
+		}
+
+	case *ast.ErrorType:
+		resultType := FromAst(typeExpr.ResultType, table)
+		if resultType.String() == "TypeError" {
+			return resultType
+		}
+
+		return &types.ErrorType{ResultType: resultType}
+
+	case *ast.TupleType:
+		members := []types.ValidType{}
+		for _, member := range typeExpr.Members {
+			resultType := FromAst(member, table)
+			if resultType.String() == "TypeError" {
+				return resultType
+			}
+			members = append(members, resultType)
+		}
+
+		return &types.Tuple{Members: members}
+
+	case *ast.VoidType:
+		return &types.Void{}
+
+	case *ast.InferType:
+		return &types.Infer{}
+
+	default:
+		log.Fatal(errors.DevError("Unexpected type node: " + node.String()))
+		return nil
+	}
 }
