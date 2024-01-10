@@ -191,26 +191,41 @@ func evaluateUnitStructDeclaration(structDecl *ast.UnitStructDeclaration, manage
 }
 
 func evaluateEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.ModuleManager) values.RuntimeValue {
-	members := map[string]values.RuntimeValue{}
-	for name, member := range enumDec.GetType().(*types.Enum).Types {
-		if unitType, ok := member.DataType.(*types.Type).DataType.(*types.UnitStruct); ok {
-			unit := values.MakeUnitStruct(name, unitType)
-			members[name] = unit
+	if enumDec.IsUnion {
+		for _, dataType := range enumDec.GetType().(*types.Union).Types {
+			if unitType, ok := dataType.(*types.Type).DataType.(*types.UnitStruct); ok {
+				unit := values.MakeUnitStruct(unitType.Name, unitType)
+				manager.Env.DeclareVariable(unit.Name, unitType, unit)
+				if enumDec.Members[unitType.Name].Exported {
+					manager.Env.Exports[unit.Name] = unit
+				}
+			}
 		}
-	}
 
-	enum := &values.Enum{
-		Name:      enumDec.Name,
-		Members:   members,
-		BaseValue: values.BaseValue{DataType: enumDec.GetType()},
-	}
+		return values.MakeNull()
+	} else {
+		members := map[string]values.RuntimeValue{}
 
-	manager.Env.DeclareVariable(enum.Name, enumDec.GetType(), enum)
-	if enumDec.IsExport() {
-		manager.Env.Exports[enumDec.Name] = enum
-	}
+		for name, member := range enumDec.GetType().(*types.Enum).Types {
+			if unitType, ok := member.DataType.(*types.Type).DataType.(*types.UnitStruct); ok {
+				unit := values.MakeUnitStruct(name, unitType)
+				members[name] = unit
+			}
+		}
 
-	return enum
+		enum := &values.Enum{
+			Name:      enumDec.Name,
+			Members:   members,
+			BaseValue: values.BaseValue{DataType: enumDec.GetType()},
+		}
+
+		manager.Env.DeclareVariable(enum.Name, enumDec.GetType(), enum)
+		if enumDec.IsExport() {
+			manager.Env.Exports[enumDec.Name] = enum
+		}
+
+		return enum
+	}
 }
 
 /*

@@ -638,6 +638,11 @@ func registerEnumDeclaration(enumDec *ast.EnumDeclaration, manager *modules.Modu
 			if err != nil {
 				return err
 			}
+
+			if member.Exported {
+				manager.SymbolTable.AddExport(name, memberType, manager.Id)
+			}
+
 			dataType.(*types.Union).Types = append(dataType.(*types.Union).Types, memberType)
 		} else {
 			dataType.(*types.Enum).Types[name] = &types.EnumMember{
