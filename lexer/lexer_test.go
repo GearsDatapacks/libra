@@ -52,6 +52,15 @@ func TestSingleTokens(t *testing.T) {
     {"->", token.ARROW},
 		{"&", token.AMPERSAND},
 		{"\n", token.NEWLINE},
+		{"\r", token.NEWLINE},
+    {"17", token.INTEGER},
+    {"42", token.INTEGER},
+    {"19.3", token.FLOAT},
+    {"foo_bar", token.IDENTIFIER},
+    {"HiThere123", token.IDENTIFIER},
+    {`"Hi :)"`, token.STRING},
+    {`"\"How are you?\""`, token.STRING},
+    {`"Hello\nworld"`, token.STRING},
 	}
 
 	for _, p := range tokens {
