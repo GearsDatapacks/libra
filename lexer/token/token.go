@@ -18,6 +18,7 @@ type Span struct {
 const (
 	EOF Kind = iota
 	INVALID
+	NEWLINE
 
 	INTEGER
 	FLOAT
@@ -39,7 +40,7 @@ const (
 	PLUS_EQUALS
 	MINUS_EQUALS
 	STAR_EQUALS
-	SLAHS_EQUALS
+	SLASH_EQUALS
 	PERCENT_EQUALS
 
 	DOUBLE_AMPERSAND
@@ -88,5 +89,102 @@ func NewSpan(start, end, line, col int) Span {
 		End:   end,
 		Line:  line,
 		Col:   col,
+	}
+}
+
+func (kind Kind) String() string {
+	switch kind {
+	case LEFT_PAREN:
+		return "`(`"
+	case RIGHT_PAREN:
+		return "`)`"
+	case LEFT_BRACE:
+		return "`{`"
+	case RIGHT_BRACE:
+		return "`}`"
+	case LEFT_SQUARE:
+		return "`[`"
+	case RIGHT_SQUARE:
+		return "`]`"
+	case COMMA:
+		return "`,`"
+	case DOT:
+		return "`.`"
+	case COLON:
+		return "`:`"
+	case QUESTION:
+		return "`?`"
+	case EQUALS:
+		return "`=`"
+	case PLUS_EQUALS:
+		return "`+=`"
+	case MINUS_EQUALS:
+		return "`-=`"
+	case STAR_EQUALS:
+		return "`*=`"
+	case SLASH_EQUALS:
+		return "`/=`"
+	case PERCENT_EQUALS:
+		return "`%=`"
+	case DOUBLE_AMPERSAND:
+		return "`&&`"
+	case DOUBLE_PIPE:
+		return "`||`"
+	case LEFT_ANGLE:
+		return "`<`"
+	case RIGHT_ANGLE:
+		return "`>`"
+	case LEFT_ANGLE_EQUALS:
+		return "`<=`"
+	case RIGHT_ANGLE_EQUALS:
+		return "`>=`"
+	case DOUBLE_EQUALS:
+		return "`==`"
+	case BANG_EQUALS:
+		return "`!=`"
+	case DOUBLE_LEFT_ANGLE:
+		return "`<<`"
+	case DOUBLE_RIGHT_ANGLE:
+		return "`>>`"
+	case PLUS:
+		return "`+`"
+	case MINUS:
+		return "`-`"
+	case STAR:
+		return "`*`"
+	case SLASH:
+		return "`/`"
+	case PERCENT:
+		return "`%`"
+	case DOUBLE_STAR:
+		return "`**`"
+	case DOUBLE_PLUS:
+		return "`++`"
+	case DOUBLE_MINUS:
+		return "`--`"
+	case BANG:
+		return "`!`"
+	case PIPE:
+		return "`|`"
+	case ARROW:
+		return "`->`"
+	case AMPERSAND:
+		return "`&`"
+	case EOF:
+		return "<Eof>"
+	case INVALID:
+		return "?"
+	case NEWLINE:
+		return "<newline>"
+	case INTEGER:
+		return "integer"
+	case FLOAT:
+		return "float"
+	case STRING:
+		return "string"
+	case IDENTIFIER:
+		return "identifier"
+	default:
+		return "?"
 	}
 }
