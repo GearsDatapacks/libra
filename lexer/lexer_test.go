@@ -8,7 +8,7 @@ import (
 	utils "github.com/gearsdatapacks/libra/test_utils"
 )
 
-func TestSingleTokens(t *testing.T) {
+func TestFixedTokens(t *testing.T) {
 	var tokens = []struct {
 		src  string
 		kind token.Kind
@@ -53,22 +53,54 @@ func TestSingleTokens(t *testing.T) {
 		{"&", token.AMPERSAND},
 		{"\n", token.NEWLINE},
 		{"\r", token.NEWLINE},
-    {"17", token.INTEGER},
-    {"42", token.INTEGER},
-    {"19.3", token.FLOAT},
-    {"foo_bar", token.IDENTIFIER},
-    {"HiThere123", token.IDENTIFIER},
-    {`"Hi :)"`, token.STRING},
-    {`"\"How are you?\""`, token.STRING},
-    {`"Hello\nworld"`, token.STRING},
 	}
 
-	for _, p := range tokens {
-		lexer := lexer.New(p.src)
+	for _, tok := range tokens {
+		lexer := lexer.New(tok.src)
 		tokens := lexer.Tokenise()
 
 		utils.AssertEq(t, len(tokens), 2)
-		utils.AssertEq(t, tokens[0].Kind, p.kind)
+		utils.AssertEq(t, tokens[0].Kind, tok.kind)
 		utils.AssertEq(t, tokens[1].Kind, token.EOF)
 	}
 }
+
+func TestVariableTokens(t *testing.T) {
+  type tokenData struct{
+    src string
+    kind token.Kind
+    text string
+  }
+  tok := func (src string, kind token.Kind, text ...string) tokenData {
+    return tokenData{
+    src: src,
+    kind: kind,
+    text: append(text, "")[0],
+    }
+  }
+  tokens := []tokenData{
+    tok("17", token.INTEGER),
+    tok("42", token.INTEGER),
+    tok("19.3", token.FLOAT),
+    tok("foo_bar", token.IDENTIFIER),
+    tok("HiThere123", token.IDENTIFIER),
+    tok(`"Hi :)"`, token.STRING, "Hi :)"),
+    tok(`"\"How are you?\""`, token.STRING, `"How are you?"`),
+    tok(`"Hello\nworld"`, token.STRING, "Hello\nworld"),
+  }
+
+  for _, data := range tokens {
+    lexer := lexer.New(data.src)
+    tokens := lexer.Tokenise()
+
+    utils.AssertEq(t, len(tokens), 2)
+    utils.AssertEq(t, tokens[0].Kind, data.kind)
+    text := data.src
+    if data.text != "" {
+      text = data.text
+    }
+    utils.AssertEq(t, tokens[0].Value, text)
+    utils.AssertEq(t, tokens[1].Kind, token.EOF)
+  }
+}
+
