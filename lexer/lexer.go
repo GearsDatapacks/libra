@@ -3,22 +3,25 @@ package lexer
 import (
 	"bytes"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
 type lexer struct {
-	src  string
-	pos  int
-	line int
-	col  int
+	src         string
+	pos         int
+	line        int
+	col         int
+	Diagnostics diagnostics.Manager
 }
 
-func New(src string) *lexer {
+func New(src string, file string) *lexer {
 	return &lexer{
-		src:  src,
-		pos:  0,
-		line: 0,
-		col:  0,
+		src:         src,
+		pos:         0,
+		line:        0,
+		col:         0,
+		Diagnostics: diagnostics.New(file, src),
 	}
 }
 
@@ -38,7 +41,7 @@ func (l *lexer) Tokenise() []token.Token {
 
 func (l *lexer) nextToken() token.Token {
 	l.skipWhitespace()
-	nextToken := token.New(token.INVALID, "", token.NewSpan(l.pos, l.pos, l.line, l.col))
+	nextToken := token.New(token.INVALID, "", token.NewSpan(l.line, l.col, l.col))
 
 	next := l.next()
 	pos := l.pos
@@ -60,10 +63,11 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.Kind = token.STRING
 		nextToken.Value = l.parseString()
 	} else {
+		l.Diagnostics.ReportInvalidCharacter(token.NewSpan(l.line, l.col, l.col+1), next)
 		l.consume()
 	}
 
-	nextToken.Span.End = l.pos
+	nextToken.Span.End = l.col
 	if nextToken.Value == "" {
 		nextToken.Value = l.src[pos:l.pos]
 	}
@@ -72,7 +76,7 @@ func (l *lexer) nextToken() token.Token {
 }
 
 func (l *lexer) parseNumber() token.Kind {
-  // TODO: 0x, 0b, etc.
+	// TODO: 0x, 0b, etc.
 	for isNumber(l.next()) {
 		l.consume()
 	}
@@ -87,18 +91,28 @@ func (l *lexer) parseNumber() token.Kind {
 }
 
 func (l *lexer) parseString() string {
+	pos := l.col
 	l.consume()
 	text := bytes.NewBuffer([]byte{})
 
 	for !l.eof() && l.next() != '"' {
 		if l.next() == '\\' {
 			l.consume()
-      text.WriteByte(escape(l.next()))
+			char, ok := escape(l.next())
+			if !ok {
+				l.Diagnostics.ReportInvalidEscapeSequence(
+					token.NewSpan(l.line, l.col-1, l.col+1), l.next())
+			}
+			text.WriteByte(char)
 		} else {
 			text.WriteByte(l.next())
 		}
 
 		l.consume()
+	}
+
+	if l.eof() {
+		l.Diagnostics.ReportUnterminatedString(token.NewSpan(l.line, pos, l.col))
 	}
 
 	l.consume()
@@ -233,8 +247,6 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 			kind = token.DOUBLE_AMPERSAND
 			l.consume()
 		}
-	case '\r':
-		fallthrough
 	case '\n':
 		kind = token.NEWLINE
 		l.consume()
@@ -264,7 +276,13 @@ func (l *lexer) peek(n int) byte {
 }
 
 func (l *lexer) consume() {
+	next := l.next()
+	l.col++
 	l.pos++
+	if next == '\n' {
+		l.line++
+		l.col = 0
+	}
 }
 
 func (l *lexer) eof() bool {

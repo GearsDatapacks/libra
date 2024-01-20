@@ -9,10 +9,9 @@ type Token struct {
 }
 
 type Span struct {
-	Start int
-	End   int
-	Line  int
-	Col   int
+	Line int
+	Col  int
+	End  int
 }
 
 const (
@@ -83,12 +82,11 @@ func New(kind Kind, value string, span Span) Token {
 	}
 }
 
-func NewSpan(start, end, line, col int) Span {
+func NewSpan(line, col, end int) Span {
 	return Span{
-		Start: start,
-		End:   end,
-		Line:  line,
-		Col:   col,
+		Line:   line,
+		Col:    col,
+    End: end,
 	}
 }
 

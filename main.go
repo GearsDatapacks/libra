@@ -14,14 +14,14 @@ func main() {
     os.Exit(1)
   }
 
-  lexer := lexer.New(string(code))
+  lexer := lexer.New(string(code), os.Args[1])
   tokens := lexer.Tokenise()
 
-  /*if len(lexer.Diagnostics > 0) {
-    for _, diag := range lexer.Diagnostics {
-      fmt.Println(diag)
+  if len(lexer.Diagnostics.Diagnostics) > 0 {
+    for _, diag := range lexer.Diagnostics.Diagnostics {
+      diag.Print()
     }
-  }*/
+  }
 
   fmt.Println(tokens)
 }

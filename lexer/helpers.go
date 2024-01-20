@@ -16,33 +16,35 @@ func isNumber(c byte) bool {
 }
 
 func isWhitespace(c byte) bool {
-  return c == ' ' || c == '\t'
+  return c == ' ' || c == '\t' || c == '\r'
 }
 
-func escape(c byte) byte {
+func escape(c byte) (char byte, ok bool) {
 	switch c {
   // TODO: \x and \u
 	case '\\':
-		return '\\'
+		char = '\\'
 	case '"':
-		return '"'
+		char = '"'
 	case 'a':
-		return '\a'
+		char = '\a'
 	case 'b':
-		return '\b'
+		char = '\b'
 	case 'f':
-		return '\f'
+		char = '\f'
 	case 'n':
-		return '\n'
+		char = '\n'
 	case 'r':
-		return '\r'
+		char = '\r'
 	case 't':
-		return '\t'
+		char = '\t'
 	case 'v':
-		return '\v'
-  // TODO: Error for invalid sequence
+		char = '\v'
 	default:
-		return c
+    return c, false
 	}
+
+  ok = true
+  return
 }
 
