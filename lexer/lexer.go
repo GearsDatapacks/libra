@@ -53,7 +53,7 @@ func (l *lexer) nextToken() token.Token {
 	} else if kind, ok := l.parsePunctuation(); ok {
 		nextToken.Kind = kind
 	} else if isNumber(next) {
-		nextToken.Kind = l.parseNumber()
+		nextToken.Kind, nextToken.Value = l.parseNumber()
 	} else if isIdentifierStart(next) {
 		nextToken.Kind = token.IDENTIFIER
 		for isIdentifierMiddle(l.next()) {
@@ -75,19 +75,43 @@ func (l *lexer) nextToken() token.Token {
 	return nextToken
 }
 
-func (l *lexer) parseNumber() token.Kind {
+func (l *lexer) parseNumber() (token.Kind, string) {
+	kind := token.INTEGER
+	text := bytes.NewBuffer([]byte{})
 	// TODO: 0x, 0b, etc.
-	for isNumber(l.next()) {
+	for isNumber(l.next()) || l.next() == '_' {
+		if l.next() != '_' {
+			text.WriteByte(l.next())
+		}
+
 		l.consume()
 	}
+
 	if l.next() == '.' && isNumber(l.peek(1)) {
+		if l.peek(-1) == '_' {
+			l.Diagnostics.ReportNumbersCannotEndWithSeparator(
+				token.NewSpan(l.line, l.col-1, l.col))
+		}
+
+		kind = token.FLOAT
+		text.WriteByte(l.next())
 		l.consume()
-		for isNumber(l.next()) {
+
+		for isNumber(l.next()) || l.next() == '_' {
+			if l.next() != '_' {
+				text.WriteByte(l.next())
+			}
+
 			l.consume()
 		}
-		return token.FLOAT
 	}
-	return token.INTEGER
+
+	if l.peek(-1) == '_' {
+		l.Diagnostics.ReportNumbersCannotEndWithSeparator(
+			token.NewSpan(l.line, l.col-1, l.col))
+	}
+
+	return kind, text.String()
 }
 
 func (l *lexer) parseString() string {

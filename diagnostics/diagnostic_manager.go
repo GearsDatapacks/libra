@@ -40,3 +40,8 @@ func (m *Manager) ReportInvalidEscapeSequence(span token.Span, char byte) {
   m.reportError(msg, span)
 }
 
+func (m *Manager) ReportNumbersCannotEndWithSeparator(span token.Span) {
+  msg := "Numbers cannot end with numeric separators"
+  m.reportError(msg, span)
+}
+
