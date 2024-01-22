@@ -30,7 +30,12 @@ func (l *lexer) Tokenise() []token.Token {
 
 	for {
 		nextToken := l.nextToken()
+    if nextToken.Kind == token.INVALID {
+      continue
+    }
+
 		tokens = append(tokens, nextToken)
+
 		if nextToken.Kind == token.EOF {
 			break
 		}
