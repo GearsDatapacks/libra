@@ -45,3 +45,13 @@ func (m *Manager) ReportNumbersCannotEndWithSeparator(span token.Span) {
   m.reportError(msg, span)
 }
 
+func (m *Manager) ReportExpectedExpression(span token.Span, kind token.Kind) {
+  msg := fmt.Sprintf("Expected expression, got %s", kind.String())
+  m.reportError(msg, span)
+}
+
+func (m *Manager) ReportExpectedNewline(span token.Span, kind token.Kind) {
+  msg := fmt.Sprintf("Expected newline after statement, got %s", kind.String())
+  m.reportError(msg, span)
+}
+

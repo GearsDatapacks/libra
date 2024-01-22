@@ -11,11 +11,11 @@ func Assert(t *testing.T, condition bool, msg ...string) {
   }
 
   if len(msg) > 0 {
-    t.Error(msg[0])
+    t.Fatal(msg[0])
     return
   }
 
-  t.Error("Condition is not true")
+  t.Fatal("Assertion failed")
 }
 
 func AssertEq[T comparable](t *testing.T, actual, expected T, msg ...string) {

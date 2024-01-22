@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gearsdatapacks/libra/lexer"
+	"github.com/gearsdatapacks/libra/parser"
 )
 
 func main() {
@@ -16,13 +17,15 @@ func main() {
 
   lexer := lexer.New(string(code), os.Args[1])
   tokens := lexer.Tokenise()
+  parser := parser.New(tokens, lexer.Diagnostics)
+  program := parser.Parse()
 
-  if len(lexer.Diagnostics.Diagnostics) > 0 {
+  if len(parser.Diagnostics.Diagnostics) > 0 {
     for _, diag := range lexer.Diagnostics.Diagnostics {
       diag.Print()
     }
   }
 
-  fmt.Println(tokens)
+  fmt.Println(program.String())
 }
 
