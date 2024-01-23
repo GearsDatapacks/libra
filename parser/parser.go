@@ -123,6 +123,19 @@ func (p *parser) register() {
 
 	p.registerNudFn(token.LEFT_PAREN, p.parseParenthesisedExpression)
 
+  // Postfix operators
+  p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
+  p.registerLedOp(token.DOUBLE_MINUS, Postfix, p.parsePostfixExpression)
+  p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression)
+  p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression)
+
+  // Prefix operators
+  p.registerNudFn(token.MINUS, p.parsePrefixExpression)
+  p.registerNudFn(token.PLUS, p.parsePrefixExpression)
+  p.registerNudFn(token.BANG, p.parsePrefixExpression)
+  p.registerNudFn(token.STAR, p.parsePrefixExpression)
+  p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
+
 	// Binary operators
 	p.registerLedOp(token.DOUBLE_AMPERSAND, Logical, p.parseBinaryExpression)
 	p.registerLedOp(token.DOUBLE_PIPE, Logical, p.parseBinaryExpression)

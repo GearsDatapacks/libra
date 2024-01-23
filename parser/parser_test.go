@@ -99,6 +99,46 @@ func TestBinaryExpressions(t *testing.T) {
   }
 }
 
+func TestPrefixExpressions(t *testing.T) {
+  tests := []struct{
+    src string
+    operator string
+    operand any
+  }{
+    {"-2", "-", 2},
+    {"!true", "!", true},
+    {"+foo", "+", "$foo"},
+  }
+
+  for _, tt := range tests {
+    program := getProgram(t, tt.src)
+    expr := getExpr[*ast.PrefixExpression](t, program)
+
+    utils.AssertEq(t, expr.Operator.Value, tt.operator)
+    testLiteral(t, expr.Operand, tt.operand)
+  }
+}
+
+func TestPostfixExpressions(t *testing.T) {
+  tests := []struct{
+    src string
+    operand any
+    operator string
+  }{
+    {"a?", "$a", "?"},
+    {"foo++", "$foo", "++"},
+    {"5!", 5, "!"},
+  }
+
+  for _, tt := range tests {
+    program := getProgram(t, tt.src)
+    expr := getExpr[*ast.PostfixExpression](t, program)
+
+    testLiteral(t, expr.Operand, tt.operand)
+    utils.AssertEq(t, expr.Operator.Value, tt.operator)
+  }
+}
+
 func TestParenthesisedExpressions(t *testing.T) {
   tests := []struct{
     src string
@@ -138,6 +178,12 @@ func TestOperatorPrecedence(t *testing.T) {
     {"true || false == true", "(true || (false == true))"},
     {"1 + (2 + 3)", "(1 + (2 + 3))"},
     {"( 2**2 ) ** 2", "((2 ** 2) ** 2)"},
+    {"-1 + 2", "(-(1) + 2)"},
+    {"foo + -(bar * baz)", "(foo + -((bar * baz)))"},
+    {"1 - foo++", "(1 - (foo)++)"},
+    {"hi + (a || b)!", "(hi + ((a || b))!)"},
+    {"foo++-- + 1", "(((foo)++)-- + 1)"},
+    {"-a! / 4", "(-((a)!) / 4)"},
   }
 
   for _, tt := range tests {

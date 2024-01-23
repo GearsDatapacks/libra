@@ -118,8 +118,8 @@ func (b *BinaryExpression) PrecedenceString() string {
 
 	result.WriteByte('(')
 
-	if bin, ok := b.Left.(*BinaryExpression); ok {
-		result.WriteString(bin.PrecedenceString())
+	if prec, ok := b.Left.(hasPrecedence); ok {
+		result.WriteString(prec.PrecedenceString())
 	} else {
 		result.WriteString(b.Left.String())
 	}
@@ -128,8 +128,8 @@ func (b *BinaryExpression) PrecedenceString() string {
 	result.WriteString(b.Operator.Value)
 	result.WriteByte(' ')
 
-	if bin, ok := b.Right.(*BinaryExpression); ok {
-		result.WriteString(bin.PrecedenceString())
+	if prec, ok := b.Right.(hasPrecedence); ok {
+		result.WriteString(prec.PrecedenceString())
 	} else {
 		result.WriteString(b.Right.String())
 	}
@@ -163,11 +163,72 @@ func (p *ParenthesisedExpression) String() string {
 	return result.String()
 }
 
+type PrefixExpression struct {
+	expression
+	Operator token.Token
+	Operand  Expression
+}
+
+func (p *PrefixExpression) Tokens() []token.Token {
+	return append([]token.Token{p.Operator}, p.Operand.Tokens()...)
+}
+
+func (p *PrefixExpression) String() string {
+	return p.Operator.Value + p.Operand.String()
+}
+
+func (p *PrefixExpression) PrecedenceString() string {
+	result := bytes.NewBuffer([]byte{})
+
+	result.WriteString(p.Operator.Value)
+	result.WriteByte('(')
+	if prec, ok := p.Operand.(hasPrecedence); ok {
+		result.WriteString(prec.PrecedenceString())
+	} else {
+		result.WriteString(p.Operand.String())
+	}
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+type PostfixExpression struct {
+	expression
+	Operand  Expression
+	Operator token.Token
+}
+
+func (p *PostfixExpression) Tokens() []token.Token {
+	return append(p.Operand.Tokens(), p.Operator)
+}
+
+func (p *PostfixExpression) String() string {
+	return p.Operand.String() + p.Operator.Value
+}
+
+func (p *PostfixExpression) PrecedenceString() string {
+	result := bytes.NewBuffer([]byte{})
+
+	result.WriteByte('(')
+	if prec, ok := p.Operand.(hasPrecedence); ok {
+		result.WriteString(prec.PrecedenceString())
+	} else {
+		result.WriteString(p.Operand.String())
+	}
+	result.WriteByte(')')
+	result.WriteString(p.Operator.Value)
+
+	return result.String()
+}
+
+type hasPrecedence interface {
+	PrecedenceString() string
+}
+
 // TODO:
 // ListLiteral
 // MapLiteral
 // FunctionCall
-// UnaryOperation
 // AssignmentExpression
 // IndexExpression
 // MemberExpression

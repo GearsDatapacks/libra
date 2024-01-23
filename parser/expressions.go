@@ -58,6 +58,25 @@ func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
 	}
 }
 
+func (p *parser) parsePrefixExpression() ast.Expression {
+  operator := p.consume()
+  operand := p.parseSubExpression(Prefix)
+
+  return &ast.PrefixExpression{
+  	Operator: operator,
+  	Operand:  operand,
+  }
+}
+
+func (p *parser) parsePostfixExpression(operand ast.Expression) ast.Expression {
+  operator := p.consume()
+
+  return &ast.PostfixExpression{
+  	Operand:  operand,
+  	Operator: operator,
+  }
+}
+
 func (p *parser) parseParenthesisedExpression() ast.Expression {
 	leftParen := p.consume()
 	expr := p.parseExpression()
