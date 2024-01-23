@@ -135,6 +135,7 @@ func (p *parser) register() {
   p.registerNudFn(token.BANG, p.parsePrefixExpression)
   p.registerNudFn(token.STAR, p.parsePrefixExpression)
   p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
+  p.registerNudFn(token.TILDE, p.parsePrefixExpression)
 
 	// Binary operators
 	p.registerLedOp(token.DOUBLE_AMPERSAND, Logical, p.parseBinaryExpression)

@@ -108,6 +108,7 @@ func TestPrefixExpressions(t *testing.T) {
     {"-2", "-", 2},
     {"!true", "!", true},
     {"+foo", "+", "$foo"},
+    {"~123", "~", 123},
   }
 
   for _, tt := range tests {

@@ -72,6 +72,7 @@ const (
 	PIPE
 	AMPERSAND
 	ARROW
+  TILDE
 )
 
 func New(kind Kind, value string, span Span) Token {
@@ -168,6 +169,8 @@ func (kind Kind) String() string {
 		return "`->`"
 	case AMPERSAND:
 		return "`&`"
+  case TILDE:
+    return "`~`"
 	case EOF:
 		return "<Eof>"
 	case INVALID:

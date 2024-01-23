@@ -51,6 +51,7 @@ func TestFixedTokens(t *testing.T) {
 		{"|", token.PIPE},
 		{"->", token.ARROW},
 		{"&", token.AMPERSAND},
+		{"~", token.TILDE},
 		{"\n", token.NEWLINE},
 	}
 
