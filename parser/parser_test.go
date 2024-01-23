@@ -99,6 +99,30 @@ func TestBinaryExpressions(t *testing.T) {
   }
 }
 
+func TestParenthesisedExpressions(t *testing.T) {
+  tests := []struct{
+    src string
+    left any
+    op string
+    right any
+  }{
+    {"(1 + 2)", 1, "+", 2},
+    {"(true && false)", true, "&&", false},
+  }
+
+  for _, tt := range tests {
+    program := getProgram(t, tt.src)
+    expr := getExpr[*ast.ParenthesisedExpression](t, program)
+    binExpr, ok := expr.Expression.(*ast.BinaryExpression)
+    utils.Assert(t, ok, fmt.Sprintf(
+      "Expression was not binary expression (was %T)", expr.Expression))
+
+    testLiteral(t, binExpr.Left, tt.left)
+    utils.AssertEq(t, binExpr.Operator.Value, tt.op)
+    testLiteral(t, binExpr.Right, tt.right)
+  }
+}
+
 func TestOperatorPrecedence(t *testing.T) {
   tests := []struct{
     src string
@@ -112,13 +136,15 @@ func TestOperatorPrecedence(t *testing.T) {
     {"a **b** c", "(a ** (b ** c))"},
     {"1 << 2 & 3", "((1 << 2) & 3)"},
     {"true || false == true", "(true || (false == true))"},
+    {"1 + (2 + 3)", "(1 + (2 + 3))"},
+    {"( 2**2 ) ** 2", "((2 ** 2) ** 2)"},
   }
 
   for _, tt := range tests {
     program := getProgram(t, tt.src)
     expr := getExpr[*ast.BinaryExpression](t, program)
 
-    utils.AssertEq(t, expr.String(), tt.res)
+    utils.AssertEq(t, expr.PrecedenceString(), tt.res)
   }
 }
 
@@ -150,6 +176,21 @@ func TestMissingNewlineError(t *testing.T) {
 	diag := p.Diagnostics.Diagnostics[0]
 	utils.AssertEq(t, diag.Message, "Expected newline after statement, got integer")
 	utils.AssertEq(t, diag.Span, token.NewSpan(0, 2, 3))
+}
+
+func TestIncorrectTokenError(t *testing.T) {
+	input := "(1 + 2"
+
+	l := lexer.New(input, "test.lb")
+	tokens := l.Tokenise()
+	p := parser.New(tokens, l.Diagnostics)
+	p.Parse()
+
+  fmt.Println(p.Diagnostics.Diagnostics)
+	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 1)
+	diag := p.Diagnostics.Diagnostics[0]
+	utils.AssertEq(t, diag.Message, "Expected `)`, found <Eof>")
+	utils.AssertEq(t, diag.Span, token.NewSpan(0, 6, 6))
 }
 
 func getProgram(t *testing.T, input string) *ast.Program {

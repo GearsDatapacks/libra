@@ -55,3 +55,8 @@ func (m *Manager) ReportExpectedNewline(span token.Span, kind token.Kind) {
   m.reportError(msg, span)
 }
 
+func (m *Manager) ReportExpectedToken(span token.Span, expected token.Kind, actual token.Kind) {
+  msg := fmt.Sprintf("Expected %s, found %s", expected.String(), actual.String())
+  m.reportError(msg, span)
+}
+

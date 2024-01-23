@@ -3,6 +3,7 @@ package parser
 import (
 	"strconv"
 
+	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
@@ -30,8 +31,8 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	nudFn := p.lookupNudFn(p.next().Kind)
 
 	if nudFn == nil {
-    p.Diagnostics.ReportExpectedExpression(p.next().Span, p.next().Kind)
-    return &ast.ErrorExpression{}
+		p.Diagnostics.ReportExpectedExpression(p.next().Span, p.next().Kind)
+		return &ast.ErrorExpression{}
 	}
 
 	left := nudFn()
@@ -47,13 +48,25 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 }
 
 func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
-  operator := p.consume()
-  right := p.parseSubExpression(p.rightPrecedence(operator.Kind))
-  return &ast.BinaryExpression{
-  	Left:     left,
-  	Operator: operator,
-  	Right:    right,
-  }
+	operator := p.consume()
+	right := p.parseSubExpression(p.rightPrecedence(operator.Kind))
+
+	return &ast.BinaryExpression{
+		Left:     left,
+		Operator: operator,
+		Right:    right,
+	}
+}
+
+func (p *parser) parseParenthesisedExpression() ast.Expression {
+	leftParen := p.consume()
+	expr := p.parseExpression()
+	rightParen := p.expect(token.RIGHT_PAREN)
+	return &ast.ParenthesisedExpression{
+		LeftParen:  leftParen,
+		Expression: expr,
+		RightParen: rightParen,
+	}
 }
 
 func (p *parser) parseIdentifier() ast.Expression {
@@ -105,5 +118,3 @@ func (p *parser) parseString() ast.Expression {
 		Value: tok.Value,
 	}
 }
-
-

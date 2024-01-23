@@ -76,43 +76,91 @@ func (i *Identifier) String() string {
 }
 
 type ErrorExpression struct {
-  expression
+	expression
 }
 
 func (e *ErrorExpression) Tokens() []token.Token {
-  return []token.Token{}
+	return []token.Token{}
 }
 func (e *ErrorExpression) String() string {
-  return ""
+	return ""
 }
 
 type BinaryExpression struct {
-  expression
-  Left Expression
-  Operator token.Token
-  Right Expression
+	expression
+	Left     Expression
+	Operator token.Token
+	Right    Expression
 }
 
 func (b *BinaryExpression) Tokens() []token.Token {
-  tokens := []token.Token{}
-  tokens = append(tokens, b.Left.Tokens()...)
-  tokens = append(tokens, b.Operator)
-  tokens = append(tokens, b.Right.Tokens()...)
-  return tokens
+	tokens := []token.Token{}
+	tokens = append(tokens, b.Left.Tokens()...)
+	tokens = append(tokens, b.Operator)
+	tokens = append(tokens, b.Right.Tokens()...)
+	return tokens
 }
 
 func (b *BinaryExpression) String() string {
-  result := bytes.NewBuffer([]byte{})
+	result := bytes.NewBuffer([]byte{})
 
-  result.WriteByte('(')
-  result.WriteString(b.Left.String())
-  result.WriteByte(' ')
-  result.WriteString(b.Operator.Value)
-  result.WriteByte(' ')
-  result.WriteString(b.Right.String())
-  result.WriteByte(')')
+	result.WriteString(b.Left.String())
+	result.WriteByte(' ')
+	result.WriteString(b.Operator.Value)
+	result.WriteByte(' ')
+	result.WriteString(b.Right.String())
 
-  return result.String()
+	return result.String()
+}
+
+func (b *BinaryExpression) PrecedenceString() string {
+	result := bytes.NewBuffer([]byte{})
+
+	result.WriteByte('(')
+
+	if bin, ok := b.Left.(*BinaryExpression); ok {
+		result.WriteString(bin.PrecedenceString())
+	} else {
+		result.WriteString(b.Left.String())
+	}
+
+	result.WriteByte(' ')
+	result.WriteString(b.Operator.Value)
+	result.WriteByte(' ')
+
+	if bin, ok := b.Right.(*BinaryExpression); ok {
+		result.WriteString(bin.PrecedenceString())
+	} else {
+		result.WriteString(b.Right.String())
+	}
+
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+type ParenthesisedExpression struct {
+	expression
+	LeftParen  token.Token
+	Expression Expression
+	RightParen token.Token
+}
+
+func (p *ParenthesisedExpression) Tokens() []token.Token {
+	tokens := []token.Token{p.LeftParen}
+	tokens = append(tokens, p.Expression.Tokens()...)
+	tokens = append(tokens, p.RightParen)
+	return tokens
+}
+
+func (p *ParenthesisedExpression) String() string {
+	result := bytes.NewBuffer([]byte{})
+
+	result.WriteByte('(')
+	result.WriteString(p.Expression.String())
+	result.WriteByte(')')
+
+	return result.String()
 }
 
 // TODO:
@@ -127,4 +175,3 @@ func (b *BinaryExpression) String() string {
 // TupleExpression
 // TypeCheckExpression
 // CastExpression
-
