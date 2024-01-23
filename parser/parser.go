@@ -118,6 +118,31 @@ func (p *parser) register() {
   p.registerNudFn(token.FLOAT, p.parseFloat)
   p.registerNudFn(token.STRING, p.parseString)
   p.registerNudFn(token.IDENTIFIER, p.parseIdentifier)
+
+  // Binary operators
+  p.registerLedOp(token.DOUBLE_AMPERSAND, Logical, p.parseBinaryExpression)
+  p.registerLedOp(token.DOUBLE_PIPE, Logical, p.parseBinaryExpression)
+
+  p.registerLedOp(token.LEFT_ANGLE, Comparison, p.parseBinaryExpression)
+  p.registerLedOp(token.LEFT_ANGLE_EQUALS, Comparison, p.parseBinaryExpression)
+  p.registerLedOp(token.RIGHT_ANGLE, Comparison, p.parseBinaryExpression)
+  p.registerLedOp(token.RIGHT_ANGLE_EQUALS, Comparison, p.parseBinaryExpression)
+  p.registerLedOp(token.DOUBLE_EQUALS, Comparison, p.parseBinaryExpression)
+  p.registerLedOp(token.BANG_EQUALS, Comparison, p.parseBinaryExpression)
+
+  p.registerLedOp(token.DOUBLE_LEFT_ANGLE, Bitwise, p.parseBinaryExpression)
+  p.registerLedOp(token.DOUBLE_RIGHT_ANGLE, Bitwise, p.parseBinaryExpression)
+  p.registerLedOp(token.PIPE, Bitwise, p.parseBinaryExpression)
+  p.registerLedOp(token.AMPERSAND, Bitwise, p.parseBinaryExpression)
+
+  p.registerLedOp(token.PLUS, Additive, p.parseBinaryExpression)
+  p.registerLedOp(token.MINUS, Additive, p.parseBinaryExpression)
+
+  p.registerLedOp(token.STAR, Multiplicative, p.parseBinaryExpression)
+  p.registerLedOp(token.SLASH, Multiplicative, p.parseBinaryExpression)
+  p.registerLedOp(token.PERCENT, Multiplicative, p.parseBinaryExpression)
+
+  p.registerLedOp(token.DOUBLE_STAR, Exponential, p.parseBinaryExpression, true)
 }
 
 func (p *parser) next() token.Token {

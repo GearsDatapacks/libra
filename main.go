@@ -21,7 +21,7 @@ func main() {
   program := parser.Parse()
 
   if len(parser.Diagnostics.Diagnostics) > 0 {
-    for _, diag := range lexer.Diagnostics.Diagnostics {
+    for _, diag := range parser.Diagnostics.Diagnostics {
       diag.Print()
     }
   }

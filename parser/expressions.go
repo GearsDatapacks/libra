@@ -12,7 +12,7 @@ const (
 	Assignment
 	Logical
 	Comparison
-	Bitshift
+	Bitwise
 	Additive
 	Multiplicative
 	Exponential
@@ -44,6 +44,16 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	}
 
 	return left
+}
+
+func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
+  operator := p.consume()
+  right := p.parseSubExpression(p.rightPrecedence(operator.Kind))
+  return &ast.BinaryExpression{
+  	Left:     left,
+  	Operator: operator,
+  	Right:    right,
+  }
 }
 
 func (p *parser) parseIdentifier() ast.Expression {
@@ -95,3 +105,5 @@ func (p *parser) parseString() ast.Expression {
 		Value: tok.Value,
 	}
 }
+
+

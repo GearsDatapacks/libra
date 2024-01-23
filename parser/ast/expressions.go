@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/gearsdatapacks/libra/lexer/token"
+import (
+	"bytes"
+
+	"github.com/gearsdatapacks/libra/lexer/token"
+)
 
 type expression struct{}
 
@@ -82,11 +86,39 @@ func (e *ErrorExpression) String() string {
   return ""
 }
 
+type BinaryExpression struct {
+  expression
+  Left Expression
+  Operator token.Token
+  Right Expression
+}
+
+func (b *BinaryExpression) Tokens() []token.Token {
+  tokens := []token.Token{}
+  tokens = append(tokens, b.Left.Tokens()...)
+  tokens = append(tokens, b.Operator)
+  tokens = append(tokens, b.Right.Tokens()...)
+  return tokens
+}
+
+func (b *BinaryExpression) String() string {
+  result := bytes.NewBuffer([]byte{})
+
+  result.WriteByte('(')
+  result.WriteString(b.Left.String())
+  result.WriteByte(' ')
+  result.WriteString(b.Operator.Value)
+  result.WriteByte(' ')
+  result.WriteString(b.Right.String())
+  result.WriteByte(')')
+
+  return result.String()
+}
+
 // TODO:
 // ListLiteral
 // MapLiteral
 // FunctionCall
-// BinaryOperation
 // UnaryOperation
 // AssignmentExpression
 // IndexExpression
