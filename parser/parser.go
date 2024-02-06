@@ -44,7 +44,7 @@ func (p *parser) Parse() *ast.Program {
 			p.Diagnostics.ReportExpectedNewline(p.next().Span, p.next().Kind)
 		}
 
-    p.consumeNewlines()
+		p.consumeNewlines()
 	}
 
 	return program
@@ -120,22 +120,23 @@ func (p *parser) register() {
 	p.registerNudFn(token.FLOAT, p.parseFloat)
 	p.registerNudFn(token.STRING, p.parseString)
 	p.registerNudFn(token.IDENTIFIER, p.parseIdentifier)
+	p.registerNudFn(token.LEFT_SQUARE, p.parseList)
 
 	p.registerNudFn(token.LEFT_PAREN, p.parseParenthesisedExpression)
 
-  // Postfix operators
-  p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
-  p.registerLedOp(token.DOUBLE_MINUS, Postfix, p.parsePostfixExpression)
-  p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression)
-  p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression)
+	// Postfix operators
+	p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
+	p.registerLedOp(token.DOUBLE_MINUS, Postfix, p.parsePostfixExpression)
+	p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression)
+	p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression)
 
-  // Prefix operators
-  p.registerNudFn(token.MINUS, p.parsePrefixExpression)
-  p.registerNudFn(token.PLUS, p.parsePrefixExpression)
-  p.registerNudFn(token.BANG, p.parsePrefixExpression)
-  p.registerNudFn(token.STAR, p.parsePrefixExpression)
-  p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
-  p.registerNudFn(token.TILDE, p.parsePrefixExpression)
+	// Prefix operators
+	p.registerNudFn(token.MINUS, p.parsePrefixExpression)
+	p.registerNudFn(token.PLUS, p.parsePrefixExpression)
+	p.registerNudFn(token.BANG, p.parsePrefixExpression)
+	p.registerNudFn(token.STAR, p.parsePrefixExpression)
+	p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
+	p.registerNudFn(token.TILDE, p.parsePrefixExpression)
 
 	// Binary operators
 	p.registerLedOp(token.DOUBLE_AMPERSAND, Logical, p.parseBinaryExpression)
@@ -168,7 +169,7 @@ func (p *parser) next() token.Token {
 }
 
 func (p *parser) peek(offset int) token.Token {
-	if p.pos + offset >= len(p.tokens) {
+	if p.pos+offset >= len(p.tokens) {
 		return p.tokens[len(p.tokens)-1]
 	}
 

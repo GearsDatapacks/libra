@@ -102,7 +102,7 @@ func (b *BinaryExpression) Tokens() []token.Token {
 }
 
 func (b *BinaryExpression) String() string {
-	result := bytes.NewBuffer([]byte{})
+	var result bytes.Buffer
 
 	result.WriteString(b.Left.String())
 	result.WriteByte(' ')
@@ -114,7 +114,7 @@ func (b *BinaryExpression) String() string {
 }
 
 func (b *BinaryExpression) PrecedenceString() string {
-	result := bytes.NewBuffer([]byte{})
+	var result bytes.Buffer
 
 	result.WriteByte('(')
 
@@ -154,7 +154,7 @@ func (p *ParenthesisedExpression) Tokens() []token.Token {
 }
 
 func (p *ParenthesisedExpression) String() string {
-	result := bytes.NewBuffer([]byte{})
+	var result bytes.Buffer
 
 	result.WriteByte('(')
 	result.WriteString(p.Expression.String())
@@ -178,7 +178,7 @@ func (p *PrefixExpression) String() string {
 }
 
 func (p *PrefixExpression) PrecedenceString() string {
-	result := bytes.NewBuffer([]byte{})
+	var result bytes.Buffer
 
 	result.WriteString(p.Operator.Value)
 	result.WriteByte('(')
@@ -207,7 +207,7 @@ func (p *PostfixExpression) String() string {
 }
 
 func (p *PostfixExpression) PrecedenceString() string {
-	result := bytes.NewBuffer([]byte{})
+	var result bytes.Buffer
 
 	result.WriteByte('(')
 	if prec, ok := p.Operand.(hasPrecedence); ok {
@@ -225,8 +225,40 @@ type hasPrecedence interface {
 	PrecedenceString() string
 }
 
+// We don't store the tokens of the commas because they probably won't be needed
+type ListLiteral struct {
+	expression
+	LeftSquare  token.Token
+	Values      []Expression
+	RightSquare token.Token
+}
+
+func (l *ListLiteral) Tokens() []token.Token {
+	tokens := []token.Token{l.LeftSquare}
+	for _, value := range l.Values {
+		tokens = append(tokens, value.Tokens()...)
+	}
+	tokens = append(tokens, l.RightSquare)
+	return tokens
+}
+
+func (l *ListLiteral) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('[')
+	for i, value := range l.Values {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+
+		result.WriteString(value.String())
+	}
+	result.WriteByte(']')
+
+	return result.String()
+}
+
 // TODO:
-// ListLiteral
 // MapLiteral
 // FunctionCall
 // AssignmentExpression

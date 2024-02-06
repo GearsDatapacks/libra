@@ -72,127 +72,146 @@ func TestBooleanExpression(t *testing.T) {
 	)
 }
 
+func TestListExpression(t *testing.T) {
+	tests := []struct {
+		src    string
+		values []any
+	}{
+		{"[]", []any{}},
+		{"[1 ,2, 3,]", []any{1, 2, 3}},
+		{"[true, false, 5]", []any{true, false, 5}},
+		{`[a,b,"c!"]`, []any{"$a", "$b", "c!"}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		list := getExpr[*ast.ListLiteral](t, program)
+		testLiteral(t, list, tt.values)
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
-  tests := []struct{
-    src string
-    left any
-    op string
-    right any
-  }{
-    {"1 + 2", 1, "+", 2},
-    {`"Hello" + "world"`, "Hello", "+", "world"},
-    {"foo - bar", "$foo", "-", "$bar"},
-    {"19 / 27", 19, "/", 27},
-    {"1 << 2", 1, "<<", 2},
-    {"7 &19", 7, "&", 19},
-    {"15.04* 1_2_3", 15.04, "*", 123},
-    {"true||false", true, "||", false},
-  }
+	tests := []struct {
+		src   string
+		left  any
+		op    string
+		right any
+	}{
+		{"1 + 2", 1, "+", 2},
+		{`"Hello" + "world"`, "Hello", "+", "world"},
+		{"foo - bar", "$foo", "-", "$bar"},
+		{"19 / 27", 19, "/", 27},
+		{"1 << 2", 1, "<<", 2},
+		{"7 &19", 7, "&", 19},
+		{"15.04* 1_2_3", 15.04, "*", 123},
+		{"true||false", true, "||", false},
+		{"[1,2,3]<< 4", []any{1, 2, 3}, "<<", 4},
+	}
 
-  for _, tt := range tests {
-    program := getProgram(t, tt.src)
-    expr := getExpr[*ast.BinaryExpression](t, program)
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.BinaryExpression](t, program)
 
-    testLiteral(t, expr.Left, tt.left)
-    utils.AssertEq(t, expr.Operator.Value, tt.op)
-    testLiteral(t, expr.Right, tt.right)
-  }
+		testLiteral(t, expr.Left, tt.left)
+		utils.AssertEq(t, expr.Operator.Value, tt.op)
+		testLiteral(t, expr.Right, tt.right)
+	}
 }
 
 func TestPrefixExpressions(t *testing.T) {
-  tests := []struct{
-    src string
-    operator string
-    operand any
-  }{
-    {"-2", "-", 2},
-    {"!true", "!", true},
-    {"+foo", "+", "$foo"},
-    {"~123", "~", 123},
-  }
+	tests := []struct {
+		src      string
+		operator string
+		operand  any
+	}{
+		{"-2", "-", 2},
+		{"!true", "!", true},
+		{"+foo", "+", "$foo"},
+		{"~123", "~", 123},
+	}
 
-  for _, tt := range tests {
-    program := getProgram(t, tt.src)
-    expr := getExpr[*ast.PrefixExpression](t, program)
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.PrefixExpression](t, program)
 
-    utils.AssertEq(t, expr.Operator.Value, tt.operator)
-    testLiteral(t, expr.Operand, tt.operand)
-  }
+		utils.AssertEq(t, expr.Operator.Value, tt.operator)
+		testLiteral(t, expr.Operand, tt.operand)
+	}
 }
 
 func TestPostfixExpressions(t *testing.T) {
-  tests := []struct{
-    src string
-    operand any
-    operator string
-  }{
-    {"a?", "$a", "?"},
-    {"foo++", "$foo", "++"},
-    {"5!", 5, "!"},
-  }
+	tests := []struct {
+		src      string
+		operand  any
+		operator string
+	}{
+		{"a?", "$a", "?"},
+		{"foo++", "$foo", "++"},
+		{"5!", 5, "!"},
+	}
 
-  for _, tt := range tests {
-    program := getProgram(t, tt.src)
-    expr := getExpr[*ast.PostfixExpression](t, program)
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.PostfixExpression](t, program)
 
-    testLiteral(t, expr.Operand, tt.operand)
-    utils.AssertEq(t, expr.Operator.Value, tt.operator)
-  }
+		testLiteral(t, expr.Operand, tt.operand)
+		utils.AssertEq(t, expr.Operator.Value, tt.operator)
+	}
 }
 
 func TestParenthesisedExpressions(t *testing.T) {
-  tests := []struct{
-    src string
-    left any
-    op string
-    right any
-  }{
-    {"(1 + 2)", 1, "+", 2},
-    {"(true && false)", true, "&&", false},
-  }
+	tests := []struct {
+		src   string
+		left  any
+		op    string
+		right any
+	}{
+		{"(1 + 2)", 1, "+", 2},
+		{"(true && false)", true, "&&", false},
+	}
 
-  for _, tt := range tests {
-    program := getProgram(t, tt.src)
-    expr := getExpr[*ast.ParenthesisedExpression](t, program)
-    binExpr, ok := expr.Expression.(*ast.BinaryExpression)
-    utils.Assert(t, ok, fmt.Sprintf(
-      "Expression was not binary expression (was %T)", expr.Expression))
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.ParenthesisedExpression](t, program)
+		binExpr, ok := expr.Expression.(*ast.BinaryExpression)
+		utils.Assert(t, ok, fmt.Sprintf(
+			"Expression was not binary expression (was %T)", expr.Expression))
 
-    testLiteral(t, binExpr.Left, tt.left)
-    utils.AssertEq(t, binExpr.Operator.Value, tt.op)
-    testLiteral(t, binExpr.Right, tt.right)
-  }
+		testLiteral(t, binExpr.Left, tt.left)
+		utils.AssertEq(t, binExpr.Operator.Value, tt.op)
+		testLiteral(t, binExpr.Right, tt.right)
+	}
 }
 
 func TestOperatorPrecedence(t *testing.T) {
-  tests := []struct{
-    src string
-    res string
-  }{
-    {"1 + 2", "(1 + 2)"},
-    {"1 + 2 + 3", "((1 + 2) + 3)"},
-    {"1 + 2 * 3", "(1 + (2 * 3))"},
-    {"1 * 2 + 3", "((1 * 2) + 3)"},
-    {"foo + bar * baz ** qux", "(foo + (bar * (baz ** qux)))"},
-    {"a **b** c", "(a ** (b ** c))"},
-    {"1 << 2 & 3", "((1 << 2) & 3)"},
-    {"true || false == true", "(true || (false == true))"},
-    {"1 + (2 + 3)", "(1 + (2 + 3))"},
-    {"( 2**2 ) ** 2", "((2 ** 2) ** 2)"},
-    {"-1 + 2", "(-(1) + 2)"},
-    {"foo + -(bar * baz)", "(foo + -((bar * baz)))"},
-    {"1 - foo++", "(1 - (foo)++)"},
-    {"hi + (a || b)!", "(hi + ((a || b))!)"},
-    {"foo++-- + 1", "(((foo)++)-- + 1)"},
-    {"-a! / 4", "(-((a)!) / 4)"},
-  }
+	tests := []struct {
+		src string
+		res string
+	}{
+		{"1 + 2", "(1 + 2)"},
+		{"1 + 2 + 3", "((1 + 2) + 3)"},
+		{"1 + 2 * 3", "(1 + (2 * 3))"},
+		{"1 * 2 + 3", "((1 * 2) + 3)"},
+		{"foo + bar * baz ** qux", "(foo + (bar * (baz ** qux)))"},
+		{"a **b** c", "(a ** (b ** c))"},
+		{"1 << 2 & 3", "((1 << 2) & 3)"},
+		{"true || false == true", "(true || (false == true))"},
+		{"1 + (2 + 3)", "(1 + (2 + 3))"},
+		{"( 2**2 ) ** 2", "((2 ** 2) ** 2)"},
+		{"-1 + 2", "(-(1) + 2)"},
+		{"foo + -(bar * baz)", "(foo + -((bar * baz)))"},
+		{"1 - foo++", "(1 - (foo)++)"},
+		{"hi + (a || b)!", "(hi + ((a || b))!)"},
+		{"foo++-- + 1", "(((foo)++)-- + 1)"},
+		{"-a! / 4", "(-((a)!) / 4)"},
+	}
 
-  for _, tt := range tests {
-    program := getProgram(t, tt.src)
-    expr := getExpr[*ast.BinaryExpression](t, program)
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.BinaryExpression](t, program)
 
-    utils.AssertEq(t, expr.PrecedenceString(), tt.res)
-  }
+		utils.AssertEq(t, expr.PrecedenceString(), tt.res)
+	}
 }
 
 func TestErrorExpression(t *testing.T) {
@@ -233,7 +252,6 @@ func TestIncorrectTokenError(t *testing.T) {
 	p := parser.New(tokens, l.Diagnostics)
 	p.Parse()
 
-  fmt.Println(p.Diagnostics.Diagnostics)
 	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 1)
 	diag := p.Diagnostics.Diagnostics[0]
 	utils.AssertEq(t, diag.Message, "Expected `)`, found <Eof>")
@@ -241,7 +259,7 @@ func TestIncorrectTokenError(t *testing.T) {
 }
 
 func getProgram(t *testing.T, input string) *ast.Program {
-  t.Helper()
+	t.Helper()
 
 	l := lexer.New(input, "test.lb")
 	tokens := l.Tokenise()
@@ -249,13 +267,13 @@ func getProgram(t *testing.T, input string) *ast.Program {
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
 	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 0,
-    fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics.Diagnostics)))
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics.Diagnostics)))
 
 	return program
 }
 
 func getExpr[T ast.Expression](t *testing.T, program *ast.Program) T {
-  t.Helper()
+	t.Helper()
 
 	utils.AssertEq(t, len(program.Statements), 1,
 		fmt.Sprintf("Program does not contain one statement. (has %d)",
@@ -272,7 +290,7 @@ func getExpr[T ast.Expression](t *testing.T, program *ast.Program) T {
 }
 
 func testLiteral(t *testing.T, expr ast.Expression, expected any) {
-  t.Helper()
+	t.Helper()
 
 	switch val := expected.(type) {
 	case int:
@@ -299,7 +317,17 @@ func testLiteral(t *testing.T, expr ast.Expression, expected any) {
 			str, ok := expr.(*ast.StringLiteral)
 			utils.Assert(t, ok, fmt.Sprintf("Value was not a string (was %T)", expr))
 			utils.AssertEq(t, str.Value, val)
+		}
 
+	case []any:
+		list, ok := expr.(*ast.ListLiteral)
+		utils.Assert(t, ok, fmt.Sprintf("Value was not a list (was %T)", expr))
+		utils.AssertEq(t, len(list.Values), len(val),
+			fmt.Sprintf("Lists' lengths do not match. Expected %d elements, got %d",
+				len(val), len(list.Values)))
+
+		for i, value := range list.Values {
+			testLiteral(t, value, val[i])
 		}
 	}
 }

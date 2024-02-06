@@ -59,22 +59,22 @@ func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parsePrefixExpression() ast.Expression {
-  operator := p.consume()
-  operand := p.parseSubExpression(Prefix)
+	operator := p.consume()
+	operand := p.parseSubExpression(Prefix)
 
-  return &ast.PrefixExpression{
-  	Operator: operator,
-  	Operand:  operand,
-  }
+	return &ast.PrefixExpression{
+		Operator: operator,
+		Operand:  operand,
+	}
 }
 
 func (p *parser) parsePostfixExpression(operand ast.Expression) ast.Expression {
-  operator := p.consume()
+	operator := p.consume()
 
-  return &ast.PostfixExpression{
-  	Operand:  operand,
-  	Operator: operator,
-  }
+	return &ast.PostfixExpression{
+		Operand:  operand,
+		Operator: operator,
+	}
 }
 
 func (p *parser) parseParenthesisedExpression() ast.Expression {
@@ -135,5 +135,26 @@ func (p *parser) parseString() ast.Expression {
 	return &ast.StringLiteral{
 		Token: tok,
 		Value: tok.Value,
+	}
+}
+
+func (p *parser) parseList() ast.Expression {
+	leftSquare := p.consume()
+	values := []ast.Expression{}
+
+	for !p.eof() && p.next().Kind != token.RIGHT_SQUARE {
+		values = append(values, p.parseExpression())
+
+		if p.next().Kind != token.RIGHT_SQUARE {
+			p.expect(token.COMMA)
+		}
+	}
+
+	rightSquare := p.expect(token.RIGHT_SQUARE)
+
+	return &ast.ListLiteral{
+		LeftSquare:  leftSquare,
+		Values:      values,
+		RightSquare: rightSquare,
 	}
 }

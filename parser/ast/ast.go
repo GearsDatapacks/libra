@@ -36,7 +36,7 @@ func (p *Program) Tokens() []token.Token {
 }
 
 func (p *Program) String() string {
-	text := bytes.NewBuffer([]byte{})
+	var text bytes.Buffer
 
 	for i, statement := range p.Statements {
 		if i != 0 {
