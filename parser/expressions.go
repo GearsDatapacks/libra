@@ -158,3 +158,32 @@ func (p *parser) parseList() ast.Expression {
 		RightSquare: rightSquare,
 	}
 }
+
+func (p *parser) parseMap() ast.Expression {
+	leftBrace := p.consume()
+	keyValues := []ast.KeyValue{}
+
+	for !p.eof() && p.next().Kind != token.RIGHT_BRACE {
+		key := p.parseExpression()
+		colon := p.expect(token.COLON)
+		value := p.parseExpression()
+
+		keyValues = append(keyValues, ast.KeyValue{
+			Key:   key,
+			Colon: colon,
+			Value: value,
+		})
+
+		if p.next().Kind != token.RIGHT_BRACE {
+			p.expect(token.COMMA)
+		}
+	}
+
+	rightBrace := p.expect(token.RIGHT_BRACE)
+
+	return &ast.MapLiteral{
+		LeftBrace:  leftBrace,
+		KeyValues:      keyValues,
+		RightBrace: rightBrace,
+	}
+}

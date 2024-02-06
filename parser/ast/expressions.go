@@ -258,6 +258,67 @@ func (l *ListLiteral) String() string {
 	return result.String()
 }
 
+type KeyValue struct {
+	Key Expression
+	Colon token.Token
+	Value Expression
+}
+
+func (kv *KeyValue) Tokens() []token.Token {
+	tokens := kv.Key.Tokens()
+	tokens = append(tokens, kv.Colon)
+	tokens = append(tokens, kv.Value.Tokens()...)
+
+	return tokens
+}
+
+func (kv *KeyValue) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(kv.Key.String())
+	result.WriteString(": ")
+	result.WriteString(kv.Value.String())
+
+	return result.String()
+}
+
+type MapLiteral struct {
+	expression
+	LeftBrace token.Token
+	KeyValues []KeyValue
+	RightBrace token.Token
+}
+
+func (m *MapLiteral) Tokens() []token.Token {
+	tokens := []token.Token{m.LeftBrace}
+	
+	for _, kv := range m.KeyValues {
+		tokens = append(tokens, kv.Tokens()...)
+	}
+
+	tokens = append(tokens, m.RightBrace)
+
+	return tokens
+}
+
+func (m *MapLiteral) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+
+	for i, kv := range m.KeyValues {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+
+		result.WriteString(kv.String())
+	}
+
+	result.WriteByte('}')
+
+	return result.String()
+}
+
 // TODO:
 // MapLiteral
 // FunctionCall

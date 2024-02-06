@@ -121,6 +121,7 @@ func (p *parser) register() {
 	p.registerNudFn(token.STRING, p.parseString)
 	p.registerNudFn(token.IDENTIFIER, p.parseIdentifier)
 	p.registerNudFn(token.LEFT_SQUARE, p.parseList)
+	p.registerNudFn(token.LEFT_BRACE, p.parseMap)
 
 	p.registerNudFn(token.LEFT_PAREN, p.parseParenthesisedExpression)
 

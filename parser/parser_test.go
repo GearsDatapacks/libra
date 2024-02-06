@@ -90,6 +90,24 @@ func TestListExpression(t *testing.T) {
 	}
 }
 
+func TestMapExpression(t *testing.T) {
+	tests := []struct {
+		src       string
+		keyValues [][2]any
+	}{
+		{"{}", [][2]any{}},
+		{"{1: 2, 2: 3, 3:4}", [][2]any{{1, 2}, {2, 3}, {3, 4}}},
+		{`{"foo": "bar", "hello": "world"}`, [][2]any{{"foo", "bar"}, {"hello", "world"}}},
+		{`{hi: "there", "x": computed}`, [][2]any{{"$hi", "there"}, {"x", "$computed"}}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		mapLit := getExpr[*ast.MapLiteral](t, program)
+		testLiteral(t, mapLit, tt.keyValues)
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string
@@ -328,6 +346,18 @@ func testLiteral(t *testing.T, expr ast.Expression, expected any) {
 
 		for i, value := range list.Values {
 			testLiteral(t, value, val[i])
+		}
+
+	case [][2]any:
+		mapLit, ok := expr.(*ast.MapLiteral)
+		utils.Assert(t, ok, fmt.Sprintf("Value was not a map (was %T)", expr))
+		utils.AssertEq(t, len(mapLit.KeyValues), len(val),
+			fmt.Sprintf("Maps' lengths do not match. Expected %d key-value pairs, got %d",
+				len(val), len(mapLit.KeyValues)))
+
+		for i, kv := range mapLit.KeyValues {
+			testLiteral(t, kv.Key, val[i][0])
+			testLiteral(t, kv.Value, val[i][1])
 		}
 	}
 }
