@@ -140,17 +140,7 @@ func (p *parser) parseString() ast.Expression {
 
 func (p *parser) parseList() ast.Expression {
 	leftSquare := p.consume()
-	values := []ast.Expression{}
-
-	for !p.eof() && p.next().Kind != token.RIGHT_SQUARE {
-		values = append(values, p.parseExpression())
-
-		if p.next().Kind != token.RIGHT_SQUARE {
-			p.expect(token.COMMA)
-		}
-	}
-
-	rightSquare := p.expect(token.RIGHT_SQUARE)
+	values, rightSquare := parseDelemitedList(p, token.RIGHT_SQUARE, p.parseExpression)
 
 	return &ast.ListLiteral{
 		LeftSquare:  leftSquare,
@@ -159,31 +149,25 @@ func (p *parser) parseList() ast.Expression {
 	}
 }
 
+func (p *parser) parseKeyValue() ast.KeyValue {
+	key := p.parseExpression()
+	colon := p.expect(token.COLON)
+	value := p.parseExpression()
+
+	return ast.KeyValue{
+		Key:   key,
+		Colon: colon,
+		Value: value,
+	}
+}
+
 func (p *parser) parseMap() ast.Expression {
 	leftBrace := p.consume()
-	keyValues := []ast.KeyValue{}
-
-	for !p.eof() && p.next().Kind != token.RIGHT_BRACE {
-		key := p.parseExpression()
-		colon := p.expect(token.COLON)
-		value := p.parseExpression()
-
-		keyValues = append(keyValues, ast.KeyValue{
-			Key:   key,
-			Colon: colon,
-			Value: value,
-		})
-
-		if p.next().Kind != token.RIGHT_BRACE {
-			p.expect(token.COMMA)
-		}
-	}
-
-	rightBrace := p.expect(token.RIGHT_BRACE)
+	keyValues, rightBrace := parseDelemitedList(p, token.RIGHT_BRACE, p.parseKeyValue)
 
 	return &ast.MapLiteral{
 		LeftBrace:  leftBrace,
-		KeyValues:      keyValues,
+		KeyValues:  keyValues,
 		RightBrace: rightBrace,
 	}
 }
