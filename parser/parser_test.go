@@ -108,6 +108,28 @@ func TestMapExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionCall(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		args []any
+	}{
+		{"add(1, 2)", "add", []any{1, 2}},
+		{`print("Hello, world!" ,)`, "print", []any{"Hello, world!"}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		call := getExpr[*ast.FunctionCall](t, program)
+		ident, ok := call.Callee.(*ast.Identifier)
+		utils.Assert(t, ok, "Callee is not an identifier")
+		utils.AssertEq(t, tt.name, ident.Name)
+		for i, arg := range call.Arguments {
+			testLiteral(t, arg, tt.args[i])
+		}
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string

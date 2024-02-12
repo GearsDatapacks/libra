@@ -319,9 +319,46 @@ func (m *MapLiteral) String() string {
 	return result.String()
 }
 
+type FunctionCall struct {
+	expression
+	Callee Expression
+	LeftParen token.Token
+	Arguments []Expression
+	RightParen token.Token
+}
+
+func (call *FunctionCall) Tokens() []token.Token {
+	tokens := append(call.Callee.Tokens(), call.LeftParen)
+	
+	for _, arg := range call.Arguments {
+		tokens = append(tokens, arg.Tokens()...)
+	}
+
+	tokens = append(tokens, call.RightParen)
+
+	return tokens
+}
+
+func (call *FunctionCall) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(call.Callee.String())
+	result.WriteByte('(')
+
+	for i, arg := range call.Arguments {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+
+		result.WriteString(arg.String())
+	}
+
+	result.WriteByte(')')
+
+	return result.String()
+}
+
 // TODO:
-// MapLiteral
-// FunctionCall
 // AssignmentExpression
 // IndexExpression
 // MemberExpression

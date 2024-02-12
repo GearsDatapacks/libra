@@ -171,3 +171,15 @@ func (p *parser) parseMap() ast.Expression {
 		RightBrace: rightBrace,
 	}
 }
+
+func (p *parser) parseFunctionCall(callee ast.Expression) ast.Expression {
+	leftParen := p.consume()
+	arguments, rightParen := parseDelemitedList(p, token.RIGHT_PAREN, p.parseExpression)
+
+	return &ast.FunctionCall{
+		Callee:     callee,
+		LeftParen:  leftParen,
+		Arguments:  arguments,
+		RightParen: rightParen,
+	}
+}
