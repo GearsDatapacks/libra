@@ -358,9 +358,39 @@ func (call *FunctionCall) String() string {
 	return result.String()
 }
 
+type IndexExpression struct {
+	expression
+	Left Expression
+	LeftSquare token.Token
+	Index Expression
+	RightSquare token.Token
+}
+
+func (index *IndexExpression) Tokens() []token.Token {
+	tokens := append(index.Left.Tokens(), index.LeftSquare)
+	
+	tokens = append(tokens, index.Index.Tokens()...)
+
+	tokens = append(tokens, index.RightSquare)
+
+	return tokens
+}
+
+func (index *IndexExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(index.Left.String())
+	result.WriteByte('[')
+
+	result.WriteString(index.Index.String())
+
+	result.WriteByte(']')
+
+	return result.String()
+}
+
 // TODO:
 // AssignmentExpression
-// IndexExpression
 // MemberExpression
 // StructExpression
 // TupleExpression

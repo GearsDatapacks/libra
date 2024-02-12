@@ -130,6 +130,24 @@ func TestFunctionCall(t *testing.T) {
 	}
 }
 
+func TestIndexExpression(t *testing.T) {
+	tests := []struct {
+		src  string
+		left any
+		index any
+	}{
+		{"arr[7]", "$arr", 7},
+		{`{"a": 1}["b"]`, [][2]any{{"a", 1}}, "b"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		call := getExpr[*ast.IndexExpression](t, program)
+		testLiteral(t, call.Left, tt.left)
+		testLiteral(t, call.Index, tt.index)
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string
@@ -244,6 +262,9 @@ func TestOperatorPrecedence(t *testing.T) {
 		{"hi + (a || b)!", "(hi + ((a || b))!)"},
 		{"foo++-- + 1", "(((foo)++)-- + 1)"},
 		{"-a! / 4", "(-((a)!) / 4)"},
+		{"!foo() / 79", "(!(foo()) / 79)"},
+		{"-a[b] + 4", "(-(a[b]) + 4)"},
+		{"fns[1]() * 3", "(fns[1]() * 3)"},
 	}
 
 	for _, tt := range tests {

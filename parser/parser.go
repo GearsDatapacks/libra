@@ -127,6 +127,7 @@ func (p *parser) register() {
 
 	// Postfix expressions
 	p.registerLedOp(token.LEFT_PAREN, Postfix, p.parseFunctionCall)
+	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression)
 
 	// Postfix operators
 	p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)

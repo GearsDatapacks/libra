@@ -183,3 +183,17 @@ func (p *parser) parseFunctionCall(callee ast.Expression) ast.Expression {
 		RightParen: rightParen,
 	}
 }
+
+func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	leftSquare := p.consume()
+	index := p.parseExpression()
+	rightSquare := p.expect(token.RIGHT_SQUARE)
+
+	return &ast.IndexExpression{
+		Left:        left,
+		LeftSquare:  leftSquare,
+		Index:       index,
+		RightSquare: rightSquare,
+	}
+}
+
