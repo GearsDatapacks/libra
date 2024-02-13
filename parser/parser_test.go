@@ -176,6 +176,28 @@ func TestBinaryExpressions(t *testing.T) {
 	}
 }
 
+func TestAssignmentExpressions(t *testing.T) {
+	tests := []struct {
+		src   string
+		assignee  any
+		op    string
+		value any
+	}{
+		{"a = b", "$a", "=", "$b"},
+		{"foo -= 1", "$foo", "-=", 1},
+		{`msg += "Hello"`, "$msg", "+=", "Hello"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.AssignmentExpression](t, program)
+
+		testLiteral(t, expr.Assignee, tt.assignee)
+		utils.AssertEq(t, expr.Operator.Value, tt.op)
+		testLiteral(t, expr.Value, tt.value)
+	}
+}
+
 func TestPrefixExpressions(t *testing.T) {
 	tests := []struct {
 		src      string
@@ -265,11 +287,13 @@ func TestOperatorPrecedence(t *testing.T) {
 		{"!foo() / 79", "(!(foo()) / 79)"},
 		{"-a[b] + 4", "(-(a[b]) + 4)"},
 		{"fns[1]() * 3", "(fns[1]() * 3)"},
+		{"a = 1 + 2", "(a = (1 + 2))"},
+		{"foo = bar = baz", "(foo = (bar = baz))"},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.BinaryExpression](t, program)
+		expr := getExpr[ast.HasPrecedence](t, program)
 
 		utils.AssertEq(t, expr.PrecedenceString(), tt.res)
 	}

@@ -118,21 +118,13 @@ func (b *BinaryExpression) PrecedenceString() string {
 
 	result.WriteByte('(')
 
-	if prec, ok := b.Left.(hasPrecedence); ok {
-		result.WriteString(prec.PrecedenceString())
-	} else {
-		result.WriteString(b.Left.String())
-	}
+	result.WriteString(maybePrecedence(b.Left))
 
 	result.WriteByte(' ')
 	result.WriteString(b.Operator.Value)
 	result.WriteByte(' ')
 
-	if prec, ok := b.Right.(hasPrecedence); ok {
-		result.WriteString(prec.PrecedenceString())
-	} else {
-		result.WriteString(b.Right.String())
-	}
+	result.WriteString(maybePrecedence(b.Right))
 
 	result.WriteByte(')')
 
@@ -182,11 +174,7 @@ func (p *PrefixExpression) PrecedenceString() string {
 
 	result.WriteString(p.Operator.Value)
 	result.WriteByte('(')
-	if prec, ok := p.Operand.(hasPrecedence); ok {
-		result.WriteString(prec.PrecedenceString())
-	} else {
-		result.WriteString(p.Operand.String())
-	}
+	result.WriteString(maybePrecedence(p.Operand))
 	result.WriteByte(')')
 
 	return result.String()
@@ -210,19 +198,11 @@ func (p *PostfixExpression) PrecedenceString() string {
 	var result bytes.Buffer
 
 	result.WriteByte('(')
-	if prec, ok := p.Operand.(hasPrecedence); ok {
-		result.WriteString(prec.PrecedenceString())
-	} else {
-		result.WriteString(p.Operand.String())
-	}
+	result.WriteString(maybePrecedence(p.Operand))
 	result.WriteByte(')')
 	result.WriteString(p.Operator.Value)
 
 	return result.String()
-}
-
-type hasPrecedence interface {
-	PrecedenceString() string
 }
 
 // We don't store the tokens of the commas because they probably won't be needed
@@ -389,8 +369,58 @@ func (index *IndexExpression) String() string {
 	return result.String()
 }
 
+type AssignmentExpression struct {
+	expression
+	Assignee Expression
+	Operator token.Token
+	Value Expression
+}
+
+func (a *AssignmentExpression) Tokens() []token.Token {
+	tokens := append(a.Assignee.Tokens(), a.Operator)
+	return append(tokens, a.Value.Tokens()...)
+}
+
+func (a *AssignmentExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(a.Assignee.String())
+	result.WriteByte(' ')
+	result.WriteString(a.Operator.Value)
+	result.WriteByte(' ')
+	result.WriteString(a.Value.String())
+
+	return result.String()
+}
+
+func (a *AssignmentExpression) PrecedenceString() string {
+	var result bytes.Buffer
+
+	result.WriteByte('(')
+	result.WriteString(maybePrecedence(a.Assignee))
+	result.WriteByte(' ')
+	result.WriteString(a.Operator.Value)
+	result.WriteByte(' ')
+	result.WriteString(maybePrecedence(a.Value))
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+type HasPrecedence interface {
+	Expression
+	PrecedenceString() string
+}
+
+func maybePrecedence(expr Expression) string {
+	if prec, ok := expr.(HasPrecedence); ok {
+		return prec.PrecedenceString()
+	}
+
+	return expr.String()
+}
+
 // TODO:
-// AssignmentExpression
 // MemberExpression
 // StructExpression
 // TupleExpression

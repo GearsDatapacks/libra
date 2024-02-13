@@ -143,6 +143,14 @@ func (p *parser) register() {
 	p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
 	p.registerNudFn(token.TILDE, p.parsePrefixExpression)
 
+	// Assignment
+	p.registerLedOp(token.EQUALS, Assignment, p.parseAssignmentExpression, true)
+	p.registerLedOp(token.PLUS_EQUALS, Assignment, p.parseAssignmentExpression, true)
+	p.registerLedOp(token.MINUS_EQUALS, Assignment, p.parseAssignmentExpression, true)
+	p.registerLedOp(token.STAR_EQUALS, Assignment, p.parseAssignmentExpression, true)
+	p.registerLedOp(token.SLASH_EQUALS, Assignment, p.parseAssignmentExpression, true)
+	p.registerLedOp(token.PERCENT_EQUALS, Assignment, p.parseAssignmentExpression, true)
+
 	// Binary operators
 	p.registerLedOp(token.DOUBLE_AMPERSAND, Logical, p.parseBinaryExpression)
 	p.registerLedOp(token.DOUBLE_PIPE, Logical, p.parseBinaryExpression)
