@@ -8,8 +8,10 @@ func parseDelemitedList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	for !p.eof() && p.next().Kind != delim {
 		result = append(result, elemFn())
 
-		if p.next().Kind != delim {
-			p.expect(token.COMMA)
+		if p.next().Kind == token.COMMA{
+			p.consume()
+		} else {
+			break
 		}
 	}
 
