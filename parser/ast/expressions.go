@@ -443,10 +443,29 @@ func (t *TupleExpression) String() string {
 	return result.String()
 }
 
+type MemberExpression struct {
+	expression
+	Left Expression
+	Dot token.Token
+	Member token.Token
+}
+
+func (m *MemberExpression) Tokens() []token.Token {
+	return append(m.Left.Tokens(), m.Dot, m.Member)
+}
+
+func (m *MemberExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(m.Left.String())
+	result.WriteByte('.')
+	result.WriteString(m.Member.Value)
+
+	return result.String()
+}
+
 // TODO:
-// MemberExpression
 // StructExpression
-// TupleExpression
 // TypeCheckExpression
 // CastExpression
 

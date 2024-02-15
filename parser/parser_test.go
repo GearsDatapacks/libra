@@ -132,8 +132,8 @@ func TestFunctionCall(t *testing.T) {
 
 func TestIndexExpression(t *testing.T) {
 	tests := []struct {
-		src  string
-		left any
+		src   string
+		left  any
 		index any
 	}{
 		{"arr[7]", "$arr", 7},
@@ -145,6 +145,24 @@ func TestIndexExpression(t *testing.T) {
 		call := getExpr[*ast.IndexExpression](t, program)
 		testLiteral(t, call.Left, tt.left)
 		testLiteral(t, call.Index, tt.index)
+	}
+}
+
+func TestMemberExpression(t *testing.T) {
+	tests := []struct {
+		src    string
+		left   any
+		member string
+	}{
+		{"foo.bar", "$foo", "bar"},
+		{"1.to_string", 1, "to_string"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		member := getExpr[*ast.MemberExpression](t, program)
+		testLiteral(t, member.Left, tt.left)
+		utils.AssertEq(t, tt.member, member.Member.Value)
 	}
 }
 
@@ -178,10 +196,10 @@ func TestBinaryExpressions(t *testing.T) {
 
 func TestAssignmentExpressions(t *testing.T) {
 	tests := []struct {
-		src   string
-		assignee  any
-		op    string
-		value any
+		src      string
+		assignee any
+		op       string
+		value    any
 	}{
 		{"a = b", "$a", "=", "$b"},
 		{"foo -= 1", "$foo", "-=", 1},
@@ -265,7 +283,7 @@ func TestParenthesisedExpressions(t *testing.T) {
 
 func TestTupleExpressions(t *testing.T) {
 	tests := []struct {
-		src   string
+		src    string
 		values []any
 	}{
 		{"()", []any{}},

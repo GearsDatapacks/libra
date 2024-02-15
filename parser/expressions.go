@@ -113,6 +113,17 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	}
 }
 
+func (p *parser) parseMember(left ast.Expression) ast.Expression {
+	dot := p.consume()
+	member := p.expect(token.IDENTIFIER)
+
+	return &ast.MemberExpression{
+		Left:   left,
+		Dot:    dot,
+		Member: member,
+	}
+}
+
 func (p *parser) parseTuple() ast.Expression {
 	leftParen := p.consume()
 
