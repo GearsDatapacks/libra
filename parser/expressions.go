@@ -113,13 +113,22 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	}
 }
 
-func (p *parser) parseParenthesisedExpression() ast.Expression {
+func (p *parser) parseTuple() ast.Expression {
 	leftParen := p.consume()
-	expr := p.parseExpression()
-	rightParen := p.expect(token.RIGHT_PAREN)
-	return &ast.ParenthesisedExpression{
+
+	values, rightParen := parseDelemitedList(p, token.RIGHT_PAREN, p.parseExpression)
+
+	if len(values) == 1 {
+		return &ast.ParenthesisedExpression{
+			LeftParen:  leftParen,
+			Expression: values[0],
+			RightParen: rightParen,
+		}
+	}
+
+	return &ast.TupleExpression{
 		LeftParen:  leftParen,
-		Expression: expr,
+		Values:     values,
 		RightParen: rightParen,
 	}
 }
@@ -207,4 +216,3 @@ func (p *parser) parseMap() ast.Expression {
 		RightBrace: rightBrace,
 	}
 }
-

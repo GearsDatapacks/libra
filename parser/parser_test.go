@@ -263,6 +263,27 @@ func TestParenthesisedExpressions(t *testing.T) {
 	}
 }
 
+func TestTupleExpressions(t *testing.T) {
+	tests := []struct {
+		src   string
+		values []any
+	}{
+		{"()", []any{}},
+		{"(1, 2, 3)", []any{1, 2, 3}},
+		{`(1, "hi", false, thing)`, []any{1, "hi", false, "$thing"}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getExpr[*ast.TupleExpression](t, program)
+		utils.AssertEq(t, len(tt.values), len(expr.Values))
+
+		for i, value := range expr.Values {
+			testLiteral(t, value, tt.values[i])
+		}
+	}
+}
+
 func TestOperatorPrecedence(t *testing.T) {
 	tests := []struct {
 		src string

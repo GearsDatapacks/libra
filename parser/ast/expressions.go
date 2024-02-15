@@ -239,7 +239,7 @@ func (l *ListLiteral) String() string {
 }
 
 type KeyValue struct {
-	Key Expression
+	Key   Expression
 	Colon token.Token
 	Value Expression
 }
@@ -264,14 +264,14 @@ func (kv *KeyValue) String() string {
 
 type MapLiteral struct {
 	expression
-	LeftBrace token.Token
-	KeyValues []KeyValue
+	LeftBrace  token.Token
+	KeyValues  []KeyValue
 	RightBrace token.Token
 }
 
 func (m *MapLiteral) Tokens() []token.Token {
 	tokens := []token.Token{m.LeftBrace}
-	
+
 	for _, kv := range m.KeyValues {
 		tokens = append(tokens, kv.Tokens()...)
 	}
@@ -301,15 +301,15 @@ func (m *MapLiteral) String() string {
 
 type FunctionCall struct {
 	expression
-	Callee Expression
-	LeftParen token.Token
-	Arguments []Expression
+	Callee     Expression
+	LeftParen  token.Token
+	Arguments  []Expression
 	RightParen token.Token
 }
 
 func (call *FunctionCall) Tokens() []token.Token {
 	tokens := append(call.Callee.Tokens(), call.LeftParen)
-	
+
 	for _, arg := range call.Arguments {
 		tokens = append(tokens, arg.Tokens()...)
 	}
@@ -340,15 +340,15 @@ func (call *FunctionCall) String() string {
 
 type IndexExpression struct {
 	expression
-	Left Expression
-	LeftSquare token.Token
-	Index Expression
+	Left        Expression
+	LeftSquare  token.Token
+	Index       Expression
 	RightSquare token.Token
 }
 
 func (index *IndexExpression) Tokens() []token.Token {
 	tokens := append(index.Left.Tokens(), index.LeftSquare)
-	
+
 	tokens = append(tokens, index.Index.Tokens()...)
 
 	tokens = append(tokens, index.RightSquare)
@@ -373,7 +373,7 @@ type AssignmentExpression struct {
 	expression
 	Assignee Expression
 	Operator token.Token
-	Value Expression
+	Value    Expression
 }
 
 func (a *AssignmentExpression) Tokens() []token.Token {
@@ -407,6 +407,49 @@ func (a *AssignmentExpression) PrecedenceString() string {
 	return result.String()
 }
 
+type TupleExpression struct {
+	expression
+	LeftParen  token.Token
+	Values     []Expression
+	RightParen token.Token
+}
+
+func (t *TupleExpression) Tokens() []token.Token {
+	tokens := []token.Token{t.LeftParen}
+	
+	for _, value := range t.Values {
+		tokens = append(tokens, value.Tokens()...)
+	}
+
+	tokens = append(tokens, t.RightParen)
+
+	return tokens
+}
+
+func (t *TupleExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('(')
+	
+	for i, value := range t.Values {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(value.String())
+	}
+
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+// TODO:
+// MemberExpression
+// StructExpression
+// TupleExpression
+// TypeCheckExpression
+// CastExpression
+
 type HasPrecedence interface {
 	Expression
 	PrecedenceString() string
@@ -419,10 +462,3 @@ func maybePrecedence(expr Expression) string {
 
 	return expr.String()
 }
-
-// TODO:
-// MemberExpression
-// StructExpression
-// TupleExpression
-// TypeCheckExpression
-// CastExpression
