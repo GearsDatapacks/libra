@@ -416,7 +416,7 @@ type TupleExpression struct {
 
 func (t *TupleExpression) Tokens() []token.Token {
 	tokens := []token.Token{t.LeftParen}
-	
+
 	for _, value := range t.Values {
 		tokens = append(tokens, value.Tokens()...)
 	}
@@ -430,7 +430,7 @@ func (t *TupleExpression) String() string {
 	var result bytes.Buffer
 
 	result.WriteByte('(')
-	
+
 	for i, value := range t.Values {
 		if i != 0 {
 			result.WriteString(", ")
@@ -445,8 +445,8 @@ func (t *TupleExpression) String() string {
 
 type MemberExpression struct {
 	expression
-	Left Expression
-	Dot token.Token
+	Left   Expression
+	Dot    token.Token
 	Member token.Token
 }
 
@@ -464,8 +464,64 @@ func (m *MemberExpression) String() string {
 	return result.String()
 }
 
+type StructMember struct {
+	Name  token.Token
+	Colon token.Token
+	Value Expression
+}
+
+func (sm *StructMember) Tokens() []token.Token {
+	return append([]token.Token{sm.Name, sm.Colon}, sm.Value.Tokens()...)
+}
+
+func (sm *StructMember) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(sm.Name.Value)
+	result.WriteString(": ")
+	result.WriteString(sm.Value.String())
+
+	return result.String()
+}
+
+type StructExpression struct {
+	expression
+	Struct     Expression
+	LeftBrace  token.Token
+	Members    []StructMember
+	RightBrace token.Token
+}
+
+func (s *StructExpression) Tokens() []token.Token {
+	tokens := append(s.Struct.Tokens(), s.LeftBrace)
+
+	for _, member := range s.Members {
+		tokens = append(tokens, member.Tokens()...)
+	}
+
+	return append(tokens, s.RightBrace)
+}
+
+func (s *StructExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(s.Struct.String())
+	result.WriteString(" { ")
+
+	for i, member := range s.Members {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+
+		result.WriteString(member.String())
+	}
+
+	result.WriteString(" }")
+
+	return result.String()
+}
+
 // TODO:
-// StructExpression
 // TypeCheckExpression
 // CastExpression
 

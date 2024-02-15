@@ -37,19 +37,20 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 
 	left := nudFn()
 
-	ledFn := p.lookupLedFn(p.next().Kind)
-	for ledFn != nil && precedence < p.leftPrecedence(p.next().Kind) {
+	ledFn := p.lookupLedFn(left)
+	for ledFn != nil && precedence < p.leftPrecedence(left) {
 		left = ledFn(left)
 
-		ledFn = p.lookupLedFn(p.next().Kind)
+		ledFn = p.lookupLedFn(left)
 	}
 
 	return left
 }
 
 func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
+	precedence := p.rightPrecedence(left)
 	operator := p.consume()
-	right := p.parseSubExpression(p.rightPrecedence(operator.Kind))
+	right := p.parseSubExpression(precedence)
 
 	return &ast.BinaryExpression{
 		Left:     left,
@@ -59,8 +60,9 @@ func (p *parser) parseBinaryExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseAssignmentExpression(assignee ast.Expression) ast.Expression {
+	precedence := p.rightPrecedence(assignee)
 	operator := p.consume()
-	value := p.parseSubExpression(p.rightPrecedence(operator.Kind))
+	value := p.parseSubExpression(precedence)
 
 	return &ast.AssignmentExpression{
 		Assignee: assignee,
@@ -121,6 +123,31 @@ func (p *parser) parseMember(left ast.Expression) ast.Expression {
 		Left:   left,
 		Dot:    dot,
 		Member: member,
+	}
+}
+
+func (p *parser) parseStructMember() ast.StructMember {
+	name := p.expect(token.IDENTIFIER)
+	colon := p.expect(token.COLON)
+	value := p.parseExpression()
+
+	return ast.StructMember{
+		Name:  name,
+		Colon: colon,
+		Value: value,
+	}
+}
+
+func (p *parser) parseStructExpression(instanceOf ast.Expression) ast.Expression {
+	leftBrace := p.consume()
+
+	members, rightBrace := parseDelemitedList(p, token.RIGHT_BRACE, p.parseStructMember)
+
+	return &ast.StructExpression{
+		Struct:     instanceOf,
+		LeftBrace:  leftBrace,
+		Members:    members,
+		RightBrace: rightBrace,
 	}
 }
 

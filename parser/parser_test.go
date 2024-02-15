@@ -166,6 +166,37 @@ func TestMemberExpression(t *testing.T) {
 	}
 }
 
+type structField struct {
+	name string
+	value any
+}
+
+func TestStructExpression(t *testing.T) {
+	tests := []struct {
+		src    string
+		name   string
+		members []structField
+	}{
+		{"foo {bar: 1, baz: 2}", "foo", []structField{{"bar", 1}, {"baz", 2}}},
+		{"rect {width: 9, height: 7.8}", "rect", []structField{{"width", 9}, {"height", 7.8}}},
+		{`message {greeting: "Hello", name: name,}`, "message", []structField{{"greeting", "Hello"}, {"name", "$name"}}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		structExpr := getExpr[*ast.StructExpression](t, program)
+		ident, ok := structExpr.Struct.(*ast.Identifier)
+		utils.Assert(t, ok, "Struct is not an identifier")
+		utils.AssertEq(t, tt.name, ident.Name)
+
+		for i, member := range structExpr.Members {
+			tMember := tt.members[i]
+			utils.AssertEq(t, tMember.name, member.Name.Value)
+			testLiteral(t, member.Value, tMember.value)
+		}
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string

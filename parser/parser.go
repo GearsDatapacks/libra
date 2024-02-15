@@ -10,7 +10,7 @@ type parser struct {
 	tokens      []token.Token
 	pos         int
 	nudFns      map[token.Kind]nudFn
-	ledOps      map[token.Kind]opInfo
+	ledOps      []lookupFn
 	Diagnostics diagnostics.Manager
 }
 
@@ -19,7 +19,7 @@ func New(tokens []token.Token, diagnostics diagnostics.Manager) *parser {
 		tokens:      tokens,
 		pos:         0,
 		nudFns:      map[token.Kind]nudFn{},
-		ledOps:      map[token.Kind]opInfo{},
+		ledOps:      []lookupFn{},
 		Diagnostics: diagnostics,
 	}
 
@@ -52,6 +52,7 @@ func (p *parser) Parse() *ast.Program {
 
 type nudFn func() ast.Expression
 type ledFn func(ast.Expression) ast.Expression
+type lookupFn func(ast.Expression) (opInfo, bool)
 
 type opInfo struct {
 	leftPrecedence  int
@@ -75,11 +76,21 @@ func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, rightA
 		rightPrecedence -= 1
 	}
 
-	p.ledOps[kind] = opInfo{
-		leftPrecedence:  leftPrecedence,
-		rightPrecedence: rightPrecedence,
-		parseFn:         fn,
-	}
+	p.registerLedLookup(func(foo ast.Expression) (opInfo, bool) {
+		if p.next().Kind == kind {
+			return opInfo{
+				leftPrecedence:  leftPrecedence,
+				rightPrecedence: rightPrecedence,
+				parseFn:         fn,
+			}, true
+		}
+
+		return opInfo{}, false
+	})
+}
+
+func (p *parser) registerLedLookup(fn lookupFn) {
+	p.ledOps = append(p.ledOps, fn)
 }
 
 func (p *parser) lookupNudFn(kind token.Kind) nudFn {
@@ -90,24 +101,35 @@ func (p *parser) lookupNudFn(kind token.Kind) nudFn {
 	return fn
 }
 
-func (p *parser) lookupLedFn(kind token.Kind) ledFn {
-	info, ok := p.ledOps[kind]
+func (p *parser) lookupLedOp(left ast.Expression) (opInfo, bool) {
+	for _, lookup := range p.ledOps {
+		info, ok := lookup(left)
+		if ok {
+			return info, true
+		}
+	}
+
+	return opInfo{}, false
+} 
+
+func (p *parser) lookupLedFn(left ast.Expression) ledFn {
+	info, ok := p.lookupLedOp(left)
 	if !ok {
 		return nil
 	}
 	return info.parseFn
 }
 
-func (p *parser) leftPrecedence(kind token.Kind) int {
-	info, ok := p.ledOps[kind]
+func (p *parser) leftPrecedence(left ast.Expression) int {
+	info, ok := p.lookupLedOp(left)
 	if !ok {
 		return Lowest
 	}
 	return info.leftPrecedence
 }
 
-func (p *parser) rightPrecedence(kind token.Kind) int {
-	info, ok := p.ledOps[kind]
+func (p *parser) rightPrecedence(left ast.Expression) int {
+	info, ok := p.lookupLedOp(left)
 	if !ok {
 		return Lowest
 	}
@@ -129,6 +151,25 @@ func (p *parser) register() {
 	p.registerLedOp(token.LEFT_PAREN, Postfix, p.parseFunctionCall)
 	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression)
 	p.registerLedOp(token.DOT, Postfix, p.parseMember)
+
+	p.registerLedLookup(func(left ast.Expression) (opInfo, bool) {
+		if p.next().Kind != token.LEFT_BRACE {
+			return opInfo{}, false
+		}
+
+		_, isIdent := left.(*ast.Identifier)
+		_, isMember := left.(*ast.MemberExpression)
+
+		if !isIdent && !isMember {
+			return opInfo{}, false
+		}
+
+		return opInfo{
+			leftPrecedence:  Postfix,
+			rightPrecedence: Postfix,
+			parseFn: p.parseStructExpression,
+		}, true
+	})
 
 	// Postfix operators
 	p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
