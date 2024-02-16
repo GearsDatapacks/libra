@@ -11,6 +11,7 @@ type parser struct {
 	pos         int
 	nudFns      map[token.Kind]nudFn
 	ledOps      []lookupFn
+	identifiers []string
 	Diagnostics diagnostics.Manager
 }
 
@@ -220,7 +221,7 @@ func (p *parser) register() {
 	p.registerLedOp(token.DOUBLE_STAR, Exponential, p.parseBinaryExpression, true)
 
 	p.registerLedLookup(func(_ ast.Expression) (opInfo, bool) {
-		if p.next().Kind == token.IDENTIFIER && p.next().Value == "is" {
+		if p.isKeyword("is") {
 			return opInfo{
 				leftPrecedence:  Comparison,
 				rightPrecedence: Comparison,
@@ -230,6 +231,37 @@ func (p *parser) register() {
 
 		return opInfo{}, false
 	})
+}
+
+func (p *parser) isKeyword(value string) bool {
+	if p.next().Kind != token.IDENTIFIER || p.next().Value != value {
+		return false
+	}
+
+	for _, ident := range p.identifiers {
+		if ident == value {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *parser) delcareIdentifier() token.Token {
+	ident := p.expect(token.IDENTIFIER)
+	p.identifiers = append(p.identifiers, ident.Value)
+	return ident
+}
+
+func (p *parser) enterScope() []string {
+	oldScope := p.identifiers
+	p.identifiers = make([]string, len(oldScope))
+	copy(p.identifiers, oldScope)
+	return oldScope
+}
+
+func (p *parser) exitScope(scope []string) {
+	p.identifiers = scope
 }
 
 func (p *parser) next() token.Token {

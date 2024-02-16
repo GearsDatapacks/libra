@@ -1,6 +1,9 @@
 package parser
 
-import "github.com/gearsdatapacks/libra/lexer/token"
+import (
+	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/parser/ast"
+)
 
 func parseDelemitedList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) ( result []Elem, delimToken token.Token) {
 	result = []Elem{}
@@ -18,4 +21,18 @@ func parseDelemitedList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	delimToken = p.expect(delim)
 
 	return result, delimToken
+}
+
+func (p *parser) parseOptionalTypeAnnotation() *ast.TypeAnnotation {
+	if p.next().Kind != token.COLON {
+		return nil
+	}
+
+	colon := p.consume()
+	ty := p.parseType()
+
+	return &ast.TypeAnnotation{
+		Colon: colon,
+		Type:  ty,
+	}
 }
