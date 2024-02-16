@@ -152,13 +152,24 @@ func (p *parser) parseStructExpression(instanceOf ast.Expression) ast.Expression
 }
 
 func (p *parser) parseCastExpression(left ast.Expression) ast.Expression {
-	arrow := p.expect(token.ARROW)
+	arrow := p.consume()
 	toType := p.parseType()
 
 	return &ast.CastExpression{
 		Left:  left,
 		Arrow: arrow,
 		Type:  toType,
+	}
+}
+
+func (p *parser) parseTypeCheckExpression(left ast.Expression) ast.Expression {
+	operator := p.consume()
+	toType := p.parseType()
+
+	return &ast.TypeCheckExpression{
+		Left:     left,
+		Operator: operator,
+		Type:     toType,
 	}
 }
 

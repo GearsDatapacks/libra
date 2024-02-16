@@ -219,6 +219,28 @@ func TestCastExpression(t *testing.T) {
 	}
 }
 
+func TestTypeCheckExpression(t *testing.T) {
+	tests := []struct {
+		src  string
+		left any
+		typeName string
+	}{
+		{"1 is i32", 1, "i32"},
+		{`"Hello" is string`, "Hello", "string"},
+		{"thing is bool", "$thing", "bool"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		typeCheck := getExpr[*ast.TypeCheckExpression](t, program)
+
+		testLiteral(t, typeCheck.Left, tt.left)
+		ident, ok := typeCheck.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Didn't check for a type name")
+		utils.AssertEq(t, tt.typeName, ident.Name.Value)
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string

@@ -546,8 +546,30 @@ func (ce *CastExpression) String() string {
 	return result.String()
 }
 
-// TODO:
-// TypeCheckExpression
+type TypeCheckExpression struct {
+	expression
+	Left     Expression
+	Operator token.Token
+	Type     TypeExpression
+}
+
+func (tc *TypeCheckExpression) Tokens() []token.Token {
+	tokens := tc.Left.Tokens()
+	tokens = append(tokens, tc.Operator)
+	tokens = append(tokens, tc.Type.Tokens()...)
+
+	return tokens
+}
+
+func (tc *TypeCheckExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(tc.Left.String())
+	result.WriteString(" is ")
+	result.WriteString(tc.Type.String())
+
+	return result.String()
+}
 
 type HasPrecedence interface {
 	Expression

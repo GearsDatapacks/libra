@@ -218,6 +218,18 @@ func (p *parser) register() {
 	p.registerLedOp(token.PERCENT, Multiplicative, p.parseBinaryExpression)
 
 	p.registerLedOp(token.DOUBLE_STAR, Exponential, p.parseBinaryExpression, true)
+
+	p.registerLedLookup(func(_ ast.Expression) (opInfo, bool) {
+		if p.next().Kind == token.IDENTIFIER && p.next().Value == "is" {
+			return opInfo{
+				leftPrecedence:  Comparison,
+				rightPrecedence: Comparison,
+				parseFn: p.parseTypeCheckExpression,
+			}, true
+		}
+
+		return opInfo{}, false
+	})
 }
 
 func (p *parser) next() token.Token {
