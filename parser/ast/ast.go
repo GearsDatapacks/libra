@@ -21,6 +21,11 @@ type Expression interface {
 	expressionNode()
 }
 
+type TypeExpression interface {
+	Node
+	typeNode()
+}
+
 type Program struct {
 	Statements []Statement
 }

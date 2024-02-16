@@ -521,9 +521,33 @@ func (s *StructExpression) String() string {
 	return result.String()
 }
 
+type CastExpression struct {
+	expression
+	Left  Expression
+	Arrow token.Token
+	Type  TypeExpression
+}
+
+func (ce *CastExpression) Tokens() []token.Token {
+	tokens := ce.Left.Tokens()
+	tokens = append(tokens, ce.Arrow)
+	tokens = append(tokens, ce.Type.Tokens()...)
+
+	return tokens
+}
+
+func (ce *CastExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(ce.Left.String())
+	result.WriteString(" -> ")
+	result.WriteString(ce.Type.String())
+
+	return result.String()
+}
+
 // TODO:
 // TypeCheckExpression
-// CastExpression
 
 type HasPrecedence interface {
 	Expression

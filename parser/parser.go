@@ -110,7 +110,7 @@ func (p *parser) lookupLedOp(left ast.Expression) (opInfo, bool) {
 	}
 
 	return opInfo{}, false
-} 
+}
 
 func (p *parser) lookupLedFn(left ast.Expression) ledFn {
 	info, ok := p.lookupLedOp(left)
@@ -151,6 +151,7 @@ func (p *parser) register() {
 	p.registerLedOp(token.LEFT_PAREN, Postfix, p.parseFunctionCall)
 	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression)
 	p.registerLedOp(token.DOT, Postfix, p.parseMember)
+	p.registerLedOp(token.ARROW, Postfix, p.parseCastExpression)
 
 	p.registerLedLookup(func(left ast.Expression) (opInfo, bool) {
 		if p.next().Kind != token.LEFT_BRACE {
@@ -167,7 +168,7 @@ func (p *parser) register() {
 		return opInfo{
 			leftPrecedence:  Postfix,
 			rightPrecedence: Postfix,
-			parseFn: p.parseStructExpression,
+			parseFn:         p.parseStructExpression,
 		}, true
 	})
 

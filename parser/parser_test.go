@@ -167,14 +167,14 @@ func TestMemberExpression(t *testing.T) {
 }
 
 type structField struct {
-	name string
+	name  string
 	value any
 }
 
 func TestStructExpression(t *testing.T) {
 	tests := []struct {
-		src    string
-		name   string
+		src     string
+		name    string
 		members []structField
 	}{
 		{"foo {bar: 1, baz: 2}", "foo", []structField{{"bar", 1}, {"baz", 2}}},
@@ -194,6 +194,28 @@ func TestStructExpression(t *testing.T) {
 			utils.AssertEq(t, tMember.name, member.Name.Value)
 			testLiteral(t, member.Value, tMember.value)
 		}
+	}
+}
+
+func TestCastExpression(t *testing.T) {
+	tests := []struct {
+		src  string
+		left any
+		to   string
+	}{
+		{"1->f32", 1, "f32"},
+		{"foo -> bar", "$foo", "bar"},
+		{`"_" -> u8`, "_", "u8"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		cast := getExpr[*ast.CastExpression](t, program)
+
+		testLiteral(t, cast.Left, tt.left)
+		ident, ok := cast.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Didn't cast to a type name")
+		utils.AssertEq(t, tt.to, ident.Name.Value)
 	}
 }
 
