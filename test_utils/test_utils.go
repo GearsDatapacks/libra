@@ -25,3 +25,9 @@ func AssertEq[T comparable](t *testing.T, actual, expected T, msg ...string) {
   Assert(t, actual == expected, append(msg, defaultMsg)...)
 }
 
+func AssertSingle[T any](t *testing.T, list []T) T {
+  t.Helper()
+
+  AssertEq(t, len(list), 1, fmt.Sprintf("Expected a single list item, got %d", len(list)))
+  return list[0]
+}

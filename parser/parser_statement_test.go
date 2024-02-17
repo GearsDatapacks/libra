@@ -43,6 +43,65 @@ func TestVariableDeclaration(t *testing.T) {
 	}
 }
 
+type elseBranch struct {
+	condition  any
+	bodyValue  any
+	elseBranch *elseBranch
+}
+
+func TestIfStatement(t *testing.T) {
+	tests := []struct {
+		src        string
+		condition  any
+		bodyValue  any
+		elseBranch *elseBranch
+	}{
+		{"if a { 10 }", "$a", 10, nil},
+		{"if false { 10 } else { 20 }", false, 10, &elseBranch{nil, 20, nil}},
+		{`if 69
+		{"Nice"}
+		else if 42 { "UATLTUAE" }else{
+			"Boring"
+		}`, 69, "Nice", &elseBranch{42, "UATLTUAE", &elseBranch{nil, "Boring", nil}}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		stmt := getStmt[*ast.IfStatement](t, program)
+		testIfStatement(t, stmt, tt.condition, tt.bodyValue, tt.elseBranch)
+	}
+}
+
+func testIfStatement(t *testing.T, stmt *ast.IfStatement, condition any, bodyValue any, elseBranch *elseBranch) {
+	testLiteral(t, stmt.Condition, condition)
+	bodyStmt := utils.AssertSingle(t, stmt.Body.Statements)
+	exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
+	utils.Assert(t, ok, "Body is not an expression statement")
+	testLiteral(t, exprStmt.Expression, bodyValue)
+
+	if elseBranch != nil {
+		utils.Assert(t, stmt.ElseBranch != nil, "Expected else branch")
+		testElseBranch(t, stmt.ElseBranch, elseBranch)
+	} else {
+		utils.Assert(t, stmt.ElseBranch == nil, "Expected no else branch")
+	}
+}
+
+func testElseBranch(t *testing.T, branch *ast.ElseBranch, expected *elseBranch) {
+	if expected.condition == nil {
+		block, ok := branch.Statement.(*ast.BlockStatement)
+		utils.Assert(t, ok, "Else branch is not a block")
+		bodyStmt := utils.AssertSingle(t, block.Statements)
+		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
+		utils.Assert(t, ok, "Body is not an expression statement")
+		testLiteral(t, exprStmt.Expression, expected.bodyValue)
+	} else {
+		ifStmt, ok := branch.Statement.(*ast.IfStatement)
+		utils.Assert(t, ok, "Else branch is not an if statement")
+		testIfStatement(t, ifStmt, expected.condition, expected.bodyValue, expected.elseBranch)
+	}
+}
+
 func getStmt[T ast.Statement](t *testing.T, program *ast.Program) T {
 	t.Helper()
 

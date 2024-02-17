@@ -12,6 +12,7 @@ type parser struct {
 	nudFns      map[token.Kind]nudFn
 	ledOps      []lookupFn
 	identifiers []string
+	noBraces    bool
 	Diagnostics diagnostics.Manager
 }
 
@@ -159,6 +160,10 @@ func (p *parser) register() {
 			return opInfo{}, false
 		}
 
+		if p.noBraces {
+			return opInfo{}, false
+		}
+
 		_, isIdent := left.(*ast.Identifier)
 		_, isMember := left.(*ast.MemberExpression)
 
@@ -225,7 +230,7 @@ func (p *parser) register() {
 			return opInfo{
 				leftPrecedence:  Comparison,
 				rightPrecedence: Comparison,
-				parseFn: p.parseTypeCheckExpression,
+				parseFn:         p.parseTypeCheckExpression,
 			}, true
 		}
 
@@ -289,10 +294,8 @@ func (p *parser) nextWithNewlines() token.Token {
 }
 
 func (p *parser) consume() token.Token {
+	p.consumeNewlines()
 	next := p.next()
-	for p.tokens[p.pos].Kind == token.NEWLINE {
-		p.pos++
-	}
 
 	p.pos++
 	return next

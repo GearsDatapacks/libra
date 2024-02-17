@@ -5,14 +5,32 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func parseDelemitedList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) ( result []Elem, delimToken token.Token) {
+func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
 	result = []Elem{}
 
 	for !p.eof() && p.next().Kind != delim {
 		result = append(result, elemFn())
 
-		if p.next().Kind == token.COMMA{
+		if p.next().Kind == token.COMMA {
 			p.consume()
+		} else {
+			break
+		}
+	}
+
+	delimToken = p.expect(delim)
+
+	return result, delimToken
+}
+
+func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+	result = []Elem{}
+
+	for !p.eof() && p.next().Kind != delim {
+		result = append(result, elemFn())
+
+		if p.nextWithNewlines().Kind == token.NEWLINE {
+			p.consumeNewlines()
 		} else {
 			break
 		}

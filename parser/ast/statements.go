@@ -80,6 +80,79 @@ func (varDec *VariableDeclaration) String() string {
 	return result.String()
 }
 
+type BlockStatement struct {
+	statement
+	LeftBrace token.Token
+	Statements []Statement
+	RightBrace token.Token
+}
+
+func (b *BlockStatement) Tokens() []token.Token {
+	tokens := []token.Token{b.LeftBrace}
+	
+	for _, stmt := range b.Statements {
+		tokens = append(tokens, stmt.Tokens()...)
+	}
+
+	tokens = append(tokens, b.RightBrace)
+	return tokens
+}
+
+func (b *BlockStatement) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	for _, stmt := range b.Statements {
+		result.WriteByte('\n')
+		result.WriteString(stmt.String())
+	}
+	result.WriteString("\n}")
+
+	return result.String()
+}
+
+type IfStatement struct {
+	statement
+	Keyword token.Token
+	Condition Expression
+	Body *BlockStatement
+	ElseBranch *ElseBranch
+}
+
+func (is *IfStatement) Tokens() []token.Token {
+	tokens := []token.Token{is.Keyword}
+	tokens = append(tokens, is.Body.Tokens()...)
+	tokens = append(tokens, is.Condition.Tokens()...)
+
+	if is.ElseBranch != nil {
+		tokens = append(tokens, is.ElseBranch.ElseKeyword)
+		tokens = append(tokens, is.ElseBranch.Statement.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (is *IfStatement) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("if ")
+	result.WriteString(is.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(is.Body.String())
+
+	if is.ElseBranch != nil {
+		result.WriteString(" else ")
+		result.WriteString(is.ElseBranch.Statement.String())
+	}
+
+	return result.String()
+}
+
+type ElseBranch struct {
+	ElseKeyword token.Token
+	Statement Statement
+}
+
 // TODO:
 // Parameter
 // FunctionDeclaration

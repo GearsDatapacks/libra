@@ -24,6 +24,7 @@ const (
 )
 
 func (p *parser) parseExpression() ast.Expression {
+	p.noBraces = false
 	return p.parseSubExpression(Lowest)
 }
 
@@ -92,7 +93,7 @@ func (p *parser) parsePostfixExpression(operand ast.Expression) ast.Expression {
 
 func (p *parser) parseFunctionCall(callee ast.Expression) ast.Expression {
 	leftParen := p.consume()
-	arguments, rightParen := parseDelemitedList(p, token.RIGHT_PAREN, p.parseExpression)
+	arguments, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 
 	return &ast.FunctionCall{
 		Callee:     callee,
@@ -141,7 +142,7 @@ func (p *parser) parseStructMember() ast.StructMember {
 func (p *parser) parseStructExpression(instanceOf ast.Expression) ast.Expression {
 	leftBrace := p.consume()
 
-	members, rightBrace := parseDelemitedList(p, token.RIGHT_BRACE, p.parseStructMember)
+	members, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructMember)
 
 	return &ast.StructExpression{
 		Struct:     instanceOf,
@@ -176,7 +177,7 @@ func (p *parser) parseTypeCheckExpression(left ast.Expression) ast.Expression {
 func (p *parser) parseTuple() ast.Expression {
 	leftParen := p.consume()
 
-	values, rightParen := parseDelemitedList(p, token.RIGHT_PAREN, p.parseExpression)
+	values, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 
 	if len(values) == 1 {
 		return &ast.ParenthesisedExpression{
@@ -245,7 +246,7 @@ func (p *parser) parseString() ast.Expression {
 
 func (p *parser) parseList() ast.Expression {
 	leftSquare := p.consume()
-	values, rightSquare := parseDelemitedList(p, token.RIGHT_SQUARE, p.parseExpression)
+	values, rightSquare := parseDelimExprList(p, token.RIGHT_SQUARE, p.parseExpression)
 
 	return &ast.ListLiteral{
 		LeftSquare:  leftSquare,
@@ -268,7 +269,7 @@ func (p *parser) parseKeyValue() ast.KeyValue {
 
 func (p *parser) parseMap() ast.Expression {
 	leftBrace := p.consume()
-	keyValues, rightBrace := parseDelemitedList(p, token.RIGHT_BRACE, p.parseKeyValue)
+	keyValues, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseKeyValue)
 
 	return &ast.MapLiteral{
 		LeftBrace:  leftBrace,
