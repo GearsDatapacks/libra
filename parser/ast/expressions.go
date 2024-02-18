@@ -59,7 +59,7 @@ func (sl *StringLiteral) Tokens() []token.Token {
 	return []token.Token{sl.Token}
 }
 func (sl *StringLiteral) String() string {
-	return sl.Token.Value
+	return `"` + sl.Token.Value + `"`
 }
 
 type Identifier struct {
