@@ -29,6 +29,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseWhileLoop()
 	}
 
+	if p.isKeyword("for") {
+		return p.parseForLoop()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -92,7 +96,6 @@ func (p *parser) parseIfStatement() ast.Statement {
 	}
 }
 
-
 func (p *parser) parseWhileLoop() ast.Statement {
 	keyword := p.consume()
 
@@ -103,9 +106,30 @@ func (p *parser) parseWhileLoop() ast.Statement {
 	body := p.parseBlockStatement()
 
 	return &ast.WhileLoop{
-		Keyword:    keyword,
-		Condition:  condition,
-		Body:       body,
+		Keyword:   keyword,
+		Condition: condition,
+		Body:      body,
 	}
 }
 
+func (p *parser) parseForLoop() ast.Statement {
+	forKeyword := p.consume()
+	defer p.exitScope(p.enterScope())
+
+	variable := p.delcareIdentifier()
+	inKeyword := p.expectKeyword("in")
+
+	p.noBraces = true
+	iterator := p.parseSubExpression(Lowest)
+	p.noBraces = false
+
+	body := p.parseBlockStatement()
+
+	return &ast.ForLoop{
+		ForKeyword: forKeyword,
+		Variable:   variable,
+		InKeyword:  inKeyword,
+		Iterator:   iterator,
+		Body:       body,
+	}
+}

@@ -11,7 +11,7 @@ type parser struct {
 	pos         int
 	nudFns      map[token.Kind]nudFn
 	ledOps      []lookupFn
-	identifiers []string
+	identifiers map[string]token.Span
 	noBraces    bool
 	Diagnostics diagnostics.Manager
 }
@@ -22,6 +22,7 @@ func New(tokens []token.Token, diagnostics diagnostics.Manager) *parser {
 		pos:         0,
 		nudFns:      map[token.Kind]nudFn{},
 		ledOps:      []lookupFn{},
+		identifiers: map[string]token.Span{},
 		Diagnostics: diagnostics,
 	}
 
@@ -243,29 +244,29 @@ func (p *parser) isKeyword(value string) bool {
 		return false
 	}
 
-	for _, ident := range p.identifiers {
-		if ident == value {
-			return false
-		}
-	}
+	_, isDeclared := p.identifiers[p.next().Value]
 
-	return true
+	return !isDeclared
 }
 
 func (p *parser) delcareIdentifier() token.Token {
 	ident := p.expect(token.IDENTIFIER)
-	p.identifiers = append(p.identifiers, ident.Value)
+	p.identifiers[ident.Value] = ident.Span
 	return ident
 }
 
-func (p *parser) enterScope() []string {
+func (p *parser) enterScope() map[string]token.Span {
 	oldScope := p.identifiers
-	p.identifiers = make([]string, len(oldScope))
-	copy(p.identifiers, oldScope)
+	p.identifiers = make(map[string]token.Span, len(oldScope))
+	
+	for ident, span := range oldScope {
+		p.identifiers[ident] = span
+	}
+
 	return oldScope
 }
 
-func (p *parser) exitScope(scope []string) {
+func (p *parser) exitScope(scope map[string]token.Span) {
 	p.identifiers = scope
 }
 
@@ -313,6 +314,21 @@ func (p *parser) expect(kind token.Kind) token.Token {
 	}
 	p.Diagnostics.ReportExpectedToken(p.next().Span, kind, p.next().Kind)
 	tok := token.New(kind, "", token.NewSpan(0, 0, 0))
+	return tok
+}
+
+func (p *parser) expectKeyword(keyword string) token.Token {
+	if p.isKeyword(keyword) {
+		return p.consume()
+	}
+
+	if p.next().Kind == token.IDENTIFIER && p.next().Value == keyword {
+		p.Diagnostics.ReportKeywordOverwritten(p.next().Span, keyword, p.identifiers[keyword])
+		return p.consume()
+	}
+
+	p.Diagnostics.ReportExpectedKeyword(p.next().Span, keyword, p.next())
+	tok := token.New(token.IDENTIFIER, "", token.NewSpan(0, 0, 0))
 	return tok
 }
 

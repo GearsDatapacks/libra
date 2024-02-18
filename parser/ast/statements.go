@@ -121,8 +121,8 @@ type IfStatement struct {
 
 func (is *IfStatement) Tokens() []token.Token {
 	tokens := []token.Token{is.Keyword}
-	tokens = append(tokens, is.Body.Tokens()...)
 	tokens = append(tokens, is.Condition.Tokens()...)
+	tokens = append(tokens, is.Body.Tokens()...)
 
 	if is.ElseBranch != nil {
 		tokens = append(tokens, is.ElseBranch.ElseKeyword)
@@ -162,8 +162,8 @@ type WhileLoop struct {
 
 func (wl *WhileLoop) Tokens() []token.Token {
 	tokens := []token.Token{wl.Keyword}
-	tokens = append(tokens, wl.Body.Tokens()...)
 	tokens = append(tokens, wl.Condition.Tokens()...)
+	tokens = append(tokens, wl.Body.Tokens()...)
 	return tokens
 }
 
@@ -178,11 +178,39 @@ func (wl *WhileLoop) String() string {
 	return result.String()
 }
 
+type ForLoop struct {
+	statement
+	ForKeyword token.Token
+	Variable   token.Token
+	InKeyword  token.Token
+	Iterator   Expression
+	Body       *BlockStatement
+}
+
+func (fl *ForLoop) Tokens() []token.Token {
+	tokens := []token.Token{fl.ForKeyword, fl.Variable, fl.InKeyword}
+	tokens = append(tokens, fl.Iterator.Tokens()...)
+	tokens = append(tokens, fl.Body.Tokens()...)
+	return tokens
+}
+
+func (fl *ForLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("for ")
+	result.WriteString(fl.Variable.Value)
+	result.WriteString(" in ")
+	result.WriteString(fl.Iterator.String())
+	result.WriteByte(' ')
+	result.WriteString(fl.Body.String())
+
+	return result.String()
+}
+
 // TODO:
 // Parameter
 // FunctionDeclaration
 // ReturnStatement
-// ForLoop
 // StructField
 // StructDeclaration
 // TupleStructDeclaration

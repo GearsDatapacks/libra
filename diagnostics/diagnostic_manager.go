@@ -25,6 +25,10 @@ func (m *Manager) reportError(msg string, span token.Span) {
 	m.Diagnostics = append(m.Diagnostics, new(Error, msg, span, m.file, m.lines))
 }
 
+func (m *Manager) reportInfo(msg string, span token.Span) {
+	m.Diagnostics = append(m.Diagnostics, new(Info, msg, span, m.file, m.lines))
+}
+
 func (m *Manager) ReportInvalidCharacter(span token.Span, char byte) {
 	msg := fmt.Sprintf("Invalid character: %q", char)
 	m.reportError(msg, span)
@@ -63,4 +67,24 @@ func (m *Manager) ReportExpectedToken(span token.Span, expected token.Kind, actu
 func (m *Manager) ReportElseStatementWithoutIf(span token.Span) {
 	msg := "Else statements not allowed without preceding if"
 	m.reportError(msg, span)
+}
+
+func (m *Manager) ReportExpectedKeyword(span token.Span, keyword string, foundToken token.Token) {
+	tokenValue := foundToken.Kind.String()
+	if foundToken.Kind == token.IDENTIFIER {
+		tokenValue = foundToken.Value
+	}
+
+	msg := fmt.Sprintf("Expected %q keyword, found %s", keyword, tokenValue)
+	m.reportError(msg, span)
+}
+
+func (m *Manager) ReportKeywordOverwritten(span token.Span, keyword string, declared token.Span) {
+	errMsg := fmt.Sprintf(
+		"Expected %q keyword, but is has been overwritten by a variable",
+		keyword)
+		info := "Try removing or renaming this variable"
+
+	m.reportError(errMsg, span)
+	m.reportInfo(info, declared)
 }

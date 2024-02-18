@@ -137,3 +137,27 @@ func TestWhileLoop(t *testing.T) {
 		testLiteral(t, exprStmt.Expression, tt.bodyValue)
 	}
 }
+
+func TestForLoop(t *testing.T) {
+	tests := []struct {
+		src       string
+		ident     string
+		iterator  any
+		bodyValue any
+	}{
+		{"for i in [1,2,3] { i }", "i", []any{1, 2, 3}, "$i"},
+		{"for foo in 93\n{[foo,bar,]}", "foo", 93, []any{"$foo", "$bar"}},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		loop := getStmt[*ast.ForLoop](t, program)
+
+		utils.AssertEq(t, loop.Variable.Value, tt.ident)
+		testLiteral(t, loop.Iterator, tt.iterator)
+		bodyStmt := utils.AssertSingle(t, loop.Body.Statements)
+		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
+		utils.Assert(t, ok, "Body is not an expression statement")
+		testLiteral(t, exprStmt.Expression, tt.bodyValue)
+	}
+}
