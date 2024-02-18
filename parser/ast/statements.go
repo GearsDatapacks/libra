@@ -82,14 +82,14 @@ func (varDec *VariableDeclaration) String() string {
 
 type BlockStatement struct {
 	statement
-	LeftBrace token.Token
+	LeftBrace  token.Token
 	Statements []Statement
 	RightBrace token.Token
 }
 
 func (b *BlockStatement) Tokens() []token.Token {
 	tokens := []token.Token{b.LeftBrace}
-	
+
 	for _, stmt := range b.Statements {
 		tokens = append(tokens, stmt.Tokens()...)
 	}
@@ -113,9 +113,9 @@ func (b *BlockStatement) String() string {
 
 type IfStatement struct {
 	statement
-	Keyword token.Token
-	Condition Expression
-	Body *BlockStatement
+	Keyword    token.Token
+	Condition  Expression
+	Body       *BlockStatement
 	ElseBranch *ElseBranch
 }
 
@@ -150,16 +150,38 @@ func (is *IfStatement) String() string {
 
 type ElseBranch struct {
 	ElseKeyword token.Token
-	Statement Statement
+	Statement   Statement
+}
+
+type WhileLoop struct {
+	statement
+	Keyword   token.Token
+	Condition Expression
+	Body      *BlockStatement
+}
+
+func (wl *WhileLoop) Tokens() []token.Token {
+	tokens := []token.Token{wl.Keyword}
+	tokens = append(tokens, wl.Body.Tokens()...)
+	tokens = append(tokens, wl.Condition.Tokens()...)
+	return tokens
+}
+
+func (wl *WhileLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("while ")
+	result.WriteString(wl.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(wl.Body.String())
+
+	return result.String()
 }
 
 // TODO:
 // Parameter
 // FunctionDeclaration
 // ReturnStatement
-// IfStatement
-// ElseStatement
-// WhileLoop
 // ForLoop
 // StructField
 // StructDeclaration

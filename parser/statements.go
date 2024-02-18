@@ -25,6 +25,10 @@ func (p *parser) parseStatement() ast.Statement {
 		p.Diagnostics.ReportElseStatementWithoutIf(p.next().Span)
 	}
 
+	if p.isKeyword("while") {
+		return p.parseWhileLoop()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -61,7 +65,7 @@ func (p *parser) parseBlockStatement() *ast.BlockStatement {
 }
 
 func (p *parser) parseIfStatement() ast.Statement {
-	ifKeyword := p.consume()
+	keyword := p.consume()
 
 	p.noBraces = true
 	condition := p.parseSubExpression(Lowest)
@@ -81,9 +85,27 @@ func (p *parser) parseIfStatement() ast.Statement {
 	}
 
 	return &ast.IfStatement{
-		Keyword:    ifKeyword,
+		Keyword:    keyword,
 		Condition:  condition,
 		Body:       body,
 		ElseBranch: elseBranch,
 	}
 }
+
+
+func (p *parser) parseWhileLoop() ast.Statement {
+	keyword := p.consume()
+
+	p.noBraces = true
+	condition := p.parseSubExpression(Lowest)
+	p.noBraces = false
+
+	body := p.parseBlockStatement()
+
+	return &ast.WhileLoop{
+		Keyword:    keyword,
+		Condition:  condition,
+		Body:       body,
+	}
+}
+

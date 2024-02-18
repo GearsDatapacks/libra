@@ -115,3 +115,25 @@ func getStmt[T ast.Statement](t *testing.T, program *ast.Program) T {
 
 	return stmt
 }
+
+func TestWhileLoop(t *testing.T) {
+	tests := []struct {
+		src       string
+		condition any
+		bodyValue any
+	}{
+		{"while true { nop }", true, "$nop"},
+		{`while thing { "Hi" }`, "$thing", "Hi"},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		loop := getStmt[*ast.WhileLoop](t, program)
+
+		testLiteral(t, loop.Condition, tt.condition)
+		bodyStmt := utils.AssertSingle(t, loop.Body.Statements)
+		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
+		utils.Assert(t, ok, "Body is not an expression statement")
+		testLiteral(t, exprStmt.Expression, tt.bodyValue)
+	}
+}
