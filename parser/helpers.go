@@ -31,7 +31,8 @@ func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	for !p.eof() && p.next().Kind != delim {
 		result = append(result, elemFn())
 
-		if p.nextWithNewlines().Kind == token.NEWLINE {
+		next := p.nextWithNewlines().Kind
+		if next == token.NEWLINE || next == token.SEMICOLON {
 			p.consumeNewlines()
 		} else {
 			break
