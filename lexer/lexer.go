@@ -30,9 +30,9 @@ func (l *lexer) Tokenise() []token.Token {
 
 	for {
 		nextToken := l.nextToken()
-    if nextToken.Kind == token.INVALID {
-      continue
-    }
+		if nextToken.Kind == token.INVALID {
+			continue
+		}
 
 		tokens = append(tokens, nextToken)
 
@@ -185,6 +185,10 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 	case '.':
 		kind = token.DOT
 		l.consume()
+		if l.next() == '.' {
+			kind = token.DOUBLE_DOT
+			l.consume()
+		}
 	case ':':
 		kind = token.COLON
 		l.consume()
@@ -276,12 +280,12 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 			kind = token.DOUBLE_AMPERSAND
 			l.consume()
 		}
-  case '~':
-    kind = token.TILDE
-    l.consume()
-  case ';':
-    kind = token.SEMICOLON
-    l.consume()
+	case '~':
+		kind = token.TILDE
+		l.consume()
+	case ';':
+		kind = token.SEMICOLON
+		l.consume()
 	case '\n':
 		kind = token.NEWLINE
 		l.consume()

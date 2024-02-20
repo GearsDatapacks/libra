@@ -66,14 +66,15 @@ const (
 
 	DOUBLE_PLUS
 	DOUBLE_MINUS
+	DOUBLE_DOT
 
 	BANG
 
 	PIPE
 	AMPERSAND
 	ARROW
-  TILDE
-  SEMICOLON
+	TILDE
+	SEMICOLON
 )
 
 func New(kind Kind, value string, span Span) Token {
@@ -86,9 +87,9 @@ func New(kind Kind, value string, span Span) Token {
 
 func NewSpan(line, col, end int) Span {
 	return Span{
-		Line:   line,
-		Col:    col,
-    End: end,
+		Line: line,
+		Col:  col,
+		End:  end,
 	}
 }
 
@@ -162,6 +163,8 @@ func (kind Kind) String() string {
 		return "`++`"
 	case DOUBLE_MINUS:
 		return "`--`"
+	case DOUBLE_DOT:
+		return "`..`"
 	case BANG:
 		return "`!`"
 	case PIPE:
@@ -170,10 +173,10 @@ func (kind Kind) String() string {
 		return "`->`"
 	case AMPERSAND:
 		return "`&`"
-  case TILDE:
-    return "`~`"
-  case SEMICOLON:
-    return "`;`"
+	case TILDE:
+		return "`~`"
+	case SEMICOLON:
+		return "`;`"
 	case EOF:
 		return "<Eof>"
 	case INVALID:

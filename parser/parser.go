@@ -155,6 +155,7 @@ func (p *parser) register() {
 	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression)
 	p.registerLedOp(token.DOT, Postfix, p.parseMember)
 	p.registerLedOp(token.ARROW, Postfix, p.parseCastExpression)
+	p.registerLedOp(token.DOUBLE_DOT, Postfix, p.parseRangeExpression)
 
 	p.registerLedLookup(func(left ast.Expression) (opInfo, bool) {
 		if p.next().Kind != token.LEFT_BRACE {

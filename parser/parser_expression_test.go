@@ -242,6 +242,24 @@ func TestTypeCheckExpression(t *testing.T) {
 	}
 }
 
+func TestRangeExpression(t *testing.T) {
+	tests := []struct {
+		src   string
+		start  any
+		end any
+	}{
+		{"1..10", 1, 10},
+		{"1.5..78.03", 1.5, 78.03},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		rangeExpr := getExpr[*ast.RangeExpression](t, program)
+		testLiteral(t, rangeExpr.Start, tt.start)
+		testLiteral(t, rangeExpr.End, tt.end)
+	}
+}
+
 func TestBinaryExpressions(t *testing.T) {
 	tests := []struct {
 		src   string

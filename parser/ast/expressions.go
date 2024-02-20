@@ -571,6 +571,31 @@ func (tc *TypeCheckExpression) String() string {
 	return result.String()
 }
 
+type RangeExpression struct {
+	expression
+	Start Expression
+	Operator token.Token
+	End Expression
+}
+
+func (r *RangeExpression) Tokens() []token.Token {
+	tokens := r.Start.Tokens()
+	tokens = append(tokens, r.Operator)
+	tokens = append(tokens, r.End.Tokens()...)
+
+	return tokens
+}
+
+func (r *RangeExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(r.Start.String())
+	result.WriteString("..")
+	result.WriteString(r.End.String())
+
+	return result.String()
+}
+
 type HasPrecedence interface {
 	Expression
 	PrecedenceString() string

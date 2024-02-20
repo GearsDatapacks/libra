@@ -47,6 +47,7 @@ func TestFixedTokens(t *testing.T) {
 		{"**", token.DOUBLE_STAR},
 		{"++", token.DOUBLE_PLUS},
 		{"--", token.DOUBLE_MINUS},
+		{"..", token.DOUBLE_DOT},
 		{"!", token.BANG},
 		{"|", token.PIPE},
 		{"->", token.ARROW},
@@ -115,10 +116,10 @@ func TestLexerDiagnostics(t *testing.T) {
 	}{
 		{"foo@bar", "Invalid character: '@'", token.NewSpan(0, 3, 4)},
 		{`"Hello`, "Unterminated string", token.NewSpan(0, 0, 6)},
-    {`"He\llo"`, "Invalid escape sequence: '\\l'", token.NewSpan(0, 3, 5)},
-    {"123_456_", "Numbers cannot end with numeric separators", token.NewSpan(0, 7, 8)},
-    {"1_.2", "Numbers cannot end with numeric separators", token.NewSpan(0, 1, 2)},
-    {"3.14_", "Numbers cannot end with numeric separators", token.NewSpan(0, 4, 5)},
+		{`"He\llo"`, "Invalid escape sequence: '\\l'", token.NewSpan(0, 3, 5)},
+		{"123_456_", "Numbers cannot end with numeric separators", token.NewSpan(0, 7, 8)},
+		{"1_.2", "Numbers cannot end with numeric separators", token.NewSpan(0, 1, 2)},
+		{"3.14_", "Numbers cannot end with numeric separators", token.NewSpan(0, 4, 5)},
 	}
 
 	for _, data := range data {

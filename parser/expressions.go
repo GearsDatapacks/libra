@@ -177,6 +177,17 @@ func (p *parser) parseTypeCheckExpression(left ast.Expression) ast.Expression {
 	}
 }
 
+func (p *parser) parseRangeExpression(start ast.Expression) ast.Expression {
+	operator := p.consume()
+	end := p.parseExpression()
+
+	return &ast.RangeExpression{
+		Start:    start,
+		Operator: operator,
+		End:      end,
+	}
+}
+
 func (p *parser) parseTuple() ast.Expression {
 	leftParen := p.consume()
 
