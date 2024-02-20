@@ -33,6 +33,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseForLoop()
 	}
 
+	if p.isKeyword("fn") {
+		return p.parseFunctionDeclaration()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -56,9 +60,11 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 	}
 }
 
-func (p *parser) parseBlockStatement() *ast.BlockStatement {
+func (p *parser) parseBlockStatement(noScope ...bool) *ast.BlockStatement {
 	leftBrace := p.expect(token.LEFT_BRACE)
-	defer p.exitScope(p.enterScope())
+	if len(noScope) == 0 || !noScope[0] {
+		defer p.exitScope(p.enterScope())
+	}
 	statements, rightBrace := parseDelimStmtList(p, token.RIGHT_BRACE, p.parseStatement)
 
 	return &ast.BlockStatement{
@@ -129,13 +135,84 @@ func (p *parser) parseForLoop() ast.Statement {
 	p.bracketLevel--
 	p.noBraces = false
 
-	body := p.parseBlockStatement()
+	body := p.parseBlockStatement(true)
 
 	return &ast.ForLoop{
 		ForKeyword: forKeyword,
 		Variable:   variable,
 		InKeyword:  inKeyword,
 		Iterator:   iterator,
+		Body:       body,
+	}
+}
+
+func (p *parser) parseParameter() ast.Parameter {
+	name := p.delcareIdentifier()
+	ty := p.parseOptionalTypeAnnotation()
+
+	return ast.Parameter{
+		Name: name,
+		Type: ty,
+	}
+}
+
+func (p *parser) parseFunctionDeclaration() ast.Statement {
+	keyword := p.consume()
+	var methodOf *ast.MethodOf
+	var memberOf *ast.MemberOf
+
+	if p.next().Kind == token.LEFT_PAREN {
+		leftParen := p.consume()
+		ty := p.parseType()
+		rightParen := p.expect(token.RIGHT_PAREN)
+
+		methodOf = &ast.MethodOf{
+			LeftParen:  leftParen,
+			Type:       ty,
+			RightParen: rightParen,
+		}
+	}
+
+	name := p.expect(token.IDENTIFIER)
+
+	if p.next().Kind == token.DOT {
+		if methodOf != nil {
+			p.Diagnostics.ReportMemberAndMethodNotAllowed(name.Span)
+		}
+
+		dot := p.consume()
+		memberOf = &ast.MemberOf{
+			Name: name,
+			Dot:  dot,
+		}
+		name = p.expect(token.IDENTIFIER)
+	} else if methodOf == nil {
+		p.identifiers[name.Value] = name.Span
+	}
+
+	leftParen := p.expect(token.LEFT_PAREN)
+	defer p.exitScope(p.enterScope())
+	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseParameter)
+
+	if len(params) > 0 {
+		lastParam := params[len(params)-1]
+		if lastParam.Type == nil {
+			p.Diagnostics.ReportLastParameterMustHaveType(lastParam.Name.Span)
+		}
+	}
+
+	returnType := p.parseOptionalTypeAnnotation()
+	body := p.parseBlockStatement(true)
+
+	return &ast.FunctionDeclaration{
+		Keyword:    keyword,
+		MethodOf:   methodOf,
+		MemberOf:   memberOf,
+		Name:       name,
+		LeftParen:  leftParen,
+		Parameters: params,
+		RightParen: rightParen,
+		ReturnType: returnType,
 		Body:       body,
 	}
 }

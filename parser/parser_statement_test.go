@@ -161,3 +161,73 @@ func TestForLoop(t *testing.T) {
 		testLiteral(t, exprStmt.Expression, tt.bodyValue)
 	}
 }
+
+func TestFunctionDeclaration(t *testing.T) {
+	tests := []struct {
+		src        string
+		methodOf   string
+		memberOf   string
+		name       string
+		params     [][2]string
+		returnType string
+		bodyValue  any
+	}{
+		{`fn hello() { "Hello, world!" }`, "", "", "hello", [][2]string{}, "", "Hello, world!"},
+		{"fn (i32) print() {\nthis\n}", "i32", "", "print", [][2]string{}, "", "$this"},
+		{"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }", "i32", "", "add", [][2]string{{"other", "i32"}}, "i32", 7},
+		{"fn u8.zero(): u8 {0}", "", "u8", "zero", [][2]string{}, "u8", 0},
+		{"fn sum(a,b,c:f64) : usize{ 3.14 }", "", "", "sum", [][2]string{{"a"}, {"b"}, {"c", "f64"}}, "usize", 3.14},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		fn := getStmt[*ast.FunctionDeclaration](t, program)
+
+		if test.methodOf == "" {
+			utils.Assert(t, fn.MethodOf == nil, "Expected not to be a method")
+		} else {
+			utils.Assert(t, fn.MethodOf != nil, "Expected to be a method")
+			name, ok := fn.MethodOf.Type.(*ast.TypeName)
+			utils.Assert(t, ok, "MethodOf is not a type name")
+			utils.AssertEq(t, name.Name.Value, test.methodOf)
+		}
+
+		if test.memberOf == "" {
+			utils.Assert(t, fn.MemberOf == nil, "Expected not to be a member")
+		} else {
+			utils.Assert(t, fn.MemberOf != nil, "Expected to be a member")
+			utils.AssertEq(t, fn.MemberOf.Name.Value, test.memberOf)
+		}
+
+		utils.AssertEq(t, fn.Name.Value, test.name)
+
+		utils.AssertEq(t, len(fn.Parameters), len(test.params))
+		for i, param := range test.params {
+			fnParam := fn.Parameters[i]
+			utils.AssertEq(t, fnParam.Name.Value, param[0])
+
+			if param[1] == "" {
+				utils.Assert(t, fnParam.Type == nil, "Expected no type annotation")
+			} else {
+				utils.Assert(t, fnParam.Type != nil, "Expected a type annotation")
+				name, ok := fnParam.Type.Type.(*ast.TypeName)
+				utils.Assert(t, ok, "Param type is not a type name")
+				utils.AssertEq(t, name.Name.Value, param[1])
+			}
+		}
+
+		if test.returnType == "" {
+			utils.Assert(t, fn.ReturnType == nil, "Expected no return type")
+		} else {
+			utils.Assert(t, fn.ReturnType != nil, "Expected a return type")
+			name, ok := fn.ReturnType.Type.(*ast.TypeName)
+			utils.Assert(t, ok, "ReturnType is not a type name")
+			utils.AssertEq(t, name.Name.Value, test.returnType)
+		}
+
+		bodyStmt := utils.AssertSingle(t, fn.Body.Statements)
+		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
+		utils.Assert(t, ok, "Body is not an expression statement")
+		testLiteral(t, exprStmt.Expression, test.bodyValue)
+	}
+}

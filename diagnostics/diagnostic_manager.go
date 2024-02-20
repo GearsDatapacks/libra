@@ -51,7 +51,6 @@ func (m *Manager) ReportNumbersCannotEndWithSeparator(span token.Span) {
 	m.reportError(msg, span)
 }
 
-
 // Parser Diagnostics
 
 func (m *Manager) ReportExpectedExpression(span token.Span, kind token.Kind) {
@@ -88,8 +87,20 @@ func (m *Manager) ReportKeywordOverwritten(span token.Span, keyword string, decl
 	errMsg := fmt.Sprintf(
 		"Expected %q keyword, but it has been overwritten by a variable",
 		keyword)
-		info := "Try removing or renaming this variable"
+	info := "Try removing or renaming this variable"
 
 	m.reportError(errMsg, span)
 	m.reportInfo(info, declared)
+}
+
+func (m *Manager) ReportLastParameterMustHaveType(span token.Span) {
+	msg := "The last parameter of a function must have a type annotation"
+
+	m.reportError(msg, span)
+}
+
+func (m *Manager) ReportMemberAndMethodNotAllowed(span token.Span) {
+	msg := "Functions cannot be both methods and static members"
+
+	m.reportError(msg, span)
 }

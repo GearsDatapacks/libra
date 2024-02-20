@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -245,8 +246,8 @@ func TestTypeCheckExpression(t *testing.T) {
 func TestRangeExpression(t *testing.T) {
 	tests := []struct {
 		src   string
-		start  any
-		end any
+		start any
+		end   any
 	}{
 		{"1..10", 1, 10},
 		{"1.5..78.03", 1.5, 78.03},
@@ -436,17 +437,19 @@ func TestParserDiagnostics(t *testing.T) {
 	tests := []struct {
 		src  string
 		msg  string
-		span token.Span
 	}{
-		{"let a = ;", "Expected expression, found `;`", token.NewSpan(0, 8, 9)},
-		{"1 2", "Expected newline after statement, found integer", token.NewSpan(0, 2, 3)},
-		{"(1 + 2", "Expected `)`, found <Eof>", token.NewSpan(0, 6, 6)},
-		{"else {}", "Else statement not allowed without preceding if", token.NewSpan(0, 0, 4)},
-		{"for i 42 {}", `Expected "in" keyword, found integer`, token.NewSpan(0, 6, 8)},
+		{"let a = [;]", "Expected expression, found `;`"},
+		{"1 [2]", "Expected newline after statement, found integer"},
+		{"(1 + 2[]", "Expected `)`, found <Eof>"},
+		{"[else] {}", "Else statement not allowed without preceding if"},
+		{"for i [42] {}", `Expected "in" keyword, found integer`},
+		{"fn add(a: i32, b, [c]): f32 {}", "The last parameter of a function must have a type annotation"},
+		{"fn (string) [bool].maybe() {}", "Functions cannot be both methods and static members"},
 	}
 
 	for _, tt := range tests {
-		lexer := lexer.New(tt.src, "test.lb")
+		src, span := getDiagnosticSpan(tt.src)
+		lexer := lexer.New(src, "test.lb")
 		tokens := lexer.Tokenise()
 
 		utils.AssertEq(t, len(lexer.Diagnostics.Diagnostics), 0, "Expected no lexer diagnostics")
@@ -454,7 +457,7 @@ func TestParserDiagnostics(t *testing.T) {
 		p := parser.New(tokens, lexer.Diagnostics)
 		p.Parse()
 		diagnostic := utils.AssertSingle(t, p.Diagnostics.Diagnostics)
-		testDiagnostic(t, diagnostic, diagnostics.Error, tt.msg, tt.span)
+		testDiagnostic(t, diagnostic, diagnostics.Error, tt.msg, span)
 	}
 }
 
@@ -491,6 +494,36 @@ func TestOverwrittenKeyword(t *testing.T) {
 
 	infoMsg := "Try removing or renaming this variable"
 	testDiagnostic(t, info, diagnostics.Info, infoMsg, token.NewSpan(0, 4, 6))
+}
+
+func getDiagnosticSpan(text string) (string, token.Span) {
+	var resultText bytes.Buffer
+	var span token.Span
+	line := 0
+	col := 0
+	found := false
+	for i, c := range text {
+		if c == '[' && !found {
+			found = true
+			span.Line = line
+			span.Col = col
+			continue
+		}
+		if c == ']' && found {
+			span.End = col
+			resultText.WriteString(text[i+1:])
+			break
+		}
+
+		col++
+		if c == '\n' {
+			line++
+			col = 0
+		}
+		resultText.WriteRune(c)
+	}
+
+	return resultText.String(), span
 }
 
 func testDiagnostic(t *testing.T,

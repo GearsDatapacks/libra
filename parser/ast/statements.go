@@ -207,9 +207,136 @@ func (fl *ForLoop) String() string {
 	return result.String()
 }
 
+type Parameter struct {
+	Name token.Token
+	Type *TypeAnnotation
+}
+
+func (p *Parameter) Tokens() []token.Token {
+	tokens := []token.Token{p.Name}
+	if p.Type != nil {
+		tokens = append(tokens, p.Type.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (p *Parameter) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(p.Name.Value)
+	if p.Type != nil {
+		result.WriteString(p.Type.String())
+	}
+
+	return result.String()
+}
+
+type MethodOf struct {
+	LeftParen  token.Token
+	Type       TypeExpression
+	RightParen token.Token
+}
+
+func (m *MethodOf) Tokens() []token.Token {
+	tokens := []token.Token{m.LeftParen}
+	tokens = append(tokens, m.Type.Tokens()...)
+	tokens = append(tokens, m.RightParen)
+
+	return tokens
+}
+
+func (m *MethodOf) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('(')
+	result.WriteString(m.Type.String())
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+type MemberOf struct {
+	Name token.Token
+	Dot  token.Token
+}
+
+func (m *MemberOf) Tokens() []token.Token {
+	return []token.Token{m.Name, m.Dot}
+}
+
+func (m *MemberOf) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(m.Name.Value)
+	result.WriteByte('.')
+
+	return result.String()
+}
+
+type FunctionDeclaration struct {
+	statement
+	Keyword    token.Token
+	MethodOf   *MethodOf
+	MemberOf   *MemberOf
+	Name       token.Token
+	LeftParen  token.Token
+	Parameters []Parameter
+	RightParen token.Token
+	ReturnType *TypeAnnotation
+	Body       *BlockStatement
+}
+
+func (fd *FunctionDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{fd.Keyword, fd.Name, fd.LeftParen}
+	for _, param := range fd.Parameters {
+		tokens = append(tokens, param.Tokens()...)
+	}
+
+	tokens = append(tokens, fd.RightParen)
+	if fd.ReturnType != nil {
+		tokens = append(tokens, fd.ReturnType.Tokens()...)
+	}
+	tokens = append(tokens, fd.Body.Tokens()...)
+
+	return tokens
+}
+
+func (fd *FunctionDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("fn ")
+	if fd.MethodOf != nil {
+		result.WriteString(fd.MethodOf.String())
+		result.WriteByte(' ')
+	}
+	
+	if fd.MemberOf != nil {
+		result.WriteString(fd.MemberOf.String())
+	}
+
+	result.WriteString(fd.Name.Value)
+	result.WriteByte('(')
+
+	for i, param := range fd.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(param.String())
+	}
+
+	result.WriteByte(')')
+	if fd.ReturnType != nil {
+		result.WriteString(fd.ReturnType.String())
+	}
+	result.WriteByte(' ')
+
+	result.WriteString(fd.Body.String())
+
+	return result.String()
+}
+
 // TODO:
-// Parameter
-// FunctionDeclaration
 // ReturnStatement
 // StructField
 // StructDeclaration
