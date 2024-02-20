@@ -37,6 +37,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseFunctionDeclaration()
 	}
 
+	if p.isKeyword("return") {
+		return p.parseReturnStatement()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -214,5 +218,17 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 		RightParen: rightParen,
 		ReturnType: returnType,
 		Body:       body,
+	}
+}
+
+func (p *parser) parseReturnStatement() ast.Statement	{
+	keyword := p.consume()
+	var value ast.Expression
+	if !p.eof() && p.canContinue() {
+		value = p.parseExpression()
+	}
+	return &ast.ReturnStatement{
+		Keyword: keyword,
+		Value:   value,
 	}
 }

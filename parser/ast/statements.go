@@ -310,7 +310,7 @@ func (fd *FunctionDeclaration) String() string {
 		result.WriteString(fd.MethodOf.String())
 		result.WriteByte(' ')
 	}
-	
+
 	if fd.MemberOf != nil {
 		result.WriteString(fd.MemberOf.String())
 	}
@@ -332,6 +332,32 @@ func (fd *FunctionDeclaration) String() string {
 	result.WriteByte(' ')
 
 	result.WriteString(fd.Body.String())
+
+	return result.String()
+}
+
+type ReturnStatement struct {
+	statement
+	Keyword token.Token
+	Value Expression
+}
+
+func (r *ReturnStatement) Tokens() []token.Token {
+	tokens := []token.Token{r.Keyword}
+	if r.Value != nil {
+		tokens = append(tokens, r.Value.Tokens()...)
+	}
+	return tokens
+}
+
+func (r *ReturnStatement) String() string {
+	var result bytes.Buffer
+	result.WriteString("return")
+
+	if r.Value != nil {
+		result.WriteByte(' ')
+		result.WriteString(r.Value.String())
+	}
 
 	return result.String()
 }

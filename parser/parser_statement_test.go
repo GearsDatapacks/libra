@@ -231,3 +231,25 @@ func TestFunctionDeclaration(t *testing.T) {
 		testLiteral(t, exprStmt.Expression, test.bodyValue)
 	}
 }
+
+func TestReturnStatement(t *testing.T) {
+	tests := []struct {
+		src     string
+		value   any
+	}{
+		{"return", nil},
+		{"return 7", 7},
+		{"return false", false},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		ret := getStmt[*ast.ReturnStatement](t, program)
+
+		if test.value == nil {
+			utils.Assert(t, ret.Value == nil, "Expected no return value")
+		} else {
+			testLiteral(t, ret.Value, test.value)
+		}
+	}
+}
