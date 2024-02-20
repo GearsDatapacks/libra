@@ -39,7 +39,10 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	left := nudFn()
 
 	ledFn := p.lookupLedFn(left)
-	for ledFn != nil && precedence < p.leftPrecedence(left) {
+	for p.canContinue() &&
+		ledFn != nil &&
+		precedence < p.leftPrecedence(left) {
+
 		left = ledFn(left)
 
 		ledFn = p.lookupLedFn(left)

@@ -7,6 +7,7 @@ import (
 
 func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
 	result = []Elem{}
+	p.bracketLevel++
 
 	for !p.eof() && p.next().Kind != delim {
 		result = append(result, elemFn())
@@ -19,6 +20,7 @@ func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	}
 
 	delimToken = p.expect(delim)
+	p.bracketLevel--
 
 	return result, delimToken
 }

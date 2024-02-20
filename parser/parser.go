@@ -7,13 +7,14 @@ import (
 )
 
 type parser struct {
-	tokens      []token.Token
-	pos         int
-	nudFns      map[token.Kind]nudFn
-	ledOps      []lookupFn
-	identifiers map[string]token.Span
-	noBraces    bool
-	Diagnostics diagnostics.Manager
+	tokens       []token.Token
+	pos          int
+	nudFns       map[token.Kind]nudFn
+	ledOps       []lookupFn
+	identifiers  map[string]token.Span
+	noBraces     bool
+	bracketLevel uint
+	Diagnostics  diagnostics.Manager
 }
 
 func New(tokens []token.Token, diagnostics diagnostics.Manager) *parser {
@@ -258,7 +259,7 @@ func (p *parser) delcareIdentifier() token.Token {
 func (p *parser) enterScope() map[string]token.Span {
 	oldScope := p.identifiers
 	p.identifiers = make(map[string]token.Span, len(oldScope))
-	
+
 	for ident, span := range oldScope {
 		p.identifiers[ident] = span
 	}
@@ -292,6 +293,11 @@ func (p *parser) nextWithNewlines() token.Token {
 	}
 
 	return p.tokens[p.pos]
+}
+
+func (p *parser) canContinue() bool {
+	return p.nextWithNewlines().Kind != token.NEWLINE ||
+		p.bracketLevel > 0
 }
 
 func (p *parser) consume() token.Token {

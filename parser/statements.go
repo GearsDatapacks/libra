@@ -72,8 +72,10 @@ func (p *parser) parseIfStatement() ast.Statement {
 	keyword := p.consume()
 
 	p.noBraces = true
+	p.bracketLevel++
 	condition := p.parseSubExpression(Lowest)
 	p.noBraces = false
+	p.bracketLevel--
 
 	body := p.parseBlockStatement()
 	var elseBranch *ast.ElseBranch
@@ -100,7 +102,9 @@ func (p *parser) parseWhileLoop() ast.Statement {
 	keyword := p.consume()
 
 	p.noBraces = true
+	p.bracketLevel++
 	condition := p.parseSubExpression(Lowest)
+	p.bracketLevel--
 	p.noBraces = false
 
 	body := p.parseBlockStatement()
@@ -120,7 +124,9 @@ func (p *parser) parseForLoop() ast.Statement {
 	inKeyword := p.expectKeyword("in")
 
 	p.noBraces = true
+	p.bracketLevel++
 	iterator := p.parseSubExpression(Lowest)
+	p.bracketLevel--
 	p.noBraces = false
 
 	body := p.parseBlockStatement()
