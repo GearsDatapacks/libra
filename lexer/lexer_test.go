@@ -53,6 +53,7 @@ func TestFixedTokens(t *testing.T) {
 		{"&", token.AMPERSAND},
 		{"~", token.TILDE},
 		{"\n", token.NEWLINE},
+		{";", token.SEMICOLON},
 	}
 
 	for _, tok := range tokens {

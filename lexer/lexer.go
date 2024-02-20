@@ -279,6 +279,9 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
   case '~':
     kind = token.TILDE
     l.consume()
+  case ';':
+    kind = token.SEMICOLON
+    l.consume()
 	case '\n':
 		kind = token.NEWLINE
 		l.consume()

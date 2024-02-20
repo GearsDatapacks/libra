@@ -73,6 +73,7 @@ const (
 	AMPERSAND
 	ARROW
   TILDE
+  SEMICOLON
 )
 
 func New(kind Kind, value string, span Span) Token {
@@ -171,6 +172,8 @@ func (kind Kind) String() string {
 		return "`&`"
   case TILDE:
     return "`~`"
+  case SEMICOLON:
+    return "`;`"
 	case EOF:
 		return "<Eof>"
 	case INVALID:

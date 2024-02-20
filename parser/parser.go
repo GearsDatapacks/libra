@@ -44,11 +44,10 @@ func (p *parser) Parse() *ast.Program {
 			p.consume()
 		}
 
-		if !p.eof() && p.nextWithNewlines().Kind != token.NEWLINE {
-			p.Diagnostics.ReportExpectedNewline(p.next().Span, p.next().Kind)
+		if !p.eof() {
+			p.expectNewline()
 		}
 
-		p.consumeNewlines()
 	}
 
 	return program
@@ -309,7 +308,8 @@ func (p *parser) consume() token.Token {
 }
 
 func (p *parser) consumeNewlines() {
-	for p.tokens[p.pos].Kind == token.NEWLINE {
+	for p.tokens[p.pos].Kind == token.NEWLINE ||
+		p.tokens[p.pos].Kind == token.SEMICOLON {
 		p.pos++
 	}
 }
@@ -336,6 +336,15 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 	p.Diagnostics.ReportExpectedKeyword(p.next().Span, keyword, p.next())
 	tok := token.New(token.IDENTIFIER, "", token.NewSpan(0, 0, 0))
 	return tok
+}
+
+func (p *parser) expectNewline() {
+	if p.nextWithNewlines().Kind != token.NEWLINE &&
+		p.next().Kind != token.SEMICOLON {
+		p.Diagnostics.ReportExpectedNewline(p.next().Span, p.next().Kind)
+	}
+
+	p.consumeNewlines()
 }
 
 func (p *parser) eof() bool {
