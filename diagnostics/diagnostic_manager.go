@@ -29,6 +29,8 @@ func (m *Manager) reportInfo(msg string, span token.Span) {
 	m.Diagnostics = append(m.Diagnostics, new(Info, msg, span, m.file, m.lines))
 }
 
+// Lexer Diagnostics
+
 func (m *Manager) ReportInvalidCharacter(span token.Span, char byte) {
 	msg := fmt.Sprintf("Invalid character: %q", char)
 	m.reportError(msg, span)
@@ -49,13 +51,16 @@ func (m *Manager) ReportNumbersCannotEndWithSeparator(span token.Span) {
 	m.reportError(msg, span)
 }
 
+
+// Parser Diagnostics
+
 func (m *Manager) ReportExpectedExpression(span token.Span, kind token.Kind) {
-	msg := fmt.Sprintf("Expected expression, got %s", kind.String())
+	msg := fmt.Sprintf("Expected expression, found %s", kind.String())
 	m.reportError(msg, span)
 }
 
 func (m *Manager) ReportExpectedNewline(span token.Span, kind token.Kind) {
-	msg := fmt.Sprintf("Expected newline after statement, got %s", kind.String())
+	msg := fmt.Sprintf("Expected newline after statement, found %s", kind.String())
 	m.reportError(msg, span)
 }
 
@@ -65,7 +70,7 @@ func (m *Manager) ReportExpectedToken(span token.Span, expected token.Kind, actu
 }
 
 func (m *Manager) ReportElseStatementWithoutIf(span token.Span) {
-	msg := "Else statements not allowed without preceding if"
+	msg := "Else statement not allowed without preceding if"
 	m.reportError(msg, span)
 }
 
@@ -81,7 +86,7 @@ func (m *Manager) ReportExpectedKeyword(span token.Span, keyword string, foundTo
 
 func (m *Manager) ReportKeywordOverwritten(span token.Span, keyword string, declared token.Span) {
 	errMsg := fmt.Sprintf(
-		"Expected %q keyword, but is has been overwritten by a variable",
+		"Expected %q keyword, but it has been overwritten by a variable",
 		keyword)
 		info := "Try removing or renaming this variable"
 

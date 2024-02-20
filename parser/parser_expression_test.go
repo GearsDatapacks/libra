@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser"
@@ -221,8 +222,8 @@ func TestCastExpression(t *testing.T) {
 
 func TestTypeCheckExpression(t *testing.T) {
 	tests := []struct {
-		src  string
-		left any
+		src      string
+		left     any
 		typeName string
 	}{
 		{"1 is i32", 1, "i32"},
@@ -413,6 +414,32 @@ func TestOperatorPrecedence(t *testing.T) {
 	}
 }
 
+func TestParserDiagnostics(t *testing.T) {
+	tests := []struct {
+		src  string
+		msg  string
+		span token.Span
+	}{
+		{"let a = ;", "Expected expression, found `;`", token.NewSpan(0, 8, 9)},
+		{"1 2", "Expected newline after statement, found integer", token.NewSpan(0, 2, 3)},
+		{"(1 + 2", "Expected `)`, found <Eof>", token.NewSpan(0, 6, 6)},
+		{"else {}", "Else statement not allowed without preceding if", token.NewSpan(0, 0, 4)},
+		{"for i 42 {}", `Expected "in" keyword, found integer`, token.NewSpan(0, 6, 8)},
+	}
+
+	for _, tt := range tests {
+		lexer := lexer.New(tt.src, "test.lb")
+		tokens := lexer.Tokenise()
+
+		utils.AssertEq(t, len(lexer.Diagnostics.Diagnostics), 0, "Expected no lexer diagnostics")
+
+		p := parser.New(tokens, lexer.Diagnostics)
+		p.Parse()
+		diagnostic := utils.AssertSingle(t, p.Diagnostics.Diagnostics)
+		testDiagnostic(t, diagnostic, diagnostics.Error, tt.msg, tt.span)
+	}
+}
+
 func TestErrorExpression(t *testing.T) {
 	input := ")"
 
@@ -421,40 +448,41 @@ func TestErrorExpression(t *testing.T) {
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
 
-	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 1)
-	diag := p.Diagnostics.Diagnostics[0]
-	utils.AssertEq(t, diag.Message, "Expected expression, got `)`")
-	utils.AssertEq(t, diag.Span, token.NewSpan(0, 0, 1))
+	diag := utils.AssertSingle(t, p.Diagnostics.Diagnostics)
+	msg := "Expected expression, found `)`"
+	testDiagnostic(t, diag, diagnostics.Error, msg, token.NewSpan(0, 0, 1))
 
 	getExpr[*ast.ErrorExpression](t, program)
 }
 
-func TestMissingNewlineError(t *testing.T) {
-	input := "1 2"
+func TestOverwrittenKeyword(t *testing.T) {
+	input := "let in = 1\nfor i in 20 {}"
 
 	l := lexer.New(input, "test.lb")
 	tokens := l.Tokenise()
+	utils.AssertEq(t, len(l.Diagnostics.Diagnostics), 0, "Expected no lexer diagnostics")
+
 	p := parser.New(tokens, l.Diagnostics)
 	p.Parse()
 
-	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 1)
-	diag := p.Diagnostics.Diagnostics[0]
-	utils.AssertEq(t, diag.Message, "Expected newline after statement, got integer")
-	utils.AssertEq(t, diag.Span, token.NewSpan(0, 2, 3))
+	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 2, "Expected 2 diagnostics")
+	err := p.Diagnostics.Diagnostics[0]
+	info := p.Diagnostics.Diagnostics[1]
+	errMsg := `Expected "in" keyword, but it has been overwritten by a variable`
+	testDiagnostic(t, err, diagnostics.Error, errMsg, token.NewSpan(1, 6, 8))
+
+	infoMsg := "Try removing or renaming this variable"
+	testDiagnostic(t, info, diagnostics.Info, infoMsg, token.NewSpan(0, 4, 6))
 }
 
-func TestIncorrectTokenError(t *testing.T) {
-	input := "(1 + 2"
-
-	l := lexer.New(input, "test.lb")
-	tokens := l.Tokenise()
-	p := parser.New(tokens, l.Diagnostics)
-	p.Parse()
-
-	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 1)
-	diag := p.Diagnostics.Diagnostics[0]
-	utils.AssertEq(t, diag.Message, "Expected `)`, found <Eof>")
-	utils.AssertEq(t, diag.Span, token.NewSpan(0, 6, 6))
+func testDiagnostic(t *testing.T,
+	diagnostic diagnostics.Diagnostic,
+	kind diagnostics.DiagnosticKind,
+	msg string,
+	span token.Span) {
+	utils.AssertEq(t, diagnostic.Kind, kind)
+	utils.AssertEq(t, diagnostic.Message, msg)
+	utils.AssertEq(t, diagnostic.Span, span)
 }
 
 func getProgram(t *testing.T, input string) *ast.Program {
