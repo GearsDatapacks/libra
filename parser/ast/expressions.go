@@ -451,13 +451,18 @@ type MemberExpression struct {
 }
 
 func (m *MemberExpression) Tokens() []token.Token {
-	return append(m.Left.Tokens(), m.Dot, m.Member)
+	if m.Left != nil {
+		return append(m.Left.Tokens(), m.Dot, m.Member)
+	}
+	return []token.Token{m.Dot, m.Member}
 }
 
 func (m *MemberExpression) String() string {
 	var result bytes.Buffer
 
-	result.WriteString(m.Left.String())
+	if m.Left != nil {
+		result.WriteString(m.Left.String())
+	}
 	result.WriteByte('.')
 	result.WriteString(m.Member.Value)
 
@@ -484,6 +489,19 @@ func (sm *StructMember) String() string {
 	return result.String()
 }
 
+type InferredExpression struct {
+	expression
+	Token token.Token
+}
+
+func (i *InferredExpression) Tokens() []token.Token {
+	return []token.Token{i.Token}
+}
+
+func (i *InferredExpression) String() string {
+	return i.Token.Value
+}
+
 type StructExpression struct {
 	expression
 	Struct     Expression
@@ -506,7 +524,10 @@ func (s *StructExpression) String() string {
 	var result bytes.Buffer
 
 	result.WriteString(s.Struct.String())
-	result.WriteString(" { ")
+	if _, isInferred := s.Struct.(*InferredExpression); !isInferred {
+		result.WriteByte(' ')
+	}
+	result.WriteString("{ ")
 
 	for i, member := range s.Members {
 		if i != 0 {
@@ -573,9 +594,9 @@ func (tc *TypeCheckExpression) String() string {
 
 type RangeExpression struct {
 	expression
-	Start Expression
+	Start    Expression
 	Operator token.Token
-	End Expression
+	End      Expression
 }
 
 func (r *RangeExpression) Tokens() []token.Token {

@@ -149,6 +149,7 @@ func (p *parser) register() {
 	p.registerNudFn(token.LEFT_BRACE, p.parseMap)
 
 	p.registerNudFn(token.LEFT_PAREN, p.parseTuple)
+	p.registerNudFn(token.DOT, p.parseInferredTypeExpression)
 
 	// Postfix expressions
 	p.registerLedOp(token.LEFT_PAREN, Postfix, p.parseFunctionCall)
@@ -297,6 +298,7 @@ func (p *parser) nextWithNewlines() token.Token {
 
 func (p *parser) canContinue() bool {
 	return p.nextWithNewlines().Kind != token.NEWLINE ||
+		p.next().Kind == token.DOT ||
 		p.bracketLevel > 0
 }
 

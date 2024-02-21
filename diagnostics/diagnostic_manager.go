@@ -104,3 +104,9 @@ func (m *Manager) ReportMemberAndMethodNotAllowed(span token.Span) {
 
 	m.reportError(msg, span)
 }
+
+func (m *Manager) ReportExpectedMemberOrStructBody(span token.Span, tok token.Token) {
+	msg := fmt.Sprintf("Invalid right-hand side of expression. Expected identifier or struct body, found %s", tok.Kind.String())
+
+	m.reportError(msg, span)
+}

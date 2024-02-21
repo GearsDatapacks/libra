@@ -158,6 +158,8 @@ func TestMemberExpression(t *testing.T) {
 	}{
 		{"foo.bar", "$foo", "bar"},
 		{"1.to_string", 1, "to_string"},
+		{"a\n.b", "$a", "b"},
+		{".None", nil, "None"},
 	}
 
 	for _, tt := range tests {
@@ -182,14 +184,21 @@ func TestStructExpression(t *testing.T) {
 		{"foo {bar: 1, baz: 2}", "foo", []structField{{"bar", 1}, {"baz", 2}}},
 		{"rect {width: 9, height: 7.8}", "rect", []structField{{"width", 9}, {"height", 7.8}}},
 		{`message {greeting: "Hello", name: name,}`, "message", []structField{{"greeting", "Hello"}, {"name", "$name"}}},
+		{".{a:1, b:2}", ".", []structField{{"a", 1}, {"b", 2}}},
+		{`struct {field: "value"}`, "struct", []structField{{"field", "value"}}},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
 		structExpr := getExpr[*ast.StructExpression](t, program)
-		ident, ok := structExpr.Struct.(*ast.Identifier)
-		utils.Assert(t, ok, "Struct is not an identifier")
-		utils.AssertEq(t, tt.name, ident.Name)
+		if tt.name == "." {
+			_, ok := structExpr.Struct.(*ast.InferredExpression)
+			utils.Assert(t, ok, "Struct's type should be inferred")
+		} else {
+			ident, ok := structExpr.Struct.(*ast.Identifier)
+			utils.Assert(t, ok, "Struct is not an identifier")
+			utils.AssertEq(t, tt.name, ident.Name)
+		}
 
 		for i, member := range structExpr.Members {
 			tMember := tt.members[i]
@@ -435,8 +444,8 @@ func TestOperatorPrecedence(t *testing.T) {
 
 func TestParserDiagnostics(t *testing.T) {
 	tests := []struct {
-		src  string
-		msg  string
+		src string
+		msg string
 	}{
 		{"let a = [;]", "Expected expression, found `;`"},
 		{"1 [2]", "Expected newline after statement, found integer"},
@@ -571,6 +580,8 @@ func testLiteral(t *testing.T, expr ast.Expression, expected any) {
 	t.Helper()
 
 	switch val := expected.(type) {
+	case nil:
+		utils.Assert(t, expr == nil, "Expected value to be nil")
 	case int:
 		integer, ok := expr.(*ast.IntegerLiteral)
 		utils.Assert(t, ok, fmt.Sprintf("Value was not an integer (was %T)", expr))

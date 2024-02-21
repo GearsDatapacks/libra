@@ -130,6 +130,25 @@ func (p *parser) parseMember(left ast.Expression) ast.Expression {
 	}
 }
 
+func (p *parser) parseInferredTypeExpression() ast.Expression {
+	dot := p.consume()
+	if p.next().Kind == token.IDENTIFIER {
+		member := p.consume()
+		return &ast.MemberExpression{
+			Left:   nil,
+			Dot:    dot,
+			Member: member,
+		}
+	}
+
+	if p.next().Kind == token.LEFT_BRACE {
+		return p.parseStructExpression(&ast.InferredExpression{Token: dot})
+	}
+
+	p.Diagnostics.ReportExpectedMemberOrStructBody(p.next().Span, p.next())
+	return &ast.InferredExpression{Token: dot}
+}
+
 func (p *parser) parseStructMember() ast.StructMember {
 	name := p.expect(token.IDENTIFIER)
 	colon := p.expect(token.COLON)
