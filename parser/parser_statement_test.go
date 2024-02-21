@@ -234,8 +234,8 @@ func TestFunctionDeclaration(t *testing.T) {
 
 func TestReturnStatement(t *testing.T) {
 	tests := []struct {
-		src     string
-		value   any
+		src   string
+		value any
 	}{
 		{"return", nil},
 		{"return 7", 7},
@@ -251,5 +251,27 @@ func TestReturnStatement(t *testing.T) {
 		} else {
 			testLiteral(t, ret.Value, test.value)
 		}
+	}
+}
+
+func TestTypeDeclaration(t *testing.T) {
+	tests := []struct {
+		src      string
+		name     string
+		typeName string
+	}{
+		{"type foo = bar", "foo", "bar"},
+		{"type int=i32", "int", "i32"},
+		{"type boolean\n =\n bool", "boolean", "bool"},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		td := getStmt[*ast.TypeDeclaration](t, program)
+
+		utils.AssertEq(t, td.Name.Value, test.name)
+		typeName, ok := td.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, typeName.Name.Value, test.typeName)
 	}
 }

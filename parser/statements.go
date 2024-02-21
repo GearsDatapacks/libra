@@ -41,6 +41,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	}
 
+	if p.isKeyword("type") {
+		return p.parseTypeDeclaration()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -230,5 +234,19 @@ func (p *parser) parseReturnStatement() ast.Statement	{
 	return &ast.ReturnStatement{
 		Keyword: keyword,
 		Value:   value,
+	}
+}
+
+func (p *parser) parseTypeDeclaration() ast.Statement	{
+	keyword := p.consume()
+	name := p.delcareIdentifier()
+	equals := p.expect(token.EQUALS)
+	ty := p.parseType()
+
+	return &ast.TypeDeclaration{
+		Keyword: keyword,
+		Name:    name,
+		Equals:  equals,
+		Type:    ty,
 	}
 }

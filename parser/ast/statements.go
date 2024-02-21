@@ -362,15 +362,38 @@ func (r *ReturnStatement) String() string {
 	return result.String()
 }
 
+type TypeDeclaration struct {
+	statement
+	Keyword token.Token
+	Name token.Token
+	Equals token.Token
+	Type TypeExpression
+}
+
+func (t *TypeDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{t.Keyword, t.Name, t.Equals}
+	tokens = append(tokens, t.Type.Tokens()...)
+	return tokens
+}
+
+func (t *TypeDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("type ")
+	result.WriteString(t.Name.Value)
+	result.WriteString(" = ")
+	result.WriteString(t.Type.String())
+
+	return result.String()
+}
+
 // TODO:
-// ReturnStatement
 // StructField
 // StructDeclaration
 // TupleStructDeclaration
 // UnitStructDeclaration
 // InterfaceMember
 // InterfaceDeclaration
-// TypeDeclaration
 // ImportStatement
 // EnumDeclaration
 // EnumMember
