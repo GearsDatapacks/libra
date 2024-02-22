@@ -162,21 +162,30 @@ func TestForLoop(t *testing.T) {
 	}
 }
 
+type parameter struct {
+	mutable  bool
+	name     string
+	dataType string
+}
+
 func TestFunctionDeclaration(t *testing.T) {
 	tests := []struct {
 		src        string
 		methodOf   string
+		thisMut    bool
 		memberOf   string
 		name       string
-		params     [][2]string
+		params     []parameter
 		returnType string
 		bodyValue  any
 	}{
-		{`fn hello() { "Hello, world!" }`, "", "", "hello", [][2]string{}, "", "Hello, world!"},
-		{"fn (i32) print() {\nthis\n}", "i32", "", "print", [][2]string{}, "", "$this"},
-		{"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }", "i32", "", "add", [][2]string{{"other", "i32"}}, "i32", 7},
-		{"fn u8.zero(): u8 {0}", "", "u8", "zero", [][2]string{}, "u8", 0},
-		{"fn sum(a,b,c:f64) : usize{ 3.14 }", "", "", "sum", [][2]string{{"a"}, {"b"}, {"c", "f64"}}, "usize", 3.14},
+		{`fn hello() { "Hello, world!" }`, "", false, "", "hello", []parameter{}, "", "Hello, world!"},
+		{"fn (i32) print() {\nthis\n}", "i32", false, "", "print", []parameter{}, "", "$this"},
+		{"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }", "i32", false, "", "add", []parameter{{false, "other", "i32"}}, "i32", 7},
+		{"fn u8.zero(): u8 {0}", "", false, "u8", "zero", []parameter{}, "u8", 0},
+		{"fn sum(a,b,c:f64) : usize{ 3.14 }", "", false, "", "sum", []parameter{{false, "a", ""}, {false, "b", ""}, {false, "c", "f64"}}, "usize", 3.14},
+		{"fn inc(mut x: u32): u32 { x }", "", false, "", "inc", []parameter{{true, "x", "u32"}}, "u32", "$x"},
+		{"fn (mut foo) bar(): foo { this }", "foo", true, "", "bar", []parameter{}, "foo", "$this"},
 	}
 
 	for _, test := range tests {
@@ -190,6 +199,12 @@ func TestFunctionDeclaration(t *testing.T) {
 			name, ok := fn.MethodOf.Type.(*ast.TypeName)
 			utils.Assert(t, ok, "MethodOf is not a type name")
 			utils.AssertEq(t, name.Name.Value, test.methodOf)
+
+			if test.thisMut {
+				utils.Assert(t, fn.MethodOf.Mutable != nil, "Expected this to be mutable")
+				} else {
+					utils.Assert(t, fn.MethodOf.Mutable == nil, "Expected this not to be mutable")
+			}
 		}
 
 		if test.memberOf == "" {
@@ -204,15 +219,21 @@ func TestFunctionDeclaration(t *testing.T) {
 		utils.AssertEq(t, len(fn.Parameters), len(test.params))
 		for i, param := range test.params {
 			fnParam := fn.Parameters[i]
-			utils.AssertEq(t, fnParam.Name.Value, param[0])
+			utils.AssertEq(t, fnParam.Name.Value, param.name)
 
-			if param[1] == "" {
+			if param.dataType == "" {
 				utils.Assert(t, fnParam.Type == nil, "Expected no type annotation")
 			} else {
 				utils.Assert(t, fnParam.Type != nil, "Expected a type annotation")
 				name, ok := fnParam.Type.Type.(*ast.TypeName)
 				utils.Assert(t, ok, "Param type is not a type name")
-				utils.AssertEq(t, name.Name.Value, param[1])
+				utils.AssertEq(t, name.Name.Value, param.dataType)
+			}
+
+			if param.mutable {
+				utils.Assert(t, fnParam.Mutable != nil, "Expected param to be mutable")
+				} else {
+					utils.Assert(t, fnParam.Mutable == nil, "Expected param not to be mutable")
 			}
 		}
 

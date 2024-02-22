@@ -208,12 +208,16 @@ func (fl *ForLoop) String() string {
 }
 
 type Parameter struct {
-	Name token.Token
-	Type *TypeAnnotation
+	Mutable *token.Token
+	Name    token.Token
+	Type    *TypeAnnotation
 }
 
 func (p *Parameter) Tokens() []token.Token {
 	tokens := []token.Token{p.Name}
+	if p.Mutable != nil {
+		tokens = append(tokens, *p.Mutable)
+	}
 	if p.Type != nil {
 		tokens = append(tokens, p.Type.Tokens()...)
 	}
@@ -224,6 +228,9 @@ func (p *Parameter) Tokens() []token.Token {
 func (p *Parameter) String() string {
 	var result bytes.Buffer
 
+	if p.Mutable != nil {
+		result.WriteString("mut ")
+	}
 	result.WriteString(p.Name.Value)
 	if p.Type != nil {
 		result.WriteString(p.Type.String())
@@ -234,12 +241,16 @@ func (p *Parameter) String() string {
 
 type MethodOf struct {
 	LeftParen  token.Token
+	Mutable    *token.Token
 	Type       TypeExpression
 	RightParen token.Token
 }
 
 func (m *MethodOf) Tokens() []token.Token {
 	tokens := []token.Token{m.LeftParen}
+	if m.Mutable != nil {
+		tokens = append(tokens, *m.Mutable)
+	}
 	tokens = append(tokens, m.Type.Tokens()...)
 	tokens = append(tokens, m.RightParen)
 
@@ -250,6 +261,9 @@ func (m *MethodOf) String() string {
 	var result bytes.Buffer
 
 	result.WriteByte('(')
+	if m.Mutable != nil {
+		result.WriteString("mut ")
+	}
 	result.WriteString(m.Type.String())
 	result.WriteByte(')')
 
@@ -339,7 +353,7 @@ func (fd *FunctionDeclaration) String() string {
 type ReturnStatement struct {
 	statement
 	Keyword token.Token
-	Value Expression
+	Value   Expression
 }
 
 func (r *ReturnStatement) Tokens() []token.Token {
@@ -365,9 +379,9 @@ func (r *ReturnStatement) String() string {
 type TypeDeclaration struct {
 	statement
 	Keyword token.Token
-	Name token.Token
-	Equals token.Token
-	Type TypeExpression
+	Name    token.Token
+	Equals  token.Token
+	Type    TypeExpression
 }
 
 func (t *TypeDeclaration) Tokens() []token.Token {

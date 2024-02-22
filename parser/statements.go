@@ -155,12 +155,19 @@ func (p *parser) parseForLoop() ast.Statement {
 }
 
 func (p *parser) parseParameter() ast.Parameter {
+	var mutable *token.Token
+	if p.isKeyword("mut") {
+		tok := p.consume()
+		mutable = &tok
+	}
+
 	name := p.delcareIdentifier()
 	ty := p.parseOptionalTypeAnnotation()
 
 	return ast.Parameter{
-		Name: name,
-		Type: ty,
+		Mutable: mutable,
+		Name:    name,
+		Type:    ty,
 	}
 }
 
@@ -171,11 +178,17 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	if p.next().Kind == token.LEFT_PAREN {
 		leftParen := p.consume()
+		var mutable *token.Token
+		if p.isKeyword("mut") {
+			tok := p.consume()
+			mutable = &tok
+		}
 		ty := p.parseType()
 		rightParen := p.expect(token.RIGHT_PAREN)
 
 		methodOf = &ast.MethodOf{
 			LeftParen:  leftParen,
+			Mutable: mutable,
 			Type:       ty,
 			RightParen: rightParen,
 		}
@@ -225,7 +238,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	}
 }
 
-func (p *parser) parseReturnStatement() ast.Statement	{
+func (p *parser) parseReturnStatement() ast.Statement {
 	keyword := p.consume()
 	var value ast.Expression
 	if !p.eof() && p.canContinue() {
@@ -237,7 +250,7 @@ func (p *parser) parseReturnStatement() ast.Statement	{
 	}
 }
 
-func (p *parser) parseTypeDeclaration() ast.Statement	{
+func (p *parser) parseTypeDeclaration() ast.Statement {
 	keyword := p.consume()
 	name := p.delcareIdentifier()
 	equals := p.expect(token.EQUALS)
