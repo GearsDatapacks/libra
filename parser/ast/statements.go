@@ -428,19 +428,41 @@ func (s *StructField) String() string {
 
 type StructDeclaration struct {
 	statement
-	Keyword token.Token
-	Name token.Token
-	LeftBrace token.Token
-	Fields []StructField
+	Keyword    token.Token
+	Name       token.Token
+	StructType *Struct
+	TupleType  *TupleStruct
+}
+
+type Struct struct {
+	LeftBrace  token.Token
+	Fields     []StructField
 	RightBrace token.Token
 }
 
+type TupleStruct struct {
+	LeftParen  token.Token
+	Types      []TypeExpression
+	RightParen token.Token
+}
+
 func (s *StructDeclaration) Tokens() []token.Token {
-	tokens := []token.Token{s.Keyword, s.Name, s.LeftBrace}
-	for _, field := range s.Fields {
-		tokens = append(tokens, field.Tokens()...)
+	tokens := []token.Token{s.Keyword, s.Name}
+
+	if s.StructType != nil {
+		tokens = append(tokens, s.StructType.LeftBrace)
+		for _, field := range s.StructType.Fields {
+			tokens = append(tokens, field.Tokens()...)
+		}
+		tokens = append(tokens, s.StructType.RightBrace)
 	}
-	tokens = append(tokens, s.RightBrace)
+	if s.TupleType != nil {
+		tokens = append(tokens, s.TupleType.LeftParen)
+		for _, ty := range s.TupleType.Types {
+			tokens = append(tokens, ty.Tokens()...)
+		}
+		tokens = append(tokens, s.TupleType.RightParen)
+	}
 
 	return tokens
 }
@@ -450,21 +472,32 @@ func (s *StructDeclaration) String() string {
 
 	result.WriteString("struct ")
 	result.WriteString(s.Name.Value)
-	result.WriteString(" {\n")
-	for i, field := range s.Fields {
-		if i != 0 {
-			result.WriteString(",\n")
+	if s.StructType != nil {
+		result.WriteString(" {\n")
+		for i, field := range s.StructType.Fields {
+			if i != 0 {
+				result.WriteString(",\n")
+			}
+			result.WriteString(field.String())
 		}
-		result.WriteString(field.String())
+		result.WriteString("\n}")
 	}
-	result.WriteString("\n}")
+	if s.TupleType != nil {
+
+		result.WriteByte('(')
+		for i, ty := range s.TupleType.Types {
+			if i != 0 {
+				result.WriteString(", ")
+			}
+			result.WriteString(ty.String())
+		}
+		result.WriteByte(')')
+	}
 
 	return result.String()
 }
 
 // TODO:
-// TupleStructDeclaration
-// UnitStructDeclaration
 // InterfaceMember
 // InterfaceDeclaration
 // ImportStatement

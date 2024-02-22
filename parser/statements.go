@@ -192,7 +192,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 		methodOf = &ast.MethodOf{
 			LeftParen:  leftParen,
-			Mutable: mutable,
+			Mutable:    mutable,
 			Type:       ty,
 			RightParen: rightParen,
 		}
@@ -273,29 +273,45 @@ func (p *parser) parseStructField() ast.StructField {
 	ty := p.parseOptionalTypeAnnotation()
 
 	return ast.StructField{
-		Name:    name,
-		Type:    ty,
+		Name: name,
+		Type: ty,
 	}
 }
 
 func (p *parser) parseStructDeclaration() ast.Statement {
 	keyword := p.consume()
 	name := p.delcareIdentifier()
-	leftBrace := p.expect(token.LEFT_BRACE)
-	fields, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
+	structDecl := &ast.StructDeclaration{
+		Keyword: keyword,
+		Name:    name,
+	}
 
-	if len(fields) > 0 {
-		last := fields[len(fields)-1]
-		if last.Type == nil {
-			p.Diagnostics.ReportLastStructFieldMustHaveType(last.Name.Span, name.Span)
+	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
+		leftBrace := p.consume()
+		fields, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
+
+		if len(fields) > 0 {
+			last := fields[len(fields)-1]
+			if last.Type == nil {
+				p.Diagnostics.ReportLastStructFieldMustHaveType(last.Name.Span, name.Span)
+			}
+		}
+
+		structDecl.StructType = &ast.Struct{
+			LeftBrace:  leftBrace,
+			Fields:     fields,
+			RightBrace: rightBrace,
+		}
+	} else if p.canContinue() && p.next().Kind == token.LEFT_PAREN {
+		leftParen := p.consume()
+		types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
+		
+		structDecl.TupleType = &ast.TupleStruct{
+			LeftParen:  leftParen,
+			Types:      types,
+			RightParen: rightParen,
 		}
 	}
 
-	return &ast.StructDeclaration{
-		Keyword:    keyword,
-		Name:       name,
-		LeftBrace:  leftBrace,
-		Fields:     fields,
-		RightBrace: rightBrace,
-	}
+	return structDecl
 }
