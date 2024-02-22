@@ -401,9 +401,68 @@ func (t *TypeDeclaration) String() string {
 	return result.String()
 }
 
+type StructField struct {
+	Name token.Token
+	Type *TypeAnnotation
+}
+
+func (s *StructField) Tokens() []token.Token {
+	tokens := []token.Token{s.Name}
+	if s.Type != nil {
+		tokens = append(tokens, s.Type.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (s *StructField) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(s.Name.Value)
+	if s.Type != nil {
+		result.WriteString(s.Type.String())
+	}
+
+	return result.String()
+}
+
+type StructDeclaration struct {
+	statement
+	Keyword token.Token
+	Name token.Token
+	LeftBrace token.Token
+	Fields []StructField
+	RightBrace token.Token
+}
+
+func (s *StructDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{s.Keyword, s.Name, s.LeftBrace}
+	for _, field := range s.Fields {
+		tokens = append(tokens, field.Tokens()...)
+	}
+	tokens = append(tokens, s.RightBrace)
+
+	return tokens
+}
+
+func (s *StructDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("struct ")
+	result.WriteString(s.Name.Value)
+	result.WriteString(" {\n")
+	for i, field := range s.Fields {
+		if i != 0 {
+			result.WriteString(",\n")
+		}
+		result.WriteString(field.String())
+	}
+	result.WriteString("\n}")
+
+	return result.String()
+}
+
 // TODO:
-// StructField
-// StructDeclaration
 // TupleStructDeclaration
 // UnitStructDeclaration
 // InterfaceMember

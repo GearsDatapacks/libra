@@ -45,6 +45,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseTypeDeclaration()
 	}
 
+	if p.isKeyword("struct") {
+		return p.parseStructDeclaration()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -218,7 +222,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	if len(params) > 0 {
 		lastParam := params[len(params)-1]
 		if lastParam.Type == nil {
-			p.Diagnostics.ReportLastParameterMustHaveType(lastParam.Name.Span)
+			p.Diagnostics.ReportLastParameterMustHaveType(lastParam.Name.Span, name.Span)
 		}
 	}
 
@@ -261,5 +265,37 @@ func (p *parser) parseTypeDeclaration() ast.Statement {
 		Name:    name,
 		Equals:  equals,
 		Type:    ty,
+	}
+}
+
+func (p *parser) parseStructField() ast.StructField {
+	name := p.delcareIdentifier()
+	ty := p.parseOptionalTypeAnnotation()
+
+	return ast.StructField{
+		Name:    name,
+		Type:    ty,
+	}
+}
+
+func (p *parser) parseStructDeclaration() ast.Statement {
+	keyword := p.consume()
+	name := p.delcareIdentifier()
+	leftBrace := p.expect(token.LEFT_BRACE)
+	fields, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
+
+	if len(fields) > 0 {
+		last := fields[len(fields)-1]
+		if last.Type == nil {
+			p.Diagnostics.ReportLastStructFieldMustHaveType(last.Name.Span, name.Span)
+		}
+	}
+
+	return &ast.StructDeclaration{
+		Keyword:    keyword,
+		Name:       name,
+		LeftBrace:  leftBrace,
+		Fields:     fields,
+		RightBrace: rightBrace,
 	}
 }

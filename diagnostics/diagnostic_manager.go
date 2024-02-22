@@ -93,10 +93,24 @@ func (m *Manager) ReportKeywordOverwritten(span token.Span, keyword string, decl
 	m.reportInfo(info, declared)
 }
 
-func (m *Manager) ReportLastParameterMustHaveType(span token.Span) {
+func (m *Manager) ReportLastParameterMustHaveType(span token.Span, fnSpan token.Span) {
 	msg := "The last parameter of a function must have a type annotation"
-
 	m.reportError(msg, span)
+
+	if span.Line != fnSpan.Line {
+		info := "Parameter of this function"
+		m.reportInfo(info, fnSpan)
+	}
+}
+
+func (m *Manager) ReportLastStructFieldMustHaveType(span token.Span, structSpan token.Span) {
+	errMsg := "The last field of a struct must have a type annotation"	
+	m.reportError(errMsg, span)
+
+	if span.Line != structSpan.Line {
+		info := "Field in this struct"
+		m.reportInfo(info, structSpan)
+	}
 }
 
 func (m *Manager) ReportMemberAndMethodNotAllowed(span token.Span) {
