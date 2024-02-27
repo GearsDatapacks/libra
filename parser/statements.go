@@ -49,6 +49,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseStructDeclaration()
 	}
 
+	if p.isKeyword("interface") {
+		return p.parseInterfaceDeclaration()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -269,7 +273,7 @@ func (p *parser) parseTypeDeclaration() ast.Statement {
 }
 
 func (p *parser) parseStructField() ast.StructField {
-	name := p.delcareIdentifier()
+	name := p.expect(token.IDENTIFIER)
 	ty := p.parseOptionalTypeAnnotation()
 
 	return ast.StructField{
@@ -314,4 +318,34 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 	}
 
 	return structDecl
+}
+
+func (p *parser) parseInterfaceMember() ast.InterfaceMember {
+	name := p.expect(token.IDENTIFIER)
+	leftParen := p.expect(token.LEFT_PAREN)
+	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
+	returnType := p.parseOptionalTypeAnnotation()
+
+	return ast.InterfaceMember{
+		Name:       name,
+		LeftParen:  leftParen,
+		Parameters: params,
+		RightParen: rightParen,
+		ReturnType: returnType,
+	}
+}
+
+func (p *parser) parseInterfaceDeclaration() ast.Statement {
+	keyword := p.consume()
+	name := p.delcareIdentifier()
+	leftBrace := p.expect(token.LEFT_BRACE)
+	members, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseInterfaceMember)
+
+	return &ast.InterfaceDeclaration{
+		Keyword:    keyword,
+		Name:       name,
+		LeftBrace:  leftBrace,
+		Members:    members,
+		RightBrace: rightBrace,
+	}
 }

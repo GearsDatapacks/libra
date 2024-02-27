@@ -357,3 +357,58 @@ func TestStructDeclaration(t *testing.T) {
 		}
 	}
 }
+
+type interfaceField struct {
+	name       string
+	params     []string
+	returnType string
+}
+
+func TestInterfaceDeclaration(t *testing.T) {
+	tests := []struct {
+		src    string
+		name   string
+		fields []interfaceField
+	}{
+		{"interface Any {}", "Any", []interfaceField{}},
+		{"interface Fooer { foo(bar): baz }", "Fooer", []interfaceField{{"foo", []string{"bar"}, "baz"}}},
+		{`interface Order {
+			less ( i32 , f64 ) : bool , 
+			greater(u32,i32,):f16
+		}`, "Order",
+			[]interfaceField{
+				{"less", []string{"i32", "f64"}, "bool"},
+				{"greater", []string{"u32", "i32"}, "f16"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		intDecl := getStmt[*ast.InterfaceDeclaration](t, program)
+
+		utils.AssertEq(t, intDecl.Name.Value, test.name)
+		utils.AssertEq(t, len(intDecl.Members), len(test.fields), "Incorrect number of fields")
+
+		for i, field := range test.fields {
+			intField := intDecl.Members[i]
+			utils.AssertEq(t, intField.Name.Value, field.name)
+			utils.AssertEq(t, len(intField.Parameters), len(field.params), "Incorrect number of parameters")
+			for i, param := range field.params {
+				intParam := intField.Parameters[i]
+				name, ok := intParam.(*ast.TypeName)
+				utils.Assert(t, ok, "Parameter is not a type name")
+				utils.AssertEq(t, name.Name.Value, param)
+			}
+
+			if field.returnType == "" {
+				utils.Assert(t, intField.ReturnType == nil, "Expected no return type")
+			} else {
+				utils.Assert(t, intField.ReturnType != nil, "Expected return type")
+				name, ok := intField.ReturnType.Type.(*ast.TypeName)
+				utils.Assert(t, ok, "Return type is not a type name")
+				utils.AssertEq(t, name.Name.Value, field.returnType)
+			}
+		}
+	}
+}

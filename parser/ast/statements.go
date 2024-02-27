@@ -497,9 +497,86 @@ func (s *StructDeclaration) String() string {
 	return result.String()
 }
 
+type InterfaceMember struct {
+	Name       token.Token
+	LeftParen  token.Token
+	Parameters []TypeExpression
+	RightParen token.Token
+	ReturnType *TypeAnnotation
+}
+
+func (i *InterfaceMember) Tokens() []token.Token {
+	tokens := []token.Token{i.Name, i.LeftParen}
+	for _, param := range i.Parameters {
+		tokens = append(tokens, param.Tokens()...)
+	}
+	tokens = append(tokens, i.RightParen)
+	if i.ReturnType != nil {
+		tokens = append(tokens, i.ReturnType.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (i *InterfaceMember) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(i.Name.Value)
+	result.WriteRune('(')
+	for i, param := range i.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(param.String())
+	}
+
+	result.WriteByte(')')
+	if i.ReturnType != nil {
+		result.WriteString(i.ReturnType.String())
+	}
+
+	return result.String()
+}
+
+type InterfaceDeclaration struct {
+	statement
+	Keyword token.Token
+	Name token.Token
+	LeftBrace token.Token
+	Members []InterfaceMember
+	RightBrace token.Token
+}
+
+func (i *InterfaceDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{i.Keyword, i.Name, i.LeftBrace}
+
+	for _, member := range i.Members {
+		tokens = append(tokens, member.Tokens()...)
+	}
+
+	tokens = append(tokens, i.RightBrace)
+	return tokens
+}
+
+func (i *InterfaceDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("interface ")
+	result.WriteString(i.Name.Value)
+	result.WriteString(" {\n")
+
+	for i, member := range i.Members {
+		if i != 0 {
+			result.WriteString(",\n")
+		}
+		result.WriteString(member.String())
+	}
+
+	result.WriteString("\n}")
+	return result.String()
+}
+
 // TODO:
-// InterfaceMember
-// InterfaceDeclaration
 // ImportStatement
 // EnumDeclaration
 // EnumMember
