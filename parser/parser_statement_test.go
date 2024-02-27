@@ -412,3 +412,50 @@ func TestInterfaceDeclaration(t *testing.T) {
 		}
 	}
 }
+
+func TestImportStatement(t *testing.T) {
+	tests := []struct {
+		src     string
+		symbols []string
+		all     bool
+		module  string
+		alias   string
+	}{
+		{`import "fs"`, nil, false, "fs", ""},
+		{`import ".././foo/bar"`, nil, false, ".././foo/bar", ""},
+		{`import * from "helpers"`, nil, true, "helpers", ""},
+		{`import { read, write } from "io"`, []string{"read", "write"}, false, "io", ""},
+		{`import "42" as life_universe_everything`, nil, false, "42", "life_universe_everything"},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ast.ImportStatement](t, program)
+
+		if test.symbols == nil {
+			utils.Assert(t, stmt.Symbols == nil, "Expected no imported symbols")
+		} else {
+			utils.Assert(t, stmt.Symbols != nil, "Expected imported symbols")
+			utils.AssertEq(t, len(stmt.Symbols.Symbols), len(test.symbols))
+			for i, symbol := range test.symbols {
+				imported := stmt.Symbols.Symbols[i]
+				utils.AssertEq(t, imported.Value, symbol)
+			}
+		}
+
+		if test.all {
+			utils.Assert(t, stmt.All != nil, "Expected to import all symbols")
+		} else {
+			utils.Assert(t, stmt.All == nil, "Expected not to import all symbols")
+		}
+
+		utils.AssertEq(t, stmt.Module.Value, test.module)
+
+		if test.alias == "" {
+			utils.Assert(t, stmt.Alias == nil, "Expected not to import as an alias")
+		} else {
+			utils.Assert(t, stmt.Alias != nil, "Expected to import as an alias")
+			utils.AssertEq(t, stmt.Alias.Alias.Value, test.alias)
+		}
+	}
+}

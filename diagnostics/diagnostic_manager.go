@@ -104,7 +104,7 @@ func (m *Manager) ReportLastParameterMustHaveType(span token.Span, fnSpan token.
 }
 
 func (m *Manager) ReportLastStructFieldMustHaveType(span token.Span, structSpan token.Span) {
-	errMsg := "The last field of a struct must have a type annotation"	
+	errMsg := "The last field of a struct must have a type annotation"
 	m.reportError(errMsg, span)
 
 	if span.Line != structSpan.Line {
@@ -121,6 +121,12 @@ func (m *Manager) ReportMemberAndMethodNotAllowed(span token.Span) {
 
 func (m *Manager) ReportExpectedMemberOrStructBody(span token.Span, tok token.Token) {
 	msg := fmt.Sprintf("Invalid right-hand side of expression. Expected identifier or struct body, found %s", tok.Kind.String())
+
+	m.reportError(msg, span)
+}
+
+func (m *Manager) ReportOneImportModifierAllowed(span token.Span) {
+	msg := "Only one import modifier is allowed"
 
 	m.reportError(msg, span)
 }

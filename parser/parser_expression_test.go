@@ -473,6 +473,8 @@ func TestParserDiagnostics(t *testing.T) {
 			{"Field in this struct", diagnostics.Info},
 		}},
 		{"fn (string) [bool].maybe() {}", []diagnostic{{"Functions cannot be both methods and static members", diagnostics.Error}}},
+		{`import * from "io" [as] in_out`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
+		{`import {read, write} from [*] from "io"`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
 	}
 
 	for _, test := range tests {

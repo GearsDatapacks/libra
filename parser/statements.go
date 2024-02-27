@@ -53,6 +53,10 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseInterfaceDeclaration()
 	}
 
+	if p.isKeyword("import") {
+		return p.parseImportStatement()
+	}
+
 	return &ast.ExpressionStatement{
 		Expression: p.parseExpression(),
 	}
@@ -309,7 +313,7 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 	} else if p.canContinue() && p.next().Kind == token.LEFT_PAREN {
 		leftParen := p.consume()
 		types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
-		
+
 		structDecl.TupleType = &ast.TupleStruct{
 			LeftParen:  leftParen,
 			Types:      types,
@@ -347,5 +351,51 @@ func (p *parser) parseInterfaceDeclaration() ast.Statement {
 		LeftBrace:  leftBrace,
 		Members:    members,
 		RightBrace: rightBrace,
+	}
+}
+
+func (p *parser) parseImportStatement() ast.Statement {
+	keyword := p.consume()
+	var symbols *ast.ImportedSymbols
+
+	if p.next().Kind == token.LEFT_BRACE {
+		symbols = &ast.ImportedSymbols{}
+
+		symbols.LeftBrace = p.consume()
+		symbols.Symbols, symbols.RightBrace = parseDelimExprList(p, token.RIGHT_BRACE, p.delcareIdentifier)
+		symbols.From = p.expectKeyword("from")
+	}
+
+	var all *ast.ImportAll
+
+	if p.next().Kind == token.STAR {
+		if symbols != nil {
+			p.Diagnostics.ReportOneImportModifierAllowed(p.next().Span)
+		}
+		all = &ast.ImportAll{}
+
+		all.Star = p.consume()
+		all.From = p.expectKeyword("from")
+	}
+
+	module := p.expect(token.STRING)
+
+	var alias *ast.ImportAlias
+
+	if p.canContinue() && p.isKeyword("as") {
+		if symbols != nil || all != nil {
+			p.Diagnostics.ReportOneImportModifierAllowed(p.next().Span)
+		}
+		alias = &ast.ImportAlias{}
+		alias.As = p.consume()
+		alias.Alias = p.delcareIdentifier()
+	}
+
+	return &ast.ImportStatement{
+		Keyword: keyword,
+		Symbols: symbols,
+		All:     all,
+		Module:  module,
+		Alias:   alias,
 	}
 }

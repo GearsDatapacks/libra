@@ -540,10 +540,10 @@ func (i *InterfaceMember) String() string {
 
 type InterfaceDeclaration struct {
 	statement
-	Keyword token.Token
-	Name token.Token
-	LeftBrace token.Token
-	Members []InterfaceMember
+	Keyword    token.Token
+	Name       token.Token
+	LeftBrace  token.Token
+	Members    []InterfaceMember
 	RightBrace token.Token
 }
 
@@ -576,7 +576,93 @@ func (i *InterfaceDeclaration) String() string {
 	return result.String()
 }
 
+type ImportAll struct {
+	Star token.Token
+	From token.Token
+}
+
+type ImportAlias struct {
+	As    token.Token
+	Alias token.Token
+}
+
+type ImportedSymbols struct {
+	LeftBrace  token.Token
+	Symbols    []token.Token
+	RightBrace token.Token
+	From       token.Token
+}
+
+func (s *ImportedSymbols) Tokens() []token.Token {
+	tokens := []token.Token{s.LeftBrace}
+	tokens = append(tokens, s.Symbols...)
+	tokens = append(tokens, s.RightBrace, s.From)
+
+	return tokens
+}
+
+func (s *ImportedSymbols) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("{ ")
+	for i, symbol := range s.Symbols {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(symbol.Value)
+	}
+
+	result.WriteString(" } from")
+
+	return result.String()
+}
+
+type ImportStatement struct {
+	statement
+	Keyword token.Token
+	Symbols *ImportedSymbols
+	All     *ImportAll
+	Module  token.Token
+	Alias   *ImportAlias
+}
+
+func (i *ImportStatement) Tokens() []token.Token {
+	tokens := []token.Token{i.Keyword}
+	if i.Symbols != nil {
+		tokens = append(tokens, i.Symbols.Tokens()...)
+	}
+	if i.All != nil {
+		tokens = append(tokens, i.All.Star, i.All.From)
+	}
+	tokens = append(tokens, i.Module)
+	if i.Alias != nil {
+		tokens = append(tokens, i.Alias.As, i.Alias.Alias)
+	}
+	return tokens
+}
+
+func (i *ImportStatement) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("import ")
+	if i.Symbols != nil {
+		result.WriteString(i.Symbols.String())
+		result.WriteByte(' ')
+	}
+	if i.All != nil {
+		result.WriteString("* from ")
+	}
+	result.WriteByte('"')
+	result.WriteString(i.Module.Value)
+	result.WriteByte('"')
+	if i.Alias != nil {
+		result.WriteString(" as ")
+		result.WriteString(i.Alias.Alias.Value)
+	}
+
+	return result.String()
+}
+
 // TODO:
-// ImportStatement
 // EnumDeclaration
 // EnumMember
