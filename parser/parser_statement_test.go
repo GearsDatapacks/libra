@@ -459,3 +459,106 @@ func TestImportStatement(t *testing.T) {
 		}
 	}
 }
+
+type enumField struct {
+	name string
+	data any
+}
+
+func TestEnumDeclaration(t *testing.T) {
+	tests := []struct {
+		src      string
+		name     string
+		dataType string
+		members  []enumField
+	}{
+		{"enum Empty {}", "Empty", "", []enumField{}},
+		{"enum Option { None, Some(i32) }", "Option", "", []enumField{
+			{"None", nil},
+			{"Some", []string{"i32"}},
+		}},
+		{"union AOrB { a {b: c}, b {c: d, e:f,}, }", "AOrB", "", []enumField{
+			{"a", [][2]string{{"b", "c"}}},
+			{"b", [][2]string{{"c", "d"}, {"e", "f"}}},
+		}},
+		{"enum Colour: u64 { Invalid, red = 100, green = 783, blue = 1.5, custom(i32, u32, f32) }", "Colour", "u64", []enumField{
+			{"Invalid", nil},
+			{"red", 100},
+			{"green", 783},
+			{"blue", 1.5},
+			{"custom", []string{"i32", "u32", "f32"}},
+		}},
+		{"union number { i32, u32, f32 }", "number", "", []enumField{
+			{"i32", nil},
+			{"u32", nil},
+			{"f32", nil},
+		}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ast.EnumDeclaration](t, program)
+
+		utils.AssertEq(t, stmt.Name.Value, test.name)
+
+		if test.dataType == "" {
+			utils.Assert(t, stmt.ValueType == nil, "Expected no type annotation")
+		} else {
+			utils.Assert(t, stmt.ValueType != nil, "Expected type annotation")
+
+			name, ok := stmt.ValueType.Type.(*ast.TypeName)
+			utils.Assert(t, ok, "Type is not a type name")
+			utils.AssertEq(t, name.Name.Value, test.dataType)
+		}
+
+		utils.AssertEq(t, len(stmt.Members), len(test.members))
+
+		for i, expected := range test.members {
+			enumMember := stmt.Members[i]
+
+			utils.AssertEq(t, enumMember.Name.Value, expected.name)
+
+			switch member := expected.data.(type) {
+			case nil:
+				utils.Assert(t, enumMember.Types == nil, "Expected a unit enum member")
+				utils.Assert(t, enumMember.Struct == nil, "Expected a unit enum member")
+				utils.Assert(t, enumMember.Value == nil, "Expected a unit enum member")
+
+			case []string:
+				utils.Assert(t, enumMember.Types != nil, "Expected a tuple enum member")
+				utils.Assert(t, enumMember.Struct == nil, "Expected a tuple enum member")
+				utils.Assert(t, enumMember.Value == nil, "Expected a tuple enum member")
+				types := enumMember.Types.Types
+
+				utils.AssertEq(t, len(types), len(member))
+				for i, ty := range member {
+					name, ok := types[i].(*ast.TypeName)
+					utils.Assert(t, ok, "Type is not a type name")
+					utils.AssertEq(t, name.Name.Value, ty)
+				}
+
+			case [][2]string:
+				utils.Assert(t, enumMember.Types == nil, "Expected a struct enum member")
+				utils.Assert(t, enumMember.Struct != nil, "Expected a struct enum member")
+				utils.Assert(t, enumMember.Value == nil, "Expected a struct enum member")
+				fields := enumMember.Struct.Fields
+
+				utils.AssertEq(t, len(fields), len(member))
+				for i, field := range member {
+					utils.AssertEq(t, fields[i].Name.Value, field[0])
+
+					name, ok := fields[i].Type.Type.(*ast.TypeName)
+					utils.Assert(t, ok, "Type is not a type name")
+					utils.AssertEq(t, name.Name.Value, field[1])
+				}
+
+			default:
+				utils.Assert(t, enumMember.Types == nil, "Expected a value enum member")
+				utils.Assert(t, enumMember.Struct == nil, "Expected a value enum member")
+				utils.Assert(t, enumMember.Value != nil, "Expected a value enum member")
+
+				testLiteral(t, enumMember.Value.Value, member)
+			}
+		}
+	}
+}

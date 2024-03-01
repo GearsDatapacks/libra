@@ -663,6 +663,130 @@ func (i *ImportStatement) String() string {
 	return result.String()
 }
 
-// TODO:
-// EnumDeclaration
-// EnumMember
+type TypeList struct {
+	LeftParen  token.Token
+	Types      []TypeExpression
+	RightParen token.Token
+}
+
+type StructBody struct {
+	LeftBrace  token.Token
+	Fields     []StructField
+	RightBrace token.Token
+}
+
+type ValueAssignment struct {
+	Equals token.Token
+	Value  Expression
+}
+
+type EnumMember struct {
+	Name   token.Token
+	Types  *TypeList
+	Struct *StructBody
+	Value  *ValueAssignment
+}
+
+func (e *EnumMember) Tokens() []token.Token {
+	tokens := []token.Token{e.Name}
+	if e.Types != nil {
+		tokens = append(tokens, e.Types.LeftParen)
+		for _, ty := range e.Types.Types {
+			tokens = append(tokens, ty.Tokens()...)
+		}
+		tokens = append(tokens, e.Types.RightParen)
+	}
+	if e.Struct != nil {
+		tokens = append(tokens, e.Struct.LeftBrace)
+		for _, field := range e.Struct.Fields {
+			tokens = append(tokens, field.Tokens()...)
+		}
+		tokens = append(tokens, e.Struct.RightBrace)
+	}
+	if e.Value != nil {
+		tokens = append(tokens, e.Value.Equals)
+		tokens = append(tokens, e.Value.Value.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (e *EnumMember) String() string {
+	var result bytes.Buffer
+	result.WriteString(e.Name.Value)
+
+	if e.Types != nil {
+		result.WriteByte('(')
+		for i, ty := range e.Types.Types {
+			if i != 0 {
+				result.WriteString(", ")
+			}
+
+			result.WriteString(ty.String())
+		}
+		result.WriteByte(')')
+	}
+	if e.Struct != nil {
+		result.WriteString("{ ")
+		for i, field := range e.Struct.Fields {
+			if i != 0 {
+				result.WriteString(", ")
+			}
+
+			result.WriteString(field.String())
+		}
+		result.WriteString(" }")
+	}
+	if e.Value != nil {
+		result.WriteString(" = ")
+		result.WriteString(e.Value.Value.String())
+	}
+
+	return result.String()
+}
+
+type EnumDeclaration struct {
+	statement
+	Keyword    token.Token
+	Name       token.Token
+	ValueType  *TypeAnnotation
+	LeftBrace  token.Token
+	Members    []EnumMember
+	RightBrace token.Token
+}
+
+func (e *EnumDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{e.Keyword, e.Name, e.LeftBrace}
+	if e.ValueType != nil {
+		tokens = append(tokens, e.ValueType.Tokens()...)
+	}
+
+	for _, member := range e.Members {
+		tokens = append(tokens, member.Tokens()...)
+	}
+	tokens = append(tokens, e.RightBrace)
+	return tokens
+}
+
+func (e *EnumDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(e.Keyword.Value)
+	result.WriteByte(' ')
+	result.WriteString(e.Name.Value)
+
+	if e.ValueType != nil {
+		result.WriteString(e.ValueType.String())
+	}
+
+	result.WriteString(" {\n")
+	for i, member := range e.Members {
+		if i != 0 {
+			result.WriteString(",\n")
+		}
+		result.WriteString(member.String())
+	}
+	result.WriteString("\n}")
+
+	return result.String()
+}
