@@ -6,10 +6,31 @@ import (
 )
 
 func (p *parser) parseTopLevelStatement() ast.Statement {
-	switch p.next().Kind {
-	default:
-		return p.parseStatement()
+	if p.isKeyword("fn") {
+		return p.parseFunctionDeclaration()
 	}
+
+	if p.isKeyword("type") {
+		return p.parseTypeDeclaration()
+	}
+
+	if p.isKeyword("struct") {
+		return p.parseStructDeclaration()
+	}
+
+	if p.isKeyword("interface") {
+		return p.parseInterfaceDeclaration()
+	}
+
+	if p.isKeyword("import") {
+		return p.parseImportStatement()
+	}
+
+	if p.isKeyword("enum") || p.isKeyword("union") {
+		return p.parseEnumDeclaration()
+	}
+
+	return p.parseStatement()
 }
 
 func (p *parser) parseStatement() ast.Statement {
@@ -34,6 +55,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("fn") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, "Function declaration")
 		return p.parseFunctionDeclaration()
 	}
 
@@ -42,22 +64,27 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("type") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, "Type declaration")
 		return p.parseTypeDeclaration()
 	}
 
 	if p.isKeyword("struct") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, "Struct declaration")
 		return p.parseStructDeclaration()
 	}
 
 	if p.isKeyword("interface") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, "Interface declaration")
 		return p.parseInterfaceDeclaration()
 	}
 
 	if p.isKeyword("import") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, "Import statement")
 		return p.parseImportStatement()
 	}
 
 	if p.isKeyword("enum") || p.isKeyword("union") {
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, p.next().Value + " declaration")
 		return p.parseEnumDeclaration()
 	}
 

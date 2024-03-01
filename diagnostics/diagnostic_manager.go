@@ -130,3 +130,9 @@ func (m *Manager) ReportOneImportModifierAllowed(span token.Span) {
 
 	m.reportError(msg, span)
 }
+
+func (m *Manager) ReportOnlyTopLevelStatement(span token.Span, stmtKind string) {
+	msg := fmt.Sprintf("%s not allowed here", stmtKind)
+
+	m.reportError(msg, span)
+}

@@ -475,6 +475,7 @@ func TestParserDiagnostics(t *testing.T) {
 		{"fn (string) [bool].maybe() {}", []diagnostic{{"Functions cannot be both methods and static members", diagnostics.Error}}},
 		{`import * from "io" [as] in_out`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
 		{`import {read, write} from [*] from "io"`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
+		{`if true { [fn] a() {} }`, []diagnostic{{"Function declaration not allowed here", diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
