@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/gearsdatapacks/libra/lexer/token"
+import (
+	"bytes"
+
+	"github.com/gearsdatapacks/libra/lexer/token"
+)
 
 type typeExpression struct{}
 
@@ -17,6 +21,34 @@ func (tn *TypeName) Tokens() []token.Token {
 
 func (tn *TypeName) String() string {
 	return tn.Name.Value
+}
+
+type Union struct {
+	typeExpression
+	Types []TypeExpression
+}
+
+func (u *Union) Tokens() []token.Token {
+	tokens := []token.Token{}
+
+	for _, ty := range u.Types {
+		tokens = append(tokens, ty.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (u *Union) String() string {
+	var result bytes.Buffer
+
+	for i, ty := range u.Types {
+		if i != 0 {
+			result.WriteString(" | ")
+		}
+		result.WriteString(ty.String())
+	}
+
+	return result.String()
 }
 
 // TODO:
