@@ -84,11 +84,38 @@ func (a *ArrayType) String() string {
 	return result.String()
 }
 
+type PointerType struct {
+	typeExpression
+	Star token.Token
+	Mut  *token.Token
+	Type TypeExpression
+}
+
+func (ptr *PointerType) Tokens() []token.Token {
+	tokens := []token.Token{ptr.Star}
+	if ptr.Mut != nil {
+		tokens = append(tokens, *ptr.Mut)
+	}
+	tokens = append(tokens, ptr.Type.Tokens()...)
+
+	return tokens
+}
+
+func (ptr *PointerType) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('*')
+	if ptr.Mut != nil {
+		result.WriteString("mut ")
+	}
+
+	result.WriteString(ptr.Type.String())
+
+	return result.String()
+}
+
 // TODO:
 // MapType
-// InferType
-// VoidType
 // ErrorType
 // TupleType
 // MemberType
-// PointerType

@@ -28,6 +28,8 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	switch p.next().Kind {
 	case token.LEFT_SQUARE:
 		return p.parseArrayType()
+	case token.STAR:
+		return p.parsePointerType()
 	case token.IDENTIFIER:
 		return p.parseTypeName()
 	default:
@@ -50,6 +52,22 @@ func (p *parser) parseArrayType() ast.TypeExpression {
 		Count:       count,
 		RightSquare: rightSquare,
 		Type:        ty,
+	}
+}
+
+func (p *parser) parsePointerType() ast.TypeExpression {
+	star := p.consume()
+	var mut *token.Token
+	if p.isKeyword("mut") {
+		tok := p.consume()
+		mut = &tok
+	}
+	ty := p.parsePrimaryType()
+	
+	return &ast.PointerType{
+		Star: star,
+		Mut:  mut,
+		Type: ty,
 	}
 }
 

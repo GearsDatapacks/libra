@@ -72,6 +72,31 @@ func TestArrayType(t *testing.T) {
 	}
 }
 
+func TestPointerType(t *testing.T) {
+	tests := []struct {
+		src      string
+		mut bool
+		dataType string
+	}{
+		{"*hello", false, "hello"},
+		{"*mut data", true, "data"},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.PointerType](t, test.src)
+
+		if test.mut {
+			utils.Assert(t, ty.Mut != nil, "Expected to be mutable")
+		} else {
+			utils.Assert(t, ty.Mut == nil, "Expected not to be mutable")
+		}
+
+		name, ok := ty.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.dataType)
+	}
+}
+
 func parseType[T ast.TypeExpression](t *testing.T, src string) T {
 	program := getProgram(t, "type _ = "+src)
 	ty := getType[T](t, program)
