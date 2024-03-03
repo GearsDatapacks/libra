@@ -51,10 +51,40 @@ func (u *Union) String() string {
 	return result.String()
 }
 
+type ArrayType struct {
+	typeExpression
+	LeftSquare  token.Token
+	Count       Expression
+	RightSquare token.Token
+	Type        TypeExpression
+}
+
+func (a *ArrayType) Tokens() []token.Token {
+	tokens := []token.Token{a.LeftSquare}
+	if a.Count != nil {
+		tokens = append(tokens, a.Count.Tokens()...)
+	}
+	tokens = append(tokens, a.RightSquare)
+	tokens = append(tokens, a.Type.Tokens()...)
+
+	return tokens
+}
+
+func (a *ArrayType) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('[')
+	if a.Count != nil {
+		result.WriteString(a.Count.String())
+	}
+
+	result.WriteByte(']')
+	result.WriteString(a.Type.String())
+
+	return result.String()
+}
+
 // TODO:
-// Union
-// ListType
-// ArrayType
 // MapType
 // InferType
 // VoidType

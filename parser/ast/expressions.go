@@ -75,17 +75,6 @@ func (i *Identifier) String() string {
 	return i.Name
 }
 
-type ErrorExpression struct {
-	expression
-}
-
-func (e *ErrorExpression) Tokens() []token.Token {
-	return []token.Token{}
-}
-func (e *ErrorExpression) String() string {
-	return ""
-}
-
 type BinaryExpression struct {
 	expression
 	Left     Expression

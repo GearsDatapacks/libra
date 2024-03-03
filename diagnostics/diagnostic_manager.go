@@ -136,3 +136,8 @@ func (m *Manager) ReportOnlyTopLevelStatement(span token.Span, stmtKind string) 
 
 	m.reportError(msg, span)
 }
+
+func (m *Manager) ReportExpectedType(span token.Span, kind token.Kind) {
+	msg := fmt.Sprintf("Expected type, found %s", kind.String())
+	m.reportError(msg, span)
+}

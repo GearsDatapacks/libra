@@ -476,6 +476,7 @@ func TestParserDiagnostics(t *testing.T) {
 		{`import * from "io" [as] in_out`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
 		{`import {read, write} from [*] from "io"`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
 		{`if true { [fn] a() {} }`, []diagnostic{{"Function declaration not allowed here", diagnostics.Error}}},
+		{`type T = [;]`, []diagnostic{{"Expected type, found `;`", diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
@@ -513,7 +514,7 @@ func TestErrorExpression(t *testing.T) {
 	msg := "Expected expression, found `)`"
 	testDiagnostic(t, diag, diagnostics.Error, msg, token.NewSpan(0, 0, 1))
 
-	getExpr[*ast.ErrorExpression](t, program)
+	getExpr[*ast.ErrorNode](t, program)
 }
 
 func getSpans(text string) (string, []token.Span) {

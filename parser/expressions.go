@@ -33,7 +33,7 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 
 	if nudFn == nil {
 		p.Diagnostics.ReportExpectedExpression(p.next().Span, p.next().Kind)
-		return &ast.ErrorExpression{}
+		return &ast.ErrorNode{}
 	}
 
 	left := nudFn()

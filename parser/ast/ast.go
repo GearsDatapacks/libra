@@ -53,3 +53,16 @@ func (p *Program) String() string {
 
 	return text.String()
 }
+
+type ErrorNode struct {
+	expression
+	statement
+	typeExpression
+}
+
+func (e *ErrorNode) Tokens() []token.Token {
+	return []token.Token{}
+}
+func (e *ErrorNode) String() string {
+	return ""
+}
