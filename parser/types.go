@@ -32,6 +32,16 @@ func (p *parser) parsePostfixType() ast.TypeExpression {
 		switch p.next().Kind {
 		case token.LEFT_SQUARE:
 			left = p.parseArrayType(left)
+		case token.QUESTION:
+			left = &ast.OptionType{
+				Type:     left,
+				Question: p.consume(),
+			}
+		case token.BANG:
+			left = &ast.ErrorType{
+				Type: left,
+				Bang: p.consume(),
+			}
 		default:
 			done = true
 		}
@@ -53,6 +63,11 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	switch p.next().Kind {
 	case token.IDENTIFIER:
 		return p.parseTypeName()
+	case token.BANG:
+		return &ast.ErrorType{
+			Type: nil,
+			Bang: p.consume(),
+		}
 	default:
 		p.Diagnostics.ReportExpectedType(p.next().Span, p.next().Kind)
 		return &ast.ErrorNode{}

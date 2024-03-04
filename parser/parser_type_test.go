@@ -75,7 +75,7 @@ func TestArrayType(t *testing.T) {
 func TestPointerType(t *testing.T) {
 	tests := []struct {
 		src      string
-		mut bool
+		mut      bool
 		dataType string
 	}{
 		{"*hello", false, "hello"},
@@ -90,6 +90,48 @@ func TestPointerType(t *testing.T) {
 		} else {
 			utils.Assert(t, ty.Mut == nil, "Expected not to be mutable")
 		}
+
+		name, ok := ty.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.dataType)
+	}
+}
+
+func TestErrorType(t *testing.T) {
+	tests := []struct {
+		src      string
+		dataType string
+	}{
+		{"f32!", "f32"},
+		{"test!", "test"},
+		{"!", ""},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.ErrorType](t, test.src)
+
+		if test.dataType == "" {
+			utils.Assert(t, ty.Type == nil, "Expected a void error type")
+		} else {
+			utils.Assert(t, ty.Type != nil, "Expected a void error type")
+			name, ok := ty.Type.(*ast.TypeName)
+			utils.Assert(t, ok, "Type is not a type name")
+			utils.AssertEq(t, name.Name.Value, test.dataType)
+		}
+	}
+}
+
+func TestOptionType(t *testing.T) {
+	tests := []struct {
+		src      string
+		dataType string
+	}{
+		{"i32?", "i32"},
+		{"result?", "result"},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.OptionType](t, test.src)
 
 		name, ok := ty.Type.(*ast.TypeName)
 		utils.Assert(t, ok, "Type is not a type name")

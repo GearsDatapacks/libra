@@ -114,6 +114,55 @@ func (ptr *PointerType) String() string {
 	return result.String()
 }
 
+type ErrorType struct {
+	typeExpression
+	Type TypeExpression
+	Bang token.Token
+}
+
+func (e *ErrorType) Tokens() []token.Token {
+	tokens := []token.Token{}
+	if e.Type != nil {
+		tokens = append(tokens, e.Type.Tokens()...)
+	}
+	tokens = append(tokens, e.Bang)
+
+	return tokens
+}
+
+func (e *ErrorType) String() string {
+	var result bytes.Buffer
+
+	if e.Type != nil {
+		result.WriteString(e.Type.String())
+	}
+	result.WriteByte('!')
+
+	return result.String()
+}
+
+type OptionType struct {
+	typeExpression
+	Type TypeExpression
+	Question token.Token
+}
+
+func (o *OptionType) Tokens() []token.Token {
+	tokens := o.Type.Tokens()
+	tokens = append(tokens, o.Question)
+
+	return tokens
+}
+
+func (o *OptionType) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(o.Type.String())
+	result.WriteByte('?')
+
+	return result.String()
+}
+
 // TODO:
 // MapType
 // TupleType
