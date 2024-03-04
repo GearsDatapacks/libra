@@ -53,19 +53,19 @@ func (u *Union) String() string {
 
 type ArrayType struct {
 	typeExpression
+	Type        TypeExpression
 	LeftSquare  token.Token
 	Count       Expression
 	RightSquare token.Token
-	Type        TypeExpression
 }
 
 func (a *ArrayType) Tokens() []token.Token {
-	tokens := []token.Token{a.LeftSquare}
+	tokens := a.Type.Tokens()
+	tokens = append(tokens, a.LeftSquare)
 	if a.Count != nil {
 		tokens = append(tokens, a.Count.Tokens()...)
 	}
 	tokens = append(tokens, a.RightSquare)
-	tokens = append(tokens, a.Type.Tokens()...)
 
 	return tokens
 }
@@ -73,13 +73,13 @@ func (a *ArrayType) Tokens() []token.Token {
 func (a *ArrayType) String() string {
 	var result bytes.Buffer
 
+	result.WriteString(a.Type.String())
+
 	result.WriteByte('[')
 	if a.Count != nil {
 		result.WriteString(a.Count.String())
 	}
-
 	result.WriteByte(']')
-	result.WriteString(a.Type.String())
 
 	return result.String()
 }
@@ -116,6 +116,5 @@ func (ptr *PointerType) String() string {
 
 // TODO:
 // MapType
-// ErrorType
 // TupleType
 // MemberType

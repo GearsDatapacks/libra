@@ -51,13 +51,17 @@ func TestArrayType(t *testing.T) {
 		count    any
 		elemType string
 	}{
-		{"[]string", nil, "string"},
-		{"[7]bool", 7, "bool"},
-		{"[2.7]i32", 2.7, "i32"},
+		{"string[]", nil, "string"},
+		{"bool[7]", 7, "bool"},
+		{"i32[2.7]", 2.7, "i32"},
 	}
 
 	for _, test := range tests {
 		ty := parseType[*ast.ArrayType](t, test.src)
+
+		name, ok := ty.Type.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.elemType)
 
 		if test.count == nil {
 			utils.Assert(t, ty.Count == nil, "Expected no count")
@@ -65,10 +69,6 @@ func TestArrayType(t *testing.T) {
 			utils.Assert(t, ty.Count != nil, "Expected a count")
 			testLiteral(t, ty.Count, test.count)
 		}
-
-		name, ok := ty.Type.(*ast.TypeName)
-		utils.Assert(t, ok, "Type is not a type name")
-		utils.AssertEq(t, name.Name.Value, test.elemType)
 	}
 }
 

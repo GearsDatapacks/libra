@@ -6,14 +6,14 @@ import (
 )
 
 func (p *parser) parseType() ast.TypeExpression {
-	ty := p.parsePrimaryType()
+	ty := p.parsePostfixType()
 
 	if p.next().Kind == token.PIPE {
 		types := []ast.TypeExpression{ty}
 
 		for p.canContinue() && p.next().Kind == token.PIPE {
 			p.consume()
-			types = append(types, p.parsePrimaryType())
+			types = append(types, p.parsePostfixType())
 		}
 
 		ty = &ast.Union{
@@ -24,12 +24,33 @@ func (p *parser) parseType() ast.TypeExpression {
 	return ty
 }
 
-func (p *parser) parsePrimaryType() ast.TypeExpression {
+func (p *parser) parsePostfixType() ast.TypeExpression {
+	left := p.parsePrefixType()
+
+	done := false
+	for !done {
+		switch p.next().Kind {
+		case token.LEFT_SQUARE:
+			left = p.parseArrayType(left)
+		default:
+			done = true
+		}
+	}
+
+	return left
+}
+
+func (p *parser) parsePrefixType() ast.TypeExpression {
 	switch p.next().Kind {
-	case token.LEFT_SQUARE:
-		return p.parseArrayType()
 	case token.STAR:
 		return p.parsePointerType()
+	default:
+		return p.parsePrimaryType()
+	}
+}
+
+func (p *parser) parsePrimaryType() ast.TypeExpression {
+	switch p.next().Kind {
 	case token.IDENTIFIER:
 		return p.parseTypeName()
 	default:
@@ -38,20 +59,19 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	}
 }
 
-func (p *parser) parseArrayType() ast.TypeExpression {
+func (p *parser) parseArrayType(ty ast.TypeExpression) ast.TypeExpression {
 	leftSquare := p.consume()
 	var count ast.Expression
 	if p.next().Kind != token.RIGHT_SQUARE {
 		count = p.parseExpression()
 	}
 	rightSquare := p.expect(token.RIGHT_SQUARE)
-	ty := p.parsePrimaryType()
 
 	return &ast.ArrayType{
+		Type:        ty,
 		LeftSquare:  leftSquare,
 		Count:       count,
 		RightSquare: rightSquare,
-		Type:        ty,
 	}
 }
 
@@ -62,8 +82,8 @@ func (p *parser) parsePointerType() ast.TypeExpression {
 		tok := p.consume()
 		mut = &tok
 	}
-	ty := p.parsePrimaryType()
-	
+	ty := p.parsePrefixType()
+
 	return &ast.PointerType{
 		Star: star,
 		Mut:  mut,
