@@ -183,6 +183,28 @@ func TestMapType(t *testing.T) {
 	}
 }
 
+func TestMemberType(t *testing.T) {
+	tests := []struct {
+		src      string
+		leftType string
+		member   string
+	}{
+		{"module.T", "module", "T"},
+		{"parser.Parser", "parser", "Parser"},
+		{"Option.None", "Option", "None"},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.MemberType](t, test.src)
+
+		name, ok := ty.Left.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.leftType)
+
+		utils.AssertEq(t, ty.Member.Value, test.member)
+	}
+}
+
 func parseType[T ast.TypeExpression](t *testing.T, src string) T {
 	program := getProgram(t, "type _ = "+src)
 	ty := getType[T](t, program)

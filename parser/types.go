@@ -42,6 +42,8 @@ func (p *parser) parsePostfixType() ast.TypeExpression {
 				Type: left,
 				Bang: p.consume(),
 			}
+		case token.DOT:
+			return p.parseMemberType(left)
 		default:
 			done = true
 		}
@@ -91,6 +93,17 @@ func (p *parser) parseArrayType(ty ast.TypeExpression) ast.TypeExpression {
 		LeftSquare:  leftSquare,
 		Count:       count,
 		RightSquare: rightSquare,
+	}
+}
+
+func (p *parser) parseMemberType(left ast.TypeExpression) ast.TypeExpression {
+	dot := p.consume()
+	member := p.expect(token.IDENTIFIER)
+
+	return &ast.MemberType{
+		Left:   left,
+		Dot:    dot,
+		Member: member,
 	}
 }
 
