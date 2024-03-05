@@ -139,6 +139,27 @@ func TestOptionType(t *testing.T) {
 	}
 }
 
+func TestTupleType(t *testing.T) {
+	tests := []struct {
+		src   string
+		types []string
+	}{
+		{"(a, b, c)", []string{"a", "b", "c"}},
+		{"(i32,f32,)", []string{"i32", "f32"}},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.TupleType](t, test.src)
+
+		utils.AssertEq(t, len(ty.Types), len(test.types))
+		for i, expected := range test.types {
+			name, ok := ty.Types[i].(*ast.TypeName)
+			utils.Assert(t, ok, "Type is not a type name")
+			utils.AssertEq(t, name.Name.Value, expected)
+		}
+	}
+}
+
 func parseType[T ast.TypeExpression](t *testing.T, src string) T {
 	program := getProgram(t, "type _ = "+src)
 	ty := getType[T](t, program)

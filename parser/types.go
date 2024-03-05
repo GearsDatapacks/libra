@@ -68,6 +68,8 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 			Type: nil,
 			Bang: p.consume(),
 		}
+	case token.LEFT_PAREN:
+		return p.parseTupleType()
 	default:
 		p.Diagnostics.ReportExpectedType(p.next().Span, p.next().Kind)
 		return &ast.ErrorNode{}
@@ -103,6 +105,25 @@ func (p *parser) parsePointerType() ast.TypeExpression {
 		Star: star,
 		Mut:  mut,
 		Type: ty,
+	}
+}
+
+func (p *parser) parseTupleType() ast.TypeExpression {
+	leftParen := p.consume()
+	types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
+
+	if len(types) == 1 {
+		return &ast.ParenthesisedType{
+			LeftParen:  leftParen,
+			Type:       types[0],
+			RightParen: rightParen,
+		}
+	}
+
+	return &ast.TupleType{
+		LeftParen:  leftParen,
+		Types:      types,
+		RightParen: rightParen,
 	}
 }
 
