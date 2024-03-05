@@ -70,6 +70,8 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 		}
 	case token.LEFT_PAREN:
 		return p.parseTupleType()
+	case token.LEFT_BRACE:
+		return p.parseMapType()
 	default:
 		p.Diagnostics.ReportExpectedType(p.next().Span, p.next().Kind)
 		return &ast.ErrorNode{}
@@ -124,6 +126,22 @@ func (p *parser) parseTupleType() ast.TypeExpression {
 		LeftParen:  leftParen,
 		Types:      types,
 		RightParen: rightParen,
+	}
+}
+
+func (p *parser) parseMapType() ast.TypeExpression {
+	leftBrace := p.consume()
+	keyType := p.parseType()
+	colon := p.expect(token.COLON)
+	valueType := p.parseType()
+	rightBrace := p.expect(token.RIGHT_BRACE)
+
+	return &ast.MapType{
+		LeftBrace:  leftBrace,
+		KeyType:    keyType,
+		Colon:      colon,
+		ValueType:  valueType,
+		RightBrace: rightBrace,
 	}
 }
 

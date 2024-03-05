@@ -223,6 +223,36 @@ func (t *TupleType) String() string {
 	return result.String()
 }
 
+type MapType struct {
+	typeExpression
+	LeftBrace token.Token
+	KeyType TypeExpression
+	Colon token.Token
+	ValueType TypeExpression
+	RightBrace token.Token
+}
+
+func (m *MapType) Tokens() []token.Token {
+	tokens := []token.Token{m.LeftBrace}
+	tokens = append(tokens, m.KeyType.Tokens()...)
+	tokens = append(tokens, m.Colon)
+	tokens = append(tokens, m.ValueType.Tokens()...)
+	tokens = append(tokens, m.RightBrace)
+
+	return tokens
+}
+
+func (m *MapType) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	result.WriteString(m.KeyType.String())
+	result.WriteString(": ")
+	result.WriteString(m.ValueType.String())
+	result.WriteByte('}')
+
+	return result.String()
+}
+
 // TODO:
-// MapType
 // MemberType

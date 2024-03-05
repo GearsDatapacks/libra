@@ -160,6 +160,29 @@ func TestTupleType(t *testing.T) {
 	}
 }
 
+func TestMapType(t *testing.T) {
+	tests := []struct {
+		src       string
+		keyType   string
+		valueType string
+	}{
+		{"{string : i32}", "string", "i32"},
+		{"{ K:V }", "K", "V"},
+	}
+
+	for _, test := range tests {
+		ty := parseType[*ast.MapType](t, test.src)
+
+		name, ok := ty.KeyType.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.keyType)
+
+		name, ok = ty.ValueType.(*ast.TypeName)
+		utils.Assert(t, ok, "Type is not a type name")
+		utils.AssertEq(t, name.Name.Value, test.valueType)
+	}
+}
+
 func parseType[T ast.TypeExpression](t *testing.T, src string) T {
 	program := getProgram(t, "type _ = "+src)
 	ty := getType[T](t, program)
