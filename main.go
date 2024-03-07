@@ -4,27 +4,31 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gearsdatapacks/libra/lexer"
-	"github.com/gearsdatapacks/libra/parser"
+	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/module"
 )
 
 func main() {
-  code, err := os.ReadFile(os.Args[1])
-  if err != nil {
-    fmt.Println(err)
-    os.Exit(1)
+	mod, diags := module.Load(os.Args[1])
+
+	for _, diag := range diags {
+		diag.Print()
+	}
+
+  printModule(mod)
+}
+
+func printModule(mod *module.Module) {
+  for _, file := range mod.Files {
+    diagnostics.SetColour(diagnostics.Blue)
+    fmt.Println(file.Path)
+    diagnostics.ResetColour()
+
+    fmt.Println(file.Ast.String())
+    fmt.Println()
   }
 
-  lexer := lexer.New(string(code), os.Args[1])
-  tokens := lexer.Tokenise()
-  parser := parser.New(tokens, lexer.Diagnostics)
-  program := parser.Parse()
-
-  if len(parser.Diagnostics.Diagnostics) > 0 {
-    for _, diag := range parser.Diagnostics.Diagnostics {
-      diag.Print()
-    }
+  for _, imported := range mod.Imported {
+    printModule(imported)
   }
-
-  fmt.Println(program.String())
 }
