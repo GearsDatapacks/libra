@@ -166,6 +166,7 @@ type parameter struct {
 	mutable  bool
 	name     string
 	dataType string
+	value    any
 }
 
 func TestFunctionDeclaration(t *testing.T) {
@@ -181,11 +182,12 @@ func TestFunctionDeclaration(t *testing.T) {
 	}{
 		{`fn hello() { "Hello, world!" }`, "", false, "", "hello", []parameter{}, "", "Hello, world!"},
 		{"fn (i32) print() {\nthis\n}", "i32", false, "", "print", []parameter{}, "", "$this"},
-		{"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }", "i32", false, "", "add", []parameter{{false, "other", "i32"}}, "i32", 7},
+		{"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }", "i32", false, "", "add", []parameter{{false, "other", "i32", nil}}, "i32", 7},
 		{"fn u8.zero(): u8 {0}", "", false, "u8", "zero", []parameter{}, "u8", 0},
-		{"fn sum(a,b,c:f64) : usize{ 3.14 }", "", false, "", "sum", []parameter{{false, "a", ""}, {false, "b", ""}, {false, "c", "f64"}}, "usize", 3.14},
-		{"fn inc(mut x: u32): u32 { x }", "", false, "", "inc", []parameter{{true, "x", "u32"}}, "u32", "$x"},
+		{"fn sum(a,b,c:f64) : usize{ 3.14 }", "", false, "", "sum", []parameter{{false, "a", "", nil}, {false, "b", "", nil}, {false, "c", "f64", nil}}, "usize", 3.14},
+		{"fn inc(mut x: u32): u32 { x }", "", false, "", "inc", []parameter{{true, "x", "u32", nil}}, "u32", "$x"},
 		{"fn (mut foo) bar(): foo { this }", "foo", true, "", "bar", []parameter{}, "foo", "$this"},
+		{"fn add(a = 1, mut b: i64 = 2): i64 { c }", "", false, "", "add", []parameter{{false, "a", "", 1}, {true, "b", "i64", 2}}, "i64", "$c"},
 	}
 
 	for _, test := range tests {
@@ -228,6 +230,13 @@ func TestFunctionDeclaration(t *testing.T) {
 				name, ok := fnParam.Type.Type.(*ast.TypeName)
 				utils.Assert(t, ok, "Param type is not a type name")
 				utils.AssertEq(t, name.Name.Value, param.dataType)
+			}
+
+			if param.value == nil {
+				utils.Assert(t, fnParam.Default == nil, "Expected no default value")
+			} else {
+				utils.Assert(t, fnParam.Default != nil, "Expected a default value")
+				testLiteral(t, fnParam.Default.Value, param.value)
 			}
 
 			if param.mutable {

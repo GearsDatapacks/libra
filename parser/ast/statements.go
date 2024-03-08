@@ -207,10 +207,16 @@ func (fl *ForLoop) String() string {
 	return result.String()
 }
 
+type DefaultValue struct {
+	Equals token.Token
+	Value  Expression
+}
+
 type Parameter struct {
 	Mutable *token.Token
 	Name    token.Token
 	Type    *TypeAnnotation
+	Default *DefaultValue
 }
 
 func (p *Parameter) Tokens() []token.Token {
@@ -220,6 +226,10 @@ func (p *Parameter) Tokens() []token.Token {
 	}
 	if p.Type != nil {
 		tokens = append(tokens, p.Type.Tokens()...)
+	}
+	if p.Default != nil {
+		tokens = append(tokens, p.Default.Equals)
+		tokens = append(tokens, p.Default.Value.Tokens()...)
 	}
 
 	return tokens
@@ -234,6 +244,10 @@ func (p *Parameter) String() string {
 	result.WriteString(p.Name.Value)
 	if p.Type != nil {
 		result.WriteString(p.Type.String())
+	}
+	if p.Default != nil {
+		result.WriteString(" = ")
+		result.WriteString(p.Default.Value.String())
 	}
 
 	return result.String()

@@ -84,7 +84,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("enum") || p.isKeyword("union") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, p.next().Value + " declaration")
+		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Span, p.next().Value+" declaration")
 		return p.parseEnumDeclaration()
 	}
 
@@ -197,6 +197,19 @@ func (p *parser) parseForLoop() ast.Statement {
 	}
 }
 
+func (p *parser) parserOptionalDefaultValue() *ast.DefaultValue {
+	if p.next().Kind != token.EQUALS {
+		return nil
+	}
+
+	equals := p.consume()
+	value := p.parseExpression()
+	return &ast.DefaultValue{
+		Equals: equals,
+		Value:  value,
+	}
+}
+
 func (p *parser) parseParameter() ast.Parameter {
 	var mutable *token.Token
 	if p.isKeyword("mut") {
@@ -206,11 +219,13 @@ func (p *parser) parseParameter() ast.Parameter {
 
 	name := p.delcareIdentifier()
 	ty := p.parseOptionalTypeAnnotation()
+	value := p.parserOptionalDefaultValue()
 
 	return ast.Parameter{
 		Mutable: mutable,
 		Name:    name,
 		Type:    ty,
+		Default: value,
 	}
 }
 
@@ -260,7 +275,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	if len(params) > 0 {
 		lastParam := params[len(params)-1]
-		if lastParam.Type == nil {
+		if lastParam.Type == nil && lastParam.Default == nil {
 			p.Diagnostics.ReportLastParameterMustHaveType(lastParam.Name.Span, name.Span)
 		}
 	}
