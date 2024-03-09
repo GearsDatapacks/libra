@@ -18,7 +18,7 @@ func main() {
 		return
 	}
 
-  tc := typechecker.New(diags)
-	program := tc.TypeCheck(mod.Files[0].Ast)
+	tc := typechecker.New(diags)
+	program := tc.TypeCheck(mod)
 	fmt.Println(program.String())
 }

@@ -2,6 +2,7 @@ package typechecker
 
 import (
 	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/module"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 )
@@ -16,11 +17,25 @@ func New(diagnostics diagnostics.Manager) *typeChecker {
 	}
 }
 
-func (t *typeChecker) TypeCheck(program *ast.Program) *ir.Program {
+func (t *typeChecker) TypeCheckProgram(program *ast.Program) *ir.Program {
 	stmts := []ir.Statement{}
 
 	for _, stmt := range program.Statements {
 		stmts = append(stmts, t.typeCheckStatement(stmt))
+	}
+
+	return &ir.Program{
+		Statements: stmts,
+	}
+}
+
+func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
+	stmts := []ir.Statement{}
+
+	for _, file := range mod.Files {
+		for _, stmt := range file.Ast.Statements {
+			stmts = append(stmts, t.typeCheckStatement(stmt))
+		}
 	}
 
 	return &ir.Program{

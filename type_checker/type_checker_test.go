@@ -7,9 +7,9 @@ import (
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 	utils "github.com/gearsdatapacks/libra/test_utils"
+	"github.com/gearsdatapacks/libra/text"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
-	"github.com/gearsdatapacks/libra/text"
 )
 
 func TestIntegerLiteral(t *testing.T) {
@@ -32,7 +32,7 @@ func getProgram(t *testing.T, input string) *ir.Program {
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
 	tc := typechecker.New(p.Diagnostics)
-	irProgram := tc.TypeCheck(program)
+	irProgram := tc.TypeCheckProgram(program)
 	utils.AssertEq(t, len(tc.Diagnostics), 0,
 		fmt.Sprintf("Expected no diagnostics (got %d)", len(tc.Diagnostics)))
 
