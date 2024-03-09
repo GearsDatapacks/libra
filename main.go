@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/module"
+	typechecker "github.com/gearsdatapacks/libra/type_checker"
 )
 
 func main() {
@@ -14,21 +14,11 @@ func main() {
 	for _, diag := range diags {
 		diag.Print()
 	}
+	if len(diags) != 0 {
+		return
+	}
 
-  printModule(mod)
-}
-
-func printModule(mod *module.Module) {
-  for _, file := range mod.Files {
-    diagnostics.SetColour(diagnostics.Blue)
-    fmt.Println(file.Path)
-    diagnostics.ResetColour()
-
-    fmt.Println(file.Ast.String())
-    fmt.Println()
-  }
-
-  for _, imported := range mod.Imported {
-    printModule(imported)
-  }
+  tc := typechecker.New(diags)
+	program := tc.TypeCheck(mod.Files[0].Ast)
+	fmt.Println(program.String())
 }

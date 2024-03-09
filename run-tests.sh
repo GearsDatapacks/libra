@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
 
-go test ./lexer
-go test ./parser
-
+go test ./lexer ./parser ./type_checker

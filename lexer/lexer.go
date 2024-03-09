@@ -5,23 +5,24 @@ import (
 
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type lexer struct {
-	src         string
+	file        *text.SourceFile
 	pos         int
 	line        int
 	col         int
 	Diagnostics diagnostics.Manager
 }
 
-func New(src string, file string) *lexer {
+func New(file *text.SourceFile) *lexer {
 	return &lexer{
-		src:         src,
+		file:        file,
 		pos:         0,
 		line:        0,
 		col:         0,
-		Diagnostics: diagnostics.New(file, src),
+		Diagnostics: diagnostics.Manager{},
 	}
 }
 
@@ -46,7 +47,7 @@ func (l *lexer) Tokenise() []token.Token {
 
 func (l *lexer) nextToken() token.Token {
 	l.skipWhitespace()
-	nextToken := token.New(token.INVALID, "", token.NewSpan(l.line, l.col, l.col))
+	nextToken := token.New(token.INVALID, "", l.getLocation(l.line, l.col, l.col))
 
 	next := l.next()
 	pos := l.pos
@@ -68,13 +69,13 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.Kind = token.STRING
 		nextToken.Value = l.parseString()
 	} else {
-		l.Diagnostics.ReportInvalidCharacter(token.NewSpan(l.line, l.col, l.col+1), next)
+		l.Diagnostics.ReportInvalidCharacter(l.getLocation(l.line, l.col, l.col+1), next)
 		l.consume()
 	}
 
-	nextToken.Span.End = l.col
+	nextToken.Location.Span.End = l.col
 	if nextToken.Value == "" {
-		nextToken.Value = l.src[pos:l.pos]
+		nextToken.Value = l.file.Text[pos:l.pos]
 	}
 
 	return nextToken
@@ -82,11 +83,11 @@ func (l *lexer) nextToken() token.Token {
 
 func (l *lexer) parseNumber() (token.Kind, string) {
 	kind := token.INTEGER
-	text := bytes.NewBuffer([]byte{})
+	str := bytes.NewBuffer([]byte{})
 	// TODO: 0x, 0b, etc.
 	for isNumber(l.next()) || l.next() == '_' {
 		if l.next() != '_' {
-			text.WriteByte(l.next())
+			str.WriteByte(l.next())
 		}
 
 		l.consume()
@@ -95,16 +96,16 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 	if l.next() == '.' && isNumber(l.peek(1)) {
 		if l.peek(-1) == '_' {
 			l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-				token.NewSpan(l.line, l.col-1, l.col))
+				l.getLocation(l.line, l.col-1, l.col))
 		}
 
 		kind = token.FLOAT
-		text.WriteByte(l.next())
+		str.WriteByte(l.next())
 		l.consume()
 
 		for isNumber(l.next()) || l.next() == '_' {
 			if l.next() != '_' {
-				text.WriteByte(l.next())
+				str.WriteByte(l.next())
 			}
 
 			l.consume()
@@ -113,16 +114,16 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 
 	if l.peek(-1) == '_' {
 		l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-			token.NewSpan(l.line, l.col-1, l.col))
+			l.getLocation(l.line, l.col-1, l.col))
 	}
 
-	return kind, text.String()
+	return kind, str.String()
 }
 
 func (l *lexer) parseString() string {
 	pos := l.col
 	l.consume()
-	text := bytes.NewBuffer([]byte{})
+	str := bytes.NewBuffer([]byte{})
 
 	for !l.eof() && l.next() != '"' {
 		if l.next() == '\\' {
@@ -130,22 +131,22 @@ func (l *lexer) parseString() string {
 			char, ok := escape(l.next())
 			if !ok {
 				l.Diagnostics.ReportInvalidEscapeSequence(
-					token.NewSpan(l.line, l.col-1, l.col+1), l.next())
+					l.getLocation(l.line, l.col-1, l.col+1), l.next())
 			}
-			text.WriteByte(char)
+			str.WriteByte(char)
 		} else {
-			text.WriteByte(l.next())
+			str.WriteByte(l.next())
 		}
 
 		l.consume()
 	}
 
 	if l.eof() {
-		l.Diagnostics.ReportUnterminatedString(token.NewSpan(l.line, pos, l.col))
+		l.Diagnostics.ReportUnterminatedString(l.getLocation(l.line, pos, l.col))
 	}
 
 	l.consume()
-	return text.String()
+	return str.String()
 }
 
 func (l *lexer) parsePunctuation() (token.Kind, bool) {
@@ -308,10 +309,10 @@ func (l *lexer) next() byte {
 }
 
 func (l *lexer) peek(n int) byte {
-	if l.pos+n >= len(l.src) {
+	if l.pos+n >= len(l.file.Text) {
 		return 0
 	}
-	return l.src[l.pos+n]
+	return l.file.Text[l.pos+n]
 }
 
 func (l *lexer) consume() {
@@ -325,5 +326,13 @@ func (l *lexer) consume() {
 }
 
 func (l *lexer) eof() bool {
-	return l.pos >= len(l.src)
+	return l.pos >= len(l.file.Text)
+}
+
+func (l *lexer) getLocation(line, col, end int) text.Location {
+	span := text.NewSpan(line, col, end)
+	return text.Location{
+		Span: span,
+		File: l.file,
+	}
 }

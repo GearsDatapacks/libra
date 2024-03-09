@@ -9,39 +9,35 @@ import (
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/parser"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type File struct {
-	Path        string
-	Ast         *ast.Program
+	Path string
+	Ast  *ast.Program
 }
 
-func loadFile(path string) (*File, []diagnostics.Diagnostic) {
-	code, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-
+func loadFile(path string) (*File, diagnostics.Manager) {
 	file := &File{Path: path}
-	l := lexer.New(string(code), path)
+	l := lexer.New(text.LoadFile(path))
 	tokens := l.Tokenise()
-	if len(l.Diagnostics.Diagnostics) != 0 {
-		return file, l.Diagnostics.Diagnostics
+	if len(l.Diagnostics) != 0 {
+		return file, l.Diagnostics
 	}
 
 	p := parser.New(tokens, l.Diagnostics)
 	file.Ast = p.Parse()
-	return file, p.Diagnostics.Diagnostics
+	return file, p.Diagnostics
 }
 
-func loadModule(modPath string) ([]File, []diagnostics.Diagnostic) {
+func loadModule(modPath string) ([]File, diagnostics.Manager) {
 	dir, err := os.ReadDir(modPath)
 	if err != nil {
 		panic(err)
 	}
 
 	files := []File{}
-	diagnostics := []diagnostics.Diagnostic{}
+	diagnostics := diagnostics.Manager{}
 	for _, entry := range dir {
 		if entry.IsDir() {
 			continue
@@ -64,13 +60,13 @@ type Module struct {
 
 var fetchedModules = map[string]*Module{}
 
-func Load(filePath string) (*Module, []diagnostics.Diagnostic) {
+func Load(filePath string) (*Module, diagnostics.Manager) {
 	modPath := filePath
 	if !isDir(modPath) {
 		modPath = path.Dir(modPath)
 	}
 	if fetched, ok := fetchedModules[modPath]; ok {
-		return fetched, []diagnostics.Diagnostic{}
+		return fetched, diagnostics.Manager{}
 	}
 
 	files, diagnostics := loadModule(modPath)

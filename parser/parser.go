@@ -4,6 +4,8 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type parser struct {
@@ -11,7 +13,7 @@ type parser struct {
 	pos          int
 	nudFns       map[token.Kind]nudFn
 	ledOps       []lookupFn
-	identifiers  map[string]token.Span
+	identifiers  map[string]text.Location
 	noBraces     bool
 	bracketLevel uint
 	Diagnostics  diagnostics.Manager
@@ -23,7 +25,7 @@ func New(tokens []token.Token, diagnostics diagnostics.Manager) *parser {
 		pos:         0,
 		nudFns:      map[token.Kind]nudFn{},
 		ledOps:      []lookupFn{},
-		identifiers: map[string]token.Span{},
+		identifiers: map[string]text.Location{},
 		Diagnostics: diagnostics,
 	}
 
@@ -253,13 +255,13 @@ func (p *parser) isKeyword(value string) bool {
 
 func (p *parser) delcareIdentifier() token.Token {
 	ident := p.expect(token.IDENTIFIER)
-	p.identifiers[ident.Value] = ident.Span
+	p.identifiers[ident.Value] = ident.Location
 	return ident
 }
 
-func (p *parser) enterScope() map[string]token.Span {
+func (p *parser) enterScope() map[string]text.Location {
 	oldScope := p.identifiers
-	p.identifiers = make(map[string]token.Span, len(oldScope))
+	p.identifiers = make(map[string]text.Location, len(oldScope))
 
 	for ident, span := range oldScope {
 		p.identifiers[ident] = span
@@ -268,7 +270,7 @@ func (p *parser) enterScope() map[string]token.Span {
 	return oldScope
 }
 
-func (p *parser) exitScope(scope map[string]token.Span) {
+func (p *parser) exitScope(scope map[string]text.Location) {
 	p.identifiers = scope
 }
 
@@ -321,8 +323,13 @@ func (p *parser) expect(kind token.Kind) token.Token {
 	if p.next().Kind == kind {
 		return p.consume()
 	}
-	p.Diagnostics.ReportExpectedToken(p.next().Span, kind, p.next().Kind)
-	tok := token.New(kind, "", token.NewSpan(0, 0, 0))
+	p.Diagnostics.ReportExpectedToken(p.next().Location, kind, p.next().Kind)
+	span := text.NewSpan(0, 0, 0)
+	location := text.Location{
+		Span: span,
+		File: p.next().Location.File,
+	}
+	tok := token.New(kind, "", location)
 	return tok
 }
 
@@ -332,19 +339,24 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 	}
 
 	if p.next().Kind == token.IDENTIFIER && p.next().Value == keyword {
-		p.Diagnostics.ReportKeywordOverwritten(p.next().Span, keyword, p.identifiers[keyword])
+		p.Diagnostics.ReportKeywordOverwritten(p.next().Location, keyword, p.identifiers[keyword])
 		return p.consume()
 	}
 
-	p.Diagnostics.ReportExpectedKeyword(p.next().Span, keyword, p.next())
-	tok := token.New(token.IDENTIFIER, "", token.NewSpan(0, 0, 0))
+	p.Diagnostics.ReportExpectedKeyword(p.next().Location, keyword, p.next())
+	span := text.NewSpan(0, 0, 0)
+	location := text.Location{
+		Span: span,
+		File: p.next().Location.File,
+	}
+	tok := token.New(token.IDENTIFIER, "", location)
 	return tok
 }
 
 func (p *parser) expectNewline() {
 	if p.nextWithNewlines().Kind != token.NEWLINE &&
 		p.next().Kind != token.SEMICOLON {
-		p.Diagnostics.ReportExpectedNewline(p.next().Span, p.next().Kind)
+		p.Diagnostics.ReportExpectedNewline(p.next().Location, p.next().Kind)
 	}
 
 	p.consumeNewlines()

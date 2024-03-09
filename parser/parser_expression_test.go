@@ -11,6 +11,7 @@ import (
 	"github.com/gearsdatapacks/libra/parser"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	utils "github.com/gearsdatapacks/libra/test_utils"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 func TestIdentifierExpression(t *testing.T) {
@@ -20,11 +21,9 @@ func TestIdentifierExpression(t *testing.T) {
 	ident := getExpr[*ast.Identifier](t, program)
 
 	utils.AssertEq(t, ident.Name, input)
-	utils.AssertEq(t, ident.Token,
-		token.New(token.IDENTIFIER, input,
-			token.NewSpan(0, 0, len(input)),
-		),
-	)
+	utils.AssertEq(t, ident.Token.Kind, token.IDENTIFIER)
+	utils.AssertEq(t, ident.Token.Value, input)
+	utils.AssertEq(t, ident.Token.Location.Span, text.NewSpan(0, 0, len(input)))
 }
 
 func TestIntegerExpression(t *testing.T) {
@@ -36,11 +35,10 @@ func TestIntegerExpression(t *testing.T) {
 	integer := getExpr[*ast.IntegerLiteral](t, program)
 
 	utils.AssertEq(t, integer.Value, int64(val))
-	utils.AssertEq(t, integer.Token,
-		token.New(token.INTEGER, "156098",
-			token.NewSpan(0, 0, len(input)),
-		),
-	)
+
+	utils.AssertEq(t, integer.Token.Kind, token.INTEGER)
+	utils.AssertEq(t, integer.Token.Value, "156098")
+	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, 0, len(input)))
 }
 
 func TestFloatExpression(t *testing.T) {
@@ -52,11 +50,10 @@ func TestFloatExpression(t *testing.T) {
 	float := getExpr[*ast.FloatLiteral](t, program)
 
 	utils.AssertEq(t, float.Value, val)
-	utils.AssertEq(t, float.Token,
-		token.New(token.FLOAT, input,
-			token.NewSpan(0, 0, len(input)),
-		),
-	)
+	
+	utils.AssertEq(t, float.Token.Kind, token.FLOAT)
+	utils.AssertEq(t, float.Token.Value, input)
+	utils.AssertEq(t, float.Token.Location.Span, text.NewSpan(0, 0, len(input)))
 }
 
 func TestBooleanExpression(t *testing.T) {
@@ -67,11 +64,9 @@ func TestBooleanExpression(t *testing.T) {
 	boolean := getExpr[*ast.BooleanLiteral](t, program)
 
 	utils.AssertEq(t, boolean.Value, true)
-	utils.AssertEq(t, boolean.Token,
-		token.New(token.IDENTIFIER, input,
-			token.NewSpan(0, 0, len(input)),
-		),
-	)
+	utils.AssertEq(t, boolean.Token.Kind, token.IDENTIFIER)
+	utils.AssertEq(t, boolean.Token.Value, input)
+	utils.AssertEq(t, boolean.Token.Location.Span, text.NewSpan(0, 0, len(input)))
 }
 
 func TestListExpression(t *testing.T) {
@@ -483,14 +478,14 @@ func TestParserDiagnostics(t *testing.T) {
 		src, spans := getSpans(test.src)
 		utils.AssertEq(t, len(spans), len(test.diagnostics), "Mismatch of spans to diagnostic messages")
 
-		lexer := lexer.New(src, "test.lb")
+		lexer := lexer.New(text.NewFile("test.lb", src))
 		tokens := lexer.Tokenise()
 
-		utils.AssertEq(t, len(lexer.Diagnostics.Diagnostics), 0, "Expected no lexer diagnostics")
+		utils.AssertEq(t, len(lexer.Diagnostics), 0, "Expected no lexer diagnostics")
 
 		p := parser.New(tokens, lexer.Diagnostics)
 		p.Parse()
-		diagnostics := p.Diagnostics.Diagnostics
+		diagnostics := p.Diagnostics
 		utils.AssertEq(t, len(diagnostics), len(test.diagnostics),
 			fmt.Sprintf("Incorrect number of diagnostics (expected %d, got %d)", len(test.diagnostics), len(diagnostics)))
 
@@ -505,26 +500,26 @@ func TestParserDiagnostics(t *testing.T) {
 func TestErrorExpression(t *testing.T) {
 	input := ")"
 
-	l := lexer.New(input, "test.lb")
+	l := lexer.New(text.NewFile("test.lb", input))
 	tokens := l.Tokenise()
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
 
-	diag := utils.AssertSingle(t, p.Diagnostics.Diagnostics)
+	diag := utils.AssertSingle(t, p.Diagnostics)
 	msg := "Expected expression, found `)`"
-	testDiagnostic(t, diag, diagnostics.Error, msg, token.NewSpan(0, 0, 1))
+	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 1))
 
 	getExpr[*ast.ErrorNode](t, program)
 }
 
-func getSpans(text string) (string, []token.Span) {
+func getSpans(sourceText string) (string, []text.Span) {
 	var resultText bytes.Buffer
-	spans := []token.Span{}
+	spans := []text.Span{}
 	line := 0
 	col := 0
-	for _, c := range text {
+	for _, c := range sourceText {
 		if c == '[' {
-			spans = append(spans, token.NewSpan(line, col, 0))
+			spans = append(spans, text.NewSpan(line, col, 0))
 			continue
 		}
 		if c == ']' {
@@ -547,22 +542,22 @@ func testDiagnostic(t *testing.T,
 	diagnostic diagnostics.Diagnostic,
 	kind diagnostics.DiagnosticKind,
 	msg string,
-	span token.Span) {
+	span text.Span) {
 	utils.AssertEq(t, diagnostic.Kind, kind)
 	utils.AssertEq(t, diagnostic.Message, msg)
-	utils.AssertEq(t, diagnostic.Span, span)
+	utils.AssertEq(t, diagnostic.Location.Span, span)
 }
 
 func getProgram(t *testing.T, input string) *ast.Program {
 	t.Helper()
 
-	l := lexer.New(input, "test.lb")
+	l := lexer.New(text.NewFile("test.lb", input))
 	tokens := l.Tokenise()
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
-	utils.AssertEq(t, len(p.Diagnostics.Diagnostics), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics.Diagnostics)))
+	utils.AssertEq(t, len(p.Diagnostics), 0,
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics)))
 
 	return program
 }

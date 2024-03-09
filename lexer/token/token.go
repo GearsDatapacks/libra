@@ -1,17 +1,13 @@
 package token
 
+import "github.com/gearsdatapacks/libra/text"
+
 type Kind int
 
 type Token struct {
-	Kind  Kind
-	Value string
-	Span  Span
-}
-
-type Span struct {
-	Line int
-	Col  int
-	End  int
+	Kind     Kind
+	Value    string
+	Location text.Location
 }
 
 const (
@@ -77,19 +73,11 @@ const (
 	SEMICOLON
 )
 
-func New(kind Kind, value string, span Span) Token {
+func New(kind Kind, value string, span text.Location) Token {
 	return Token{
-		Kind:  kind,
-		Value: value,
-		Span:  span,
-	}
-}
-
-func NewSpan(line, col, end int) Span {
-	return Span{
-		Line: line,
-		Col:  col,
-		End:  end,
+		Kind:     kind,
+		Value:    value,
+		Location: span,
 	}
 }
 

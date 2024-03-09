@@ -32,7 +32,7 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	nudFn := p.lookupNudFn(p.next().Kind)
 
 	if nudFn == nil {
-		p.Diagnostics.ReportExpectedExpression(p.next().Span, p.next().Kind)
+		p.Diagnostics.ReportExpectedExpression(p.next().Location, p.next().Kind)
 		return &ast.ErrorNode{}
 	}
 
@@ -145,7 +145,7 @@ func (p *parser) parseInferredTypeExpression() ast.Expression {
 		return p.parseStructExpression(&ast.InferredExpression{Token: dot})
 	}
 
-	p.Diagnostics.ReportExpectedMemberOrStructBody(p.next().Span, p.next())
+	p.Diagnostics.ReportExpectedMemberOrStructBody(p.next().Location, p.next())
 	return &ast.InferredExpression{Token: dot}
 }
 

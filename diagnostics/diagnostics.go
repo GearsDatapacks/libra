@@ -3,8 +3,7 @@ package diagnostics
 import (
 	"fmt"
 	"strings"
-
-	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type DiagnosticKind int
@@ -18,23 +17,19 @@ const (
 type Diagnostic struct {
 	Kind    DiagnosticKind
 	Message string
-	Span    token.Span
-	file    string
-  lines []string
+	Location    text.Location
 }
 
-func new(kind DiagnosticKind, message string, span token.Span, file string, lines []string) Diagnostic {
+func new(kind DiagnosticKind, message string, location text.Location) Diagnostic {
 	return Diagnostic{
-		Kind:    kind,
-		Message: message,
-		Span:    span,
-		file:    file,
-    lines: lines,
+		Kind:     kind,
+		Message:  message,
+		Location: location,
 	}
 }
 
 func (d *Diagnostic) Print() {
-  colour := Reset
+	colour := Reset
 	switch d.Kind {
 	case Error:
 		colour = Red
@@ -44,26 +39,30 @@ func (d *Diagnostic) Print() {
 		colour = Cyan
 	}
 
-  SetColour(White)
-  fmt.Printf("%s:%d:%d:\n", d.file, d.Span.Line+1, d.Span.Col+1)
-  ResetColour()
+	fileName := d.Location.File.FileName
+	span := d.Location.Span
+	lines := d.Location.File.Lines
 
-  line := d.lines[d.Span.Line]
+	SetColour(White)
+	fmt.Printf("%s:%d:%d:\n", fileName, span.Line+1, span.Column+1)
+	ResetColour()
 
-  fmt.Print(line[:d.Span.Col])
+	line := lines[span.Line]
 
-  SetColour(colour)
-  fmt.Print(line[d.Span.Col:d.Span.End])
-  ResetColour()
+	fmt.Print(line[:span.Column])
 
-  fmt.Println(line[d.Span.End:])
+	SetColour(colour)
+	fmt.Print(line[span.Column:span.End])
+	ResetColour()
 
-  arrow := strings.Repeat(" ", d.Span.Col) + "^"
-  fmt.Print(arrow + " ")
+	fmt.Println(line[span.End:])
 
-  SetColour(colour)
+	arrow := strings.Repeat(" ", span.Column) + "^"
+	fmt.Print(arrow + " ")
+
+	SetColour(colour)
 	fmt.Println(d.Message)
-  fmt.Println()
+	fmt.Println()
 
-  ResetColour()
+	ResetColour()
 }

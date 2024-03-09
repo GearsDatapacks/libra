@@ -75,7 +75,7 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	case token.LEFT_BRACE:
 		return p.parseMapType()
 	default:
-		p.Diagnostics.ReportExpectedType(p.next().Span, p.next().Kind)
+		p.Diagnostics.ReportExpectedType(p.next().Location, p.next().Kind)
 		return &ast.ErrorNode{}
 	}
 }

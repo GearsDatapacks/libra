@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	utils "github.com/gearsdatapacks/libra/test_utils"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 func TestFixedTokens(t *testing.T) {
@@ -58,7 +59,7 @@ func TestFixedTokens(t *testing.T) {
 	}
 
 	for _, tok := range tokens {
-		lexer := lexer.New(tok.src, "test.lb")
+		lexer := lexer.New(text.NewFile("test.lb", tok.src))
 		tokens := lexer.Tokenise()
 
 		utils.AssertEq(t, len(tokens), 2)
@@ -94,7 +95,7 @@ func TestVariableTokens(t *testing.T) {
 	}
 
 	for _, data := range tokens {
-		lexer := lexer.New(data.src, "test.lb")
+		lexer := lexer.New(text.NewFile("test.lb", data.src))
 		tokens := lexer.Tokenise()
 
 		utils.AssertEq(t, len(tokens), 2)
@@ -112,22 +113,22 @@ func TestLexerDiagnostics(t *testing.T) {
 	data := []struct {
 		src  string
 		msg  string
-		span token.Span
+		span text.Span
 	}{
-		{"foo@bar", "Invalid character: '@'", token.NewSpan(0, 3, 4)},
-		{`"Hello`, "Unterminated string", token.NewSpan(0, 0, 6)},
-		{`"He\llo"`, "Invalid escape sequence: '\\l'", token.NewSpan(0, 3, 5)},
-		{"123_456_", "Numbers cannot end with numeric separators", token.NewSpan(0, 7, 8)},
-		{"1_.2", "Numbers cannot end with numeric separators", token.NewSpan(0, 1, 2)},
-		{"3.14_", "Numbers cannot end with numeric separators", token.NewSpan(0, 4, 5)},
+		{"foo@bar", "Invalid character: '@'", text.NewSpan(0, 3, 4)},
+		{`"Hello`, "Unterminated string", text.NewSpan(0, 0, 6)},
+		{`"He\llo"`, "Invalid escape sequence: '\\l'", text.NewSpan(0, 3, 5)},
+		{"123_456_", "Numbers cannot end with numeric separators", text.NewSpan(0, 7, 8)},
+		{"1_.2", "Numbers cannot end with numeric separators", text.NewSpan(0, 1, 2)},
+		{"3.14_", "Numbers cannot end with numeric separators", text.NewSpan(0, 4, 5)},
 	}
 
 	for _, data := range data {
-		lexer := lexer.New(data.src, "test.lb")
+		lexer := lexer.New(text.NewFile("test.lb", data.src))
 		lexer.Tokenise()
 
-		utils.AssertEq(t, len(lexer.Diagnostics.Diagnostics), 1)
-		utils.AssertEq(t, lexer.Diagnostics.Diagnostics[0].Message, data.msg)
-		utils.AssertEq(t, lexer.Diagnostics.Diagnostics[0].Span, data.span)
+		utils.AssertEq(t, len(lexer.Diagnostics), 1)
+		utils.AssertEq(t, lexer.Diagnostics[0].Message, data.msg)
+		utils.AssertEq(t, lexer.Diagnostics[0].Location.Span, data.span)
 	}
 }
