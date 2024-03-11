@@ -1,6 +1,10 @@
 package ir
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/gearsdatapacks/libra/type_checker/types"
+)
 
 type Node interface {
 	String() string
@@ -13,6 +17,7 @@ type Statement interface {
 
 type Expression interface {
 	Node
+	Type() types.Type
 	irExpr()
 }
 

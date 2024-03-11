@@ -10,6 +10,7 @@ import (
 	"github.com/gearsdatapacks/libra/text"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func TestIntegerLiteral(t *testing.T) {
@@ -21,6 +22,7 @@ func TestIntegerLiteral(t *testing.T) {
 	integer := getExpr[*ir.IntegerLiteral](t, program)
 
 	utils.AssertEq(t, integer.Value, int64(val))
+	utils.AssertEq[types.Type](t, integer.Type(), types.Int)
 }
 
 func getProgram(t *testing.T, input string) *ir.Program {

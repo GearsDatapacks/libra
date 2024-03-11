@@ -20,5 +20,10 @@ func main() {
 
 	tc := typechecker.New(diags)
 	program := tc.TypeCheck(mod)
+
+	for _, diag := range tc.Diagnostics {
+		diag.Print()
+	}
+
 	fmt.Println(program.String())
 }

@@ -1,6 +1,10 @@
 package ir
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gearsdatapacks/libra/type_checker/types"
+)
 
 type expression struct{}
 
@@ -13,6 +17,10 @@ type IntegerLiteral struct {
 
 func (i *IntegerLiteral) String() string {
 	return fmt.Sprint(i.Value)
+}
+
+func (i *IntegerLiteral) Type() types.Type {
+	return types.Int
 }
 
 // TODO:
