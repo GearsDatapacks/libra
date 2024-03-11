@@ -5,15 +5,18 @@ import (
 	"github.com/gearsdatapacks/libra/module"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
 
 type typeChecker struct {
 	Diagnostics diagnostics.Manager
+	symbols     *symbols.Table
 }
 
 func New(diagnostics diagnostics.Manager) *typeChecker {
 	return &typeChecker{
 		Diagnostics: diagnostics,
+		symbols:     symbols.New(),
 	}
 }
 

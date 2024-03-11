@@ -5,6 +5,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/text"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type Manager []Diagnostic
@@ -127,5 +128,27 @@ func (m *Manager) ReportOnlyTopLevelStatement(location text.Location, stmtKind s
 
 func (m *Manager) ReportExpectedType(location text.Location, kind token.Kind) {
 	msg := fmt.Sprintf("Expected type, found %s", kind.String())
+	m.reportError(msg, location)
+}
+
+// Type-checker Diagnostics
+
+func (m *Manager) ReportUndefinedType(location text.Location, name string) {
+	msg := fmt.Sprintf("Type %q is not defined", name)
+	m.reportError(msg, location)
+}
+
+func (m *Manager) ReportNotAssignable(location text.Location, expected, actual types.Type) {
+	msg := fmt.Sprintf("Value of type %q is not assignable to type %q", actual.String(), expected.String())
+	m.reportError(msg, location)
+}
+
+func (m *Manager) ReportVariableDefined(location text.Location, name string) {
+	msg := fmt.Sprintf("Variable %q is already defined", name)
+	m.reportError(msg, location)
+}
+
+func (m *Manager) ReportVariableUndefined(location text.Location, name string) {
+	msg := fmt.Sprintf("Variable %q is not defined", name)
 	m.reportError(msg, location)
 }

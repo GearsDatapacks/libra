@@ -3,6 +3,7 @@ package ir
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -65,8 +66,20 @@ func (StringLiteral) Type() types.Type {
 	return types.String
 }
 
+type VariableExpression struct {
+	expression
+	Symbol symbols.Variable
+}
+
+func (v *VariableExpression) String() string {
+	return v.Symbol.Name
+}
+
+func (v *VariableExpression) Type() types.Type {
+	return v.Symbol.Type
+}
+
 // TODO:
-// Identifier
 // BinaryExpression
 // UnaryExpression
 // ListLiteral
