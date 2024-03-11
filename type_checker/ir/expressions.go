@@ -19,14 +19,53 @@ func (i *IntegerLiteral) String() string {
 	return fmt.Sprint(i.Value)
 }
 
-func (i *IntegerLiteral) Type() types.Type {
+func (IntegerLiteral) Type() types.Type {
 	return types.Int
 }
 
+type FloatLiteral struct {
+	expression
+	Value float64
+}
+
+func (f *FloatLiteral) String() string {
+	return fmt.Sprint(f.Value)
+}
+
+func (FloatLiteral) Type() types.Type {
+	return types.Float
+}
+
+type BooleanLiteral struct {
+	expression
+	Value bool
+}
+
+func (b *BooleanLiteral) String() string {
+	if b.Value {
+		return "true"
+	}
+	return "false"
+}
+
+func (BooleanLiteral) Type() types.Type {
+	return types.Bool
+}
+
+type StringLiteral struct {
+	expression
+	Value string
+}
+
+func (b *StringLiteral) String() string {
+	return "\"" + b.Value + "\""
+}
+
+func (StringLiteral) Type() types.Type {
+	return types.String
+}
+
 // TODO:
-// FloatLiteral
-// BooleanLiteral
-// StringLiteral
 // Identifier
 // BinaryExpression
 // UnaryExpression

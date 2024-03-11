@@ -25,6 +25,41 @@ func TestIntegerLiteral(t *testing.T) {
 	utils.AssertEq[types.Type](t, integer.Type(), types.Int)
 }
 
+func TestFloatLiteral(t *testing.T) {
+	input := "3.14_15_9"
+	val := 3.14159
+
+	program := getProgram(t, input)
+
+	float := getExpr[*ir.FloatLiteral](t, program)
+
+	utils.AssertEq(t, float.Value, val)
+	utils.AssertEq[types.Type](t, float.Type(), types.Float)
+}
+
+func TestBooleanLiteral(t *testing.T) {
+	input := "true"
+
+	program := getProgram(t, input)
+
+	boolean := getExpr[*ir.BooleanLiteral](t, program)
+
+	utils.AssertEq(t, boolean.Value, true)
+	utils.AssertEq[types.Type](t, boolean.Type(), types.Bool)
+}
+
+func TestStringLiteral(t *testing.T) {
+	input := `"Hi \"there\\"`
+	val := "Hi \"there\\"
+
+	program := getProgram(t, input)
+
+	str := getExpr[*ir.StringLiteral](t, program)
+
+	utils.AssertEq(t, str.Value, val)
+	utils.AssertEq[types.Type](t, str.Type(), types.String)
+}
+
 func getProgram(t *testing.T, input string) *ir.Program {
 	t.Helper()
 
