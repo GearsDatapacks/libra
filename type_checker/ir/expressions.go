@@ -284,6 +284,26 @@ func (b *BinaryExpression) Type() types.Type {
 	return b.Operator.Type()
 }
 
+type Conversion struct {
+	expression
+	Expression Expression
+	To         types.Type
+}
+
+func (c *Conversion) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(c.Expression.String())
+	result.WriteString(" -> ")
+	result.WriteString(c.To.String())
+
+	return result.String()
+}
+
+func (c *Conversion) Type() types.Type {
+	return c.To
+}
+
 // TODO:
 // UnaryExpression
 // ListLiteral

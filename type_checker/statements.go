@@ -34,9 +34,15 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		}
 	}
 
-	if expectedType != nil && expectedType != value.Type() {
-		t.Diagnostics.ReportNotAssignable(varDec.Value.Tokens()[0].Location, expectedType, value.Type())
+	if expectedType != nil {
+		conversion := convert(value, expectedType, false)
+		if conversion == nil {
+			t.Diagnostics.ReportNotAssignable(varDec.Value.Tokens()[0].Location, expectedType, value.Type())
+		} else {
+			value = conversion
+		}
 	}
+
 	varType := expectedType
 	if expectedType == nil {
 		varType = value.Type()

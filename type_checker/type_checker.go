@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type typeChecker struct {
@@ -44,4 +45,40 @@ func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
 	return &ir.Program{
 		Statements: stmts,
 	}
+}
+
+func canConvert(from, to types.Type) (exists, explicit bool) {
+	if from == to {
+		return false, true
+	}
+
+	if from == types.Int && to == types.Float {
+		return true, false
+	}
+
+	if from == types.Float && to == types.Int {
+		return true, true
+	}
+
+	if from == types.Bool && to == types.Int {
+		return true, true
+	}
+
+	return false, false
+}
+
+func convert(from ir.Expression, to types.Type, allowExplicit bool) ir.Expression {
+	exists, explicit := canConvert(from.Type(), to)
+
+	if !exists && explicit {
+		return from
+	}
+	if exists && (!explicit || allowExplicit) {
+		return &ir.Conversion{
+			Expression: from,
+			To:         to,
+		}
+	}
+
+	return nil
 }

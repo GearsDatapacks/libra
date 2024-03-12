@@ -75,6 +75,7 @@ func TestVariables(t *testing.T) {
 		{"mut foo: f32 = 1.4", "foo", true, types.Float},
 		{`const greeting: string = "Hi!"`, "greeting", false, types.String},
 		{"mut is_awesome = true", "is_awesome", true, types.Bool},
+		{"const my_float: f32 = 15", "my_float", false, types.Float},
 	}
 
 	for _, test := range tests {
@@ -105,7 +106,7 @@ func TestBinaryExpression(t *testing.T) {
 	}{
 		{"true && false", types.Bool, ir.LogicalAnd, types.Bool, types.Bool},
 		{"false || false", types.Bool, ir.LogicalOr, types.Bool, types.Bool},
-		{"1.5 < 2", types.Float, ir.Less, types.Int, types.Bool},
+		{"1.5 < 2", types.Float, ir.Less, types.Float, types.Bool},
 		{"17 <= 17", types.Int, ir.LessEq, types.Int, types.Bool},
 		{"3.14 > 2.71", types.Float, ir.Greater, types.Float, types.Bool},
 		{"42 >= 69", types.Int, ir.GreaterEq, types.Int, types.Bool},
@@ -117,17 +118,17 @@ func TestBinaryExpression(t *testing.T) {
 		{"10101 | 1010", types.Int, ir.BitwiseOr, types.Int, types.Int},
 		{"73 & 52", types.Int, ir.BitwiseAnd, types.Int, types.Int},
 		{"1 + 6", types.Int, ir.AddInt, types.Int, types.Int},
-		{"2.3 + 4", types.Float, ir.AddFloat, types.Int, types.Float},
+		{"2.3 + 4", types.Float, ir.AddFloat, types.Float, types.Float},
 		{`"Hello " + "world"`, types.String, ir.Concat, types.String, types.String},
 		{"8 - 12", types.Int, ir.SubtractInt, types.Int, types.Int},
-		{"3 - 1.3", types.Int, ir.SubtractFloat, types.Float, types.Float},
+		{"3 - 1.3", types.Float, ir.SubtractFloat, types.Float, types.Float},
 		{"6 * 7", types.Int, ir.MultiplyInt, types.Int, types.Int},
 		{"1.3 * 0.4", types.Float, ir.MultiplyFloat, types.Float, types.Float},
-		{"0.3 / 2", types.Float, ir.Divide, types.Int, types.Float},
+		{"0.3 / 2", types.Float, ir.Divide, types.Float, types.Float},
 		{"103 % 2", types.Int, ir.ModuloInt, types.Int, types.Int},
-		{"1.4 % 1", types.Float, ir.ModuloFloat, types.Int, types.Float},
+		{"1.4 % 1", types.Float, ir.ModuloFloat, types.Float, types.Float},
 		{"2 ** 7", types.Int, ir.PowerInt, types.Int, types.Int},
-		{"3 ** 0.5", types.Int, ir.PowerFloat, types.Float, types.Float},
+		{"3 ** 0.5", types.Float, ir.PowerFloat, types.Float, types.Float},
 	}
 
 	for _, test := range tests {

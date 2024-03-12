@@ -56,7 +56,7 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	left := t.typeCheckExpression(binExpr.Left)
 	right := t.typeCheckExpression(binExpr.Right)
 
-	operator := getBinaryOperator(binExpr.Operator.Kind, left.Type(), right.Type())
+	left, right, operator := getBinaryOperator(binExpr.Operator.Kind, left, right)
 
 	if operator == 0 {
 		t.Diagnostics.ReportBinaryOperatorUndefined(binExpr.Operator.Location, binExpr.Operator.Value, left.Type(), right.Type())
@@ -69,130 +69,145 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	}
 }
 
-func getBinaryOperator(op token.Kind, left, right types.Type) ir.BinaryOperator {
+func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Expression, binOp ir.BinaryOperator) {
+	lhs = left
+	rhs = right
+	binOp = 0
+	lType := left.Type()
+	rType := right.Type()
+
+	leftNumeric := lType == types.Int || lType == types.Float
+	rightNumeric := rType == types.Int || rType == types.Float
+	isFloat := lType == types.Float || rType == types.Float
+
 	switch op {
 	case token.DOUBLE_AMPERSAND:
-		if left == types.Bool && right == types.Bool {
-			return ir.LogicalAnd
+		if lType == types.Bool && rType == types.Bool {
+			binOp = ir.LogicalAnd
 		}
 	case token.DOUBLE_PIPE:
-		if left == types.Bool && right == types.Bool {
-			return ir.LogicalOr
+		if lType == types.Bool && rType == types.Bool {
+			binOp = ir.LogicalOr
 		}
 	case token.LEFT_ANGLE:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
 		if leftNumeric && rightNumeric {
-			return ir.Less
+			binOp = ir.Less
+			if isFloat {
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
+			}
 		}
 	case token.RIGHT_ANGLE:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
 		if leftNumeric && rightNumeric {
-			return ir.Greater
+			binOp = ir.Greater
+			if isFloat {
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
+			}
 		}
 	case token.LEFT_ANGLE_EQUALS:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
 		if leftNumeric && rightNumeric {
-			return ir.LessEq
+			binOp = ir.LessEq
+			if isFloat {
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
+			}
 		}
 	case token.RIGHT_ANGLE_EQUALS:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
 		if leftNumeric && rightNumeric {
-			return ir.GreaterEq
+			binOp = ir.GreaterEq
+			if isFloat {
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
+			}
 		}
 	case token.DOUBLE_EQUALS:
-		if left == right {
-			return ir.Equal
+		if lType == rType {
+			binOp = ir.Equal
 		}
 	case token.BANG_EQUALS:
-		if left == right {
-			return ir.NotEqual
+		if lType == rType {
+			binOp = ir.NotEqual
 		}
 	case token.DOUBLE_LEFT_ANGLE:
-		if left == types.Int && right == types.Int {
-			return ir.LeftShift
+		if lType == types.Int && rType == types.Int {
+			binOp = ir.LeftShift
 		}
 	case token.DOUBLE_RIGHT_ANGLE:
-		if left == types.Int && right == types.Int {
-			return ir.RightShift
+		if lType == types.Int && rType == types.Int {
+			binOp = ir.RightShift
 		}
 	case token.PLUS:
-		if left == types.String && right == types.String {
-			return ir.Concat
+		if lType == types.String && rType == types.String {
+			binOp = ir.Concat
 		}
 
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
-		isFloat := left == types.Float || right == types.Float
 		if leftNumeric && rightNumeric {
 			if isFloat {
-				return ir.AddFloat
+				binOp = ir.AddFloat
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
 			} else {
-				return ir.AddInt
+				binOp = ir.AddInt
 			}
 		}
 	case token.MINUS:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
-		isFloat := left == types.Float || right == types.Float
 		if leftNumeric && rightNumeric {
 			if isFloat {
-				return ir.SubtractFloat
+				binOp = ir.SubtractFloat
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
 			} else {
-				return ir.SubtractInt
+				binOp = ir.SubtractInt
 			}
 		}
 	case token.STAR:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
-		isFloat := left == types.Float || right == types.Float
 		if leftNumeric && rightNumeric {
 			if isFloat {
-				return ir.MultiplyFloat
+				binOp = ir.MultiplyFloat
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
 			} else {
-				return ir.MultiplyInt
+				binOp = ir.MultiplyInt
 			}
 		}
 	case token.SLASH:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
 		if leftNumeric && rightNumeric {
-			return ir.Divide
+			binOp = ir.Divide
+			if isFloat {
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
+			}
 		}
 	case token.PERCENT:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
-		isFloat := left == types.Float || right == types.Float
 		if leftNumeric && rightNumeric {
 			if isFloat {
-				return ir.ModuloFloat
+				binOp = ir.ModuloFloat
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
 			} else {
-				return ir.ModuloInt
+				binOp = ir.ModuloInt
 			}
 		}
 	case token.DOUBLE_STAR:
-		leftNumeric := left == types.Int || left == types.Float
-		rightNumeric := right == types.Int || right == types.Float
-		isFloat := left == types.Float || right == types.Float
 		if leftNumeric && rightNumeric {
 			if isFloat {
-				return ir.PowerFloat
+				binOp = ir.PowerFloat
+				lhs = convert(lhs, types.Float, false)
+				rhs = convert(rhs, types.Float, false)
 			} else {
-				return ir.PowerInt
+				binOp = ir.PowerInt
 			}
 		}
 	case token.PIPE:
-		if left == types.Int && right == types.Int {
-			return ir.BitwiseOr
+		if lType == types.Int && rType == types.Int {
+			binOp = ir.BitwiseOr
 		}
 	case token.AMPERSAND:
-		if left == types.Int && right == types.Int {
-			return ir.BitwiseAnd
+		if lType == types.Int && rType == types.Int {
+			binOp = ir.BitwiseAnd
 		}
 	}
 
-	return 0
+	return
 }
