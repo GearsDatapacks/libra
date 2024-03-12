@@ -13,7 +13,7 @@ type Type interface {
 type PrimaryType int
 
 const (
-	_ PrimaryType = iota
+	Invalid PrimaryType = iota
 	Int
 	Float
 	Bool

@@ -152,3 +152,8 @@ func (m *Manager) ReportVariableUndefined(location text.Location, name string) {
 	msg := fmt.Sprintf("Variable %q is not defined", name)
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportBinaryOperatorUndefined(location text.Location, operator string, left, right types.Type) {
+	msg := fmt.Sprintf("Operator %q is not defined for types %q and %q", operator, left.String(), right.String())
+	m.reportError(msg, location)
+}

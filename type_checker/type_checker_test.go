@@ -64,7 +64,7 @@ func TestStringLiteral(t *testing.T) {
 	utils.AssertEq[types.Type](t, str.Type(), types.String)
 }
 
-func TesVariables(t *testing.T) {
+func TestVariables(t *testing.T) {
 	tests := []struct {
 		src      string
 		varName  string
@@ -95,6 +95,52 @@ func TesVariables(t *testing.T) {
 	}
 }
 
+func TestBinaryExpression(t *testing.T) {
+	tests := []struct {
+		src    string
+		left   types.Type
+		op     ir.BinaryOperator
+		right  types.Type
+		result types.Type
+	}{
+		{"true && false", types.Bool, ir.LogicalAnd, types.Bool, types.Bool},
+		{"false || false", types.Bool, ir.LogicalOr, types.Bool, types.Bool},
+		{"1.5 < 2", types.Float, ir.Less, types.Int, types.Bool},
+		{"17 <= 17", types.Int, ir.LessEq, types.Int, types.Bool},
+		{"3.14 > 2.71", types.Float, ir.Greater, types.Float, types.Bool},
+		{"42 >= 69", types.Int, ir.GreaterEq, types.Int, types.Bool},
+		{"1 == 2", types.Int, ir.Equal, types.Int, types.Bool},
+		{"true == true", types.Bool, ir.Equal, types.Bool, types.Bool},
+		{"1.2 != 7.5", types.Float, ir.NotEqual, types.Float, types.Bool},
+		{"1 << 5", types.Int, ir.LeftShift, types.Int, types.Int},
+		{"8362 >> 3", types.Int, ir.RightShift, types.Int, types.Int},
+		{"10101 | 1010", types.Int, ir.BitwiseOr, types.Int, types.Int},
+		{"73 & 52", types.Int, ir.BitwiseAnd, types.Int, types.Int},
+		{"1 + 6", types.Int, ir.AddInt, types.Int, types.Int},
+		{"2.3 + 4", types.Float, ir.AddFloat, types.Int, types.Float},
+		{`"Hello " + "world"`, types.String, ir.Concat, types.String, types.String},
+		{"8 - 12", types.Int, ir.SubtractInt, types.Int, types.Int},
+		{"3 - 1.3", types.Int, ir.SubtractFloat, types.Float, types.Float},
+		{"6 * 7", types.Int, ir.MultiplyInt, types.Int, types.Int},
+		{"1.3 * 0.4", types.Float, ir.MultiplyFloat, types.Float, types.Float},
+		{"0.3 / 2", types.Float, ir.Divide, types.Int, types.Float},
+		{"103 % 2", types.Int, ir.ModuloInt, types.Int, types.Int},
+		{"1.4 % 1", types.Float, ir.ModuloFloat, types.Int, types.Float},
+		{"2 ** 7", types.Int, ir.PowerInt, types.Int, types.Int},
+		{"3 ** 0.5", types.Int, ir.PowerFloat, types.Float, types.Float},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		binExpr := getExpr[*ir.BinaryExpression](t, program)
+
+		utils.AssertEq(t, binExpr.Left.Type(), test.left)
+		utils.AssertEq(t, binExpr.Operator, test.op)
+		utils.AssertEq(t, binExpr.Operator.Type(), test.result)
+		utils.AssertEq(t, binExpr.Right.Type(), test.right)
+	}
+}
+
 type diagnostic struct {
 	message string
 	kind    diagnostics.DiagnosticKind
@@ -109,6 +155,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{"const text: string = [false]", []diagnostic{{`Value of type "bool" is not assignable to type "string"`, diagnostics.Error}}},
 		{"let foo = 1; let [foo] = 2", []diagnostic{{`Variable "foo" is already defined`, diagnostics.Error}}},
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},
+		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "i32" and "string"`, diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
