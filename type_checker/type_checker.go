@@ -48,7 +48,7 @@ func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
 }
 
 func canConvert(from, to types.Type) (exists, explicit bool) {
-	if from == to {
+	if types.Assignable(to, from) {
 		return false, true
 	}
 

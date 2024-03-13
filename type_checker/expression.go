@@ -56,6 +56,15 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	left := t.typeCheckExpression(binExpr.Left)
 	right := t.typeCheckExpression(binExpr.Right)
 
+	// Don't even check for operators with invalid types, to prevent cascading errors
+	if left.Type() == types.Invalid || right.Type() == types.Invalid {
+		return &ir.BinaryExpression{
+			Left:     left,
+			Operator: 0,
+			Right:    right,
+		}
+	}
+
 	left, right, operator := getBinaryOperator(binExpr.Operator.Kind, left, right)
 
 	if operator == 0 {

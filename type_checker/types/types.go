@@ -8,6 +8,15 @@ import (
 
 type Type interface {
 	String() string
+	valid(Type) bool
+}
+
+func Assignable(to, from Type) bool {
+	if to == Invalid || from == Invalid {
+		return true
+	}
+
+	return to.valid(from)
 }
 
 type PrimaryType int
@@ -21,14 +30,20 @@ const (
 )
 
 var typeNames = map[PrimaryType]string{
-	Int:    "i32",
-	Float:  "f32",
-	Bool:   "bool",
-	String: "string",
+	Invalid: "<?>",
+	Int:     "i32",
+	Float:   "f32",
+	Bool:    "bool",
+	String:  "string",
 }
 
 func (pt PrimaryType) String() string {
 	return typeNames[pt]
+}
+
+func (pt PrimaryType) valid(other Type) bool {
+	primary, isPrimary := other.(PrimaryType)
+	return isPrimary && primary == pt
 }
 
 func FromAst(node ast.TypeExpression) Type {
