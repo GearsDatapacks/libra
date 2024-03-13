@@ -78,6 +78,10 @@ func Load(filePath string) (*Module, diagnostics.Manager) {
 	}
 	fetchedModules[modPath] = mod
 
+	if len(diagnostics) != 0 {
+		return mod, diagnostics
+	}
+
 	for _, file := range files {
 		for _, stmt := range file.Ast.Statements {
 			if importStmt, ok := stmt.(*ast.ImportStatement); ok {

@@ -33,14 +33,29 @@ type Location struct {
 	File *SourceFile
 }
 
-type Span struct {
-	Line, Column, End int
+func (l Location) To(other Location) Location {
+	if l.File != other.File {
+		panic("Must join locations from the same file")
+	}
+	return Location{
+		Span: l.Span.To(other.Span),
+		File: l.File,
+	}
 }
 
-func NewSpan(line, col, end int) Span {
+type Span struct {
+	StartLine, EndLine, Column, End int
+}
+
+func NewSpan(startLine, endLine, col, end int) Span {
 	return Span{
-		Line:   line,
-		Column: col,
-		End:    end,
+		StartLine: startLine,
+		EndLine:   endLine,
+		Column:    col,
+		End:       end,
 	}
+}
+
+func (s Span) To(other Span) Span {
+	return NewSpan(s.StartLine, other.EndLine, s.Column, other.End)
 }

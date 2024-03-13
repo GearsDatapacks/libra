@@ -86,7 +86,7 @@ func (m *Manager) ReportLastParameterMustHaveType(location text.Location, fnLoca
 	msg := "The last parameter of a function must have a type annotation"
 	m.reportError(msg, location)
 
-	if location.Span.Line != fnLocation.Span.Line {
+	if location.Span.StartLine != fnLocation.Span.StartLine {
 		info := "Parameter of this function"
 		m.reportInfo(info, fnLocation)
 	}
@@ -96,7 +96,7 @@ func (m *Manager) ReportLastStructFieldMustHaveType(location text.Location, stru
 	errMsg := "The last field of a struct must have a type annotation"
 	m.reportError(errMsg, location)
 
-	if location.Span.Line != structLoc.Span.Line {
+	if location.Span.StartLine != structLoc.Span.StartLine {
 		info := "Field in this struct"
 		m.reportInfo(info, structLoc)
 	}

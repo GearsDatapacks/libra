@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"fmt"
 	"strings"
+
 	"github.com/gearsdatapacks/libra/text"
 )
 
@@ -15,9 +16,9 @@ const (
 )
 
 type Diagnostic struct {
-	Kind    DiagnosticKind
-	Message string
-	Location    text.Location
+	Kind     DiagnosticKind
+	Message  string
+	Location text.Location
 }
 
 func new(kind DiagnosticKind, message string, location text.Location) Diagnostic {
@@ -44,20 +45,38 @@ func (d *Diagnostic) Print() {
 	lines := d.Location.File.Lines
 
 	SetColour(White)
-	fmt.Printf("%s:%d:%d:\n", fileName, span.Line+1, span.Column+1)
+	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.Column+1)
 	ResetColour()
 
-	line := lines[span.Line]
+	spanLines := lines[span.StartLine : span.EndLine+1]
+	numLines := span.EndLine + 1 - span.StartLine
 
-	fmt.Print(line[:span.Column])
+	fmt.Print(spanLines[0][:span.Column])
 
 	SetColour(colour)
-	fmt.Print(line[span.Column:span.End])
+	if numLines == 1 {
+		fmt.Print(spanLines[0][span.Column:span.End])
+	} else {
+		for i, line := range lines {
+			if i == 0 {
+				fmt.Println(line[span.Column:])
+			} else if i == numLines-1 {
+				fmt.Print(line[:span.End])
+			} else {
+				fmt.Println(line)
+			}
+		}
+	}
+
 	ResetColour()
 
-	fmt.Println(line[span.End:])
+	fmt.Println(spanLines[numLines-1][span.End:])
 
-	arrow := strings.Repeat(" ", span.Column) + "^"
+	column := span.Column
+	if numLines > 1 {
+		column = 0
+	}
+	arrow := strings.Repeat(" ", column) + "^"
 	fmt.Print(arrow + " ")
 
 	SetColour(colour)

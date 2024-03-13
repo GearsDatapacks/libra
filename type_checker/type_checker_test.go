@@ -203,11 +203,12 @@ func getSpans(sourceText string) (string, []text.Span) {
 	col := 0
 	for _, c := range sourceText {
 		if c == '[' {
-			spans = append(spans, text.NewSpan(line, col, 0))
+			spans = append(spans, text.NewSpan(line, line, col, 0))
 			continue
 		}
 		if c == ']' {
 			spans[len(spans)-1].End = col
+			spans[len(spans)-1].EndLine = line
 			continue
 		}
 

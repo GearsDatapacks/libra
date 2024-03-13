@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type Node interface {
@@ -19,11 +20,13 @@ type Statement interface {
 type Expression interface {
 	Node
 	expressionNode()
+	Location() text.Location
 }
 
 type TypeExpression interface {
 	Node
 	typeNode()
+	Location() text.Location
 }
 
 type Program struct {
@@ -62,6 +65,9 @@ type ErrorNode struct {
 
 func (e *ErrorNode) Tokens() []token.Token {
 	return []token.Token{}
+}
+func (e *ErrorNode) Location() text.Location {
+	return text.Location{}
 }
 func (e *ErrorNode) String() string {
 	return ""

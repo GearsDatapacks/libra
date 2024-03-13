@@ -47,7 +47,7 @@ func (l *lexer) Tokenise() []token.Token {
 
 func (l *lexer) nextToken() token.Token {
 	l.skipWhitespace()
-	nextToken := token.New(token.INVALID, "", l.getLocation(l.line, l.col, l.col))
+	nextToken := token.New(token.INVALID, "", l.getLocation(l.line, l.line, l.col, l.col))
 
 	next := l.next()
 	pos := l.pos
@@ -69,7 +69,7 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.Kind = token.STRING
 		nextToken.Value = l.parseString()
 	} else {
-		l.Diagnostics.ReportInvalidCharacter(l.getLocation(l.line, l.col, l.col+1), next)
+		l.Diagnostics.ReportInvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next)
 		l.consume()
 	}
 
@@ -96,7 +96,7 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 	if l.next() == '.' && isNumber(l.peek(1)) {
 		if l.peek(-1) == '_' {
 			l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-				l.getLocation(l.line, l.col-1, l.col))
+				l.getLocation(l.line, l.line, l.col-1, l.col))
 		}
 
 		kind = token.FLOAT
@@ -114,13 +114,14 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 
 	if l.peek(-1) == '_' {
 		l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-			l.getLocation(l.line, l.col-1, l.col))
+			l.getLocation(l.line, l.line, l.col-1, l.col))
 	}
 
 	return kind, str.String()
 }
 
 func (l *lexer) parseString() string {
+	startLine := l.line
 	pos := l.col
 	l.consume()
 	str := bytes.NewBuffer([]byte{})
@@ -131,7 +132,7 @@ func (l *lexer) parseString() string {
 			char, ok := escape(l.next())
 			if !ok {
 				l.Diagnostics.ReportInvalidEscapeSequence(
-					l.getLocation(l.line, l.col-1, l.col+1), l.next())
+					l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next())
 			}
 			str.WriteByte(char)
 		} else {
@@ -142,7 +143,7 @@ func (l *lexer) parseString() string {
 	}
 
 	if l.eof() {
-		l.Diagnostics.ReportUnterminatedString(l.getLocation(l.line, pos, l.col))
+		l.Diagnostics.ReportUnterminatedString(l.getLocation(startLine, l.line, pos, l.col))
 	}
 
 	l.consume()
@@ -329,8 +330,8 @@ func (l *lexer) eof() bool {
 	return l.pos >= len(l.file.Text)
 }
 
-func (l *lexer) getLocation(line, col, end int) text.Location {
-	span := text.NewSpan(line, col, end)
+func (l *lexer) getLocation(startLine, endLine, col, end int) text.Location {
+	span := text.NewSpan(startLine, endLine, col, end)
 	return text.Location{
 		Span: span,
 		File: l.file,

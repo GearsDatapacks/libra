@@ -30,14 +30,14 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		expectedType = types.FromAst(varDec.Type.Type)
 		if expectedType == nil {
 			name := varDec.Type.Type.(*ast.TypeName)
-			t.Diagnostics.ReportUndefinedType(name.Name.Location, name.Name.Value)
+			t.Diagnostics.ReportUndefinedType(name.Location(), name.Name.Value)
 		}
 	}
 
 	if expectedType != nil {
 		conversion := convert(value, expectedType, false)
 		if conversion == nil {
-			t.Diagnostics.ReportNotAssignable(varDec.Value.Tokens()[0].Location, expectedType, value.Type())
+			t.Diagnostics.ReportNotAssignable(varDec.Value.Location(), expectedType, value.Type())
 		} else {
 			value = conversion
 		}

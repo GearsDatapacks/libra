@@ -23,7 +23,7 @@ func TestIdentifierExpression(t *testing.T) {
 	utils.AssertEq(t, ident.Name, input)
 	utils.AssertEq(t, ident.Token.Kind, token.IDENTIFIER)
 	utils.AssertEq(t, ident.Token.Value, input)
-	utils.AssertEq(t, ident.Token.Location.Span, text.NewSpan(0, 0, len(input)))
+	utils.AssertEq(t, ident.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestIntegerExpression(t *testing.T) {
@@ -38,7 +38,7 @@ func TestIntegerExpression(t *testing.T) {
 
 	utils.AssertEq(t, integer.Token.Kind, token.INTEGER)
 	utils.AssertEq(t, integer.Token.Value, "156098")
-	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, 0, len(input)))
+	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestFloatExpression(t *testing.T) {
@@ -50,10 +50,10 @@ func TestFloatExpression(t *testing.T) {
 	float := getExpr[*ast.FloatLiteral](t, program)
 
 	utils.AssertEq(t, float.Value, val)
-	
+
 	utils.AssertEq(t, float.Token.Kind, token.FLOAT)
 	utils.AssertEq(t, float.Token.Value, input)
-	utils.AssertEq(t, float.Token.Location.Span, text.NewSpan(0, 0, len(input)))
+	utils.AssertEq(t, float.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestBooleanExpression(t *testing.T) {
@@ -66,7 +66,7 @@ func TestBooleanExpression(t *testing.T) {
 	utils.AssertEq(t, boolean.Value, true)
 	utils.AssertEq(t, boolean.Token.Kind, token.IDENTIFIER)
 	utils.AssertEq(t, boolean.Token.Value, input)
-	utils.AssertEq(t, boolean.Token.Location.Span, text.NewSpan(0, 0, len(input)))
+	utils.AssertEq(t, boolean.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestListExpression(t *testing.T) {
@@ -507,7 +507,7 @@ func TestErrorExpression(t *testing.T) {
 
 	diag := utils.AssertSingle(t, p.Diagnostics)
 	msg := "Expected expression, found `)`"
-	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 1))
+	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 0, 1))
 
 	getExpr[*ast.ErrorNode](t, program)
 }
@@ -519,11 +519,12 @@ func getSpans(sourceText string) (string, []text.Span) {
 	col := 0
 	for _, c := range sourceText {
 		if c == '[' {
-			spans = append(spans, text.NewSpan(line, col, 0))
+			spans = append(spans, text.NewSpan(line, line, col, 0))
 			continue
 		}
 		if c == ']' {
 			spans[len(spans)-1].End = col
+			spans[len(spans)-1].EndLine = line
 			continue
 		}
 

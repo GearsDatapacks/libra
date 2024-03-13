@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type typeExpression struct{}
@@ -17,6 +18,10 @@ type TypeName struct {
 
 func (tn *TypeName) Tokens() []token.Token {
 	return []token.Token{tn.Name}
+}
+
+func (tn *TypeName) Location() text.Location {
+	return tn.Name.Location
 }
 
 func (tn *TypeName) String() string {
@@ -36,6 +41,10 @@ func (u *Union) Tokens() []token.Token {
 	}
 
 	return tokens
+}
+
+func (u *Union) Location() text.Location {
+	return u.Types[0].Location().To(u.Types[len(u.Types)-1].Location())
 }
 
 func (u *Union) String() string {
@@ -70,6 +79,10 @@ func (a *ArrayType) Tokens() []token.Token {
 	return tokens
 }
 
+func (a *ArrayType) Location() text.Location {
+	return a.Type.Location().To(a.RightSquare.Location)
+}
+
 func (a *ArrayType) String() string {
 	var result bytes.Buffer
 
@@ -101,6 +114,10 @@ func (ptr *PointerType) Tokens() []token.Token {
 	return tokens
 }
 
+func (ptr *PointerType) Location() text.Location {
+	return ptr.Star.Location.To(ptr.Type.Location())
+}
+
 func (ptr *PointerType) String() string {
 	var result bytes.Buffer
 
@@ -130,6 +147,10 @@ func (e *ErrorType) Tokens() []token.Token {
 	return tokens
 }
 
+func (e *ErrorType) Location() text.Location {
+	return e.Type.Location().To(e.Bang.Location)
+}
+
 func (e *ErrorType) String() string {
 	var result bytes.Buffer
 
@@ -154,6 +175,10 @@ func (o *OptionType) Tokens() []token.Token {
 	return tokens
 }
 
+func (o *OptionType) Location() text.Location {
+	return o.Type.Location().To(o.Question.Location)
+}
+
 func (o *OptionType) String() string {
 	var result bytes.Buffer
 
@@ -175,6 +200,10 @@ func (p *ParenthesisedType) Tokens() []token.Token {
 	tokens = append(tokens, p.Type.Tokens()...)
 	tokens = append(tokens, p.RightParen)
 	return tokens
+}
+
+func (p *ParenthesisedType) Location() text.Location {
+	return p.LeftParen.Location.To(p.RightParen.Location)
 }
 
 func (p *ParenthesisedType) String() string {
@@ -204,6 +233,10 @@ func (t *TupleType) Tokens() []token.Token {
 	tokens = append(tokens, t.RightParen)
 
 	return tokens
+}
+
+func (t *TupleType) Location() text.Location {
+	return t.LeftParen.Location.To(t.RightParen.Location)
 }
 
 func (t *TupleType) String() string {
@@ -242,6 +275,10 @@ func (m *MapType) Tokens() []token.Token {
 	return tokens
 }
 
+func (m *MapType) Location() text.Location {
+	return m.LeftBrace.Location.To(m.LeftBrace.Location)
+}
+
 func (m *MapType) String() string {
 	var result bytes.Buffer
 
@@ -263,6 +300,10 @@ type MemberType struct {
 
 func (m *MemberType) Tokens() []token.Token {
 	return append(m.Left.Tokens(), m.Dot, m.Member)
+}
+
+func (m *MemberType) Location() text.Location {
+	return m.Left.Location().To(m.Member.Location)
 }
 
 func (m *MemberType) String() string {

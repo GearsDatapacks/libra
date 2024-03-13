@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 type expression struct{}
@@ -19,6 +20,9 @@ type IntegerLiteral struct {
 func (il *IntegerLiteral) Tokens() []token.Token {
 	return []token.Token{il.Token}
 }
+func (il *IntegerLiteral) Location() text.Location {
+	return il.Token.Location
+}
 func (il *IntegerLiteral) String() string {
 	return il.Token.Value
 }
@@ -31,6 +35,9 @@ type FloatLiteral struct {
 
 func (fl *FloatLiteral) Tokens() []token.Token {
 	return []token.Token{fl.Token}
+}
+func (fl *FloatLiteral) Location() text.Location {
+	return fl.Token.Location
 }
 func (fl *FloatLiteral) String() string {
 	return fl.Token.Value
@@ -45,6 +52,9 @@ type BooleanLiteral struct {
 func (bl *BooleanLiteral) Tokens() []token.Token {
 	return []token.Token{bl.Token}
 }
+func (bl *BooleanLiteral) Location() text.Location {
+	return bl.Token.Location
+}
 func (bl *BooleanLiteral) String() string {
 	return bl.Token.Value
 }
@@ -58,6 +68,9 @@ type StringLiteral struct {
 func (sl *StringLiteral) Tokens() []token.Token {
 	return []token.Token{sl.Token}
 }
+func (sl *StringLiteral) Location() text.Location {
+	return sl.Token.Location
+}
 func (sl *StringLiteral) String() string {
 	return `"` + sl.Token.Value + `"`
 }
@@ -70,6 +83,9 @@ type Identifier struct {
 
 func (i *Identifier) Tokens() []token.Token {
 	return []token.Token{i.Token}
+}
+func (i *Identifier) Location() text.Location {
+	return i.Token.Location
 }
 func (i *Identifier) String() string {
 	return i.Name
@@ -88,6 +104,10 @@ func (b *BinaryExpression) Tokens() []token.Token {
 	tokens = append(tokens, b.Operator)
 	tokens = append(tokens, b.Right.Tokens()...)
 	return tokens
+}
+
+func (b *BinaryExpression) Location() text.Location {
+	return b.Left.Location().To(b.Right.Location())
 }
 
 func (b *BinaryExpression) String() string {
@@ -134,6 +154,10 @@ func (p *ParenthesisedExpression) Tokens() []token.Token {
 	return tokens
 }
 
+func (p *ParenthesisedExpression) Location() text.Location {
+	return p.LeftParen.Location.To(p.RightParen.Location)
+}
+
 func (p *ParenthesisedExpression) String() string {
 	var result bytes.Buffer
 
@@ -152,6 +176,10 @@ type PrefixExpression struct {
 
 func (p *PrefixExpression) Tokens() []token.Token {
 	return append([]token.Token{p.Operator}, p.Operand.Tokens()...)
+}
+
+func (p *PrefixExpression) Location() text.Location {
+	return p.Operator.Location.To(p.Operand.Location())
 }
 
 func (p *PrefixExpression) String() string {
@@ -177,6 +205,10 @@ type PostfixExpression struct {
 
 func (p *PostfixExpression) Tokens() []token.Token {
 	return append(p.Operand.Tokens(), p.Operator)
+}
+
+func (p *PostfixExpression) Location() text.Location {
+	return p.Operand.Location().To(p.Operator.Location)
 }
 
 func (p *PostfixExpression) String() string {
@@ -209,6 +241,10 @@ func (l *ListLiteral) Tokens() []token.Token {
 	}
 	tokens = append(tokens, l.RightSquare)
 	return tokens
+}
+
+func (l *ListLiteral) Location() text.Location {
+	return l.LeftSquare.Location.To(l.RightSquare.Location)
 }
 
 func (l *ListLiteral) String() string {
@@ -256,6 +292,10 @@ type MapLiteral struct {
 	LeftBrace  token.Token
 	KeyValues  []KeyValue
 	RightBrace token.Token
+}
+
+func (m *MapLiteral) Location() text.Location {
+	return m.LeftBrace.Location.To(m.RightBrace.Location)
 }
 
 func (m *MapLiteral) Tokens() []token.Token {
@@ -308,6 +348,10 @@ func (call *FunctionCall) Tokens() []token.Token {
 	return tokens
 }
 
+func (call *FunctionCall) Location() text.Location {
+	return call.Callee.Location().To(call.RightParen.Location)
+}
+
 func (call *FunctionCall) String() string {
 	var result bytes.Buffer
 
@@ -345,6 +389,10 @@ func (index *IndexExpression) Tokens() []token.Token {
 	return tokens
 }
 
+func (index *IndexExpression) Location() text.Location {
+	return index.Left.Location().To(index.RightSquare.Location)
+}
+
 func (index *IndexExpression) String() string {
 	var result bytes.Buffer
 
@@ -368,6 +416,10 @@ type AssignmentExpression struct {
 func (a *AssignmentExpression) Tokens() []token.Token {
 	tokens := append(a.Assignee.Tokens(), a.Operator)
 	return append(tokens, a.Value.Tokens()...)
+}
+
+func (a *AssignmentExpression) Location() text.Location {
+	return a.Assignee.Location().To(a.Value.Location())
 }
 
 func (a *AssignmentExpression) String() string {
@@ -415,6 +467,10 @@ func (t *TupleExpression) Tokens() []token.Token {
 	return tokens
 }
 
+func (t *TupleExpression) Location() text.Location {
+	return t.LeftParen.Location.To(t.RightParen.Location)
+}
+
 func (t *TupleExpression) String() string {
 	var result bytes.Buffer
 
@@ -444,6 +500,10 @@ func (m *MemberExpression) Tokens() []token.Token {
 		return append(m.Left.Tokens(), m.Dot, m.Member)
 	}
 	return []token.Token{m.Dot, m.Member}
+}
+
+func (m *MemberExpression) Location() text.Location {
+	return m.Left.Location().To(m.Member.Location)
 }
 
 func (m *MemberExpression) String() string {
@@ -487,6 +547,10 @@ func (i *InferredExpression) Tokens() []token.Token {
 	return []token.Token{i.Token}
 }
 
+func (i *InferredExpression) Location() text.Location {
+	return i.Token.Location
+}
+
 func (i *InferredExpression) String() string {
 	return i.Token.Value
 }
@@ -507,6 +571,10 @@ func (s *StructExpression) Tokens() []token.Token {
 	}
 
 	return append(tokens, s.RightBrace)
+}
+
+func (s *StructExpression) Location() text.Location {
+	return s.Struct.Location().To(s.RightBrace.Location)
 }
 
 func (s *StructExpression) String() string {
@@ -546,6 +614,10 @@ func (ce *CastExpression) Tokens() []token.Token {
 	return tokens
 }
 
+func (ce *CastExpression) Location() text.Location {
+	return ce.Left.Location().To(ce.Type.Location())
+}
+
 func (ce *CastExpression) String() string {
 	var result bytes.Buffer
 
@@ -571,6 +643,10 @@ func (tc *TypeCheckExpression) Tokens() []token.Token {
 	return tokens
 }
 
+func (ce *TypeCheckExpression) Location() text.Location {
+	return ce.Left.Location().To(ce.Type.Location())
+}
+
 func (tc *TypeCheckExpression) String() string {
 	var result bytes.Buffer
 
@@ -586,6 +662,10 @@ type RangeExpression struct {
 	Start    Expression
 	Operator token.Token
 	End      Expression
+}
+
+func (r *RangeExpression) Location() text.Location {
+	return r.Start.Location().To(r.End.Location())
 }
 
 func (r *RangeExpression) Tokens() []token.Token {
