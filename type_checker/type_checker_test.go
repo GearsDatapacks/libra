@@ -26,7 +26,7 @@ func TestIntegerLiteral(t *testing.T) {
 	integer := getExpr[*ir.IntegerLiteral](t, program)
 
 	utils.AssertEq(t, integer.Value, int64(val))
-	utils.AssertEq[types.Type](t, integer.Type(), types.Int)
+	utils.AssertEq[types.Type](t, integer.Type(), types.UntypedInt)
 }
 
 func TestFloatLiteral(t *testing.T) {
@@ -38,7 +38,7 @@ func TestFloatLiteral(t *testing.T) {
 	float := getExpr[*ir.FloatLiteral](t, program)
 
 	utils.AssertEq(t, float.Value, val)
-	utils.AssertEq[types.Type](t, float.Type(), types.Float)
+	utils.AssertEq[types.Type](t, float.Type(), types.UntypedFloat)
 }
 
 func TestBooleanLiteral(t *testing.T) {
@@ -107,28 +107,28 @@ func TestBinaryExpression(t *testing.T) {
 		{"true && false", types.Bool, ir.LogicalAnd, types.Bool, types.Bool},
 		{"false || false", types.Bool, ir.LogicalOr, types.Bool, types.Bool},
 		{"1.5 < 2", types.Float, ir.Less, types.Float, types.Bool},
-		{"17 <= 17", types.Int, ir.LessEq, types.Int, types.Bool},
+		{"17 <= 17", types.UntypedInt, ir.LessEq, types.UntypedInt, types.Bool},
 		{"3.14 > 2.71", types.Float, ir.Greater, types.Float, types.Bool},
-		{"42 >= 69", types.Int, ir.GreaterEq, types.Int, types.Bool},
-		{"1 == 2", types.Int, ir.Equal, types.Int, types.Bool},
+		{"42 >= 69", types.UntypedInt, ir.GreaterEq, types.UntypedInt, types.Bool},
+		{"1 == 2", types.UntypedInt, ir.Equal, types.UntypedInt, types.Bool},
 		{"true == true", types.Bool, ir.Equal, types.Bool, types.Bool},
-		{"1.2 != 7.5", types.Float, ir.NotEqual, types.Float, types.Bool},
-		{"1 << 5", types.Int, ir.LeftShift, types.Int, types.Int},
-		{"8362 >> 3", types.Int, ir.RightShift, types.Int, types.Int},
-		{"10101 | 1010", types.Int, ir.BitwiseOr, types.Int, types.Int},
-		{"73 & 52", types.Int, ir.BitwiseAnd, types.Int, types.Int},
-		{"1 + 6", types.Int, ir.AddInt, types.Int, types.Int},
-		{"2.3 + 4", types.Float, ir.AddFloat, types.Float, types.Float},
+		{"1.2 != 7.5", types.UntypedFloat, ir.NotEqual, types.UntypedFloat, types.Bool},
+		{"1 << 5", types.UntypedInt, ir.LeftShift, types.UntypedInt, types.UntypedInt},
+		{"8362 >> 3", types.UntypedInt, ir.RightShift, types.UntypedInt, types.UntypedInt},
+		{"10101 | 1010", types.UntypedInt, ir.BitwiseOr, types.UntypedInt, types.UntypedInt},
+		{"73 & 52", types.UntypedInt, ir.BitwiseAnd, types.UntypedInt, types.UntypedInt},
+		{"1 + 6", types.UntypedInt, ir.AddInt, types.UntypedInt, types.UntypedInt},
+		{"2.3 + 4", types.Float, ir.AddFloat, types.Float, types.UntypedFloat},
 		{`"Hello " + "world"`, types.String, ir.Concat, types.String, types.String},
-		{"8 - 12", types.Int, ir.SubtractInt, types.Int, types.Int},
-		{"3 - 1.3", types.Float, ir.SubtractFloat, types.Float, types.Float},
-		{"6 * 7", types.Int, ir.MultiplyInt, types.Int, types.Int},
-		{"1.3 * 0.4", types.Float, ir.MultiplyFloat, types.Float, types.Float},
-		{"0.3 / 2", types.Float, ir.Divide, types.Float, types.Float},
-		{"103 % 2", types.Int, ir.ModuloInt, types.Int, types.Int},
-		{"1.4 % 1", types.Float, ir.ModuloFloat, types.Float, types.Float},
-		{"2 ** 7", types.Int, ir.PowerInt, types.Int, types.Int},
-		{"3 ** 0.5", types.Float, ir.PowerFloat, types.Float, types.Float},
+		{"8 - 12", types.UntypedInt, ir.SubtractInt, types.UntypedInt, types.UntypedInt},
+		{"3 - 1.3", types.Float, ir.SubtractFloat, types.Float, types.UntypedFloat},
+		{"6 * 7", types.UntypedInt, ir.MultiplyInt, types.UntypedInt, types.UntypedInt},
+		{"1.3 * 0.4", types.Float, ir.MultiplyFloat, types.Float, types.UntypedFloat},
+		{"0.3 / 2", types.Float, ir.Divide, types.Float, types.UntypedFloat},
+		{"103 % 2", types.UntypedInt, ir.ModuloInt, types.UntypedInt, types.UntypedInt},
+		{"1.4 % 1", types.Float, ir.ModuloFloat, types.Float, types.UntypedFloat},
+		{"2 ** 7", types.UntypedInt, ir.PowerInt, types.UntypedInt, types.UntypedInt},
+		{"3 ** 0.5", types.Float, ir.PowerFloat, types.Float, types.UntypedFloat},
 	}
 
 	for _, test := range tests {
@@ -136,7 +136,8 @@ func TestBinaryExpression(t *testing.T) {
 		binExpr := getExpr[*ir.BinaryExpression](t, program)
 
 		utils.AssertEq(t, binExpr.Left.Type(), test.left)
-		utils.AssertEq(t, binExpr.Operator, test.op)
+		op := binExpr.Operator & ^ir.UntypedBit
+		utils.AssertEq(t, op, test.op)
 		utils.AssertEq(t, binExpr.Operator.Type(), test.result)
 		utils.AssertEq(t, binExpr.Right.Type(), test.right)
 	}
@@ -156,7 +157,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{"const text: string = [false]", []diagnostic{{`Value of type "bool" is not assignable to type "string"`, diagnostics.Error}}},
 		{"let foo = 1; let [foo] = 2", []diagnostic{{`Variable "foo" is already defined`, diagnostics.Error}}},
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},
-		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "i32" and "string"`, diagnostics.Error}}},
+		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "untyped int" and "string"`, diagnostics.Error}}},
 	}
 
 	for _, test := range tests {

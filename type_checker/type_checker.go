@@ -47,33 +47,48 @@ func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
 	}
 }
 
-func canConvert(from, to types.Type) (exists, explicit bool) {
+type conversionKind int
+
+const (
+	none conversionKind = iota
+	identity
+	implicit
+	operator
+	explicit
+)
+
+func canConvert(from, to types.Type) conversionKind {
+	kind := none
+
 	if types.Assignable(to, from) {
-		return false, true
+		kind = identity
+	} else if from == types.Int && to == types.Float {
+		kind = operator
+	} else if from == types.Float && to == types.Int {
+		kind = explicit
+	} else if from == types.Bool && to == types.Int {
+		kind = explicit
 	}
 
-	if from == types.Int && to == types.Float {
-		return true, false
+	if v, ok := from.(types.VariableType); ok &&
+		v.Untyped && kind == identity {
+		return implicit
 	}
 
-	if from == types.Float && to == types.Int {
-		return true, true
-	}
-
-	if from == types.Bool && to == types.Int {
-		return true, true
-	}
-
-	return false, false
+	return kind
 }
 
-func convert(from ir.Expression, to types.Type, allowExplicit bool) ir.Expression {
-	exists, explicit := canConvert(from.Type(), to)
+func convert(from ir.Expression, to types.Type, maxKind conversionKind) ir.Expression {
+	kind := canConvert(from.Type(), to)
 
-	if !exists && explicit {
+	if kind == identity {
 		return from
 	}
-	if exists && (!explicit || allowExplicit) {
+	if kind == none {
+		return nil
+	}
+
+	if kind <= maxKind {
 		return &ir.Conversion{
 			Expression: from,
 			To:         to,

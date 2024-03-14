@@ -44,7 +44,7 @@ func (t *typeChecker) typeCheckIdentifier(ident *ast.Identifier) ir.Expression {
 		variable = &symbols.Variable{
 			Name:    ident.Name,
 			Mutable: true,
-			Type:    nil,
+			Type:    types.Invalid,
 		}
 	}
 	return &ir.VariableExpression{
@@ -85,77 +85,86 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 	lType := left.Type()
 	rType := right.Type()
 
-	leftNumeric := lType == types.Int || lType == types.Float
-	rightNumeric := rType == types.Int || rType == types.Float
-	isFloat := lType == types.Float || rType == types.Float
+	leftNumeric := types.Assignable(types.Int, lType) || types.Assignable(types.Float, lType)
+	rightNumeric := types.Assignable(types.Int, rType) || types.Assignable(types.Float, rType)
+	isFloat := !types.Assignable(types.Int, lType) || !types.Assignable(types.Int, rType)
+	var lUntyped bool
+	var rUntyped bool
+	if v, ok := lType.(types.VariableType); ok {
+		lUntyped = v.Untyped
+	}
+	if v, ok := rType.(types.VariableType); ok {
+		rUntyped = v.Untyped
+	}
+	untyped := lUntyped && rUntyped
 
 	switch op {
 	case token.DOUBLE_AMPERSAND:
-		if lType == types.Bool && rType == types.Bool {
+		if types.Assignable(types.Bool, lType) && types.Assignable(types.Bool, rType) {
 			binOp = ir.LogicalAnd
 		}
 	case token.DOUBLE_PIPE:
-		if lType == types.Bool && rType == types.Bool {
+		if types.Assignable(types.Bool, lType) && types.Assignable(types.Bool, rType) {
 			binOp = ir.LogicalOr
 		}
 	case token.LEFT_ANGLE:
 		if leftNumeric && rightNumeric {
 			binOp = ir.Less
 			if isFloat {
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			}
 		}
 	case token.RIGHT_ANGLE:
 		if leftNumeric && rightNumeric {
 			binOp = ir.Greater
 			if isFloat {
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			}
 		}
 	case token.LEFT_ANGLE_EQUALS:
 		if leftNumeric && rightNumeric {
 			binOp = ir.LessEq
 			if isFloat {
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			}
 		}
 	case token.RIGHT_ANGLE_EQUALS:
 		if leftNumeric && rightNumeric {
 			binOp = ir.GreaterEq
 			if isFloat {
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			}
 		}
 	case token.DOUBLE_EQUALS:
-		if lType == rType {
+		if types.Assignable(rType, lType) || types.Assignable(lType, rType) {
 			binOp = ir.Equal
 		}
 	case token.BANG_EQUALS:
-		if lType == rType {
+		if types.Assignable(rType, lType) || types.Assignable(lType, rType) {
 			binOp = ir.NotEqual
 		}
 	case token.DOUBLE_LEFT_ANGLE:
-		if lType == types.Int && rType == types.Int {
+		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.LeftShift
 		}
 	case token.DOUBLE_RIGHT_ANGLE:
-		if lType == types.Int && rType == types.Int {
+		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.RightShift
 		}
 	case token.PLUS:
-		if lType == types.String && rType == types.String {
+		if types.Assignable(types.String, lType) && types.Assignable(types.String, rType) {
 			binOp = ir.Concat
 		}
 
 		if leftNumeric && rightNumeric {
 			if isFloat {
 				binOp = ir.AddFloat
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			} else {
 				binOp = ir.AddInt
 			}
@@ -164,8 +173,8 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		if leftNumeric && rightNumeric {
 			if isFloat {
 				binOp = ir.SubtractFloat
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			} else {
 				binOp = ir.SubtractInt
 			}
@@ -174,8 +183,8 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		if leftNumeric && rightNumeric {
 			if isFloat {
 				binOp = ir.MultiplyFloat
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			} else {
 				binOp = ir.MultiplyInt
 			}
@@ -184,16 +193,16 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		if leftNumeric && rightNumeric {
 			binOp = ir.Divide
 			if isFloat {
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			}
 		}
 	case token.PERCENT:
 		if leftNumeric && rightNumeric {
 			if isFloat {
 				binOp = ir.ModuloFloat
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			} else {
 				binOp = ir.ModuloInt
 			}
@@ -202,21 +211,24 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		if leftNumeric && rightNumeric {
 			if isFloat {
 				binOp = ir.PowerFloat
-				lhs = convert(lhs, types.Float, false)
-				rhs = convert(rhs, types.Float, false)
+				lhs = convert(lhs, types.Float, operator)
+				rhs = convert(rhs, types.Float, operator)
 			} else {
 				binOp = ir.PowerInt
 			}
 		}
 	case token.PIPE:
-		if lType == types.Int && rType == types.Int {
+		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.BitwiseOr
 		}
 	case token.AMPERSAND:
-		if lType == types.Int && rType == types.Int {
+		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.BitwiseAnd
 		}
 	}
 
+	if untyped {
+		binOp = binOp | ir.UntypedBit
+	}
 	return
 }

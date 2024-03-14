@@ -35,12 +35,14 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	if expectedType != nil {
-		conversion := convert(value, expectedType, false)
+		conversion := convert(value, expectedType, implicit)
 		if conversion == nil {
 			t.Diagnostics.ReportNotAssignable(varDec.Value.Location(), expectedType, value.Type())
 		} else {
 			value = conversion
 		}
+	} else {
+		value = convert(value, types.ToReal(value.Type()), implicit)
 	}
 
 	varType := expectedType

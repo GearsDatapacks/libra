@@ -22,7 +22,7 @@ func (i *IntegerLiteral) String() string {
 }
 
 func (IntegerLiteral) Type() types.Type {
-	return types.Int
+	return types.UntypedInt
 }
 
 type FloatLiteral struct {
@@ -34,8 +34,12 @@ func (f *FloatLiteral) String() string {
 	return fmt.Sprint(f.Value)
 }
 
-func (FloatLiteral) Type() types.Type {
-	return types.Float
+func (f *FloatLiteral) Type() types.Type {
+	uf := types.UntypedFloat
+	if float64(int64(f.Value)) == f.Value {
+		uf.Downcastable = true
+	}
+	return uf
 }
 
 type BooleanLiteral struct {
@@ -108,9 +112,12 @@ const (
 	ModuloFloat
 	PowerInt
 	PowerFloat
+	UntypedBit = 1 << 8
 )
 
 func (b BinaryOperator) String() string {
+	b = b & ^UntypedBit
+
 	switch b {
 	case LogicalAnd:
 		return "&&"
@@ -183,82 +190,92 @@ func (b BinaryOperator) String() string {
 }
 
 func (b BinaryOperator) Type() types.Type {
+	untyped := b&UntypedBit != 0
+	b = b & ^UntypedBit
+	var ty types.Type = types.Invalid
+
 	switch b {
 	case LogicalAnd:
-		return types.Bool
+		ty = types.Bool
 
 	case LogicalOr:
-		return types.Bool
+		ty = types.Bool
 
 	case Less:
-		return types.Bool
+		ty = types.Bool
 
 	case LessEq:
-		return types.Bool
+		ty = types.Bool
 
 	case Greater:
-		return types.Bool
+		ty = types.Bool
 
 	case GreaterEq:
-		return types.Bool
+		ty = types.Bool
 
 	case Equal:
-		return types.Bool
+		ty = types.Bool
 
 	case NotEqual:
-		return types.Bool
+		ty = types.Bool
 
 	case LeftShift:
-		return types.Int
+		ty = types.Int
 
 	case RightShift:
-		return types.Int
+		ty = types.Int
 
 	case BitwiseOr:
-		return types.Int
+		ty = types.Int
 
 	case BitwiseAnd:
-		return types.Int
+		ty = types.Int
 
 	case AddInt:
-		return types.Int
+		ty = types.Int
 
 	case AddFloat:
-		return types.Float
+		ty = types.Float
 
 	case Concat:
-		return types.String
+		ty = types.String
 
 	case SubtractInt:
-		return types.Int
+		ty = types.Int
 
 	case SubtractFloat:
-		return types.Float
+		ty = types.Float
 
 	case MultiplyInt:
-		return types.Int
+		ty = types.Int
 
 	case MultiplyFloat:
-		return types.Float
+		ty = types.Float
 
 	case Divide:
-		return types.Float
+		ty = types.Float
 
 	case ModuloInt:
-		return types.Int
+		ty = types.Int
 
 	case ModuloFloat:
-		return types.Float
+		ty = types.Float
 
 	case PowerInt:
-		return types.Int
+		ty = types.Int
 
 	case PowerFloat:
-		return types.Float
-
-	default:
-		return types.Invalid
+		ty = types.Float
 	}
+
+	if untyped {
+		if variable, ok := ty.(types.VariableType); ok {
+			variable.Untyped = true
+			return variable
+		}
+	}
+
+	return ty
 }
 
 type BinaryExpression struct {
