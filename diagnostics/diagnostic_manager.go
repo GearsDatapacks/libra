@@ -162,3 +162,8 @@ func (m *Manager) ReportUnaryOperatorUndefined(location text.Location, operator 
 	msg := fmt.Sprintf("Operator %q is not defined for operand of type %q", operator, operand.String())
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportCannotCast(location text.Location, from, to types.Type) {
+	msg := fmt.Sprintf("Cannot cast value of type %q to type %q", from.String(), to.String())
+	m.reportError(msg, location)
+}

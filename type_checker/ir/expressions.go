@@ -439,6 +439,14 @@ func (c *Conversion) Type() types.Type {
 	return c.To
 }
 
+type InvalidExpression struct {
+	Expression
+}
+
+func (i *InvalidExpression) Type() types.Type {
+	return types.Invalid
+}
+
 // TODO:
 // ListLiteral
 // MapLiteral
@@ -449,6 +457,5 @@ func (c *Conversion) Type() types.Type {
 // MemberExpression
 // StructMember
 // StructExpression
-// CastExpression
 // TypeCheckExpression
 // RangeExpression

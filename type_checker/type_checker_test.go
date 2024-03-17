@@ -174,6 +174,29 @@ func TestUnaryExpression(t *testing.T) {
 	}
 }
 
+func TestCastExpression(t *testing.T) {
+	tests := []struct {
+		src      string
+		result   types.Type
+	}{
+		{"1 -> i32", types.Int},
+		{"1 -> f32", types.Float},
+		{"1.6 -> f32", types.Float},
+		{"true -> bool", types.Bool},
+		{"false -> i32", types.Int},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		// note: if the conversion doesn't change the type (true -> bool),
+		// the compiler removes the conversion completely, so we can't assume
+		// the expression will be a *ir.Conversion
+		expr := getExpr[ir.Expression](t, program)
+
+		utils.AssertEq(t, expr.Type(), test.result)
+	}
+}
+
 type diagnostic struct {
 	message string
 	kind    diagnostics.DiagnosticKind
@@ -190,6 +213,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},
 		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "untyped int" and "string"`, diagnostics.Error}}},
 		{"const neg_bool = [-]true", []diagnostic{{`Operator "-" is not defined for operand of type "bool"`, diagnostics.Error}}},
+		{"let truthy: bool = [1] -> bool", []diagnostic{{`Cannot cast value of type "untyped int" to type "bool"`, diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
@@ -297,6 +321,6 @@ func getExpr[T ir.Expression](t *testing.T, program *ir.Program) T {
 	exprStmt := getStmt[*ir.ExpressionStatement](t, program)
 	expr, ok := exprStmt.Expression.(T)
 	utils.Assert(t, ok, fmt.Sprintf(
-		"expression is not %T (is %T)", struct{ t T }{}.t, expr))
+		"expression is not %T (is %T)", struct{ t T }{}.t, exprStmt.Expression))
 	return expr
 }

@@ -32,10 +32,14 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
 		return t.typeCheckBinaryExpression(expr)
+	case *ast.ParenthesisedExpression:
+		return t.typeCheckExpression(expr.Expression)
 	case *ast.PrefixExpression:
 		return t.typeCheckPrefixExpression(expr)
 	case *ast.PostfixExpression:
 		return t.typeCheckPostfixExpression(expr)
+	case *ast.CastExpression:
+		return t.typeCheckCastExpression(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -369,4 +373,17 @@ func getPostfixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOpera
 		unOp = unOp | ir.UntypedBit
 	}
 	return unOp
+}
+
+func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {
+	value := t.typeCheckExpression(expr.Left)
+	ty := types.FromAst(expr.Type)
+	conversion := convert(value, ty, explicit)
+	if conversion == nil {
+		t.Diagnostics.ReportCannotCast(expr.Left.Location(), value.Type(), ty)
+		return &ir.InvalidExpression{
+			Expression: value,
+		}
+	}
+	return conversion
 }
