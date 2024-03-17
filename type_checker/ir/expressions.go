@@ -301,6 +301,124 @@ func (b *BinaryExpression) Type() types.Type {
 	return b.Operator.Type()
 }
 
+type UnaryOperator int
+
+const (
+	_ UnaryOperator = iota
+	NegateInt
+	NegateFloat
+	Identity
+	LogicalNot
+	BitwiseNot
+)
+
+const (
+	postfix UnaryOperator = iota | (1 << 16)
+	IncrecementInt
+	IncrementFloat
+	DecrecementInt
+	DecrementFloat
+	PropagateError
+	CrashError
+	// TODO: Deref and ref
+)
+
+func (u UnaryOperator) String() string {
+	u = u & ^UntypedBit
+
+	switch u {
+	case NegateInt:
+		fallthrough
+	case NegateFloat:
+		return "-"
+	case Identity:
+		return "+"
+	case LogicalNot:
+		return "!"
+	case BitwiseNot:
+		return "~"
+	case IncrecementInt:
+		fallthrough
+	case IncrementFloat:
+		return "++"
+	case DecrecementInt:
+		fallthrough
+	case DecrementFloat:
+		return "--"
+	case PropagateError:
+		return "?"
+	case CrashError:
+		return "!"
+	default:
+		return "<?>"
+	}
+}
+
+func (b UnaryOperator) Type() types.Type {
+	untyped := b&UntypedBit != 0
+	b = b & ^UntypedBit
+	var ty types.Type = types.Invalid
+
+	switch b {
+	case NegateInt:
+		ty = types.Int
+	case NegateFloat:
+		ty = types.Float
+	case Identity:
+		ty = types.Int
+	case LogicalNot:
+		ty = types.Bool
+	case BitwiseNot:
+		ty = types.Int
+	case IncrecementInt:
+		ty = types.Int
+	case IncrementFloat:
+		ty = types.Float
+	case DecrecementInt:
+		ty = types.Int
+	case DecrementFloat:
+		ty = types.Float
+	case PropagateError:
+		panic("TODO: Type for PropagateError unary operator")
+	case CrashError:
+		panic("TODO: Type for CrashError unary operator")
+	}
+
+	if untyped {
+		if variable, ok := ty.(types.VariableType); ok {
+			variable.Untyped = true
+			return variable
+		}
+	}
+
+	return ty
+}
+
+type UnaryExpression struct {
+	expression
+	Operator UnaryOperator
+	Operand  Expression
+}
+
+func (u *UnaryExpression) String() string {
+	var result bytes.Buffer
+	isPost := (u.Operator & postfix) != 0
+
+	if isPost {
+		result.WriteString(u.Operand.String())
+		result.WriteString(u.Operator.String())
+	} else {
+		result.WriteString(u.Operator.String())
+		result.WriteString(u.Operand.String())
+	}
+
+	return result.String()
+}
+
+func (u *UnaryExpression) Type() types.Type {
+	return u.Operator.Type()
+}
+
 type Conversion struct {
 	expression
 	Expression Expression
@@ -322,7 +440,6 @@ func (c *Conversion) Type() types.Type {
 }
 
 // TODO:
-// UnaryExpression
 // ListLiteral
 // MapLiteral
 // FunctionCall

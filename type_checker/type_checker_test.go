@@ -18,7 +18,7 @@ import (
 )
 
 func TestIntegerLiteral(t *testing.T) {
-	input := "1_23_456"
+	input := "+1_23_456"
 	val := 123456
 
 	program := getProgram(t, input)
@@ -143,6 +143,37 @@ func TestBinaryExpression(t *testing.T) {
 	}
 }
 
+func TestUnaryExpression(t *testing.T) {
+	tests := []struct {
+		src      string
+		operator ir.UnaryOperator
+		operand  types.Type
+		result   types.Type
+	}{
+		{"-1", ir.NegateInt, types.UntypedInt, types.UntypedInt},
+		{"-2.72", ir.NegateFloat, types.UntypedFloat, types.UntypedFloat},
+		{"!true", ir.LogicalNot, types.Bool, types.Bool},
+		{"~104", ir.BitwiseNot, types.UntypedInt, types.UntypedInt},
+		// TODO:
+		// IncrecementInt (Needs a variable to increment)
+		// IncrementFloat
+		// DecrecementInt
+		// DecrementFloat
+		// PropagateError
+		// CrashError
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		unExpr := getExpr[*ir.UnaryExpression](t, program)
+
+		utils.AssertEq(t, unExpr.Operand.Type(), test.operand)
+		op := unExpr.Operator & ^ir.UntypedBit
+		utils.AssertEq(t, op, test.operator)
+		utils.AssertEq(t, unExpr.Operator.Type(), test.result)
+	}
+}
+
 type diagnostic struct {
 	message string
 	kind    diagnostics.DiagnosticKind
@@ -158,6 +189,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{"let foo = 1; let [foo] = 2", []diagnostic{{`Variable "foo" is already defined`, diagnostics.Error}}},
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},
 		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "untyped int" and "string"`, diagnostics.Error}}},
+		{"const neg_bool = [-]true", []diagnostic{{`Operator "-" is not defined for operand of type "bool"`, diagnostics.Error}}},
 	}
 
 	for _, test := range tests {

@@ -32,6 +32,10 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
 		return t.typeCheckBinaryExpression(expr)
+	case *ast.PrefixExpression:
+		return t.typeCheckPrefixExpression(expr)
+	case *ast.PostfixExpression:
+		return t.typeCheckPostfixExpression(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -227,8 +231,142 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		}
 	}
 
-	if untyped {
+	if untyped && binOp != 0 {
 		binOp = binOp | ir.UntypedBit
 	}
 	return
+}
+
+func (t *typeChecker) typeCheckPrefixExpression(unExpr *ast.PrefixExpression) ir.Expression {
+	operand := t.typeCheckExpression(unExpr.Operand)
+
+	// Don't check for operators with invalid types, to prevent cascading errors
+	if operand.Type() == types.Invalid {
+		return &ir.UnaryExpression{
+			Operand:  operand,
+			Operator: 0,
+		}
+	}
+
+	operator := getPrefixOperator(unExpr.Operator.Kind, operand)
+
+	if operator == 0 {
+		t.Diagnostics.ReportUnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type())
+	}
+
+	// We can safely ignore the identity operator
+	if operator & ^ir.UntypedBit == ir.Identity {
+		return operand
+	}
+
+	return &ir.UnaryExpression{
+		Operator: operator,
+		Operand:  operand,
+	}
+}
+
+func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) ir.Expression {
+	operand := t.typeCheckExpression(unExpr.Operand)
+
+	// Don't check for operators with invalid types, to prevent cascading errors
+	if operand.Type() == types.Invalid {
+		return &ir.UnaryExpression{
+			Operand:  operand,
+			Operator: 0,
+		}
+	}
+
+	operator := getPostfixOperator(unExpr.Operator.Kind, operand)
+
+	if operator == 0 {
+		t.Diagnostics.ReportUnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type())
+	}
+
+	return &ir.UnaryExpression{
+		Operator: operator,
+		Operand:  operand,
+	}
+}
+
+func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
+	var unOp ir.UnaryOperator
+	opType := operand.Type()
+
+	numeric := types.Assignable(types.Int, opType) || types.Assignable(types.Float, opType)
+	isFloat := !types.Assignable(types.Int, opType)
+	var untyped bool
+	if v, ok := opType.(types.VariableType); ok {
+		untyped = v.Untyped
+	}
+
+	switch tokKind {
+	case token.MINUS:
+		if numeric {
+			if isFloat {
+				unOp = ir.NegateFloat
+			} else {
+				unOp = ir.NegateInt
+			}
+		}
+	case token.PLUS:
+		if numeric {
+			unOp = ir.Identity
+		}
+	case token.BANG:
+		if types.Assignable(types.Bool, opType) {
+			unOp = ir.LogicalNot
+		}
+	case token.TILDE:
+		if types.Assignable(types.Int, opType) {
+			unOp = ir.BitwiseNot
+		}
+	}
+
+	if untyped && unOp != 0 {
+		unOp = unOp | ir.UntypedBit
+	}
+
+	return unOp
+}
+
+func getPostfixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
+	var unOp ir.UnaryOperator
+	opType := operand.Type()
+
+	numeric := types.Assignable(types.Int, opType) || types.Assignable(types.Float, opType)
+	isFloat := !types.Assignable(types.Int, opType)
+	var untyped bool
+	if v, ok := opType.(types.VariableType); ok {
+		untyped = v.Untyped
+	}
+
+	switch tokKind {
+	// TODO: Check that it's incrementing a variable
+	case token.DOUBLE_PLUS:
+		if numeric {
+			if isFloat {
+				unOp = ir.IncrementFloat
+			} else {
+				unOp = ir.IncrecementInt
+			}
+		}
+	case token.DOUBLE_MINUS:
+		if numeric {
+			if isFloat {
+				unOp = ir.DecrementFloat
+			} else {
+				unOp = ir.DecrecementInt
+			}
+		}
+	case token.QUESTION:
+		panic("TODO: '?' unary operator")
+
+	case token.BANG:
+		panic("TODO: '!' postfix operator")
+	}
+
+	if untyped && unOp != 0 {
+		unOp = unOp | ir.UntypedBit
+	}
+	return unOp
 }

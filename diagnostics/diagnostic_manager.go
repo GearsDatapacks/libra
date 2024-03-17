@@ -157,3 +157,8 @@ func (m *Manager) ReportBinaryOperatorUndefined(location text.Location, operator
 	msg := fmt.Sprintf("Operator %q is not defined for types %q and %q", operator, left.String(), right.String())
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportUnaryOperatorUndefined(location text.Location, operator string, operand types.Type) {
+	msg := fmt.Sprintf("Operator %q is not defined for operand of type %q", operator, operand.String())
+	m.reportError(msg, location)
+}
