@@ -280,7 +280,20 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 		}
 	}
 
-	operator := getPostfixOperator(unExpr.Operator.Kind, operand)
+	operator := t.getPostfixOperator(unExpr.Operator.Kind, operand)
+	plainOp := operator & ^ir.UntypedBit
+
+	if plainOp >= ir.IncrecementInt && plainOp <= ir.DecrementFloat {
+		if !ir.AssignableExpr(operand) {
+			incDec := "increment"
+			if plainOp >= ir.DecrecementInt {
+				incDec = "decrement"
+			}
+			t.Diagnostics.ReportCannotIncDec(unExpr.Operand.Location(), incDec)
+		} else if !ir.MutableExpr(operand) {
+			t.Diagnostics.ReportVariableImmutable(unExpr.Operand.Location(), operand.String())
+		}
+	}
 
 	if operator == 0 {
 		t.Diagnostics.ReportUnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type())
@@ -333,7 +346,7 @@ func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperat
 	return unOp
 }
 
-func getPostfixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
+func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
 	var unOp ir.UnaryOperator
 	opType := operand.Type()
 

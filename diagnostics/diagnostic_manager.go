@@ -167,3 +167,13 @@ func (m *Manager) ReportCannotCast(location text.Location, from, to types.Type) 
 	msg := fmt.Sprintf("Cannot cast value of type %q to type %q", from.String(), to.String())
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportCannotIncDec(location text.Location, incDec string) {
+	msg := fmt.Sprintf("Cannot %s a non-variable value", incDec)
+	m.reportError(msg, location)
+}
+
+func (m *Manager) ReportVariableImmutable(location text.Location, varName string) {
+	msg := fmt.Sprintf("Variable %q is immutable", varName)
+	m.reportError(msg, location)
+}
