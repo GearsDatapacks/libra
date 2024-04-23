@@ -13,6 +13,7 @@ const (
 	Assignment
 	Logical
 	Comparison
+	Range
 	Bitwise
 	Additive
 	Multiplicative
