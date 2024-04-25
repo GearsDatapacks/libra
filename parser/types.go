@@ -84,7 +84,13 @@ func (p *parser) parseArrayType(ty ast.TypeExpression) ast.TypeExpression {
 	leftSquare := p.consume()
 	var count ast.Expression
 	if p.next().Kind != token.RIGHT_SQUARE {
-		count = p.parseExpression()
+		if p.next().Kind == token.IDENTIFIER && p.next().Value == "_" {
+			count = &ast.InferredExpression{
+				Token: p.consume(),
+			}
+		} else {
+			count = p.parseExpression()
+		}
 	}
 	rightSquare := p.expect(token.RIGHT_SQUARE)
 
