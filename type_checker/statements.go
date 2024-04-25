@@ -29,7 +29,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	value := t.typeCheckExpression(varDec.Value)
 	var expectedType types.Type = nil
 	if varDec.Type != nil {
-		expectedType = types.FromAst(varDec.Type.Type)
+		expectedType = t.typeFromAst(varDec.Type.Type)
 		if expectedType == nil {
 			name := varDec.Type.Type.(*ast.TypeName)
 			t.Diagnostics.ReportUndefinedType(name.Location(), name.Name.Value)

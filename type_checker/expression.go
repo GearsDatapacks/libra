@@ -28,6 +28,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return &ir.StringLiteral{
 			Value: expr.Value,
 		}
+	case *ast.ListLiteral:
+		return t.typeCheckArray(expr)
 	case *ast.Identifier:
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
@@ -390,7 +392,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 
 func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {
 	value := t.typeCheckExpression(expr.Left)
-	ty := types.FromAst(expr.Type)
+	ty := t.typeFromAst(expr.Type)
 	conversion := convert(value, ty, explicit)
 	if conversion == nil {
 		t.Diagnostics.ReportCannotCast(expr.Left.Location(), value.Type(), ty)
@@ -399,4 +401,31 @@ func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expre
 		}
 	}
 	return conversion
+}
+
+func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
+	var elemType types.Type = types.Invalid
+	values := []ir.Expression{}
+
+	for _, elem := range arr.Values {
+		value := t.typeCheckExpression(elem)
+		if elemType == types.Invalid {
+			elemType = types.ToReal(value.Type())
+		}
+		converted := convert(value, elemType, operator)
+		if converted == nil {
+			t.Diagnostics.ReportNotAssignable(elem.Location(), elemType, value.Type())
+		} else {
+			values = append(values, converted)
+		}
+	}
+
+	return &ir.ArrayExpression{
+		DataType: &types.ArrayType{
+			ElemType: elemType,
+			Length:   len(values),
+			CanInfer: true,
+		},
+		Elements: values,
+	}
 }

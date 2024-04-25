@@ -182,3 +182,8 @@ func (m *Manager) ReportNotConst(location text.Location) {
 	msg := "Value must be known at compile time"
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportCountMustBeInt(location text.Location) {
+	msg := "Array length must be an integer"
+	m.reportError(msg, location)
+}

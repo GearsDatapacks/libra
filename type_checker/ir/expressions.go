@@ -741,8 +741,39 @@ func (i *InvalidExpression) Type() types.Type {
 	return types.Invalid
 }
 
+type ArrayExpression struct {
+	expression
+	DataType *types.ArrayType
+	Elements []Expression
+}
+
+func (a *ArrayExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('[')
+	for i, elem := range a.Elements {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(elem.String())
+	}
+
+	result.WriteByte(']')
+	return result.String()
+}
+
+func (a *ArrayExpression) Type() types.Type {
+	return a.DataType
+}
+
+func (a *ArrayExpression) IsConst() bool {
+	return false
+}
+func (a *ArrayExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
-// ListLiteral
 // MapLiteral
 // FunctionCall
 // IndexExpression

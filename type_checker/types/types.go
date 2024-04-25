@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-
-	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
 type Type interface {
@@ -124,30 +122,52 @@ func (v VariableType) ToReal() Type {
 	return v
 }
 
+type ListType struct {
+	ElemType Type
+}
+
+func (l *ListType) String() string {
+	return l.ElemType.String() + "[]"
+}
+
+func (l *ListType) valid(other Type) bool {
+	if list, ok := other.(*ListType); ok {
+		return Assignable(l.ElemType, list.ElemType) && Assignable(list.ElemType, l.ElemType)
+	}
+	if array, ok := other.(*ArrayType); ok {
+		return array.CanInfer && Assignable(l.ElemType, array.ElemType)
+	}
+	return false
+}
+
+type ArrayType struct {
+	ElemType Type
+	Length int
+	CanInfer bool
+}
+
+func (a *ArrayType) String() string {
+	if a.Length == -1 {
+		return a.ElemType.String() + "[_]"
+	}
+	return fmt.Sprintf("%s[%d]", a.ElemType.String(), a.Length)
+}
+
+func (a *ArrayType) valid(other Type) bool {
+	array, ok := other.(*ArrayType)
+	if !ok {
+		return false
+	}
+
+	lengthsMatch := a.Length == -1 || a.Length == array.Length
+	return lengthsMatch && Assignable(a.ElemType, array.ElemType) && Assignable(array.ElemType, a.ElemType)
+}
+
+func (a *ArrayType) ToReal() Type {
+	a.CanInfer = false
+	return a
+}
+
 type Pseudo interface {
 	ToReal() Type
-}
-
-func FromAst(node ast.TypeExpression) Type {
-	switch ty := node.(type) {
-	case *ast.TypeName:
-		return lookupType(ty.Name.Value)
-	default:
-		panic(fmt.Sprintf("TODO: Types from %T", ty))
-	}
-}
-
-func lookupType(name string) Type {
-	switch name {
-	case "i32":
-		return Int
-	case "f32":
-		return Float
-	case "bool":
-		return Bool
-	case "string":
-		return String
-	default:
-		return nil
-	}
 }
