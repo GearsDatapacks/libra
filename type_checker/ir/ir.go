@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Node interface {
@@ -18,6 +19,8 @@ type Statement interface {
 type Expression interface {
 	Node
 	Type() types.Type
+	IsConst() bool
+	ConstValue() values.ConstValue
 	irExpr()
 }
 

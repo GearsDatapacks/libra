@@ -177,3 +177,8 @@ func (m *Manager) ReportVariableImmutable(location text.Location, varName string
 	msg := fmt.Sprintf("Variable %q is immutable", varName)
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportNotConst(location text.Location) {
+	msg := "Value must be known at compile time"
+	m.reportError(msg, location)
+}

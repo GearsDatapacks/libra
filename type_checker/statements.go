@@ -7,6 +7,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
@@ -24,6 +25,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 
 func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclaration) ir.Statement {
 	mutable := varDec.Keyword.Value == "mut"
+	constant := varDec.Keyword.Value == "const"
 	value := t.typeCheckExpression(varDec.Value)
 	var expectedType types.Type = nil
 	if varDec.Type != nil {
@@ -50,10 +52,19 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		varType = value.Type()
 	}
 
+	if constant && !value.IsConst() {
+		t.Diagnostics.ReportNotConst(varDec.Value.Location())
+	}
+	var constVal values.ConstValue
+	if !mutable && value.IsConst() {
+		constVal = value.ConstValue()
+	}
+
 	variable := symbols.Variable{
 		Name:    varDec.Identifier.Value,
 		Mutable: mutable,
 		Type:    varType,
+		ConstValue: constVal,
 	}
 	if !t.symbols.DeclareVariable(variable) {
 		t.Diagnostics.ReportVariableDefined(varDec.Identifier.Location, variable.Name)
