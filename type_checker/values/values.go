@@ -27,6 +27,11 @@ type StringValue struct {
 	Value string
 }
 
+type ArrayValue struct {
+	constValue
+	Elements []ConstValue
+}
+
 func NumericValue(v ConstValue) float64 {
 	switch val := v.(type) {
 	case FloatValue:

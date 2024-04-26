@@ -12,7 +12,7 @@ import (
 
 type expression struct{}
 
-func (expression) irExpr()                       {}
+func (expression) irExpr() {}
 
 type IntegerLiteral struct {
 	expression
@@ -363,14 +363,14 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 	switch b.Operator & ^UntypedBit {
 	case LogicalAnd:
 		left := b.Left.ConstValue().(values.BoolValue)
-		right := b.Left.ConstValue().(values.BoolValue)
+		right := b.Right.ConstValue().(values.BoolValue)
 		return values.BoolValue{
 			Value: left.Value && right.Value,
 		}
 
 	case LogicalOr:
 		left := b.Left.ConstValue().(values.BoolValue)
-		right := b.Left.ConstValue().(values.BoolValue)
+		right := b.Right.ConstValue().(values.BoolValue)
 		return values.BoolValue{
 			Value: left.Value || right.Value,
 		}
@@ -415,73 +415,73 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 
 	case LeftShift:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value << right.Value,
 		}
 
 	case RightShift:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value >> right.Value,
 		}
 
 	case BitwiseOr:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value | right.Value,
 		}
 
 	case BitwiseAnd:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value & right.Value,
 		}
 
 	case AddInt:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value + right.Value,
 		}
 	case AddFloat:
 		left := b.Left.ConstValue().(values.FloatValue)
-		right := b.Left.ConstValue().(values.FloatValue)
+		right := b.Right.ConstValue().(values.FloatValue)
 		return values.FloatValue{
 			Value: left.Value + right.Value,
 		}
 	case Concat:
 		left := b.Left.ConstValue().(values.StringValue)
-		right := b.Left.ConstValue().(values.StringValue)
+		right := b.Right.ConstValue().(values.StringValue)
 		return values.StringValue{
 			Value: left.Value + right.Value,
 		}
 
 	case SubtractInt:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value - right.Value,
 		}
 	case SubtractFloat:
 		left := b.Left.ConstValue().(values.FloatValue)
-		right := b.Left.ConstValue().(values.FloatValue)
+		right := b.Right.ConstValue().(values.FloatValue)
 		return values.FloatValue{
 			Value: left.Value - right.Value,
 		}
 
 	case MultiplyInt:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value * right.Value,
 		}
 	case MultiplyFloat:
 		left := b.Left.ConstValue().(values.FloatValue)
-		right := b.Left.ConstValue().(values.FloatValue)
+		right := b.Right.ConstValue().(values.FloatValue)
 		return values.FloatValue{
 			Value: left.Value * right.Value,
 		}
@@ -495,13 +495,13 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 
 	case ModuloInt:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value % right.Value,
 		}
 	case ModuloFloat:
 		left := b.Left.ConstValue().(values.FloatValue)
-		right := b.Left.ConstValue().(values.FloatValue)
+		right := b.Right.ConstValue().(values.FloatValue)
 
 		return values.FloatValue{
 			Value: math.Mod(left.Value, right.Value),
@@ -509,13 +509,13 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 
 	case PowerInt:
 		left := b.Left.ConstValue().(values.IntValue)
-		right := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: int64(math.Pow(float64(left.Value), float64(right.Value))),
 		}
 	case PowerFloat:
 		left := b.Left.ConstValue().(values.FloatValue)
-		right := b.Left.ConstValue().(values.FloatValue)
+		right := b.Right.ConstValue().(values.FloatValue)
 
 		return values.FloatValue{
 			Value: math.Pow(left.Value, right.Value),
@@ -767,10 +767,26 @@ func (a *ArrayExpression) Type() types.Type {
 }
 
 func (a *ArrayExpression) IsConst() bool {
-	return false
+	for _, elem := range a.Elements {
+		if !elem.IsConst() {
+			return false
+		}
+	}
+	return true
 }
 func (a *ArrayExpression) ConstValue() values.ConstValue {
-	return nil
+	if !a.IsConst() {
+		return nil
+	}
+
+	elems := []values.ConstValue{}
+	for _, elem := range a.Elements {
+		elems = append(elems, elem.ConstValue())
+	}
+
+	return values.ArrayValue{
+		Elements: elems,
+	}
 }
 
 // TODO:
