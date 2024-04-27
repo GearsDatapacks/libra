@@ -15,6 +15,7 @@ import (
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 func TestIntegerLiteral(t *testing.T) {
@@ -176,8 +177,8 @@ func TestUnaryExpression(t *testing.T) {
 
 func TestCastExpression(t *testing.T) {
 	tests := []struct {
-		src      string
-		result   types.Type
+		src    string
+		result types.Type
 	}{
 		{"1 -> i32", types.Int},
 		{"1 -> f32", types.Float},
@@ -194,6 +195,102 @@ func TestCastExpression(t *testing.T) {
 		expr := getExpr[ir.Expression](t, program)
 
 		utils.AssertEq(t, expr.Type(), test.result)
+	}
+}
+
+func TestCompileTimeValues(t *testing.T) {
+	tests := []struct {
+		src   string
+		value any
+	}{
+		{"1", 1},
+		{"17.5", 17.5},
+		{"1.0", 1.0},
+		{"1.0 -> i32", 1},
+		{"5 -> f32", 5.0},
+		{"false", false},
+		{"true", true},
+		{"-1", -1},
+		{"!false", true},
+		{"1 + 2 * 3", 7},
+		{"1 + 2 / 4", 1.5},
+		{`"test" + "123"`, "test123"},
+		{"7 == 10", false},
+		{"1.5 != 2.3", true},
+		{"true || false", true},
+		{"true && false", false},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[ir.Expression](t, program)
+
+		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
+		utils.AssertEq(t, expr.ConstValue(), constValue(test.value))
+	}
+}
+
+func TestArrays(t *testing.T) {
+	tests := []struct {
+		src    string
+		values []any
+	}{
+		{"[1, 2, 3]", []any{1, 2, 3}},
+		{"[true, false, true || true]", []any{true, false, true}},
+		{"[1.5 + 2, 6 / 5, 1.2 ** 2]", []any{3.5, 1.2, 1.44}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[*ir.ArrayExpression](t, program)
+
+		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
+		constVal := expr.ConstValue().(values.ArrayValue)
+		utils.AssertEq(t, len(constVal.Elements), len(test.values))
+		for i, elem := range constVal.Elements {
+			utils.AssertEq(t, elem, constValue(test.values[i]))
+		}
+	}
+}
+
+func constValue(val any) values.ConstValue {
+	switch value := val.(type) {
+	case int:
+		return values.IntValue{
+			Value: int64(value),
+		}
+	case float64:
+		return values.FloatValue{
+			Value: value,
+		}
+	case bool:
+		return values.BoolValue{
+			Value: value,
+		}
+	case string:
+		return values.StringValue{
+			Value: value,
+		}
+	default:
+		panic("Unreachable")
+	}
+}
+
+func TestIndexExpressions(t *testing.T) {
+	tests := []struct {
+		src      string
+		dataType types.Type
+	}{
+		{"[1, 2, 3][1]", types.Int},
+		{"[1.2, 3.4, 1][7]", types.Float},
+		{"[7 == 2, 31 > 30.5][0.0]", types.Bool},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[*ir.IndexExpression](t, program)
+
+		utils.AssertEq(t, expr.Type(), test.dataType)
 	}
 }
 
@@ -214,6 +311,12 @@ func TestTCDiagnostics(t *testing.T) {
 		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "untyped int" and "string"`, diagnostics.Error}}},
 		{"const neg_bool = [-]true", []diagnostic{{`Operator "-" is not defined for operand of type "bool"`, diagnostics.Error}}},
 		{"let truthy: bool = [1] -> bool", []diagnostic{{`Cannot cast value of type "untyped int" to type "bool"`, diagnostics.Error}}},
+		{"let i = 0; [i]++", []diagnostic{{`Variable "i" is immutable`, diagnostics.Error}}},
+		{"1 + [2]--", []diagnostic{{`Cannot decrement a non-variable value`, diagnostics.Error}}},
+		{"[[1, 2, [true] ]]", []diagnostic{{`Value of type "bool" is not assignable to type "i32"`, diagnostics.Error}}},
+		{"mut a = 0; const b = [a + 1]", []diagnostic{{`Value must be known at compile time`, diagnostics.Error}}},
+		{`let arr: string[[ [1.5] ]] = [["one", "half"]]`, []diagnostic{{`Array length must be an integer`, diagnostics.Error}}},
+		{`[[1, 2, 3]][[ [3.14] ]]`, []diagnostic{{`Cannot index value of type "i32[3]" with value of type "untyped float"`, diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
@@ -258,17 +361,27 @@ func getSpans(sourceText string) (string, []text.Span) {
 	spans := []text.Span{}
 	line := 0
 	col := 0
-	for _, c := range sourceText {
-		if c == '[' {
-			spans = append(spans, text.NewSpan(line, line, col, 0))
+	escaped := false
+	for i, c := range sourceText {
+		if c == '[' && !escaped {
+			if i+1 < len(sourceText) && sourceText[i+1] == '[' {
+				escaped = true
+			} else {
+				spans = append(spans, text.NewSpan(line, line, col, 0))
+			}
 			continue
 		}
-		if c == ']' {
-			spans[len(spans)-1].End = col
-			spans[len(spans)-1].EndLine = line
+		if c == ']' && !escaped {
+			if i+1 < len(sourceText) && sourceText[i+1] == ']' {
+				escaped = true
+			} else {
+				spans[len(spans)-1].End = col
+				spans[len(spans)-1].EndLine = line
+			}
 			continue
 		}
 
+		escaped = false
 		col++
 		if c == '\n' {
 			line++

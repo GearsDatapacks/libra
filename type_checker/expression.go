@@ -439,7 +439,7 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 	if left.Type() != types.Invalid &&
 		index.Type() != types.Invalid &&
 		types.Index(left.Type(), index.Type()) == types.Invalid {
-		t.Diagnostics.ReportCannotIndex(indexExpr.Left.Location(), left.Type(), index.Type())
+		t.Diagnostics.ReportCannotIndex(indexExpr.Index.Location(), left.Type(), index.Type())
 	}
 
 	return &ir.IndexExpression{

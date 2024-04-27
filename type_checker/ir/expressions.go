@@ -689,7 +689,7 @@ func (u *UnaryExpression) ConstValue() values.ConstValue {
 	case CrashError:
 		return nil
 	default:
-		panic("unreachable")
+		return nil
 	}
 }
 
