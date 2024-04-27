@@ -42,6 +42,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckPostfixExpression(expr)
 	case *ast.CastExpression:
 		return t.typeCheckCastExpression(expr)
+	case *ast.IndexExpression:
+		return t.typeCheckIndexExpression(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -427,5 +429,21 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 			CanInfer: true,
 		},
 		Elements: values,
+	}
+}
+
+func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) ir.Expression {
+	left := t.typeCheckExpression(indexExpr.Left)
+	index := t.typeCheckExpression(indexExpr.Index)
+
+	if left.Type() != types.Invalid &&
+		index.Type() != types.Invalid &&
+		types.Index(left.Type(), index.Type()) == types.Invalid {
+		t.Diagnostics.ReportCannotIndex(indexExpr.Left.Location(), left.Type(), index.Type())
+	}
+
+	return &ir.IndexExpression{
+		Left:  left,
+		Index: index,
 	}
 }

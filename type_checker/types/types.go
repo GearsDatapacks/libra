@@ -7,6 +7,7 @@ import (
 type Type interface {
 	String() string
 	valid(Type) bool
+	indexBy(Type) Type
 }
 
 func Assignable(to, from Type) bool {
@@ -15,6 +16,13 @@ func Assignable(to, from Type) bool {
 	}
 
 	return to.valid(from)
+}
+
+func Index(left, index Type) Type {
+	if index == Invalid {
+		return Invalid
+	}
+	return left.indexBy(index)
 }
 
 func ToReal(ty Type) Type {
@@ -45,6 +53,17 @@ func (pt PrimaryType) String() string {
 func (pt PrimaryType) valid(other Type) bool {
 	primary, isPrimary := other.(PrimaryType)
 	return isPrimary && primary == pt
+}
+
+func (pt PrimaryType) indexBy(index Type) Type {
+	switch pt {
+	case String:
+		if Assignable(Int, index) {
+			return String
+		}
+	}
+
+	return Invalid
 }
 
 type VTKind int
@@ -115,6 +134,10 @@ func (v VariableType) valid(other Type) bool {
 	return v.Kind == variable.Kind
 }
 
+func (v VariableType) indexBy(index Type) Type {
+	return Invalid
+}
+
 func (v VariableType) ToReal() Type {
 	if v.Untyped {
 		v.Untyped = false
@@ -140,6 +163,13 @@ func (l *ListType) valid(other Type) bool {
 	return false
 }
 
+func (l *ListType) indexBy(index Type) Type {
+	if Assignable(Int, index) {
+		return l.ElemType
+	}
+	return Invalid
+}
+
 type ArrayType struct {
 	ElemType Type
 	Length int
@@ -161,6 +191,13 @@ func (a *ArrayType) valid(other Type) bool {
 
 	lengthsMatch := a.Length == -1 || a.Length == array.Length
 	return lengthsMatch && Assignable(a.ElemType, array.ElemType) && Assignable(array.ElemType, a.ElemType)
+}
+
+func (a *ArrayType) indexBy(index Type) Type {
+	if Assignable(Int, index) {
+		return a.ElemType
+	}
+	return Invalid
 }
 
 func (a *ArrayType) ToReal() Type {

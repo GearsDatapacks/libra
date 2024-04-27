@@ -187,3 +187,8 @@ func (m *Manager) ReportCountMustBeInt(location text.Location) {
 	msg := "Array length must be an integer"
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportCannotIndex(location text.Location, leftType, indexType types.Type) {
+	msg := fmt.Sprintf("Cannot index value of type %q with value of type %q", leftType, indexType)
+	m.reportError(msg, location)
+}

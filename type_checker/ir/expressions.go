@@ -789,6 +789,28 @@ func (a *ArrayExpression) ConstValue() values.ConstValue {
 	}
 }
 
+type IndexExpression struct {
+	expression
+	Left Expression
+	Index Expression
+}
+
+func (i *IndexExpression) String() string {
+	return fmt.Sprintf("%s[%s]", i.Left.String(), i.Index.String())
+}
+
+func (i *IndexExpression) Type() types.Type {
+	return types.Index(i.Left.Type(), i.Index.Type())
+}
+
+func (i *IndexExpression) IsConst() bool {
+	return false
+}
+
+func (i *IndexExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
 // MapLiteral
 // FunctionCall
