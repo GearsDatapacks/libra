@@ -811,6 +811,46 @@ func (i *IndexExpression) ConstValue() values.ConstValue {
 	return nil
 }
 
+type KeyValue struct {
+	Key Expression
+	Value Expression
+}
+
+type MapExpression struct {
+	expression
+	KeyValues []KeyValue
+	DataType *types.MapType
+}
+
+func (m *MapExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	for i, kv := range m.KeyValues {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(kv.Key.String())
+		result.WriteString(": ")
+		result.WriteString(kv.Value.String())
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
+func (m *MapExpression) Type() types.Type {
+	return m.DataType
+}
+
+func (m *MapExpression) IsConst() bool {
+	return false
+}
+
+func (m *MapExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
 // MapLiteral
 // FunctionCall

@@ -40,6 +40,13 @@ func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 			Length:   length,
 			CanInfer: false,
 		}
+	case *ast.MapType:
+		keyType := t.typeFromAst(ty.KeyType)
+		valueType := t.typeFromAst(ty.ValueType)
+		return &types.MapType{
+			KeyType:   keyType,
+			ValueType: valueType,
+		}
 	default:
 		panic(fmt.Sprintf("TODO: Types from %T", ty))
 	}

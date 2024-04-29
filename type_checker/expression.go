@@ -30,6 +30,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		}
 	case *ast.ListLiteral:
 		return t.typeCheckArray(expr)
+	case *ast.MapLiteral:
+		return t.typeCheckMap(expr)
 	case *ast.Identifier:
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
@@ -445,5 +447,46 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 	return &ir.IndexExpression{
 		Left:  left,
 		Index: index,
+	}
+}
+
+func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
+	var keyType types.Type = types.Invalid
+	var valueType types.Type = types.Invalid
+	keyValues := []ir.KeyValue{}
+
+	for _, kv := range mapLit.KeyValues {
+		key := t.typeCheckExpression(kv.Key)
+		if keyType == types.Invalid {
+			keyType = types.ToReal(key.Type())
+		}
+		convertedKey := convert(key, keyType, operator)
+		if convertedKey == nil {
+			t.Diagnostics.ReportNotAssignable(kv.Key.Location(), keyType, key.Type())
+			continue
+		}
+
+		value := t.typeCheckExpression(kv.Value)
+		if valueType == types.Invalid {
+			valueType = types.ToReal(value.Type())
+		}
+		convertedValue := convert(value, valueType, operator)
+		if convertedValue == nil {
+			t.Diagnostics.ReportNotAssignable(kv.Value.Location(), valueType, value.Type())
+			continue
+		}
+
+		keyValues = append(keyValues, ir.KeyValue{
+			Key:   key,
+			Value: value,
+		})
+	}
+
+	return &ir.MapExpression{
+		KeyValues: keyValues,
+		DataType:  &types.MapType{
+			KeyType:   keyType,
+			ValueType: valueType,
+		},
 	}
 }

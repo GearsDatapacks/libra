@@ -205,6 +205,33 @@ func (a *ArrayType) ToReal() Type {
 	return a
 }
 
+type MapType struct {
+	KeyType Type
+	ValueType Type
+}
+
+func (m *MapType) String() string {
+	return fmt.Sprintf("{%s: %s}", m.KeyType.String(), m.ValueType.String())
+}
+
+func (m *MapType) valid(other Type) bool {
+	mapType, ok := other.(*MapType)
+	if !ok {
+		return false
+	}
+
+	keysMatch := Assignable(m.KeyType, mapType.KeyType) && Assignable(mapType.KeyType, m.KeyType)
+	valuesMatch := Assignable(m.ValueType, mapType.ValueType) && Assignable(mapType.ValueType, m.ValueType)
+	return keysMatch && valuesMatch
+}
+
+func (m *MapType) indexBy(index Type) Type {
+	if Assignable(m.KeyType, index) {
+		return m.ValueType
+	}
+	return Invalid
+}
+
 type Pseudo interface {
 	ToReal() Type
 }
