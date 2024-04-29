@@ -192,3 +192,8 @@ func (m *Manager) ReportCannotIndex(location text.Location, leftType, indexType 
 	msg := fmt.Sprintf("Cannot index value of type %q with value of type %q", leftType, indexType)
 	m.reportError(msg, location)
 }
+
+func (m *Manager) ReportNotHashable(location text.Location, ty types.Type) {
+	msg := fmt.Sprintf("Value of type %q cannot be used as a key in a map", ty.String())
+	m.reportError(msg, location)
+}

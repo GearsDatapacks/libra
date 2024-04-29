@@ -32,6 +32,17 @@ func ToReal(ty Type) Type {
 	return ty
 }
 
+func Hashable(ty Type) bool {
+	switch ty.(type) {
+	case PrimaryType:
+		return true
+	case VariableType:
+		return true
+	default:
+		return false
+	}
+}
+
 type PrimaryType int
 
 const (
@@ -172,7 +183,7 @@ func (l *ListType) indexBy(index Type) Type {
 
 type ArrayType struct {
 	ElemType Type
-	Length int
+	Length   int
 	CanInfer bool
 }
 
@@ -206,7 +217,7 @@ func (a *ArrayType) ToReal() Type {
 }
 
 type MapType struct {
-	KeyType Type
+	KeyType   Type
 	ValueType Type
 }
 

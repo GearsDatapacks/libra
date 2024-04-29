@@ -482,11 +482,20 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 		})
 	}
 
-	return &ir.MapExpression{
+	mapExpr := &ir.MapExpression{
 		KeyValues: keyValues,
-		DataType:  &types.MapType{
+		DataType: &types.MapType{
 			KeyType:   keyType,
 			ValueType: valueType,
 		},
 	}
+
+	if !types.Hashable(keyType) {
+		t.Diagnostics.ReportNotHashable(mapLit.KeyValues[0].Key.Location(), keyType)
+		return &ir.InvalidExpression{
+			Expression: mapExpr,
+		}
+	}
+
+	return mapExpr
 }

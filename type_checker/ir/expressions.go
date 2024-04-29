@@ -741,6 +741,10 @@ func (i *InvalidExpression) Type() types.Type {
 	return types.Invalid
 }
 
+func (i *InvalidExpression) IsConst() bool {
+	return false
+}
+
 type ArrayExpression struct {
 	expression
 	DataType *types.ArrayType
@@ -844,11 +848,29 @@ func (m *MapExpression) Type() types.Type {
 }
 
 func (m *MapExpression) IsConst() bool {
-	return false
+	for _, kv := range m.KeyValues {
+		if !kv.Key.IsConst() || !kv.Value.IsConst() {
+			return false
+		}
+	}
+	return true
 }
 
 func (m *MapExpression) ConstValue() values.ConstValue {
-	return nil
+	if !m.IsConst() {
+		return nil
+	}
+
+	value := map[uint64]values.ConstValue{}
+	for _, kv := range m.KeyValues {
+		keyValue := kv.Key.ConstValue()
+		valueValue := kv.Value.ConstValue()
+		value[keyValue.Hash()] = valueValue
+	}
+
+	return values.MapValue{
+		Values: value,
+	}
 }
 
 // TODO:
