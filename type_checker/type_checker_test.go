@@ -253,6 +253,31 @@ func TestArrays(t *testing.T) {
 	}
 }
 
+func TestMaps(t *testing.T) {
+	tests := []struct {
+		src       string
+		keyValues [][2]any
+	}{
+		{"{1: 2, 3: 4}", [][2]any{{1, 2}, {3, 4}}},
+		{`{"one": 1, "two": 2, "three": 3}`, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
+		{`{true: "true", false: "false"}`, [][2]any{{true, "true"}, {false, "false"}}},
+		{`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}`, [][2]any{{"12", 3}, {"74", 11}}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[*ir.MapExpression](t, program)
+
+		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
+		constVal := expr.ConstValue().(values.MapValue)
+		utils.AssertEq(t, len(constVal.Values), len(test.keyValues))
+		for _, kv := range test.keyValues {
+			key := constValue(kv[0])
+			utils.AssertEq(t, constVal.Values[key.Hash()], constValue(kv[1]))
+		}
+	}
+}
+
 func constValue(val any) values.ConstValue {
 	switch value := val.(type) {
 	case int:
