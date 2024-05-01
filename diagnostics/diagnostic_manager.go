@@ -173,8 +173,8 @@ func (m *Manager) ReportCannotIncDec(location text.Location, incDec string) {
 	m.reportError(msg, location)
 }
 
-func (m *Manager) ReportVariableImmutable(location text.Location, varName string) {
-	msg := fmt.Sprintf("Variable %q is immutable", varName)
+func (m *Manager) ReportValueImmutable(location text.Location) {
+	msg := "Cannot modify value, it is immutable"
 	m.reportError(msg, location)
 }
 
@@ -195,5 +195,10 @@ func (m *Manager) ReportCannotIndex(location text.Location, leftType, indexType 
 
 func (m *Manager) ReportNotHashable(location text.Location, ty types.Type) {
 	msg := fmt.Sprintf("Value of type %q cannot be used as a key in a map", ty.String())
+	m.reportError(msg, location)
+}
+
+func (m *Manager) ReportCannotAssign(location text.Location) {
+	msg := "Cannot assign to a non-variable value"
 	m.reportError(msg, location)
 }

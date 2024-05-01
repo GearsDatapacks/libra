@@ -46,6 +46,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckCastExpression(expr)
 	case *ast.IndexExpression:
 		return t.typeCheckIndexExpression(expr)
+	case *ast.AssignmentExpression:
+		return t.typeCheckAssignment(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -297,7 +299,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 			}
 			t.Diagnostics.ReportCannotIncDec(unExpr.Operand.Location(), incDec)
 		} else if !ir.MutableExpr(operand) {
-			t.Diagnostics.ReportVariableImmutable(unExpr.Operand.Location(), operand.String())
+			t.Diagnostics.ReportValueImmutable(unExpr.Operand.Location())
 		}
 	}
 
@@ -498,4 +500,27 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 	}
 
 	return mapExpr
+}
+
+func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) ir.Expression {
+	assignee := t.typeCheckExpression(assignment.Assignee)
+	value := t.typeCheckExpression(assignment.Value)
+
+	if !ir.AssignableExpr(assignee) {
+		t.Diagnostics.ReportCannotAssign(assignment.Assignee.Location())
+	} else if !ir.MutableExpr(assignee) {
+		t.Diagnostics.ReportValueImmutable(assignment.Assignee.Location())
+	} else {
+		conversion := convert(value, assignee.Type(), implicit)
+		if conversion == nil {
+			t.Diagnostics.ReportNotAssignable(assignment.Assignee.Location(), assignee.Type(), value.Type())
+		} else {
+			value = conversion
+		}
+	}
+
+	return &ir.Assignment{
+		Assignee: assignee,
+		Value:    value,
+	}
 }

@@ -42,8 +42,12 @@ func (p *Program) String() string {
 }
 
 func AssignableExpr(expr Expression) bool {
-	switch expr.(type) {
+	switch e := expr.(type) {
 	case *VariableExpression:
+		return true
+	case *IndexExpression:
+		return AssignableExpr(e.Left)
+	case *InvalidExpression:
 		return true
 	default:
 		return false
@@ -54,6 +58,10 @@ func MutableExpr(expr Expression) bool {
 	switch e := expr.(type) {
 	case *VariableExpression:
 		return e.Symbol.Mutable
+	case *IndexExpression:
+		return MutableExpr(e.Left)
+	case *InvalidExpression:
+		return true
 	default:
 		return false
 	}

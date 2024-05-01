@@ -873,11 +873,30 @@ func (m *MapExpression) ConstValue() values.ConstValue {
 	}
 }
 
+type Assignment struct {
+	expression
+	Assignee Expression
+	Value Expression
+}
+
+func (a *Assignment) String() string {
+	return fmt.Sprintf("%s = %s", a.Assignee, a.Value)
+}
+
+func (a *Assignment) Type() types.Type {
+	return a.Value.Type()
+}
+
+func (a *Assignment) IsConst() bool {
+	return a.Value.IsConst()
+}
+
+func (a *Assignment) ConstValue() values.ConstValue {
+	return a.Value.ConstValue()
+}
+
 // TODO:
-// MapLiteral
 // FunctionCall
-// IndexExpression
-// AssignmentExpression
 // TupleExpression
 // MemberExpression
 // StructMember
