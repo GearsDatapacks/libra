@@ -506,6 +506,20 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	assignee := t.typeCheckExpression(assignment.Assignee)
 	value := t.typeCheckExpression(assignment.Value)
 
+	if assignment.Operator.Kind != token.EQUALS {
+		left, right, operator := getBinaryOperator(assignment.Operator.Kind - token.EQUALS, assignee, value)
+
+		if operator == 0 {
+			t.Diagnostics.ReportBinaryOperatorUndefined(assignment.Operator.Location, assignment.Operator.Value, left.Type(), right.Type())
+		}
+
+		value = &ir.BinaryExpression{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+
 	if !ir.AssignableExpr(assignee) {
 		t.Diagnostics.ReportCannotAssign(assignment.Assignee.Location())
 	} else if !ir.MutableExpr(assignee) {

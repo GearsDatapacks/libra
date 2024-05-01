@@ -326,7 +326,8 @@ func TestAssignmentExpressions(t *testing.T) {
 	}{
 		{"mut a = 1; a = 2", types.Int},
 		{"mut pi = 3.15; pi = 3.14", types.Float},
-		{`mut greeting = "Helo"; greeting = "Hello"`, types.String},
+		{`mut greeting = "Hell"; greeting += "o"`, types.String},
+		{"mut count = 10; count -= 2", types.Int},
 	}
 
 	for _, test := range tests {
