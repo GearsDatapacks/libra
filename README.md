@@ -337,7 +337,7 @@ let result = add(1, 2) // result = 3
 
 ## Type-declaration statements
 Type-declaration statements are statements that can only appear at the top level of the program; that is, not within another statement such as a function.
-They define a data-type that can be used in the program.
+They define a data-type that can be used in the program. Type names follow the PascalCase naming convention.
 
 ### Type aliases
 A type alias simply binds a type to a name. It is useful for eliminating the need to repeatedly write a complex type.
@@ -345,8 +345,161 @@ Type aliases follow a similar syntax to variable declarations, and can also be r
 
 Example:
 ```rust
-type complex_type = {string: [2]i32}[]
-let complex_value: complex_type = [{"values": [1,2]}]
+type ComplexType = {string: [2]i32}[]
+let complex_value: ComplexType = [{"values": [1,2]}]
+```
+
+### Struct declarations
+A struct declaration creates a custom type, which is a compound of named values.
+
+Example:
+```rust
+struct Person {
+  name: string,
+  age: u8
+}
+```
+
+This defines a struct `Person`, with the fields name (a string), and age (an unsigned 8-bit integer).
+`Person` is now a data-type that can be instantiated, and used as a value.
+
+Example:
+```rust
+// Instantiate the Person struct
+let bob = Person {
+  name: "Bob",
+  age: 42
+}
+
+// Access the name field of bob
+let bob_name = bob.name // "Bob"
+```
+
+### Interface declarations
+An interface is a type that doesn't describe to a specifc value, but rather a constraint on values.
+An interface simply defines a set of methods a type must have to conform to it. Any type with those methods automatically is assignable to that interface type.
+
+Example:
+```rust
+// Anything with these two methods is a valid Sentient
+interface Sentient {
+  think(i32): i32,
+  feel(): string
+}
+
+struct Human {
+  name: string,
+  emotion: string,
+}
+
+fn (Human) think(input: i32): i32 {
+  return input + 1
+}
+fn (Human) feel(): string {
+  return this.emotion
+}
+
+struct Robot {
+  state: i32
+}
+
+fn (Robot) thing(input: i32): i32 {
+  this.state += input
+  return this.state
+}
+fn (Robot) feel(): string {
+  return "Beep boop. Robots can't feel"
+}
+
+fn live(being: Sentient) {
+  print(being.think(7))
+  print(being.feel())
+}
+
+// Valid! Person implements Sentient
+live(Person { name: "Julie", emotion: "Happy" })
+// Valid! Robot implements Sentient
+live(Robot { state: 94 })
+// Invalid! i32 doesn't have either method required by Sentient
+live(7)
+```
+
+### Enums
+An enum is a type that is restricted to a set of possible values.
+An enum has an underlying type, and each variant has a value of that type. By default, the underlying type is `i32`; if the type is a kind of integer, it automatically assigns incrementing values to each of the variants. Otherwise, the values must be assigned manually.
+
+Example:
+```rust
+enum Colour {
+  Red, // 0
+  Green, // 1
+  Blue, // 2
+  Pink = 105, // 105
+  Yellow, // 106
+}
+
+let my_colour = Colour.Pink
+if my_colour == Colour.Blue {
+  print("My favourite colour!")
+} else {
+  print("The colour is adequate")
+}
+
+enum Name: string {
+  Bob = "Bob",
+  Anna = "Anna",
+  Richard = "Richard",
+}
+
+// If we know that the type is Name, Name can be ommited from the value
+let person_name: Name = .Richard
+```
+
+You can use the static `from` method automatically generated for enums to construct a value for that enum from a raw value of that type, but since the values are limited it returns an optional result.
+
+Example:
+```rust
+let name = Name.from("Jane")
+if name.some() {
+  print("Jane is a valid name")
+} else {
+  print("Please choose a different name")
+}
+```
+
+### Unions
+A union is a value that can be of multiple types. It is tagged at runtime so the language knows which type it is.
+If a union only has one member of a type, it can be inferred, otherwise an explicit member needs to be specified.
+
+Example:
+```rust
+union Number {
+  u8, u16, u32, u64,
+  i8, i16, i32, i64,
+  f8, f16, f32, f64,
+}
+
+// Number.f32
+mut num: Number = 15.6
+// Number.i32
+num = 7
+
+union Property {
+  Height(f32),
+  Weight(f32),
+  Age(u32)
+}
+
+// Can be inferred: only one member has type u32
+let age: Property = 102
+// Can't be inferred: two members have type f32, so an explicit member must be specified
+// But, since we explicitly use Property, the type annotation can be omitted
+let height = Property.Height(1.67)
+// If the type is known, it can be omitted from the value
+let weight: Property = .Weight(61.3)
+
+print(height == .Weight(1.67)) // False: one is weight, one is height
+print(age == .Age(102)) // True: they completely match
 ```
 
 ## Hello, world!
