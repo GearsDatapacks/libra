@@ -548,8 +548,9 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 
 	for _, value := range tuple.Values {
 		expr := t.typeCheckExpression(value)
-		dataTypes = append(dataTypes, expr.Type())
-		values = append(values, expr)
+		ty := types.ToReal(expr.Type())
+		dataTypes = append(dataTypes,  ty)
+		values = append(values, convert(expr, ty, implicit))
 	}
 
 	return &ir.TupleExpression{

@@ -232,18 +232,20 @@ func TestCompileTimeValues(t *testing.T) {
 
 func TestArrays(t *testing.T) {
 	tests := []struct {
-		src    string
-		values []any
+		src      string
+		elemType types.Type
+		values   []any
 	}{
-		{"[1, 2, 3]", []any{1, 2, 3}},
-		{"[true, false, true || true]", []any{true, false, true}},
-		{"[1.5 + 2, 6 / 5, 1.2 ** 2]", []any{3.5, 1.2, 1.44}},
+		{"[1, 2, 3]", types.Int, []any{1, 2, 3}},
+		{"[true, false, true || true]", types.Bool, []any{true, false, true}},
+		{"[1.5 + 2, 6 / 5, 1.2 ** 2]", types.Float, []any{3.5, 1.2, 1.44}},
 	}
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
 		expr := getExpr[*ir.ArrayExpression](t, program)
 
+		utils.AssertEq(t, expr.Type().(*types.ArrayType).ElemType, test.elemType)
 		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
 		constVal := expr.ConstValue().(values.ArrayValue)
 		utils.AssertEq(t, len(constVal.Elements), len(test.values))
@@ -256,17 +258,23 @@ func TestArrays(t *testing.T) {
 func TestMaps(t *testing.T) {
 	tests := []struct {
 		src       string
+		keyType   types.Type
+		valueType types.Type
 		keyValues [][2]any
 	}{
-		{"{1: 2, 3: 4}", [][2]any{{1, 2}, {3, 4}}},
-		{`{"one": 1, "two": 2, "three": 3}`, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
-		{`{true: "true", false: "false"}`, [][2]any{{true, "true"}, {false, "false"}}},
-		{`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}`, [][2]any{{"12", 3}, {"74", 11}}},
+		{"{1: 2, 3: 4}", types.Int, types.Int, [][2]any{{1, 2}, {3, 4}}},
+		{`{"one": 1, "two": 2, "three": 3}`, types.String, types.Int, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
+		{`{true: "true", false: "false"}`, types.Bool, types.String, [][2]any{{true, "true"}, {false, "false"}}},
+		{`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}`, types.String, types.Int, [][2]any{{"12", 3}, {"74", 11}}},
 	}
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
 		expr := getExpr[*ir.MapExpression](t, program)
+
+		ty := expr.Type().(*types.MapType)
+		utils.AssertEq(t, ty.KeyType, test.keyType)
+		utils.AssertEq(t, ty.ValueType, test.valueType)
 
 		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
 		constVal := expr.ConstValue().(values.MapValue)
@@ -274,6 +282,37 @@ func TestMaps(t *testing.T) {
 		for _, kv := range test.keyValues {
 			key := constValue(kv[0])
 			utils.AssertEq(t, constVal.Values[key.Hash()], constValue(kv[1]))
+		}
+	}
+}
+
+func TestTuples(t *testing.T) {
+	tests := []struct {
+		src    string
+		types []types.Type
+		values []any
+	}{
+		{"()", []types.Type{}, []any{}},
+		{"(1, 2, 3)", []types.Type{types.Int, types.Int, types.Int}, []any{1, 2, 3}},
+		{"(1.5, true, -1)", []types.Type{types.Float, types.Bool, types.Int}, []any{1.5, true, -1}},
+		{`("Hi", 2, false)`, []types.Type{types.String, types.Int, types.Bool}, []any{"Hi", 2, false}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[*ir.TupleExpression](t, program)
+
+		types := expr.Type().(*types.TupleType).Types
+		utils.AssertEq(t, len(types), len(test.types))
+		for i, ty := range test.types {
+			utils.AssertEq(t, types[i], ty)
+		}
+
+		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
+		constVal := expr.ConstValue().(values.TupleValue)
+		utils.AssertEq(t, len(constVal.Values), len(test.values))
+		for i, elem := range constVal.Values {
+			utils.AssertEq(t, elem, constValue(test.values[i]))
 		}
 	}
 }
@@ -359,9 +398,11 @@ func TestTCDiagnostics(t *testing.T) {
 		{"1 + [2]--", []diagnostic{{`Cannot decrement a non-variable value`, diagnostics.Error}}},
 		{"[[1, 2, [true] ]]", []diagnostic{{`Value of type "bool" is not assignable to type "i32"`, diagnostics.Error}}},
 		{"mut a = 0; const b = [a + 1]", []diagnostic{{`Value must be known at compile time`, diagnostics.Error}}},
+		{"mut i = 1; (1, true, 7.3)[[ [i] ]]", []diagnostic{{`Value must be known at compile time`, diagnostics.Error}}},
 		{`let arr: string[[ [1.5] ]] = [["one", "half"]]`, []diagnostic{{`Array length must be an integer`, diagnostics.Error}}},
 		{`[[1, 2, 3]][[ [3.14] ]]`, []diagnostic{{`Cannot index value of type "i32[3]" with value of type "untyped float"`, diagnostics.Error}}},
 		{"[1] = 2", []diagnostic{{"Cannot assign to a non-variable value", diagnostics.Error}}},
+		{"[[1, 2, 3]][[ [8] ]]", []diagnostic{{"Index 8 is out of bounds of array of length 3", diagnostics.Error}}},
 	}
 
 	for _, test := range tests {
