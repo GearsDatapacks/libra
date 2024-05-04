@@ -3,6 +3,7 @@ package parser
 import (
 	"strconv"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -33,7 +34,7 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	nudFn := p.lookupNudFn(p.next().Kind)
 
 	if nudFn == nil {
-		p.Diagnostics.ReportExpectedExpression(p.next().Location, p.next().Kind)
+		p.Diagnostics.Report(diagnostics.ExpectedExpression(p.next().Location, p.next().Kind))
 		return &ast.ErrorNode{}
 	}
 
@@ -146,7 +147,7 @@ func (p *parser) parseInferredTypeExpression() ast.Expression {
 		return p.parseStructExpression(&ast.InferredExpression{Token: dot})
 	}
 
-	p.Diagnostics.ReportExpectedMemberOrStructBody(p.next().Location, p.next())
+	p.Diagnostics.Report(diagnostics.ExpectedMemberOrStructBody(p.next().Location, p.next()))
 	return &ast.InferredExpression{Token: dot}
 }
 

@@ -15,6 +15,22 @@ const (
 	Info
 )
 
+type Partial struct {
+	Kind     DiagnosticKind
+	Message  string
+}
+
+func partial(kind DiagnosticKind, message string) *Partial {
+	return &Partial{
+		Kind:    kind,
+		Message: message,
+	}
+}
+
+func (p *Partial) Location(location text.Location) Diagnostic {
+	return new(p.Kind, p.Message, location)
+}
+
 type Diagnostic struct {
 	Kind     DiagnosticKind
 	Message  string

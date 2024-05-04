@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Type interface {
 	String() string
 	valid(Type) bool
-	indexBy(Type, []values.ConstValue) Type
+	indexBy(Type, []values.ConstValue) (Type, *diagnostics.Partial)
 }
 
 func Assignable(to, from Type) bool {
@@ -21,9 +22,9 @@ func Assignable(to, from Type) bool {
 	return to.valid(from)
 }
 
-func Index(left, index Type, constVals ...values.ConstValue) Type {
+func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics.Partial) {
 	if index == Invalid {
-		return Invalid
+		return Invalid, nil
 	}
 	return left.indexBy(index, constVals)
 }
@@ -69,15 +70,17 @@ func (pt PrimaryType) valid(other Type) bool {
 	return isPrimary && primary == pt
 }
 
-func (pt PrimaryType) indexBy(index Type, _ []values.ConstValue) Type {
+func (pt PrimaryType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
 	switch pt {
 	case String:
 		if Assignable(Int, index) {
-			return String
+			return String, nil
 		}
+	case Invalid:
+		return Invalid, nil
 	}
 
-	return Invalid
+	return Invalid, diagnostics.CannotIndex(pt, index)
 }
 
 type VTKind int
@@ -148,8 +151,8 @@ func (v VariableType) valid(other Type) bool {
 	return v.Kind == variable.Kind
 }
 
-func (v VariableType) indexBy(index Type, _ []values.ConstValue) Type {
-	return Invalid
+func (v VariableType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
+	return Invalid, diagnostics.CannotIndex(v, index)
 }
 
 func (v VariableType) ToReal() Type {
@@ -177,11 +180,11 @@ func (l *ListType) valid(other Type) bool {
 	return false
 }
 
-func (l *ListType) indexBy(index Type, _ []values.ConstValue) Type {
+func (l *ListType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
 	if Assignable(Int, index) {
-		return l.ElemType
+		return l.ElemType, nil
 	}
-	return Invalid
+	return Invalid, diagnostics.CannotIndex(l, index)
 }
 
 type ArrayType struct {
@@ -207,11 +210,18 @@ func (a *ArrayType) valid(other Type) bool {
 	return lengthsMatch && Assignable(a.ElemType, array.ElemType) && Assignable(array.ElemType, a.ElemType)
 }
 
-func (a *ArrayType) indexBy(index Type, _ []values.ConstValue) Type {
-	if Assignable(Int, index) {
-		return a.ElemType
+func (a *ArrayType) indexBy(index Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
+	if !Assignable(Int, index) {
+		return Invalid, diagnostics.CannotIndex(a, index)
 	}
-	return Invalid
+	if len(constVals) > 0 && a.Length != -1 {
+		intIndex := int64(values.NumericValue(constVals[0]))
+		if intIndex < 0 || intIndex >= int64(a.Length) {
+			return Invalid, diagnostics.IndexOutOfBounds(intIndex, int64(a.Length))
+		}
+	}
+
+	return a.ElemType, nil
 }
 
 func (a *ArrayType) ToReal() Type {
@@ -239,11 +249,11 @@ func (m *MapType) valid(other Type) bool {
 	return keysMatch && valuesMatch
 }
 
-func (m *MapType) indexBy(index Type, _ []values.ConstValue) Type {
+func (m *MapType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
 	if Assignable(m.KeyType, index) {
-		return m.ValueType
+		return m.ValueType, nil
 	}
-	return Invalid
+	return Invalid, diagnostics.CannotIndex(m, index)
 }
 
 type TupleType struct {
@@ -284,17 +294,17 @@ func (t *TupleType) valid(other Type) bool {
 	return true
 }
 
-func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) Type {
+func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
 	if !Assignable(Int, t) {
-		return Invalid
+		return Invalid, diagnostics.CannotIndex(a, t)
 	}
 
 	if len(constVals) == 0 {
-		return Invalid
+		return Invalid, diagnostics.NotConstPartial
 	}
 
 	index := constVals[0].(values.IntValue).Value
-	return a.Types[index]
+	return a.Types[index], nil
 }
 
 type Pseudo interface {

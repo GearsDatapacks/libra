@@ -3,6 +3,7 @@ package typechecker
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
@@ -32,14 +33,14 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		expectedType = t.typeFromAst(varDec.Type.Type)
 		if expectedType == nil {
 			name := varDec.Type.Type.(*ast.TypeName)
-			t.Diagnostics.ReportUndefinedType(name.Location(), name.Name.Value)
+			t.Diagnostics.Report(diagnostics.UndefinedType(name.Location(), name.Name.Value))
 		}
 	}
 
 	if expectedType != nil {
 		conversion := convert(value, expectedType, implicit)
 		if conversion == nil {
-			t.Diagnostics.ReportNotAssignable(varDec.Value.Location(), expectedType, value.Type())
+			t.Diagnostics.Report(diagnostics.NotAssignable(varDec.Value.Location(), expectedType, value.Type()))
 		} else {
 			value = conversion
 		}
@@ -53,7 +54,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	if constant && !value.IsConst() {
-		t.Diagnostics.ReportNotConst(varDec.Value.Location())
+		t.Diagnostics.Report(diagnostics.NotConst(varDec.Value.Location()))
 	}
 	var constVal values.ConstValue
 	if !mutable && value.IsConst() {
@@ -61,13 +62,13 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	variable := symbols.Variable{
-		Name:    varDec.Identifier.Value,
-		Mutable: mutable,
-		Type:    varType,
+		Name:       varDec.Identifier.Value,
+		Mutable:    mutable,
+		Type:       varType,
 		ConstValue: constVal,
 	}
 	if !t.symbols.DeclareVariable(variable) {
-		t.Diagnostics.ReportVariableDefined(varDec.Identifier.Location, variable.Name)
+		t.Diagnostics.Report(diagnostics.VariableDefined(varDec.Identifier.Location, variable.Name))
 	}
 	return &ir.VariableDeclaration{
 		Name:  variable.Name,

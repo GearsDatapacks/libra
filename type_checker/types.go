@@ -3,6 +3,7 @@ package typechecker
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
@@ -26,12 +27,12 @@ func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 		if _, ok := ty.Count.(*ast.InferredExpression); !ok {
 			expr := convert(t.typeCheckExpression(ty.Count), types.Int, implicit)
 			if expr == nil {
-				t.Diagnostics.ReportCountMustBeInt(ty.Count.Location())
+				t.Diagnostics.Report(diagnostics.CountMustBeInt(ty.Count.Location()))
 			} else if expr.IsConst() {
 				value := expr.ConstValue().(values.IntValue)
 				length = int(value.Value)
 			} else {
-				t.Diagnostics.ReportNotConst(ty.Count.Location())
+				t.Diagnostics.Report(diagnostics.NotConst(ty.Count.Location()))
 			}
 		}
 

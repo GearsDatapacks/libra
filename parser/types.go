@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -75,7 +76,7 @@ func (p *parser) parsePrimaryType() ast.TypeExpression {
 	case token.LEFT_BRACE:
 		return p.parseMapType()
 	default:
-		p.Diagnostics.ReportExpectedType(p.next().Location, p.next().Kind)
+		p.Diagnostics.Report(diagnostics.ExpectedType(p.next().Location, p.next().Kind))
 		return &ast.ErrorNode{}
 	}
 }

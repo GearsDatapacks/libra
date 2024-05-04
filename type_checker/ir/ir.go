@@ -3,6 +3,7 @@ package ir
 import (
 	"bytes"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
@@ -67,7 +68,7 @@ func MutableExpr(expr Expression) bool {
 	}
 }
 
-func Index(left, index Expression) types.Type {
+func Index(left, index Expression) (types.Type, *diagnostics.Partial) {
 	if index.IsConst() {
 		if left.IsConst() {
 			return types.Index(left.Type(), index.Type(), index.ConstValue(), left.ConstValue())

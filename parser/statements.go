@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
@@ -43,7 +44,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("else") {
-		p.Diagnostics.ReportElseStatementWithoutIf(p.next().Location)
+		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
 	}
 
 	if p.isKeyword("while") {
@@ -55,7 +56,7 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("fn") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, "Function declaration")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Function declaration"))
 		return p.parseFunctionDeclaration()
 	}
 
@@ -64,27 +65,27 @@ func (p *parser) parseStatement() ast.Statement {
 	}
 
 	if p.isKeyword("type") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, "Type declaration")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Type declaration"))
 		return p.parseTypeDeclaration()
 	}
 
 	if p.isKeyword("struct") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, "Struct declaration")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Struct declaration"))
 		return p.parseStructDeclaration()
 	}
 
 	if p.isKeyword("interface") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, "Interface declaration")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Interface declaration"))
 		return p.parseInterfaceDeclaration()
 	}
 
 	if p.isKeyword("import") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, "Import statement")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Import statement"))
 		return p.parseImportStatement()
 	}
 
 	if p.isKeyword("enum") || p.isKeyword("union") {
-		p.Diagnostics.ReportOnlyTopLevelStatement(p.next().Location, p.next().Value+" declaration")
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, p.next().Value+" declaration"))
 		return p.parseEnumDeclaration()
 	}
 
@@ -256,7 +257,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	if p.next().Kind == token.DOT {
 		if methodOf != nil {
-			p.Diagnostics.ReportMemberAndMethodNotAllowed(name.Location)
+			p.Diagnostics.Report(diagnostics.MemberAndMethodNotAllowed(name.Location))
 		}
 
 		dot := p.consume()
@@ -276,7 +277,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	if len(params) > 0 {
 		lastParam := params[len(params)-1]
 		if lastParam.Type == nil && lastParam.Default == nil {
-			p.Diagnostics.ReportLastParameterMustHaveType(lastParam.Name.Location, name.Location)
+			p.Diagnostics.Report(diagnostics.LastParameterMustHaveType(lastParam.Name.Location, name.Location)...)
 		}
 	}
 
@@ -347,7 +348,7 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 		if len(fields) > 0 {
 			last := fields[len(fields)-1]
 			if last.Type == nil {
-				p.Diagnostics.ReportLastStructFieldMustHaveType(last.Name.Location, name.Location)
+				p.Diagnostics.Report(diagnostics.LastStructFieldMustHaveType(last.Name.Location, name.Location)...)
 			}
 		}
 
@@ -416,7 +417,7 @@ func (p *parser) parseImportStatement() ast.Statement {
 
 	if p.next().Kind == token.STAR {
 		if symbols != nil {
-			p.Diagnostics.ReportOneImportModifierAllowed(p.next().Location)
+			p.Diagnostics.Report(diagnostics.OneImportModifierAllowed(p.next().Location))
 		}
 		all = &ast.ImportAll{}
 
@@ -430,7 +431,7 @@ func (p *parser) parseImportStatement() ast.Statement {
 
 	if p.canContinue() && p.isKeyword("as") {
 		if symbols != nil || all != nil {
-			p.Diagnostics.ReportOneImportModifierAllowed(p.next().Location)
+			p.Diagnostics.Report(diagnostics.OneImportModifierAllowed(p.next().Location))
 		}
 		alias = &ast.ImportAlias{}
 		alias.As = p.consume()

@@ -69,7 +69,7 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.Kind = token.STRING
 		nextToken.Value = l.parseString()
 	} else {
-		l.Diagnostics.ReportInvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next)
+		l.Diagnostics.Report(diagnostics.InvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next))
 		l.consume()
 	}
 
@@ -95,8 +95,8 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 
 	if l.next() == '.' && isNumber(l.peek(1)) {
 		if l.peek(-1) == '_' {
-			l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-				l.getLocation(l.line, l.line, l.col-1, l.col))
+			l.Diagnostics.Report(diagnostics.NumbersCannotEndWithSeparator(
+				l.getLocation(l.line, l.line, l.col-1, l.col)))
 		}
 
 		kind = token.FLOAT
@@ -113,8 +113,8 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 	}
 
 	if l.peek(-1) == '_' {
-		l.Diagnostics.ReportNumbersCannotEndWithSeparator(
-			l.getLocation(l.line, l.line, l.col-1, l.col))
+		l.Diagnostics.Report(diagnostics.NumbersCannotEndWithSeparator(
+			l.getLocation(l.line, l.line, l.col-1, l.col)))
 	}
 
 	return kind, str.String()
@@ -131,8 +131,8 @@ func (l *lexer) parseString() string {
 			l.consume()
 			char, ok := escape(l.next())
 			if !ok {
-				l.Diagnostics.ReportInvalidEscapeSequence(
-					l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next())
+				l.Diagnostics.Report(diagnostics.InvalidEscapeSequence(
+					l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next()))
 			}
 			str.WriteByte(char)
 		} else {
@@ -143,7 +143,7 @@ func (l *lexer) parseString() string {
 	}
 
 	if l.eof() {
-		l.Diagnostics.ReportUnterminatedString(l.getLocation(startLine, l.line, pos, l.col))
+		l.Diagnostics.Report(diagnostics.UnterminatedString(l.getLocation(startLine, l.line, pos, l.col)))
 	}
 
 	l.consume()

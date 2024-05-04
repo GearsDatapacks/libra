@@ -3,6 +3,7 @@ package typechecker
 import (
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
@@ -58,7 +59,7 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 func (t *typeChecker) typeCheckIdentifier(ident *ast.Identifier) ir.Expression {
 	variable := t.symbols.LookupVariable(ident.Name)
 	if variable == nil {
-		t.Diagnostics.ReportVariableUndefined(ident.Token.Location, ident.Name)
+		t.Diagnostics.Report(diagnostics.VariableUndefined(ident.Token.Location, ident.Name))
 		variable = &symbols.Variable{
 			Name:    ident.Name,
 			Mutable: true,
@@ -86,7 +87,7 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	left, right, operator := getBinaryOperator(binExpr.Operator.Kind, left, right)
 
 	if operator == 0 {
-		t.Diagnostics.ReportBinaryOperatorUndefined(binExpr.Operator.Location, binExpr.Operator.Value, left.Type(), right.Type())
+		t.Diagnostics.Report(diagnostics.BinaryOperatorUndefined(binExpr.Operator.Location, binExpr.Operator.Value, left.Type(), right.Type()))
 	}
 
 	return &ir.BinaryExpression{
@@ -265,7 +266,7 @@ func (t *typeChecker) typeCheckPrefixExpression(unExpr *ast.PrefixExpression) ir
 	operator := getPrefixOperator(unExpr.Operator.Kind, operand)
 
 	if operator == 0 {
-		t.Diagnostics.ReportUnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type())
+		t.Diagnostics.Report(diagnostics.UnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type()))
 	}
 
 	// We can safely ignore the identity operator
@@ -299,14 +300,14 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 			if plainOp >= ir.DecrecementInt {
 				incDec = "decrement"
 			}
-			t.Diagnostics.ReportCannotIncDec(unExpr.Operand.Location(), incDec)
+			t.Diagnostics.Report(diagnostics.CannotIncDec(unExpr.Operand.Location(), incDec))
 		} else if !ir.MutableExpr(operand) {
-			t.Diagnostics.ReportValueImmutable(unExpr.Operand.Location())
+			t.Diagnostics.Report(diagnostics.ValueImmutable(unExpr.Operand.Location()))
 		}
 	}
 
 	if operator == 0 {
-		t.Diagnostics.ReportUnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type())
+		t.Diagnostics.Report(diagnostics.UnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type()))
 	}
 
 	return &ir.UnaryExpression{
@@ -403,7 +404,7 @@ func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expre
 	ty := t.typeFromAst(expr.Type)
 	conversion := convert(value, ty, explicit)
 	if conversion == nil {
-		t.Diagnostics.ReportCannotCast(expr.Left.Location(), value.Type(), ty)
+		t.Diagnostics.Report(diagnostics.CannotCast(expr.Left.Location(), value.Type(), ty))
 		return &ir.InvalidExpression{
 			Expression: value,
 		}
@@ -422,7 +423,7 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 		}
 		converted := convert(value, elemType, operator)
 		if converted == nil {
-			t.Diagnostics.ReportNotAssignable(elem.Location(), elemType, value.Type())
+			t.Diagnostics.Report(diagnostics.NotAssignable(elem.Location(), elemType, value.Type()))
 		} else {
 			values = append(values, converted)
 		}
@@ -441,16 +442,16 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) ir.Expression {
 	left := t.typeCheckExpression(indexExpr.Left)
 	index := t.typeCheckExpression(indexExpr.Index)
+	ty, diag := ir.Index(left, index)
 
-	if left.Type() != types.Invalid &&
-		index.Type() != types.Invalid &&
-		ir.Index(left, index) == types.Invalid {
-		t.Diagnostics.ReportCannotIndex(indexExpr.Index.Location(), left.Type(), index.Type())
+	if diag != nil {
+		t.Diagnostics.Report(diag.Location(indexExpr.Index.Location()))
 	}
 
 	return &ir.IndexExpression{
 		Left:  left,
 		Index: index,
+		DataType: ty,
 	}
 }
 
@@ -466,7 +467,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 		}
 		convertedKey := convert(key, keyType, operator)
 		if convertedKey == nil {
-			t.Diagnostics.ReportNotAssignable(kv.Key.Location(), keyType, key.Type())
+			t.Diagnostics.Report(diagnostics.NotAssignable(kv.Key.Location(), keyType, key.Type()))
 			continue
 		}
 
@@ -476,7 +477,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 		}
 		convertedValue := convert(value, valueType, operator)
 		if convertedValue == nil {
-			t.Diagnostics.ReportNotAssignable(kv.Value.Location(), valueType, value.Type())
+			t.Diagnostics.Report(diagnostics.NotAssignable(kv.Value.Location(), valueType, value.Type()))
 			continue
 		}
 
@@ -495,7 +496,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 	}
 
 	if !types.Hashable(keyType) {
-		t.Diagnostics.ReportNotHashable(mapLit.KeyValues[0].Key.Location(), keyType)
+		t.Diagnostics.Report(diagnostics.NotHashable(mapLit.KeyValues[0].Key.Location(), keyType))
 		return &ir.InvalidExpression{
 			Expression: mapExpr,
 		}
@@ -509,10 +510,10 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	value := t.typeCheckExpression(assignment.Value)
 
 	if assignment.Operator.Kind != token.EQUALS {
-		left, right, operator := getBinaryOperator(assignment.Operator.Kind - token.EQUALS, assignee, value)
+		left, right, operator := getBinaryOperator(assignment.Operator.Kind-token.EQUALS, assignee, value)
 
 		if operator == 0 {
-			t.Diagnostics.ReportBinaryOperatorUndefined(assignment.Operator.Location, assignment.Operator.Value, left.Type(), right.Type())
+			t.Diagnostics.Report(diagnostics.BinaryOperatorUndefined(assignment.Operator.Location, assignment.Operator.Value, left.Type(), right.Type()))
 		}
 
 		value = &ir.BinaryExpression{
@@ -523,13 +524,13 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	}
 
 	if !ir.AssignableExpr(assignee) {
-		t.Diagnostics.ReportCannotAssign(assignment.Assignee.Location())
+		t.Diagnostics.Report(diagnostics.CannotAssign(assignment.Assignee.Location()))
 	} else if !ir.MutableExpr(assignee) {
-		t.Diagnostics.ReportValueImmutable(assignment.Assignee.Location())
+		t.Diagnostics.Report(diagnostics.ValueImmutable(assignment.Assignee.Location()))
 	} else {
 		conversion := convert(value, assignee.Type(), implicit)
 		if conversion == nil {
-			t.Diagnostics.ReportNotAssignable(assignment.Assignee.Location(), assignee.Type(), value.Type())
+			t.Diagnostics.Report(diagnostics.NotAssignable(assignment.Assignee.Location(), assignee.Type(), value.Type()))
 		} else {
 			value = conversion
 		}
@@ -552,7 +553,7 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 	}
 
 	return &ir.TupleExpression{
-		Values:   values,
+		Values: values,
 		DataType: &types.TupleType{
 			Types: dataTypes,
 		},

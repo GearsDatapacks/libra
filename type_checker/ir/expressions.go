@@ -718,6 +718,10 @@ func (c *Conversion) IsConst() bool {
 }
 
 func (c *Conversion) ConstValue() values.ConstValue {
+	if !c.IsConst() {
+		return nil
+	}
+	
 	switch c.To {
 	case types.Float:
 		return values.FloatValue{
@@ -797,6 +801,7 @@ type IndexExpression struct {
 	expression
 	Left Expression
 	Index Expression
+	DataType types.Type
 }
 
 func (i *IndexExpression) String() string {
@@ -804,7 +809,7 @@ func (i *IndexExpression) String() string {
 }
 
 func (i *IndexExpression) Type() types.Type {
-	return Index(i.Left, i.Index)
+	return i.DataType
 }
 
 func (i *IndexExpression) IsConst() bool {

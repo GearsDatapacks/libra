@@ -307,7 +307,7 @@ func TestIndexExpressions(t *testing.T) {
 		dataType types.Type
 	}{
 		{"[1, 2, 3][1]", types.Int},
-		{"[1.2, 3.4, 1][7]", types.Float},
+		{"[1.2, 3.4, 1][2]", types.Float},
 		{"[7 == 2, 31 > 30.5][0.0]", types.Bool},
 	}
 
@@ -443,6 +443,7 @@ func testDiagnostic(t *testing.T,
 	kind diagnostics.DiagnosticKind,
 	msg string,
 	span text.Span) {
+	t.Helper()
 	utils.AssertEq(t, diagnostic.Kind, kind)
 	utils.AssertEq(t, diagnostic.Message, msg)
 	utils.AssertEq(t, diagnostic.Location.Span, span)

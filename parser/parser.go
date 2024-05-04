@@ -323,7 +323,7 @@ func (p *parser) expect(kind token.Kind) token.Token {
 	if p.next().Kind == kind {
 		return p.consume()
 	}
-	p.Diagnostics.ReportExpectedToken(p.next().Location, kind, p.next().Kind)
+	p.Diagnostics.Report(diagnostics.ExpectedToken(p.next().Location, kind, p.next().Kind))
 	span := text.NewSpan(0, 0, 0, 0)
 	location := text.Location{
 		Span: span,
@@ -339,11 +339,11 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 	}
 
 	if p.next().Kind == token.IDENTIFIER && p.next().Value == keyword {
-		p.Diagnostics.ReportKeywordOverwritten(p.next().Location, keyword, p.identifiers[keyword])
+		p.Diagnostics.Report(diagnostics.KeywordOverwritten(p.next().Location, keyword, p.identifiers[keyword])...)
 		return p.consume()
 	}
 
-	p.Diagnostics.ReportExpectedKeyword(p.next().Location, keyword, p.next())
+	p.Diagnostics.Report(diagnostics.ExpectedKeyword(p.next().Location, keyword, p.next()))
 	span := text.NewSpan(0, 0, 0, 0)
 	location := text.Location{
 		Span: span,
@@ -356,7 +356,7 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 func (p *parser) expectNewline() {
 	if p.nextWithNewlines().Kind != token.NEWLINE &&
 		p.next().Kind != token.SEMICOLON {
-		p.Diagnostics.ReportExpectedNewline(p.next().Location, p.next().Kind)
+		p.Diagnostics.Report(diagnostics.ExpectedNewline(p.next().Location, p.next().Kind))
 	}
 
 	p.consumeNewlines()
