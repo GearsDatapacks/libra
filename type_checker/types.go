@@ -47,6 +47,14 @@ func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 			KeyType:   keyType,
 			ValueType: valueType,
 		}
+	case *ast.TupleType:
+		dataTypes := []types.Type{}
+		for _, ty := range ty.Types {
+			dataTypes = append(dataTypes, t.typeFromAst(ty))
+		}
+		return &types.TupleType{
+			Types: dataTypes,
+		}
 	default:
 		panic(fmt.Sprintf("TODO: Types from %T", ty))
 	}

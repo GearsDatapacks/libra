@@ -66,3 +66,13 @@ func MutableExpr(expr Expression) bool {
 		return false
 	}
 }
+
+func Index(left, index Expression) types.Type {
+	if index.IsConst() {
+		if left.IsConst() {
+			return types.Index(left.Type(), index.Type(), index.ConstValue(), left.ConstValue())
+		}
+		return types.Index(left.Type(), index.Type(), index.ConstValue())
+	}
+	return types.Index(left.Type(), index.Type())
+}

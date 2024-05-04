@@ -32,6 +32,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckArray(expr)
 	case *ast.MapLiteral:
 		return t.typeCheckMap(expr)
+	case *ast.TupleExpression:
+		return t.typeCheckTuple(expr)
 	case *ast.Identifier:
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
@@ -442,7 +444,7 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 
 	if left.Type() != types.Invalid &&
 		index.Type() != types.Invalid &&
-		types.Index(left.Type(), index.Type()) == types.Invalid {
+		ir.Index(left, index) == types.Invalid {
 		t.Diagnostics.ReportCannotIndex(indexExpr.Index.Location(), left.Type(), index.Type())
 	}
 
@@ -536,5 +538,23 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	return &ir.Assignment{
 		Assignee: assignee,
 		Value:    value,
+	}
+}
+
+func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
+	dataTypes := []types.Type{}
+	values := []ir.Expression{}
+
+	for _, value := range tuple.Values {
+		expr := t.typeCheckExpression(value)
+		dataTypes = append(dataTypes, expr.Type())
+		values = append(values, expr)
+	}
+
+	return &ir.TupleExpression{
+		Values:   values,
+		DataType: &types.TupleType{
+			Types: dataTypes,
+		},
 	}
 }

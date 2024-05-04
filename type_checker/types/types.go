@@ -1,13 +1,16 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
+
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Type interface {
 	String() string
 	valid(Type) bool
-	indexBy(Type) Type
+	indexBy(Type, []values.ConstValue) Type
 }
 
 func Assignable(to, from Type) bool {
@@ -18,11 +21,11 @@ func Assignable(to, from Type) bool {
 	return to.valid(from)
 }
 
-func Index(left, index Type) Type {
+func Index(left, index Type, constVals ...values.ConstValue) Type {
 	if index == Invalid {
 		return Invalid
 	}
-	return left.indexBy(index)
+	return left.indexBy(index, constVals)
 }
 
 func ToReal(ty Type) Type {
@@ -66,7 +69,7 @@ func (pt PrimaryType) valid(other Type) bool {
 	return isPrimary && primary == pt
 }
 
-func (pt PrimaryType) indexBy(index Type) Type {
+func (pt PrimaryType) indexBy(index Type, _ []values.ConstValue) Type {
 	switch pt {
 	case String:
 		if Assignable(Int, index) {
@@ -145,7 +148,7 @@ func (v VariableType) valid(other Type) bool {
 	return v.Kind == variable.Kind
 }
 
-func (v VariableType) indexBy(index Type) Type {
+func (v VariableType) indexBy(index Type, _ []values.ConstValue) Type {
 	return Invalid
 }
 
@@ -174,7 +177,7 @@ func (l *ListType) valid(other Type) bool {
 	return false
 }
 
-func (l *ListType) indexBy(index Type) Type {
+func (l *ListType) indexBy(index Type, _ []values.ConstValue) Type {
 	if Assignable(Int, index) {
 		return l.ElemType
 	}
@@ -204,7 +207,7 @@ func (a *ArrayType) valid(other Type) bool {
 	return lengthsMatch && Assignable(a.ElemType, array.ElemType) && Assignable(array.ElemType, a.ElemType)
 }
 
-func (a *ArrayType) indexBy(index Type) Type {
+func (a *ArrayType) indexBy(index Type, _ []values.ConstValue) Type {
 	if Assignable(Int, index) {
 		return a.ElemType
 	}
@@ -236,11 +239,62 @@ func (m *MapType) valid(other Type) bool {
 	return keysMatch && valuesMatch
 }
 
-func (m *MapType) indexBy(index Type) Type {
+func (m *MapType) indexBy(index Type, _ []values.ConstValue) Type {
 	if Assignable(m.KeyType, index) {
 		return m.ValueType
 	}
 	return Invalid
+}
+
+type TupleType struct {
+	Types []Type
+}
+
+func (t *TupleType) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('(')
+	for i, ty := range t.Types {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(ty.String())
+	}
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+func (t *TupleType) valid(other Type) bool {
+	tuple, ok := other.(*TupleType)
+	if !ok {
+		return false
+	}
+
+	if len(t.Types) != len(tuple.Types) {
+		return false
+	}
+
+	for i, ty := range t.Types {
+		if !Assignable(ty, tuple.Types[i]) && !Assignable(tuple.Types[i], ty) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) Type {
+	if !Assignable(Int, t) {
+		return Invalid
+	}
+
+	if len(constVals) == 0 {
+		return Invalid
+	}
+
+	index := constVals[0].(values.IntValue).Value
+	return a.Types[index]
 }
 
 type Pseudo interface {

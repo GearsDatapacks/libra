@@ -59,7 +59,16 @@ type ArrayValue struct {
 	Elements []ConstValue
 }
 
-func (s ArrayValue) Hash() uint64 {
+func (ArrayValue) Hash() uint64 {
+	return 0
+}
+
+type TupleValue struct {
+	constValue
+	Values []ConstValue
+}
+
+func (TupleValue) Hash() uint64 {
 	return 0
 }
 
@@ -68,7 +77,7 @@ type MapValue struct {
 	Values map[uint64]ConstValue
 }
 
-func (m MapValue) Hash() uint64 {
+func (MapValue) Hash() uint64 {
 	return 0
 }
 

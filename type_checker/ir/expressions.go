@@ -804,7 +804,7 @@ func (i *IndexExpression) String() string {
 }
 
 func (i *IndexExpression) Type() types.Type {
-	return types.Index(i.Left.Type(), i.Index.Type())
+	return Index(i.Left, i.Index)
 }
 
 func (i *IndexExpression) IsConst() bool {
@@ -895,9 +895,57 @@ func (a *Assignment) ConstValue() values.ConstValue {
 	return a.Value.ConstValue()
 }
 
+type TupleExpression struct {
+	expression
+	Values []Expression
+	DataType *types.TupleType
+}
+
+func (t *TupleExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('(')
+	for i, val := range t.Values {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(val.String())
+	}
+
+	result.WriteByte(')')
+	return result.String()
+}
+
+func (t *TupleExpression) Type() types.Type {
+	return t.DataType
+}
+
+func (t *TupleExpression) IsConst() bool {
+	for _, val := range t.Values {
+		if !val.IsConst() {
+			return false
+		}
+	}
+	return true
+}
+
+func (t *TupleExpression) ConstValue() values.ConstValue {
+	if !t.IsConst() {
+		return nil
+	}
+
+	vals := []values.ConstValue{}
+	for _, val := range t.Values {
+		vals = append(vals, val.ConstValue())
+	}
+
+	return values.TupleValue{
+		Values: vals,
+	}
+}
+
 // TODO:
 // FunctionCall
-// TupleExpression
 // MemberExpression
 // StructMember
 // StructExpression
