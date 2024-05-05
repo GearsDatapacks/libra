@@ -253,6 +253,32 @@ Example:
 (1 + 2) * 3 // Evaluated a (1 + 2) * 3 = 9
 ```
 
+### Unary Expressions
+A unary expression consists of an operator and an operand. The operator is either prefix (comes before operand), or postfix (comes after).
+Unary operators have only two precedence levels as they are conrolled by order. Postfix operators have higher precedence than prefix ones.
+
+Example:
+```rust
+mut i = 1
+print(-i++) // -1
+```
+
+Here is a table of unary operators:
+
+Operator|Function           |Position
+--------|--------           |--------
+++      |Increment          |Postfix
+--      |Decrement          |Postfix
+?       |Error propogation  |Postfix
+!       |Error unwrapping   |Postfix
+\+      |Arithmetic identity|Prefix
+\-      |Arithmetic Negation|Prefix
+!       |Logical Not        |Prefix
+\*      |Poiner dereference |Prefix
+&       |Reference          |Prefix
+~       |Bitwise Not        |Prefix
+
+
 ## Variables
 A variable is a named reference to a value.
 A variable's name must begin with a letter or `_`, and continue with letters, numbers and `_`.
@@ -311,6 +337,91 @@ mut arr: f32[] = [1.3, 3.14, -6.9]
 ```
 
 If the specified type for a variable does not match the type of the value assigned to it, it produces an error.
+
+## Pointers
+A pointer is a value that holds an address of another value. This allows you to pass values around without copying them, or allowing functions to modify a value.
+A pointer type is denoted: `*T`, where `T` is the type of the value it points to.
+By default a pointer is immutable, meaning it cannot be used to modify the underlying value. A mutable pointer is denoted: `*mut T`.
+
+You can create a pointer by referencing a value using the reference operator (`&`), and access the value it points to using the dereference operator (`*`).
+A mutable pointer can be created by adding the `mut` keyword (`&mut <value>`). A mutable pointer can only reference a mutable value. 
+
+Example:
+```rust
+fn increment(p: *mut i32) {
+  *p += 1
+}
+
+mut i = 0
+increment(&mut i)
+print(i) // 1
+
+// As opposed to
+fn increment(mut i: i32) {
+  i += 1 // i32 is passed by copy, so this doesn't modify the original value
+}
+mut i = 0
+increment(i)
+print(i) // still 0
+```
+
+The derefence operator doesn't always need to be used to access the value that a pointer references. Member access on a struct can still be used through a pointer.
+
+Example:
+```rust
+struct Point {
+  x, y: f32
+}
+
+fn (Point) sum(): f32 {
+  return this.x + this.y
+}
+
+let point = Point {x: 3.2, y: 1.8}
+let pointer_to_point: *Point = &point
+let point_x = pointer_to_point.x // This works, no need to dereference
+let sum = pointer_to_point.sum() // This also works
+```
+
+## Type-check Expressions
+A type-check expression is used to determine if a value is of a certain type at runtime.
+It uses the syntax: `<value> is <type>`.
+
+Example:
+```rust
+union Int {
+  i8, i16, i32, i64
+}
+
+fn get_bit_width(i: Int) -> i32 {
+  if i is i8 {
+    return 8
+  } else if i is i16 {
+    return 16
+  } else if i is i32 {
+    return 32
+  } else {
+    return 64
+  }
+}
+```
+
+## Cast expressions
+Cast expressions can be used to convert a value from one type to another. This either changes the representation in memory or forces a union type to be of one type. The syntax is `<value> -> <type>`.
+
+Example:
+```rust
+let int = 21
+let float = int -> f32 // 21.0
+
+union Thing {
+  string, i32, f32
+}
+
+let my_thing: Thing = "Hello"
+let my_str = my_thing -> string // Makes sure my_thing is a string
+let my_int = my_thing -> i32 // ERROR: Thing is string not i32
+```
 
 ## Functions
 A function is a piece of code that can be called from anywhere, allowing behaviour to be determined by the arguments to be passed to it.
@@ -468,7 +579,7 @@ Example:
 ```go
 import "path/to/module" // Gets imported as "module"
 
-let value = module.exported_function()
+let value: module.Type = module.exported_function()
 ```
 
 If you want to change the name of the imported module, you can use the `as` keyword.
@@ -530,6 +641,30 @@ let bob = Person {
 // Access the name field of bob
 let bob_name = bob.name // "Bob"
 ```
+
+### Error types
+An error type is a special kind of type in Libra. An error type is a struct, except all error types are assignable to the builtin `error` type.
+Error type declarations look almost identical to struct declarations, but using the `error` keyword instead.
+
+Example:
+```rust
+error FileNotFound {
+  file_name: string
+}
+
+error GenericError {
+  message: string
+}
+
+mut err: error = FileNotFound{file_name: "foo.txt"}
+err = GenericError{message: "An error occured"}
+```
+
+### Result and Option types
+Results and options are ways of specifying types that might have some kind of error.
+The option type is a union between `None`, a void value, and some type `T`. This is useful when a value might not be there, such as returning the element of a map. The syntax for an option type is `T?`.
+
+A result type is a union between a type `T` and the `error` type. This allows for returning a value from a function that might error. The syntax for a result type is `T!`.
 
 ### Interface declarations
 An interface is a type that doesn't describe to a specifc value, but rather a constraint on values.
@@ -659,6 +794,14 @@ let weight: Property = .Weight(61.3)
 
 print(height == .Weight(1.67)) // False: one is weight, one is height
 print(age == .Age(102)) // True: they completely match
+```
+
+A shorthand for unions can be used: `<type1> | <type2> | ... | <type>`. This allows for inlining a union type without declaring a type for it, but it doesn't support naming of fields and therefore doesn't allow duplicate types.
+
+Example:
+```rust
+mut int_or_float: i32 | f32 = 7
+int_or_float = 12.3
 ```
 
 ## Hello, world!
