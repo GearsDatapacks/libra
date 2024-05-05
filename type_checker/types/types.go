@@ -22,6 +22,10 @@ func Assignable(to, from Type) bool {
 	return to.valid(from)
 }
 
+func Match(a, b Type) bool {
+	return Assignable(a, b) && Assignable(b, a)
+}
+
 func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics.Partial) {
 	if index == Invalid {
 		return Invalid, nil
@@ -172,7 +176,7 @@ func (l *ListType) String() string {
 
 func (l *ListType) valid(other Type) bool {
 	if list, ok := other.(*ListType); ok {
-		return Assignable(l.ElemType, list.ElemType) && Assignable(list.ElemType, l.ElemType)
+		return Match(l.ElemType, list.ElemType)
 	}
 	if array, ok := other.(*ArrayType); ok {
 		return array.CanInfer && Assignable(l.ElemType, array.ElemType)
@@ -207,7 +211,7 @@ func (a *ArrayType) valid(other Type) bool {
 	}
 
 	lengthsMatch := a.Length == -1 || a.Length == array.Length
-	return lengthsMatch && Assignable(a.ElemType, array.ElemType) && Assignable(array.ElemType, a.ElemType)
+	return lengthsMatch && Match(a.ElemType, array.ElemType)
 }
 
 func (a *ArrayType) indexBy(index Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
@@ -244,8 +248,8 @@ func (m *MapType) valid(other Type) bool {
 		return false
 	}
 
-	keysMatch := Assignable(m.KeyType, mapType.KeyType) && Assignable(mapType.KeyType, m.KeyType)
-	valuesMatch := Assignable(m.ValueType, mapType.ValueType) && Assignable(mapType.ValueType, m.ValueType)
+	keysMatch := Match(mapType.KeyType, m.KeyType)
+	valuesMatch := Match(mapType.ValueType, m.ValueType)
 	return keysMatch && valuesMatch
 }
 

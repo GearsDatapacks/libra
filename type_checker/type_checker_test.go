@@ -289,7 +289,7 @@ func TestMaps(t *testing.T) {
 func TestTuples(t *testing.T) {
 	tests := []struct {
 		src    string
-		types []types.Type
+		types  []types.Type
 		values []any
 	}{
 		{"()", []types.Type{}, []any{}},
@@ -374,6 +374,30 @@ func TestAssignmentExpressions(t *testing.T) {
 		expr := program.Statements[1].(*ir.ExpressionStatement).Expression.(*ir.Assignment)
 
 		utils.AssertEq(t, expr.Type(), test.dataType)
+	}
+}
+
+func TestTypeChecks(t *testing.T) {
+	tests := []struct {
+		src       string
+		valueType types.Type
+		dataType  types.Type
+	}{
+		{"1 is i32", types.UntypedInt, types.Int},
+		{"true is bool[1]", types.Bool, &types.ArrayType{ElemType: types.Bool, Length: 1}},
+		{"{1: 1.0, 3: 3.14} is {i32: f32}",
+			&types.MapType{KeyType: types.Int, ValueType: types.Float},
+			&types.MapType{KeyType: types.Int, ValueType: types.Float},
+		},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		expr := getExpr[*ir.TypeCheck](t, program)
+
+		utils.Assert(t, types.Match(expr.Value.Type(), test.valueType))
+		utils.Assert(t, types.Match(expr.DataType, test.dataType))
+		utils.AssertEq(t, expr.Type(), types.Type(types.Bool))
 	}
 }
 

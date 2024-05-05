@@ -426,7 +426,7 @@ live(7)
 
 ### Enums
 An enum is a type that is restricted to a set of possible values.
-An enum has an underlying type, and each variant has a value of that type. By default, the underlying type is `i32`; if the type is a kind of integer, it automatically assigns incrementing values to each of the variants. Otherwise, the values must be assigned manually.
+An enum has an underlying type, and each variant has a value of that type. By default, the underlying type is `i32`; if the type is a kind of integer, it automatically assigns incrementing values to each of the variants. If the type is a string, it automatically has the value of the name of that member. Otherwise, the values must be assigned manually.
 
 Example:
 ```rust
@@ -447,8 +447,8 @@ if my_colour == Colour.Blue {
 
 enum Name: string {
   Bob = "Bob",
-  Anna = "Anna",
-  Richard = "Richard",
+  Ann = "Anne",
+  Richard, // "Richard"
 }
 
 // If we know that the type is Name, Name can be ommited from the value
@@ -456,6 +456,7 @@ let person_name: Name = .Richard
 ```
 
 You can use the static `from` method automatically generated for enums to construct a value for that enum from a raw value of that type, but since the values are limited it returns an optional result.
+If you want to get the underlying value of an enum member, you can use the `raw` method.
 
 Example:
 ```rust
@@ -465,6 +466,8 @@ if name.some() {
 } else {
   print("Please choose a different name")
 }
+
+print(Colour.Blue.raw()) // 2
 ```
 
 ### Unions

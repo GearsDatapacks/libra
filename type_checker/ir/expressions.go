@@ -721,7 +721,7 @@ func (c *Conversion) ConstValue() values.ConstValue {
 	if !c.IsConst() {
 		return nil
 	}
-	
+
 	switch c.To {
 	case types.Float:
 		return values.FloatValue{
@@ -799,8 +799,8 @@ func (a *ArrayExpression) ConstValue() values.ConstValue {
 
 type IndexExpression struct {
 	expression
-	Left Expression
-	Index Expression
+	Left     Expression
+	Index    Expression
 	DataType types.Type
 }
 
@@ -821,14 +821,14 @@ func (i *IndexExpression) ConstValue() values.ConstValue {
 }
 
 type KeyValue struct {
-	Key Expression
+	Key   Expression
 	Value Expression
 }
 
 type MapExpression struct {
 	expression
 	KeyValues []KeyValue
-	DataType *types.MapType
+	DataType  *types.MapType
 }
 
 func (m *MapExpression) String() string {
@@ -881,7 +881,7 @@ func (m *MapExpression) ConstValue() values.ConstValue {
 type Assignment struct {
 	expression
 	Assignee Expression
-	Value Expression
+	Value    Expression
 }
 
 func (a *Assignment) String() string {
@@ -902,7 +902,7 @@ func (a *Assignment) ConstValue() values.ConstValue {
 
 type TupleExpression struct {
 	expression
-	Values []Expression
+	Values   []Expression
 	DataType *types.TupleType
 }
 
@@ -949,10 +949,37 @@ func (t *TupleExpression) ConstValue() values.ConstValue {
 	}
 }
 
+type TypeCheck struct {
+	expression
+	Value    Expression
+	DataType types.Type
+}
+
+func (t *TypeCheck) String() string {
+	return fmt.Sprintf("%s is %s", t.Value.String(), t.DataType.String())
+}
+
+func (t *TypeCheck) Type() types.Type {
+	return types.Bool
+}
+
+func (t *TypeCheck) IsConst() bool {
+	return types.Assignable(t.DataType, t.Value.Type()) ||
+		!types.Assignable(t.Value.Type(), t.DataType)
+}
+
+func (t *TypeCheck) ConstValue() values.ConstValue {
+	if types.Assignable(t.DataType, t.Value.Type()) {
+		return values.BoolValue{Value: true}
+	}
+	if !types.Assignable(t.Value.Type(), t.DataType) {
+		return values.BoolValue{Value: false}
+	}
+	return nil
+}
+
 // TODO:
 // FunctionCall
 // MemberExpression
-// StructMember
 // StructExpression
-// TypeCheckExpression
 // RangeExpression

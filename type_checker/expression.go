@@ -51,6 +51,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckIndexExpression(expr)
 	case *ast.AssignmentExpression:
 		return t.typeCheckAssignment(expr)
+	case *ast.TypeCheckExpression:
+		return t.typeCheckTypeCheck(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -558,5 +560,15 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 		DataType: &types.TupleType{
 			Types: dataTypes,
 		},
+	}
+}
+
+func (t *typeChecker) typeCheckTypeCheck(tc *ast.TypeCheckExpression) ir.Expression {
+	value := t.typeCheckExpression(tc.Left)
+	ty := t.typeFromAst(tc.Type)
+
+	return &ir.TypeCheck{
+		Value:    value,
+		DataType: ty,
 	}
 }
