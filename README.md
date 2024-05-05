@@ -335,6 +335,162 @@ Example:
 let result = add(1, 2) // result = 3
 ```
 
+// WhileLoop
+// ForLoop
+// FunctionDeclaration
+// ReturnStatement
+// TypeDeclaration
+// StructDeclaration
+// InterfaceDeclaration
+// ImportStatement
+// EnumDeclaration
+
+## Statements
+Statements make up a Libra program, and don't produce a value.
+
+### Block statements
+A block statement is a grouping of statements enlosed in `{`, `}`. The statements are evaluated from top to bottom as in a regular program, but live in their own scope, meaning any variables created are not valid outside of it. This is useful when you want to perform an inline calculation without creating any unnecessary variables.
+
+Example:
+```rust
+mut value = 1
+{
+  const two = 2
+  let other_thing = two + 73
+  value += other_thing
+}
+print(value) // 76
+print(other_thing) // ERROR: other_thing is now out of scope
+```
+
+### If/else statements
+An if statement is used to run a piece of code based on a condition. It takes a condition expression (which must be of type `bool`) and a block statement to run as the body.
+If the condition succeeds, it runs the block. Otherwise, if there is an else branch, it runs that. An else branch is the `else` keyword followed by another conditional if statement, or an unconditional block statement.
+
+Example:
+```rust
+if thing_is_true() {
+  print("true")
+} else {
+  print("false")
+}
+
+if a > 0 {
+  print("a is positive")
+} else if a < 0 {
+  print("a is negative")
+} else {
+  print("a is zero")
+}
+```
+
+### While loops
+A while loop is used to repeatedly execute a block of code while a condition is true. The syntax is identical to an if statement, except using the `while` keyword.
+
+Example:
+```rust
+mut i = 1
+
+while i < 10 {
+  print(i) // Prints 1 (inclusive) to 10 (exclusive)
+  i++
+}
+print("Done!")
+```
+
+### For loops
+A for loop iterates over values in an iterator. It is used to, for example, perform an action for each item in an array or other sequence.
+A for loop is defined using the `for` keyword, followed by the name of the variable that holds the element of the iterator each iteration, then the `in` keyword, the value to iterate over, and a block to run each iteration.
+
+Example:
+```rust
+// Runs for every number between 1 (inclusive) and 10 (exclusive)
+for i in 1..10 {
+  print(i)
+}
+
+const primes = [2, 3, 5, 7, 11, 13]
+for prime in primes {
+  print(prime, "is prime")
+}
+```
+
+### Break and Continue
+Sometimes you want to exit a loop before it normally should. You can use the `break` keyword for that.
+Or, if you just want to skip to the next iteration of the loop, use `continue`.
+Both break and continue are disallowed outside of loops, and produce a compile-time error if used that way.
+
+Example:
+```rust
+for i in 1..10 {
+  if i == 5 {
+    break
+  }
+  print(i) // prints 1 to 4 (inclusive)
+}
+
+for i in 1..10 {
+  if i % 2 == 0 {
+    continue
+  }
+  print(i) // prints 1, 3, 5, 7, 9
+}
+```
+
+### Return statements
+A return statement is used to return a value from a function. The syntax is the `return` keyword followed by an optional expression.
+The type of the expression must match the return type of the surrouding function (unless `void`, in which case there must not be a value), and the return statement must only be used within a function. Breaking either of these rules results in a compile-time error.
+
+Example:
+```rust
+fn add(a, b: i32): i32 {
+  return a + b
+  print("This statement isn't reached")
+}
+print(add(1, 2)) // 3
+
+fn perform_task(task: string) {
+  if task == "greet" {
+    print("Hello!")
+    return
+  }
+  print("Unkown task")
+}
+perform_task("greet")
+```
+
+### Imports
+When writing Libra code, you will often want to split code into multiple files/modules. An import can be used to bring in code from other modules.
+A basic import statement is simply the `import` keyword followed by the path to the module to import.
+This defines a struct containing all exported members from that module, and names it after the module name.
+
+Example:
+```go
+import "path/to/module" // Gets imported as "module"
+
+let value = module.exported_function()
+```
+
+If you want to change the name of the imported module, you can use the `as` keyword.
+
+Example:
+```go
+import "my_very_long_module_name" as mod
+mod.foo()
+```
+
+You can specify a list of members to import directly into the current file using `import {...} from ...`, or import all exported memeber of that module using `*`.
+
+Example:
+```go
+import {foo, bar} from "module"
+foo()
+bar()
+
+import * from "module"
+baz() // Exported by module
+```
+
 ## Type-declaration statements
 Type-declaration statements are statements that can only appear at the top level of the program; that is, not within another statement such as a function.
 They define a data-type that can be used in the program. Type names follow the PascalCase naming convention.
