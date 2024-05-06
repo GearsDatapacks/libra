@@ -97,6 +97,49 @@ func TestVariables(t *testing.T) {
 	}
 }
 
+type elseBranch struct {
+	hasCondition bool
+	bodyValue    any
+	elseBranch   *elseBranch
+}
+
+func TestIfStatements(t *testing.T) {
+	tests := []struct {
+		src        string
+		bodyValue  any
+		elseBranch *elseBranch
+	}{
+		{"if 1 + 2 == 3 {1 + 2}", 3, nil},
+		{"if true {1} else {0}", 1, &elseBranch{false, 0, nil}},
+		{"if 1 == 2 {3} else if 2 != 3 {7} else {13}", 3, &elseBranch{true, 7, &elseBranch{false, 13, nil}}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ir.IfStatement](t, program)
+		testIfStatement(t, stmt, test.bodyValue, test.elseBranch)
+	}
+}
+
+func testIfStatement(t *testing.T, stmt *ir.IfStatement, expectedValue any, elseBranch *elseBranch) {
+	utils.AssertEq(t, stmt.Condition.Type(), types.Type(types.Bool))
+	bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+	utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
+	utils.AssertEq(t, bodyValue.ConstValue(), constValue(expectedValue))
+
+	if elseBranch == nil {
+		utils.Assert(t, stmt.ElseBranch == nil)
+	} else if elseBranch.hasCondition {
+		ifStmt := stmt.ElseBranch.(*ir.IfStatement)
+		testIfStatement(t, ifStmt, elseBranch.bodyValue, elseBranch.elseBranch)
+	} else {
+		block := stmt.ElseBranch.(*ir.Block)
+		bodyValue := utils.AssertSingle(t, block.Statements).(*ir.ExpressionStatement).Expression
+		utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
+		utils.AssertEq(t, bodyValue.ConstValue(), constValue(elseBranch.bodyValue))
+	}
+}
+
 func TestBinaryExpression(t *testing.T) {
 	tests := []struct {
 		src    string
@@ -427,6 +470,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{`[[1, 2, 3]][[ [3.14] ]]`, []diagnostic{{`Cannot index value of type "i32[3]" with value of type "untyped float"`, diagnostics.Error}}},
 		{"[1] = 2", []diagnostic{{"Cannot assign to a non-variable value", diagnostics.Error}}},
 		{"[[1, 2, 3]][[ [8] ]]", []diagnostic{{"Index 8 is out of bounds of array of length 3", diagnostics.Error}}},
+		{"if [21] {12}", []diagnostic{{"Condition must be a boolean", diagnostics.Error}}},
 	}
 
 	for _, test := range tests {

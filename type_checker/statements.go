@@ -19,6 +19,10 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		}
 	case *ast.VariableDeclaration:
 		return t.typeCheckVariableDeclaration(stmt)
+	case *ast.BlockStatement:
+		return t.typeCheckBlock(stmt)
+	case *ast.IfStatement:
+		return t.typeCheckIfStatement(stmt)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", statement))
 	}
@@ -73,5 +77,33 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	return &ir.VariableDeclaration{
 		Name:  variable.Name,
 		Value: value,
+	}
+}
+
+func (t *typeChecker) typeCheckBlock(block *ast.BlockStatement) *ir.Block {
+	stmts := []ir.Statement{}
+	for _, stmt := range block.Statements {
+		stmts = append(stmts, t.typeCheckStatement(stmt))
+	}
+	return &ir.Block{
+		Statements: stmts,
+	}
+}
+
+func (t *typeChecker) typeCheckIfStatement(ifStmt *ast.IfStatement) ir.Statement {
+	condition := t.typeCheckExpression(ifStmt.Condition)
+	if !types.Assignable(types.Bool, condition.Type()) {
+		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(ifStmt.Condition.Location()))
+	}
+
+	body := t.typeCheckBlock(ifStmt.Body)
+	var elseBranch ir.Statement
+	if ifStmt.ElseBranch != nil {
+		elseBranch = t.typeCheckStatement(ifStmt.ElseBranch.Statement)
+	}
+	return &ir.IfStatement{
+		Condition:  condition,
+		Body:       body,
+		ElseBranch: elseBranch,
 	}
 }

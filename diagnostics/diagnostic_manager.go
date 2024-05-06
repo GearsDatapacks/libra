@@ -216,3 +216,8 @@ func IndexOutOfBounds(index, len int64) *Partial {
 	msg := fmt.Sprintf("Index %d is out of bounds of array of length %d", index, len)
 	return partial(Error, msg)
 }
+
+func ConditionMustBeBool(location text.Location) Diagnostic {
+	msg := "Condition must be a boolean"
+	return makeError(msg, location)
+}

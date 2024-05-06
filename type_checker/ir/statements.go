@@ -32,10 +32,50 @@ func (v *VariableDeclaration) String() string {
 	return result.String()
 }
 
+type Block struct {
+	statement
+	Statements []Statement
+}
+
+func (b *Block) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	if len(b.Statements) > 0 {
+		result.WriteByte('\n')
+	}
+	for _, stmt := range b.Statements {
+		result.WriteString(stmt.String())
+		result.WriteByte('\n')
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
+type IfStatement struct {
+	statement
+	Condition Expression
+	Body *Block
+	ElseBranch Statement
+}
+
+func (i *IfStatement) String() string {
+	var result bytes.Buffer
+	result.WriteString("if ")
+	result.WriteString(i.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(i.Body.String())
+	
+	if i.ElseBranch != nil {
+		result.WriteString("\nelse ")
+		result.WriteString(i.ElseBranch.String())
+	}
+
+	return result.String()
+}
+
 // TODO:
-// BlockStatement
-// IfStatement
-// ElseBranch
 // WhileLoop
 // ForLoop
 // FunctionDeclaration
