@@ -191,6 +191,10 @@ func (l *ListType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostic
 	return Invalid, diagnostics.CannotIndex(l, index)
 }
 
+func (l *ListType) Item() Type {
+	return l.ElemType
+}
+
 type ArrayType struct {
 	ElemType Type
 	Length   int
@@ -233,6 +237,10 @@ func (a *ArrayType) ToReal() Type {
 	return a
 }
 
+func (a *ArrayType) Item() Type {
+	return a.ElemType
+}
+
 type MapType struct {
 	KeyType   Type
 	ValueType Type
@@ -258,6 +266,10 @@ func (m *MapType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics
 		return m.ValueType, nil
 	}
 	return Invalid, diagnostics.CannotIndex(m, index)
+}
+
+func (m *MapType) Item() Type {
+	return &TupleType{Types: []Type{m.KeyType, m.ValueType}}
 }
 
 type TupleType struct {
@@ -313,4 +325,8 @@ func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) (Type, *diagn
 
 type Pseudo interface {
 	ToReal() Type
+}
+
+type Iterator interface {
+	Item() Type
 }

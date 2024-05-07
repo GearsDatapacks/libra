@@ -221,3 +221,8 @@ func ConditionMustBeBool(location text.Location) Diagnostic {
 	msg := "Condition must be a boolean"
 	return makeError(msg, location)
 }
+
+func NotIterable(location text.Location) Diagnostic {
+	msg := "Value is not iterable"
+	return makeError(msg, location)
+}

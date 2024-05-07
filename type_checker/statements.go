@@ -20,11 +20,13 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 	case *ast.VariableDeclaration:
 		return t.typeCheckVariableDeclaration(stmt)
 	case *ast.BlockStatement:
-		return t.typeCheckBlock(stmt)
+		return t.typeCheckBlock(stmt, true)
 	case *ast.IfStatement:
 		return t.typeCheckIfStatement(stmt)
 	case *ast.WhileLoop:
 		return t.typeCheckWhileLoop(stmt)
+	case *ast.ForLoop:
+		return t.typeCheckForLoop(stmt)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", statement))
 	}
@@ -82,10 +84,12 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 }
 
-func (t *typeChecker) typeCheckBlock(block *ast.BlockStatement) *ir.Block {
-	t.enterScope()
-	defer t.exitScope()
-	
+func (t *typeChecker) typeCheckBlock(block *ast.BlockStatement, createScope bool) *ir.Block {
+	if createScope {
+		t.enterScope()
+		defer t.exitScope()
+	}
+
 	stmts := []ir.Statement{}
 	for _, stmt := range block.Statements {
 		stmts = append(stmts, t.typeCheckStatement(stmt))
@@ -101,7 +105,7 @@ func (t *typeChecker) typeCheckIfStatement(ifStmt *ast.IfStatement) ir.Statement
 		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(ifStmt.Condition.Location()))
 	}
 
-	body := t.typeCheckBlock(ifStmt.Body)
+	body := t.typeCheckBlock(ifStmt.Body, true)
 	var elseBranch ir.Statement
 	if ifStmt.ElseBranch != nil {
 		elseBranch = t.typeCheckStatement(ifStmt.ElseBranch.Statement)
@@ -119,10 +123,35 @@ func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Statement {
 		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(loop.Condition.Location()))
 	}
 
-	body := t.typeCheckBlock(loop.Body)
+	body := t.typeCheckBlock(loop.Body, true)
 	return &ir.WhileLoop{
-		Condition:  condition,
-		Body:       body,
+		Condition: condition,
+		Body:      body,
 	}
 }
 
+func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
+	iter := t.typeCheckExpression(loop.Iterator)
+	var itemType types.Type = types.Invalid
+	if iterator, ok := iter.Type().(types.Iterator); ok {
+		itemType = iterator.Item()
+	} else {
+		t.Diagnostics.Report(diagnostics.NotIterable(loop.Iterator.Location()))
+	}
+	variable := symbols.Variable{
+		Name:       loop.Variable.Value,
+		Mutable:    false,
+		Type:       itemType,
+		ConstValue: nil,
+	}
+	t.enterScope()
+	defer t.exitScope()
+	t.symbols.DeclareVariable(variable)
+	body := t.typeCheckBlock(loop.Body, false)
+
+	return &ir.ForLoop{
+		Variable: variable,
+		Iterator: iter,
+		Body:     body,
+	}
+}

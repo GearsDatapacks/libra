@@ -160,6 +160,30 @@ func TestWhileLoops(t *testing.T) {
 	}
 }
 
+func TestForLoops(t *testing.T) {
+	tests := []struct {
+		src      string
+		itemType types.Type
+		iterType types.Type
+	}{
+		{"for i in [1,2,3] {i}", types.Int, &types.ArrayType{ElemType: types.Int, Length: -1}},
+		{`for s in ["Hello", "world"] {s}`, types.String, &types.ArrayType{ElemType: types.String, Length: -1}},
+		{"for kv in {true: 1, false: 0} {kv}",
+			&types.TupleType{Types: []types.Type{types.Bool, types.Int}},
+			&types.MapType{KeyType: types.Bool, ValueType: types.Int}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ir.ForLoop](t, program)
+
+		utils.Assert(t, types.Assignable(test.itemType, stmt.Variable.Type))
+		utils.Assert(t, types.Assignable(test.iterType, stmt.Iterator.Type()))
+		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+		utils.Assert(t, types.Assignable(test.itemType, bodyValue.Type()))
+	}
+}
+
 func TestBinaryExpression(t *testing.T) {
 	tests := []struct {
 		src    string

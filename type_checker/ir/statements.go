@@ -1,6 +1,10 @@
 package ir
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
+)
 
 type statement struct{}
 
@@ -81,18 +85,37 @@ type WhileLoop struct {
 	Body *Block
 }
 
-func (i *WhileLoop) String() string {
+func (w *WhileLoop) String() string {
 	var result bytes.Buffer
 	result.WriteString("while ")
-	result.WriteString(i.Condition.String())
+	result.WriteString(w.Condition.String())
 	result.WriteByte(' ')
-	result.WriteString(i.Body.String())
+	result.WriteString(w.Body.String())
+
+	return result.String()
+}
+
+type ForLoop struct {
+	statement
+	Variable symbols.Variable
+	Iterator Expression
+	Body *Block
+}
+
+func (f *ForLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("for ")
+	result.WriteString(f.Variable.Name)
+	result.WriteString(" in ")
+	result.WriteString(f.Iterator.String())
+	result.WriteByte(' ')
+	result.WriteString(f.Body.String())
 
 	return result.String()
 }
 
 // TODO:
-// ForLoop
 // FunctionDeclaration
 // ReturnStatement
 // TypeDeclaration
