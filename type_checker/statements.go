@@ -83,6 +83,9 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 }
 
 func (t *typeChecker) typeCheckBlock(block *ast.BlockStatement) *ir.Block {
+	t.enterScope()
+	defer t.exitScope()
+	
 	stmts := []ir.Statement{}
 	for _, stmt := range block.Statements {
 		stmts = append(stmts, t.typeCheckStatement(stmt))

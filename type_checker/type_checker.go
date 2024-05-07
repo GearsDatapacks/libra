@@ -47,6 +47,14 @@ func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
 	}
 }
 
+func (t *typeChecker) enterScope() {
+	t.symbols = t.symbols.Child()
+}
+
+func (t *typeChecker) exitScope() {
+	t.symbols = t.symbols.Parent
+}
+
 type conversionKind int
 
 const (

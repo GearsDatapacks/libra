@@ -1,7 +1,7 @@
 package symbols
 
 type Table struct {
-	parent    *Table
+	Parent    *Table
 	variables map[string]Variable
 }
 
@@ -13,7 +13,7 @@ func New() *Table {
 
 func (t *Table) Child() *Table {
 	return &Table{
-		parent:    t,
+		Parent:    t,
 		variables: map[string]Variable{},
 	}
 }
@@ -31,8 +31,8 @@ func (t *Table) LookupVariable(name string) *Variable {
 	if ok {
 		return &variable
 	}
-	if t.parent != nil {
-		return t.parent.LookupVariable(name)
+	if t.Parent != nil {
+		return t.Parent.LookupVariable(name)
 	}
 	return nil
 }
