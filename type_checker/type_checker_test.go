@@ -140,6 +140,26 @@ func testIfStatement(t *testing.T, stmt *ir.IfStatement, expectedValue any, else
 	}
 }
 
+func TestWhileLoops(t *testing.T) {
+	tests := []struct {
+		src       string
+		bodyValue any
+	}{
+		{"while true {false}", false},
+		{"while 9 > 12 {9 * 12}", 9 * 12},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ir.WhileLoop](t, program)
+
+		utils.AssertEq(t, stmt.Condition.Type(), types.Type(types.Bool))
+		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+		utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
+		utils.AssertEq(t, bodyValue.ConstValue(), constValue(test.bodyValue))
+	}
+}
+
 func TestBinaryExpression(t *testing.T) {
 	tests := []struct {
 		src    string

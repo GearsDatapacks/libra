@@ -75,8 +75,23 @@ func (i *IfStatement) String() string {
 	return result.String()
 }
 
+type WhileLoop struct {
+	statement
+	Condition Expression
+	Body *Block
+}
+
+func (i *WhileLoop) String() string {
+	var result bytes.Buffer
+	result.WriteString("while ")
+	result.WriteString(i.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(i.Body.String())
+
+	return result.String()
+}
+
 // TODO:
-// WhileLoop
 // ForLoop
 // FunctionDeclaration
 // ReturnStatement

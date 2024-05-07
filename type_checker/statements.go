@@ -23,6 +23,8 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckBlock(stmt)
 	case *ast.IfStatement:
 		return t.typeCheckIfStatement(stmt)
+	case *ast.WhileLoop:
+		return t.typeCheckWhileLoop(stmt)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", statement))
 	}
@@ -107,3 +109,17 @@ func (t *typeChecker) typeCheckIfStatement(ifStmt *ast.IfStatement) ir.Statement
 		ElseBranch: elseBranch,
 	}
 }
+
+func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Statement {
+	condition := t.typeCheckExpression(loop.Condition)
+	if !types.Assignable(types.Bool, condition.Type()) {
+		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(loop.Condition.Location()))
+	}
+
+	body := t.typeCheckBlock(loop.Body)
+	return &ir.WhileLoop{
+		Condition:  condition,
+		Body:       body,
+	}
+}
+
