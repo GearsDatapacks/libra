@@ -2,6 +2,7 @@ package ir
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
@@ -115,9 +116,46 @@ func (f *ForLoop) String() string {
 	return result.String()
 }
 
+type FunctionDeclaration struct {
+	statement
+	Name string
+	Parameters []string
+	Body *Block
+}
+
+func (f *FunctionDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("fn ")
+	result.WriteString(f.Name)
+	result.WriteByte('(')
+
+	for i, param := range f.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(param)
+	}
+
+	result.WriteString(") ")
+	result.WriteString(f.Body.String())
+
+	return result.String()
+}
+
+type ReturnStatement struct {
+	statement
+	Value Expression
+}
+
+func (r *ReturnStatement) String() string {
+	if r.Value != nil {
+		return fmt.Sprintf("return %s", r.Value.String())
+	}
+	return "return"
+}
+
 // TODO:
-// FunctionDeclaration
-// ReturnStatement
 // TypeDeclaration
 // StructDeclaration
 // InterfaceDeclaration

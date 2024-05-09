@@ -27,6 +27,10 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckWhileLoop(stmt)
 	case *ast.ForLoop:
 		return t.typeCheckForLoop(stmt)
+	case *ast.FunctionDeclaration:
+		return t.typeCheckFunctionDeclaration(stmt)
+	case *ast.ReturnStatement:
+		return t.typeCheckReturn(stmt)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", statement))
 	}
@@ -153,5 +157,68 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
 		Variable: variable,
 		Iterator: iter,
 		Body:     body,
+	}
+}
+
+func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration) ir.Statement {
+	fnType := t.symbols.LookupVariable(funcDec.Name.Value).Type.(*types.Function)
+
+	t.enterScope(symbols.FunctionContext{ReturnType: fnType.ReturnType})
+	defer t.exitScope()
+	params := []string{}
+
+	for i, param := range funcDec.Parameters {
+		symbol := symbols.Variable{
+			Name:       param.Name.Value,
+			Mutable:    param.Mutable != nil,
+			Type:       fnType.Parameters[i],
+			ConstValue: nil,
+		}
+		t.symbols.DeclareVariable(symbol)
+		params = append(params, param.Name.Value)
+	}
+
+	body := t.typeCheckBlock(funcDec.Body, false)
+
+	return &ir.FunctionDeclaration{
+		Name:       funcDec.Name.Value,
+		Parameters: params,
+		Body:       body,
+	}
+}
+
+func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
+	var expectedType types.Type = nil
+	symbolTable := t.symbols
+	for symbolTable != nil {
+		if fnContext, ok := symbolTable.Context.(symbols.FunctionContext); ok {
+			expectedType = fnContext.ReturnType
+			break
+		}
+		symbolTable = symbolTable.Parent
+	}
+	if expectedType == nil {
+		t.Diagnostics.Report(diagnostics.NoReturnOutsideFunction(ret.Keyword.Location))
+		expectedType = types.Invalid
+	}
+
+	if ret.Value == nil {
+		if expectedType != types.Void {
+			t.Diagnostics.Report(diagnostics.ExpectedReturnValue(ret.Keyword.Location))
+		}
+		return &ir.ReturnStatement{
+			Value: nil,
+		}
+	}
+
+	value := t.typeCheckExpression(ret.Value)
+	if conversion := convert(value, expectedType, implicit); conversion != nil {
+		value = conversion
+	} else {
+		t.Diagnostics.Report(diagnostics.NotAssignable(ret.Value.Location(), expectedType, value.Type()))
+	}
+
+	return &ir.ReturnStatement{
+		Value: value,
 	}
 }

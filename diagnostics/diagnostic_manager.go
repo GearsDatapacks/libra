@@ -226,3 +226,13 @@ func NotIterable(location text.Location) Diagnostic {
 	msg := "Value is not iterable"
 	return makeError(msg, location)
 }
+
+func NoReturnOutsideFunction(location text.Location) Diagnostic {
+	msg := "Cannot use return outside of a function"
+	return makeError(msg, location)
+}
+
+func ExpectedReturnValue(location text.Location) Diagnostic {
+	msg := "Expected a return value"
+	return makeError(msg, location)
+}

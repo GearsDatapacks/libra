@@ -55,12 +55,14 @@ type PrimaryType int
 
 const (
 	Invalid PrimaryType = iota
+	Void
 	Bool
 	String
 )
 
 var typeNames = map[PrimaryType]string{
 	Invalid: "<?>",
+	Void:    "void",
 	Bool:    "bool",
 	String:  "string",
 }
@@ -321,6 +323,54 @@ func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) (Type, *diagn
 
 	index := constVals[0].(values.IntValue).Value
 	return a.Types[index], nil
+}
+
+type Function struct {
+	Parameters []Type
+	ReturnType Type
+}
+
+func (fn *Function) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("fn(")
+	for i, ty := range fn.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(ty.String())
+	}
+	result.WriteByte(')')
+
+	if fn.ReturnType != Void {
+		result.WriteString(": ")
+		result.WriteString(fn.ReturnType.String())
+	}
+
+	return result.String()
+}
+
+func (fn *Function) valid(other Type) bool {
+	function, ok := other.(*Function)
+	if !ok {
+		return false
+	}
+
+	if len(fn.Parameters) != len(function.Parameters) {
+		return false
+	}
+
+	for i, ty := range fn.Parameters {
+		if !Match(ty, function.Parameters[i]) {
+			return false
+		}
+	}
+
+	return Match(fn.ReturnType, function.ReturnType)
+}
+
+func (a *Function) indexBy(t Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
+	return Invalid, diagnostics.CannotIndex(a, t)
 }
 
 type Pseudo interface {

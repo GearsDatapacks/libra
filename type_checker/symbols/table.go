@@ -3,6 +3,7 @@ package symbols
 type Table struct {
 	Parent    *Table
 	variables map[string]Variable
+	Context   any
 }
 
 func New() *Table {
@@ -15,6 +16,14 @@ func (t *Table) Child() *Table {
 	return &Table{
 		Parent:    t,
 		variables: map[string]Variable{},
+	}
+}
+
+func (t *Table) ChildWithContext(context any) *Table {
+	return &Table{
+		Parent:    t,
+		variables: map[string]Variable{},
+		Context:   context,
 	}
 }
 

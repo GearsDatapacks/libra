@@ -341,7 +341,7 @@ If the specified type for a variable does not match the type of the value assign
 ## Pointers
 A pointer is a value that holds an address of another value. This allows you to pass values around without copying them, or allowing functions to modify a value.
 A pointer type is denoted: `*T`, where `T` is the type of the value it points to.
-By default a pointer is immutable, meaning it cannot be used to modify the underlying value. A mutable pointer is denoted: `*mut T`.
+By default a pointer is immutable, meaning it cannot be used to modify the underlying value. A mutable pointer is denoted: `*mut T`. A mutable pointer is assignable to an immutable pointer.
 
 You can create a pointer by referencing a value using the reference operator (`&`), and access the value it points to using the dereference operator (`*`).
 A mutable pointer can be created by adding the `mut` keyword (`&mut <value>`). A mutable pointer can only reference a mutable value. 
@@ -446,20 +446,10 @@ Example:
 let result = add(1, 2) // result = 3
 ```
 
-// WhileLoop
-// ForLoop
-// FunctionDeclaration
-// ReturnStatement
-// TypeDeclaration
-// StructDeclaration
-// InterfaceDeclaration
-// ImportStatement
-// EnumDeclaration
-
 ## Statements
 Statements make up a Libra program, and don't produce a value.
 
-### Block statements
+### Blocks
 A block statement is a grouping of statements enlosed in `{`, `}`. The statements are evaluated from top to bottom as in a regular program, but live in their own scope, meaning any variables created are not valid outside of it. This is useful when you want to perform an inline calculation without creating any unnecessary variables.
 
 Example:
@@ -474,7 +464,7 @@ print(value) // 76
 print(other_thing) // ERROR: other_thing is now out of scope
 ```
 
-### If/else statements
+### If/else
 An if statement is used to run a piece of code based on a condition. It takes a condition expression (which must be of type `bool`) and a block statement to run as the body.
 If the condition succeeds, it runs the block. Otherwise, if there is an else branch, it runs that. An else branch is the `else` keyword followed by another conditional if statement, or an unconditional block statement.
 
@@ -548,7 +538,7 @@ for i in 1..10 {
 }
 ```
 
-### Return statements
+### Return
 A return statement is used to return a value from a function. The syntax is the `return` keyword followed by an optional expression.
 The type of the expression must match the return type of the surrouding function (unless `void`, in which case there must not be a value), and the return statement must only be used within a function. Breaking either of these rules results in a compile-time error.
 

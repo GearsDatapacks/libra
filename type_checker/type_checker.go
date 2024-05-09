@@ -34,21 +34,50 @@ func (t *typeChecker) TypeCheckProgram(program *ast.Program) *ir.Program {
 }
 
 func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
-	stmts := []ir.Statement{}
-
-	for _, file := range mod.Files {
-		for _, stmt := range file.Ast.Statements {
-			stmts = append(stmts, t.typeCheckStatement(stmt))
-		}
-	}
+	t.registerDeclarations(mod)
+	t.typeCheckFunctions(mod)
+	stmts := t.typeCheckStatements(mod)
 
 	return &ir.Program{
 		Statements: stmts,
 	}
 }
 
-func (t *typeChecker) enterScope() {
-	t.symbols = t.symbols.Child()
+func (t *typeChecker) registerDeclarations(mod *module.Module) {
+	for _, file := range mod.Files {
+		for _, stmt := range file.Ast.Statements {
+			 t.registerDeclaration(stmt)
+		}
+	}
+}
+
+func (t *typeChecker) typeCheckFunctions(mod *module.Module) {
+	for _, file := range mod.Files {
+		for _, stmt := range file.Ast.Statements {
+			 if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
+				t.typeCheckFunctionType(fn)
+			 }
+		}
+	}
+}
+
+func (t *typeChecker) typeCheckStatements(mod *module.Module) []ir.Statement {
+	stmts := []ir.Statement{}
+	for _, file := range mod.Files {
+		for _, stmt := range file.Ast.Statements {
+			stmts = append(stmts, t.typeCheckStatement(stmt))
+		}
+	}
+
+	return stmts
+}
+
+func (t *typeChecker) enterScope(context ...any) {
+	if len(context) > 0 {
+		t.symbols = t.symbols.ChildWithContext(context[0])
+	} else {
+		t.symbols = t.symbols.Child()
+	}
 }
 
 func (t *typeChecker) exitScope() {
