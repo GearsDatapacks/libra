@@ -978,8 +978,42 @@ func (t *TypeCheck) ConstValue() values.ConstValue {
 	return nil
 }
 
+type FunctionCall struct {
+	expression
+	Function Expression
+	Arguments []Expression
+	ReturnType types.Type
+}
+
+func (f *FunctionCall) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(f.Function.String())
+	result.WriteByte('(')
+	for i, arg := range f.Arguments {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(arg.String())
+	}
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+func (f *FunctionCall) Type() types.Type {
+	return f.ReturnType
+}
+
+func (f *FunctionCall) IsConst() bool {
+	return false
+}
+
+func (f *FunctionCall) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
-// FunctionCall
 // MemberExpression
 // StructExpression
 // RangeExpression

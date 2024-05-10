@@ -236,3 +236,13 @@ func ExpectedReturnValue(location text.Location) Diagnostic {
 	msg := "Expected a return value"
 	return makeError(msg, location)
 }
+
+func NotCallable(location text.Location, ty tcType) Diagnostic {
+	msg := fmt.Sprintf("Value of type %q cannot be called", ty.String())
+	return makeError(msg, location)
+}
+
+func WrongNumberAgruments(location text.Location, expected, actual int) Diagnostic {
+	msg := fmt.Sprintf("Incorrect number of arguments (expected %d, found %d)", expected, actual)
+	return makeError(msg, location)
+}

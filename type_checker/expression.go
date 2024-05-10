@@ -53,6 +53,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckAssignment(expr)
 	case *ast.TypeCheckExpression:
 		return t.typeCheckTypeCheck(expr)
+	case *ast.FunctionCall:
+		return t.typeCheckFunctionCall(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -451,8 +453,8 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 	}
 
 	return &ir.IndexExpression{
-		Left:  left,
-		Index: index,
+		Left:     left,
+		Index:    index,
 		DataType: ty,
 	}
 }
@@ -551,7 +553,7 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 	for _, value := range tuple.Values {
 		expr := t.typeCheckExpression(value)
 		ty := types.ToReal(expr.Type())
-		dataTypes = append(dataTypes,  ty)
+		dataTypes = append(dataTypes, ty)
 		values = append(values, convert(expr, ty, implicit))
 	}
 
@@ -570,5 +572,50 @@ func (t *typeChecker) typeCheckTypeCheck(tc *ast.TypeCheckExpression) ir.Express
 	return &ir.TypeCheck{
 		Value:    value,
 		DataType: ty,
+	}
+}
+
+func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expression {
+	fn := t.typeCheckExpression(call.Callee)
+	funcType, ok := fn.Type().(*types.Function)
+	if !ok {
+		t.Diagnostics.Report(diagnostics.NotCallable(call.Callee.Location(), fn.Type()))
+		return &ir.InvalidExpression{
+			Expression: &ir.FunctionCall{
+				Function:   fn,
+				Arguments:  []ir.Expression{},
+				ReturnType: types.Invalid,
+			},
+		}
+	}
+
+	if len(call.Arguments) != len(funcType.Parameters) {
+		t.Diagnostics.Report(diagnostics.WrongNumberAgruments(call.Callee.Location(), len(funcType.Parameters), len(call.Arguments)))
+		return &ir.InvalidExpression{
+			Expression: &ir.FunctionCall{
+				Function:   fn,
+				Arguments:  []ir.Expression{},
+				ReturnType: types.Invalid,
+			},
+		}
+	}
+
+	args := []ir.Expression{}
+	for i, arg := range call.Arguments {
+		value := t.typeCheckExpression(arg)
+		expectedType := funcType.Parameters[i]
+		conversion := convert(value, expectedType, implicit)
+		if conversion == nil {
+			args = append(args, value)
+			t.Diagnostics.Report(diagnostics.NotAssignable(arg.Location(), expectedType, value.Type()))
+		} else {
+			args = append(args, conversion)
+		}
+	}
+
+	return &ir.FunctionCall{
+		Function:   fn,
+		Arguments:  args,
+		ReturnType: funcType.ReturnType,
 	}
 }
