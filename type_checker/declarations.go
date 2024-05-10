@@ -11,6 +11,15 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 	switch stmt := statement.(type) {
 	case *ast.FunctionDeclaration:
 		t.registerFunction(stmt)
+	case *ast.TypeDeclaration:
+		t.registerTypeDeclaration(stmt)
+	}
+}
+
+func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
+	switch stmt := statement.(type) {
+	case *ast.TypeDeclaration:
+		t.typeCheckTypeDeclaration(stmt)
 	}
 }
 
@@ -19,24 +28,37 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 		Parameters: []types.Type{},
 		ReturnType: types.Void,
 	}
-	symbol := symbols.Variable{
+	symbol := &symbols.Variable{
 		Name:       fn.Name.Value,
-		Mutable:    false,
+		IsMut:      false,
 		Type:       fnType,
 		ConstValue: nil,
 	}
 
 	if fn.MethodOf == nil && fn.MemberOf == nil {
-		if !t.symbols.DeclareVariable(symbol) {
+		if !t.symbols.Register(symbol) {
 			t.Diagnostics.Report(diagnostics.VariableDefined(fn.Name.Location, fn.Name.Value))
 		}
 	}
 }
 
+func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
+	symbol := &symbols.Type{
+		Name: typeDec.Name.Value,
+		Type: &types.Alias{Type: types.Void},
+	}
+	t.symbols.Register(symbol)
+}
+
+func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
+	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
+	symbol.Type.(*types.Alias).Type = t.typeFromAst(typeDec.Type)
+}
+
 func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	var fnType *types.Function
 	if fn.MethodOf == nil && fn.MemberOf == nil {
-		fnType = t.symbols.LookupVariable(fn.Name.Value).Type.(*types.Function)
+		fnType = t.symbols.Lookup(fn.Name.Value).GetType().(*types.Function)
 	} else {
 		panic("TODO: Methods and static methods")
 	}

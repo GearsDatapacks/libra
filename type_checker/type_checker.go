@@ -35,6 +35,7 @@ func (t *typeChecker) TypeCheckProgram(program *ast.Program) *ir.Program {
 
 func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
 	t.registerDeclarations(mod)
+	t.typeCheckDeclarations(mod)
 	t.typeCheckFunctions(mod)
 	stmts := t.typeCheckStatements(mod)
 
@@ -47,6 +48,14 @@ func (t *typeChecker) registerDeclarations(mod *module.Module) {
 	for _, file := range mod.Files {
 		for _, stmt := range file.Ast.Statements {
 			 t.registerDeclaration(stmt)
+		}
+	}
+}
+
+func (t *typeChecker) typeCheckDeclarations(mod *module.Module) {
+	for _, file := range mod.Files {
+		for _, stmt := range file.Ast.Statements {
+			 t.typeCheckDeclaration(stmt)
 		}
 	}
 }

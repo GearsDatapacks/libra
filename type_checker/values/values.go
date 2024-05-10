@@ -81,6 +81,15 @@ func (MapValue) Hash() uint64 {
 	return 0
 }
 
+type TypeValue struct {
+	constValue
+	Type any // types.Type, but no import cycles :/
+}
+
+func (TypeValue) Hash() uint64 {
+	return 0
+}
+
 func NumericValue(v ConstValue) float64 {
 	switch val := v.(type) {
 	case FloatValue:

@@ -12,7 +12,7 @@ import (
 func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 	switch ty := node.(type) {
 	case *ast.TypeName:
-		return lookupType(ty.Name.Value)
+		return t.lookupType(ty.Name.Value)
 	case *ast.ArrayType:
 		elemType := t.typeFromAst(ty.Type)
 
@@ -61,7 +61,7 @@ func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 	}
 }
 
-func lookupType(name string) types.Type {
+func (t *typeChecker) lookupType(name string) types.Type {
 	switch name {
 	case "i32":
 		return types.Int
@@ -71,7 +71,19 @@ func lookupType(name string) types.Type {
 		return types.Bool
 	case "string":
 		return types.String
+	case "Type":
+		return types.RuntimeType
 	default:
-		return nil
+		variable := t.symbols.Lookup(name)
+		if variable == nil {
+			return nil
+		}
+		if variable.GetType() != types.RuntimeType {
+			return nil
+		}
+		if variable.Value() == nil {
+			return nil
+		}
+		return variable.Value().(values.TypeValue).Type.(types.Type)
 	}
 }

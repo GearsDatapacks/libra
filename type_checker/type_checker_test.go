@@ -92,7 +92,7 @@ func TestVariables(t *testing.T) {
 		utils.Assert(t, ok, "Expression is not a variable")
 
 		utils.AssertEq(t, variable.Symbol.Name, test.varName)
-		utils.AssertEq(t, variable.Symbol.Mutable, test.mutable)
+		utils.AssertEq(t, variable.Symbol.IsMut, test.mutable)
 		utils.AssertEq(t, variable.Symbol.Type, test.dataType)
 	}
 }

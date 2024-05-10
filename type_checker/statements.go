@@ -31,6 +31,10 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckFunctionDeclaration(stmt)
 	case *ast.ReturnStatement:
 		return t.typeCheckReturn(stmt)
+	case *ast.TypeDeclaration:
+		return &ir.Block{
+			Statements: []ir.Statement{},
+		}
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", statement))
 	}
@@ -73,13 +77,13 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		constVal = value.ConstValue()
 	}
 
-	variable := symbols.Variable{
+	variable := &symbols.Variable{
 		Name:       varDec.Identifier.Value,
-		Mutable:    mutable,
+		IsMut:      mutable,
 		Type:       varType,
 		ConstValue: constVal,
 	}
-	if !t.symbols.DeclareVariable(variable) {
+	if !t.symbols.Register(variable) {
 		t.Diagnostics.Report(diagnostics.VariableDefined(varDec.Identifier.Location, variable.Name))
 	}
 	return &ir.VariableDeclaration{
@@ -144,13 +148,13 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
 	}
 	variable := symbols.Variable{
 		Name:       loop.Variable.Value,
-		Mutable:    false,
+		IsMut:      false,
 		Type:       itemType,
 		ConstValue: nil,
 	}
 	t.enterScope()
 	defer t.exitScope()
-	t.symbols.DeclareVariable(variable)
+	t.symbols.Register(&variable)
 	body := t.typeCheckBlock(loop.Body, false)
 
 	return &ir.ForLoop{
@@ -161,20 +165,20 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
 }
 
 func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration) ir.Statement {
-	fnType := t.symbols.LookupVariable(funcDec.Name.Value).Type.(*types.Function)
+	fnType := t.symbols.Lookup(funcDec.Name.Value).GetType().(*types.Function)
 
 	t.enterScope(symbols.FunctionContext{ReturnType: fnType.ReturnType})
 	defer t.exitScope()
 	params := []string{}
 
 	for i, param := range funcDec.Parameters {
-		symbol := symbols.Variable{
+		symbol := &symbols.Variable{
 			Name:       param.Name.Value,
-			Mutable:    param.Mutable != nil,
+			IsMut:      param.Mutable != nil,
 			Type:       fnType.Parameters[i],
 			ConstValue: nil,
 		}
-		t.symbols.DeclareVariable(symbol)
+		t.symbols.Register(symbol)
 		params = append(params, param.Name.Value)
 	}
 

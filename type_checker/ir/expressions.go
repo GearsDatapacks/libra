@@ -722,12 +722,12 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	switch c.To {
-	case types.Float:
+	switch {
+	case types.Match(c.To, types.Float):
 		return values.FloatValue{
 			Value: values.NumericValue(c.Expression.ConstValue()),
 		}
-	case types.Int:
+	case types.Match(c.To, types.Int):
 		num := values.NumericValue(c.Expression.ConstValue())
 		return values.IntValue{
 			Value: int64(num),

@@ -19,6 +19,13 @@ func Assignable(to, from Type) bool {
 		return true
 	}
 
+	if alias, ok := to.(*Alias); ok {
+		return Assignable(alias.Type, from)
+	}
+	if alias, ok := from.(*Alias); ok {
+		return Assignable(to, alias.Type)
+	}
+
 	return to.valid(from)
 }
 
@@ -35,7 +42,7 @@ func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics
 
 func ToReal(ty Type) Type {
 	if pseudo, ok := ty.(Pseudo); ok {
-		return pseudo.ToReal()
+		return pseudo.toReal()
 	}
 	return ty
 }
@@ -58,13 +65,15 @@ const (
 	Void
 	Bool
 	String
+	RuntimeType
 )
 
 var typeNames = map[PrimaryType]string{
-	Invalid: "<?>",
-	Void:    "void",
-	Bool:    "bool",
-	String:  "string",
+	Invalid:     "<?>",
+	Void:        "void",
+	Bool:        "bool",
+	String:      "string",
+	RuntimeType: "Type",
 }
 
 func (pt PrimaryType) String() string {
@@ -161,7 +170,7 @@ func (v VariableType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnos
 	return Invalid, diagnostics.CannotIndex(v, index)
 }
 
-func (v VariableType) ToReal() Type {
+func (v VariableType) toReal() Type {
 	if v.Untyped {
 		v.Untyped = false
 	}
@@ -234,7 +243,7 @@ func (a *ArrayType) indexBy(index Type, constVals []values.ConstValue) (Type, *d
 	return a.ElemType, nil
 }
 
-func (a *ArrayType) ToReal() Type {
+func (a *ArrayType) toReal() Type {
 	a.CanInfer = false
 	return a
 }
@@ -373,8 +382,16 @@ func (a *Function) indexBy(t Type, _ []values.ConstValue) (Type, *diagnostics.Pa
 	return Invalid, diagnostics.CannotIndex(a, t)
 }
 
+type Alias struct {
+	Type
+}
+
+func (a *Alias) toReal() Type {
+	return ToReal(a.Type)
+}
+
 type Pseudo interface {
-	ToReal() Type
+	toReal() Type
 }
 
 type Iterator interface {

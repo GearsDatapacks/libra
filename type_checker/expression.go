@@ -61,17 +61,22 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 }
 
 func (t *typeChecker) typeCheckIdentifier(ident *ast.Identifier) ir.Expression {
-	variable := t.symbols.LookupVariable(ident.Name)
-	if variable == nil {
+	symbol := t.symbols.Lookup(ident.Name)
+	if symbol == nil {
 		t.Diagnostics.Report(diagnostics.VariableUndefined(ident.Token.Location, ident.Name))
-		variable = &symbols.Variable{
-			Name:    ident.Name,
-			Mutable: true,
-			Type:    types.Invalid,
+		symbol = &symbols.Variable{
+			Name:  ident.Name,
+			IsMut: true,
+			Type:  types.Invalid,
 		}
 	}
 	return &ir.VariableExpression{
-		Symbol: *variable,
+		Symbol: symbols.Variable{
+			Name:       symbol.GetName(),
+			IsMut:      symbol.Mutable(),
+			Type:       symbol.GetType(),
+			ConstValue: symbol.Value(),
+		},
 	}
 }
 

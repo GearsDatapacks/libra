@@ -58,7 +58,7 @@ func AssignableExpr(expr Expression) bool {
 func MutableExpr(expr Expression) bool {
 	switch e := expr.(type) {
 	case *VariableExpression:
-		return e.Symbol.Mutable
+		return e.Symbol.IsMut
 	case *IndexExpression:
 		return MutableExpr(e.Left)
 	case *InvalidExpression:
