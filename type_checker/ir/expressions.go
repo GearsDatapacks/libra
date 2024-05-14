@@ -980,8 +980,8 @@ func (t *TypeCheck) ConstValue() values.ConstValue {
 
 type FunctionCall struct {
 	expression
-	Function Expression
-	Arguments []Expression
+	Function   Expression
+	Arguments  []Expression
 	ReturnType types.Type
 }
 
@@ -1013,7 +1013,68 @@ func (f *FunctionCall) ConstValue() values.ConstValue {
 	return nil
 }
 
+type StructExpression struct {
+	expression
+	Struct *types.Struct
+	Fields map[string]Expression
+}
+
+func (s *StructExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(s.Struct.Name)
+	result.WriteString(" {")
+	if len(s.Fields) > 0 {
+		result.WriteByte(' ')
+	}
+	isFirst := true
+	for name, value := range s.Fields {
+		if !isFirst {
+			result.WriteString(", ")
+		} else {
+			isFirst = false
+		}
+		result.WriteString(name)
+		result.WriteString(": ")
+		result.WriteString(value.String())
+	}
+	if len(s.Fields) > 0 {
+		result.WriteByte(' ')
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
+func (s *StructExpression) Type() types.Type {
+	return s.Struct
+}
+
+func (s *StructExpression) IsConst() bool {
+	for _, expr := range s.Fields {
+		if !expr.IsConst() {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *StructExpression) ConstValue() values.ConstValue {
+	if !s.IsConst() {
+		return nil
+	}
+
+	members := map[string]values.ConstValue{}
+
+	for name, expr := range s.Fields {
+		members[name] = expr.ConstValue()
+	}
+
+	return values.StructValue{
+		Members: members,
+	}
+}
+
 // TODO:
 // MemberExpression
-// StructExpression
 // RangeExpression

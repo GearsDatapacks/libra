@@ -90,6 +90,15 @@ func (TypeValue) Hash() uint64 {
 	return 0
 }
 
+type StructValue struct {
+	constValue
+	Members map[string]ConstValue
+}
+
+func (StructValue) Hash() uint64 {
+	return 0
+}
+
 func NumericValue(v ConstValue) float64 {
 	switch val := v.(type) {
 	case FloatValue:

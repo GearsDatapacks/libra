@@ -31,7 +31,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckFunctionDeclaration(stmt)
 	case *ast.ReturnStatement:
 		return t.typeCheckReturn(stmt)
-	case *ast.TypeDeclaration:
+	case *ast.TypeDeclaration, *ast.StructDeclaration:
 		return &ir.Block{
 			Statements: []ir.Statement{},
 		}

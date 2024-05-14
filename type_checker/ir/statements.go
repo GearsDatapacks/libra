@@ -22,7 +22,7 @@ func (e *ExpressionStatement) String() string {
 
 type VariableDeclaration struct {
 	statement
-	Name string
+	Name  string
 	Value Expression
 }
 
@@ -60,8 +60,8 @@ func (b *Block) String() string {
 
 type IfStatement struct {
 	statement
-	Condition Expression
-	Body *Block
+	Condition  Expression
+	Body       *Block
 	ElseBranch Statement
 }
 
@@ -71,7 +71,7 @@ func (i *IfStatement) String() string {
 	result.WriteString(i.Condition.String())
 	result.WriteByte(' ')
 	result.WriteString(i.Body.String())
-	
+
 	if i.ElseBranch != nil {
 		result.WriteString("\nelse ")
 		result.WriteString(i.ElseBranch.String())
@@ -83,7 +83,7 @@ func (i *IfStatement) String() string {
 type WhileLoop struct {
 	statement
 	Condition Expression
-	Body *Block
+	Body      *Block
 }
 
 func (w *WhileLoop) String() string {
@@ -100,7 +100,7 @@ type ForLoop struct {
 	statement
 	Variable symbols.Variable
 	Iterator Expression
-	Body *Block
+	Body     *Block
 }
 
 func (f *ForLoop) String() string {
@@ -118,9 +118,9 @@ func (f *ForLoop) String() string {
 
 type FunctionDeclaration struct {
 	statement
-	Name string
+	Name       string
 	Parameters []string
-	Body *Block
+	Body       *Block
 }
 
 func (f *FunctionDeclaration) String() string {
@@ -156,8 +156,6 @@ func (r *ReturnStatement) String() string {
 }
 
 // TODO:
-// TypeDeclaration
-// StructDeclaration
 // InterfaceDeclaration
 // ImportStatement
 // EnumDeclaration

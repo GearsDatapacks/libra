@@ -13,6 +13,8 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 		t.registerFunction(stmt)
 	case *ast.TypeDeclaration:
 		t.registerTypeDeclaration(stmt)
+	case *ast.StructDeclaration:
+		t.registerStructDeclaration(stmt)
 	}
 }
 
@@ -20,6 +22,8 @@ func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
 	switch stmt := statement.(type) {
 	case *ast.TypeDeclaration:
 		t.typeCheckTypeDeclaration(stmt)
+	case *ast.StructDeclaration:
+		t.typeCheckStructDeclaration(stmt)
 	}
 }
 
@@ -47,6 +51,21 @@ func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 		Name: typeDec.Name.Value,
 		Type: &types.Alias{Type: types.Void},
 	}
+	t.symbols.Register(symbol)
+}
+
+func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
+	if decl.StructType == nil {
+		panic("TODO: Tuple struct declarations")
+	}
+	symbol := &symbols.Type{
+		Name: decl.Name.Value,
+		Type: &types.Struct{
+			Name:   decl.Name.Value,
+			Fields: map[string]types.Type{},
+		},
+	}
+
 	t.symbols.Register(symbol)
 }
 
@@ -80,4 +99,29 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	}
 
 	fnType.ReturnType = t.typeFromAst(fn.ReturnType.Type)
+}
+
+func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
+	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Struct)
+
+	fields := []types.Type{}
+	for _, field := range decl.StructType.Fields {
+		if field.Type == nil {
+			fields = append(fields, nil)
+		} else {
+			ty := t.typeFromAst(field.Type.Type)
+			for i := len(fields) - 1; i >= 0; i-- {
+				if fields[i] == nil {
+					fields[i] = ty
+				} else {
+					break
+				}
+			}
+			fields = append(fields, ty)
+		}
+	}
+
+	for i, field := range decl.StructType.Fields {
+		ty.Fields[field.Name.Value] = fields[i]
+	}
 }

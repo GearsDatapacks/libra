@@ -187,10 +187,10 @@ func ValueImmutable(location text.Location) Diagnostic {
 }
 
 var NotConstPartial = partial(Error, "Value must be known at compile time")
+
 func NotConst(location text.Location) Diagnostic {
 	return NotConstPartial.Location(location)
 }
-
 
 func CountMustBeInt(location text.Location) Diagnostic {
 	msg := "Array length must be an integer"
@@ -244,5 +244,25 @@ func NotCallable(location text.Location, ty tcType) Diagnostic {
 
 func WrongNumberAgruments(location text.Location, expected, actual int) Diagnostic {
 	msg := fmt.Sprintf("Incorrect number of arguments (expected %d, found %d)", expected, actual)
+	return makeError(msg, location)
+}
+
+func NoMember(leftType tcType, member string) *Partial {
+	msg := fmt.Sprintf("Value of type %q does not have member %q", leftType.String(), member)
+	return partial(Error, msg)
+}
+
+func OnlyConstructTypes(location text.Location) Diagnostic {
+	msg := "Cannot construct value, not a type"
+	return makeError(msg, location)
+}
+
+func CannotConstruct(location text.Location, ty tcType) Diagnostic {
+	msg := fmt.Sprintf("Cannot construct value of type %q", ty.String())
+	return makeError(msg, location)
+}
+
+func NoStructMember(location text.Location, name, member string) Diagnostic {
+	msg := fmt.Sprintf("Struct %q does not have member %q", name, member)
 	return makeError(msg, location)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expression {
@@ -55,6 +56,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckTypeCheck(expr)
 	case *ast.FunctionCall:
 		return t.typeCheckFunctionCall(expr)
+	case *ast.StructExpression:
+		return t.typeCheckStructExpression(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -622,5 +625,53 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 		Function:   fn,
 		Arguments:  args,
 		ReturnType: funcType.ReturnType,
+	}
+}
+
+func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression) ir.Expression {
+	struc := t.typeCheckExpression(structExpr.Struct)
+	if !types.Assignable(struc.Type(), types.RuntimeType) {
+		t.Diagnostics.Report(diagnostics.OnlyConstructTypes(structExpr.Struct.Location()))
+		return &ir.InvalidExpression{
+			Expression: &ir.IntegerLiteral{},
+		}
+	}
+	if !struc.IsConst() {
+		t.Diagnostics.Report(diagnostics.NotConst(structExpr.Struct.Location()))
+		return &ir.InvalidExpression{
+			Expression: &ir.IntegerLiteral{},
+		}
+	}
+	ty := struc.ConstValue().(values.TypeValue)
+	structTy, ok := ty.Type.(*types.Struct)
+	if !ok {
+		t.Diagnostics.Report(diagnostics.CannotConstruct(structExpr.Struct.Location(), ty.Type.(types.Type)))
+		return &ir.InvalidExpression{
+			Expression: &ir.IntegerLiteral{},
+		}
+	}
+
+	fields := map[string]ir.Expression{}
+
+	for _, member := range structExpr.Members {
+		ty, ok := structTy.Fields[member.Name.Value]
+		if !ok {
+			t.Diagnostics.Report(diagnostics.NoStructMember(member.Name.Location, structTy.Name, member.Name.Value))
+			continue
+		}
+		value := t.typeCheckExpression(member.Value)
+		conversion := convert(value, ty, implicit)
+		if conversion != nil {
+			value = conversion
+		} else {
+			t.Diagnostics.Report(diagnostics.NotAssignable(member.Value.Location(), ty, value.Type()))
+		}
+
+		fields[member.Name.Value] = value
+	}
+
+	return &ir.StructExpression{
+		Struct: structTy,
+		Fields: fields,
 	}
 }

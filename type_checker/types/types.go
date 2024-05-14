@@ -11,7 +11,6 @@ import (
 type Type interface {
 	String() string
 	valid(Type) bool
-	indexBy(Type, []values.ConstValue) (Type, *diagnostics.Partial)
 }
 
 func Assignable(to, from Type) bool {
@@ -37,11 +36,24 @@ func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics
 	if index == Invalid {
 		return Invalid, nil
 	}
-	return left.indexBy(index, constVals)
+	if indexable, ok := left.(indexable); ok {
+		return indexable.indexBy(index, constVals)
+	}
+	return Invalid, diagnostics.CannotIndex(left, index)
+}
+
+func Member(left Type, member string) (Type, *diagnostics.Partial) {
+	if left == Invalid {
+		return Invalid, nil
+	}
+	if hasMember, ok := left.(hasMembers); ok {
+		return hasMember.member(member)
+	}
+	return Invalid, diagnostics.NoMember(left, member)
 }
 
 func ToReal(ty Type) Type {
-	if pseudo, ok := ty.(Pseudo); ok {
+	if pseudo, ok := ty.(pseudo); ok {
 		return pseudo.toReal()
 	}
 	return ty
@@ -164,10 +176,6 @@ func (v VariableType) valid(other Type) bool {
 	}
 
 	return v.Kind == variable.Kind
-}
-
-func (v VariableType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
-	return Invalid, diagnostics.CannotIndex(v, index)
 }
 
 func (v VariableType) toReal() Type {
@@ -378,10 +386,6 @@ func (fn *Function) valid(other Type) bool {
 	return Match(fn.ReturnType, function.ReturnType)
 }
 
-func (a *Function) indexBy(t Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
-	return Invalid, diagnostics.CannotIndex(a, t)
-}
-
 type Alias struct {
 	Type
 }
@@ -390,8 +394,59 @@ func (a *Alias) toReal() Type {
 	return ToReal(a.Type)
 }
 
-type Pseudo interface {
+type Struct struct {
+	Name   string
+	Fields map[string]Type
+}
+
+func (s *Struct) String() string {
+	return s.Name
+}
+
+func (s *Struct) valid(other Type) bool {
+	struc, ok := other.(*Struct)
+	if !ok {
+		return false
+	}
+
+	if s.Name != struc.Name {
+		return false
+	}
+
+	if len(s.Fields) != len(struc.Fields) {
+		return false
+	}
+
+	for name, ty := range s.Fields {
+		if struc.Fields[name] == nil {
+			fmt.Println(struc.Fields)
+			return false
+		}
+		if !Match(ty, struc.Fields[name]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
+	if ty, ok := s.Fields[member]; ok {
+		return ty, nil
+	}
+	return Invalid, diagnostics.NoMember(s, member)
+}
+
+type pseudo interface {
 	toReal() Type
+}
+
+type indexable interface {
+	indexBy(Type, []values.ConstValue) (Type, *diagnostics.Partial)
+}
+
+type hasMembers interface {
+	member(string) (Type, *diagnostics.Partial)
 }
 
 type Iterator interface {
