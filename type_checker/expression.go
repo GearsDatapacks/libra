@@ -58,6 +58,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckFunctionCall(expr)
 	case *ast.StructExpression:
 		return t.typeCheckStructExpression(expr)
+	case *ast.MemberExpression:
+		return t.typeCheckMemberExpression(expr)
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -673,5 +675,20 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 	return &ir.StructExpression{
 		Struct: structTy,
 		Fields: fields,
+	}
+}
+
+func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir.Expression {
+	left := t.typeCheckExpression(member.Left)
+	ty, diag := types.Member(left.Type(), member.Member.Value)
+
+	if diag != nil {
+		t.Diagnostics.Report(diag.Location(member.Member.Location))
+	}
+
+	return &ir.MemberExpression{
+		Left:     left,
+		Member:   member.Member.Value,
+		DataType: ty,
 	}
 }

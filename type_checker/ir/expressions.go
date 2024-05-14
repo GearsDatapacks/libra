@@ -1075,6 +1075,28 @@ func (s *StructExpression) ConstValue() values.ConstValue {
 	}
 }
 
+type MemberExpression struct {
+	expression
+	Left     Expression
+	Member   string
+	DataType types.Type
+}
+
+func (m *MemberExpression) String() string {
+	return fmt.Sprintf("%s.%s", m.Left.String(), m.Member)
+}
+
+func (m *MemberExpression) Type() types.Type {
+	return m.DataType
+}
+
+func (*MemberExpression) IsConst() bool {
+	return false
+}
+
+func (*MemberExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
-// MemberExpression
 // RangeExpression
