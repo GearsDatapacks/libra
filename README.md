@@ -72,7 +72,7 @@ Example:
 
 Integers must not end with the delimiter (`_`). For example `1_000_` produces a syntax error.
 
-Integers can be of several types, varying in bit-size and signded-ness.
+Integers can be of several types, varying in bit-size and signed-ness.
 For example, the `u16` type represents a 16-bit unsigned integer,
 or the `i8` type, which represents a 8-bit signed integer.
 Valid bit-sizes are powers of 2 between 8 and 64 inclusive.
@@ -116,7 +116,7 @@ Strings can span multiple lines.
 If you want to use the `"` character in a string, you can escape it with a `\`.
 If you want to use a `\` character, it must be double escaped: `\\`.
 The `\` character can also be usd in combination with other characters to create various escape sequences, e.g. `\n` (line feed) or `\t` (horizontal tab).
-A `\` preceeding a character that does not form an escape sequence will cause a syntax error.
+A `\` preceding a character that does not form an escape sequence will cause a syntax error.
 A string with no terminating `"` will also cause a syntax error
 
 Example:
@@ -255,7 +255,7 @@ Example:
 
 ### Unary Expressions
 A unary expression consists of an operator and an operand. The operator is either prefix (comes before operand), or postfix (comes after).
-Unary operators have only two precedence levels as they are conrolled by order. Postfix operators have higher precedence than prefix ones.
+Unary operators have only two precedence levels as they are controlled by order. Postfix operators have higher precedence than prefix ones.
 
 Example:
 ```rust
@@ -269,12 +269,12 @@ Operator|Function           |Position
 --------|--------           |--------
 ++      |Increment          |Postfix
 --      |Decrement          |Postfix
-?       |Error propogation  |Postfix
+?       |Error propagation  |Postfix
 !       |Error unwrapping   |Postfix
 \+      |Arithmetic identity|Prefix
 \-      |Arithmetic Negation|Prefix
 !       |Logical Not        |Prefix
-\*      |Poiner dereference |Prefix
+\*      |Pointer dereference |Prefix
 &       |Reference          |Prefix
 ~       |Bitwise Not        |Prefix
 
@@ -365,7 +365,7 @@ increment(i)
 print(i) // still 0
 ```
 
-The derefence operator doesn't always need to be used to access the value that a pointer references. Member access on a struct can still be used through a pointer.
+The dereference operator doesn't always need to be used to access the value that a pointer references. Member access on a struct can still be used through a pointer.
 
 Example:
 ```rust
@@ -450,7 +450,7 @@ let result = add(1, 2) // result = 3
 Statements make up a Libra program, and don't produce a value.
 
 ### Blocks
-A block statement is a grouping of statements enlosed in `{`, `}`. The statements are evaluated from top to bottom as in a regular program, but live in their own scope, meaning any variables created are not valid outside of it. This is useful when you want to perform an inline calculation without creating any unnecessary variables.
+A block statement is a grouping of statements enclosed in `{`, `}`. The statements are evaluated from top to bottom as in a regular program, but live in their own scope, meaning any variables created are not valid outside of it. This is useful when you want to perform an inline calculation without creating any unnecessary variables.
 
 Example:
 ```rust
@@ -540,7 +540,7 @@ for i in 1..10 {
 
 ### Return
 A return statement is used to return a value from a function. The syntax is the `return` keyword followed by an optional expression.
-The type of the expression must match the return type of the surrouding function (unless `void`, in which case there must not be a value), and the return statement must only be used within a function. Breaking either of these rules results in a compile-time error.
+The type of the expression must match the return type of the surrounding function (unless `void`, in which case there must not be a value), and the return statement must only be used within a function. Breaking either of these rules results in a compile-time error.
 
 Example:
 ```rust
@@ -555,7 +555,7 @@ fn perform_task(task: string) {
     print("Hello!")
     return
   }
-  print("Unkown task")
+  print("Unknown task")
 }
 perform_task("greet")
 ```
@@ -580,7 +580,7 @@ import "my_very_long_module_name" as mod
 mod.foo()
 ```
 
-You can specify a list of members to import directly into the current file using `import {...} from ...`, or import all exported memeber of that module using `*`.
+You can specify a list of members to import directly into the current file using `import {...} from ...`, or import all exported member of that module using `*`.
 
 Example:
 ```go
@@ -606,7 +606,7 @@ type ComplexType = {string: [2]i32}[]
 let complex_value: ComplexType = [{"values": [1,2]}]
 ```
 
-### Struct declarations
+### Structs
 A struct declaration creates a custom type, which is a compound of named values.
 
 Example:
@@ -632,6 +632,27 @@ let bob = Person {
 let bob_name = bob.name // "Bob"
 ```
 
+### Tuple structs
+A tuple struct is like a struct, but the values are denoted by order rather than name. Syntax is similar to a tuple.
+
+Example:
+```rust
+struct Coordinate3D(f32, f32, f32)
+
+let coords = Coordinate3D(1.4, 82.3, -9.3)
+let x = coords[0]
+```
+
+### Unit structs
+A unit struct is a value with no size. This is equivalent to a union member with type void.
+
+Example:
+```rust
+struct Unit
+
+let empty_value = Unit
+```
+
 ### Error types
 An error type is a special kind of type in Libra. An error type is a struct, except all error types are assignable to the builtin `error` type.
 Error type declarations look almost identical to struct declarations, but using the `error` keyword instead.
@@ -647,7 +668,7 @@ error GenericError {
 }
 
 mut err: error = FileNotFound{file_name: "foo.txt"}
-err = GenericError{message: "An error occured"}
+err = GenericError{message: "An error occurred"}
 ```
 
 ### Result and Option types
@@ -656,8 +677,8 @@ The option type is a union between `None`, a void value, and some type `T`. This
 
 A result type is a union between a type `T` and the `error` type. This allows for returning a value from a function that might error. The syntax for a result type is `T!`.
 
-### Interface declarations
-An interface is a type that doesn't describe to a specifc value, but rather a constraint on values.
+### Interfaces
+An interface is a type that doesn't describe to a specific value, but rather a constraint on values.
 An interface simply defines a set of methods a type must have to conform to it. Any type with those methods automatically is assignable to that interface type.
 
 Example:
@@ -684,7 +705,7 @@ struct Robot {
   state: i32
 }
 
-fn (Robot) thing(input: i32): i32 {
+fn (Robot) think(input: i32): i32 {
   this.state += input
   return this.state
 }
@@ -732,7 +753,7 @@ enum Name: string {
   Richard, // "Richard"
 }
 
-// If we know that the type is Name, Name can be ommited from the value
+// If we know that the type is Name, Name can be omitted from the value
 let person_name: Name = .Richard
 ```
 
@@ -792,6 +813,25 @@ Example:
 ```rust
 mut int_or_float: i32 | f32 = 7
 int_or_float = 12.3
+```
+
+### Untagged unions
+Unions can also be marked as untagged, meaning the compiler doesn't store any information about which type is being represented. This is equivalent to C unions. Untagged unions cannot use the shorthand syntax.  
+Untagged unions are unsafe and can cause invalid data such as dangling pointers.
+
+Example:
+```rust
+@untagged
+union IntPtr {
+  int: usize,
+  ptr: *i32
+}
+
+let my_fake_ptr = IntPtr.int(182)
+let my_ptr = my_fake_ptr -> .ptr // my_ptr now points to address 182
+// Or the shorthand:
+let my_ptr2 = my_fake_ptr.ptr
+let my_int: i32 = *my_ptr // Probably nonsense data
 ```
 
 ## Hello, world!
