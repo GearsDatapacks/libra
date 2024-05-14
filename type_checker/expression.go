@@ -458,15 +458,17 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 	index := t.typeCheckExpression(indexExpr.Index)
 	ty, diag := ir.Index(left, index)
 
-	if diag != nil {
-		t.Diagnostics.Report(diag.Location(indexExpr.Index.Location()))
-	}
-
-	return &ir.IndexExpression{
+	expr := &ir.IndexExpression{
 		Left:     left,
 		Index:    index,
 		DataType: ty,
 	}
+	if diag != nil {
+		t.Diagnostics.Report(diag.Location(indexExpr.Index.Location()))
+		return &ir.InvalidExpression{Expression: expr}
+	}
+
+	return expr
 }
 
 func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
@@ -682,13 +684,15 @@ func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir
 	left := t.typeCheckExpression(member.Left)
 	ty, diag := types.Member(left.Type(), member.Member.Value)
 
-	if diag != nil {
-		t.Diagnostics.Report(diag.Location(member.Member.Location))
-	}
-
-	return &ir.MemberExpression{
+	memberExpr := &ir.MemberExpression{
 		Left:     left,
 		Member:   member.Member.Value,
 		DataType: ty,
 	}
+	if diag != nil {
+		t.Diagnostics.Report(diag.Location(member.Member.Location))
+		return &ir.InvalidExpression{Expression: memberExpr}
+	}
+
+	return memberExpr
 }

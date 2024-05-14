@@ -8,10 +8,15 @@ import (
 type ConstValue interface {
 	constVal()
 	Hash() uint64
+	Index(ConstValue) ConstValue
+	Member(string) ConstValue
 }
 type constValue struct{}
 
-func (constValue) constVal() {}
+func (constValue) constVal()                   {}
+func (constValue) Index(ConstValue) ConstValue { return nil }
+func (constValue) Member(string) ConstValue    { return nil }
+func (constValue) Hash() uint64                { return 0 }
 
 type IntValue struct {
 	constValue
@@ -54,13 +59,19 @@ func (s StringValue) Hash() uint64 {
 	return h.Sum64()
 }
 
+func (s StringValue) Index(index ConstValue) ConstValue {
+	return StringValue{
+		Value: string(s.Value[index.(IntValue).Value]),
+	}
+}
+
 type ArrayValue struct {
 	constValue
 	Elements []ConstValue
 }
 
-func (ArrayValue) Hash() uint64 {
-	return 0
+func (a ArrayValue) Index(index ConstValue) ConstValue {
+	return a.Elements[index.(IntValue).Value]
 }
 
 type TupleValue struct {
@@ -68,8 +79,8 @@ type TupleValue struct {
 	Values []ConstValue
 }
 
-func (TupleValue) Hash() uint64 {
-	return 0
+func (t TupleValue) Index(index ConstValue) ConstValue {
+	return t.Values[index.(IntValue).Value]
 }
 
 type MapValue struct {
@@ -77,8 +88,8 @@ type MapValue struct {
 	Values map[uint64]ConstValue
 }
 
-func (MapValue) Hash() uint64 {
-	return 0
+func (m MapValue) Index(index ConstValue) ConstValue {
+	return m.Values[index.Hash()]
 }
 
 type TypeValue struct {
@@ -86,17 +97,13 @@ type TypeValue struct {
 	Type any // types.Type, but no import cycles :/
 }
 
-func (TypeValue) Hash() uint64 {
-	return 0
-}
-
 type StructValue struct {
 	constValue
 	Members map[string]ConstValue
 }
 
-func (StructValue) Hash() uint64 {
-	return 0
+func (s StructValue) Member(member string) ConstValue {
+	return s.Members[member]
 }
 
 func NumericValue(v ConstValue) float64 {

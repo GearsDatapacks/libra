@@ -813,11 +813,15 @@ func (i *IndexExpression) Type() types.Type {
 }
 
 func (i *IndexExpression) IsConst() bool {
-	return false
+	return i.Left.IsConst() && i.Index.IsConst()
 }
 
 func (i *IndexExpression) ConstValue() values.ConstValue {
-	return nil
+	if !i.IsConst() {
+		return nil
+	}
+
+	return i.Left.ConstValue().Index(i.Index.ConstValue())
 }
 
 type KeyValue struct {
@@ -1090,12 +1094,15 @@ func (m *MemberExpression) Type() types.Type {
 	return m.DataType
 }
 
-func (*MemberExpression) IsConst() bool {
-	return false
+func (m*MemberExpression) IsConst() bool {
+	return m.Left.IsConst()
 }
 
-func (*MemberExpression) ConstValue() values.ConstValue {
-	return nil
+func (m*MemberExpression) ConstValue() values.ConstValue {
+	if !m.IsConst() {
+		return nil
+	}
+	return m.Left.ConstValue().Member(m.Member)
 }
 
 // TODO:
