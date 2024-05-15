@@ -52,6 +52,6 @@ func (t *Type) GetName() string {
 	return t.Name
 }
 
-func (t *Type) Mutable() bool {
+func (*Type) Mutable() bool {
 	return false
 }

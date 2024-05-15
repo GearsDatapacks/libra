@@ -15,6 +15,8 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 		t.registerTypeDeclaration(stmt)
 	case *ast.StructDeclaration:
 		t.registerStructDeclaration(stmt)
+	case *ast.InterfaceDeclaration:
+		t.registerInterfaceDeclaration(stmt)
 	}
 }
 
@@ -24,6 +26,8 @@ func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
 		t.typeCheckTypeDeclaration(stmt)
 	case *ast.StructDeclaration:
 		t.typeCheckStructDeclaration(stmt)
+	case *ast.InterfaceDeclaration:
+		t.typeCheckInterfaceDeclaration(stmt)
 	}
 }
 
@@ -69,6 +73,18 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 	t.symbols.Register(symbol)
 }
 
+func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
+	symbol := &symbols.Type{
+		Name: decl.Name.Value,
+		Type: &types.Interface{
+			Name:    decl.Name.Value,
+			Methods: map[string]*types.Function{},
+		},
+	}
+
+	t.symbols.Register(symbol)
+}
+
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
 	symbol.Type.(*types.Alias).Type = t.typeFromAst(typeDec.Type)
@@ -79,7 +95,10 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	if fn.MethodOf == nil && fn.MemberOf == nil {
 		fnType = t.symbols.Lookup(fn.Name.Value).GetType().(*types.Function)
 	} else {
-		panic("TODO: Methods and static methods")
+		fnType = &types.Function{
+			Parameters: []types.Type{},
+			ReturnType: types.Void,
+		}
 	}
 
 	for _, param := range fn.Parameters {
@@ -98,7 +117,25 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 		}
 	}
 
-	fnType.ReturnType = t.typeFromAst(fn.ReturnType.Type)
+	if fn.ReturnType != nil {
+		fnType.ReturnType = t.typeFromAst(fn.ReturnType.Type)
+	}
+
+	if fn.MethodOf != nil {
+		methodOf := t.typeFromAst(fn.MethodOf.Type)
+		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
+			MethodOf: methodOf,
+			Static:   false,
+			Function: fnType,
+		})
+	} else if fn.MemberOf != nil {
+		methodOf := t.lookupType(fn.MemberOf.Name.Value)
+		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
+			MethodOf: methodOf,
+			Static:   true,
+			Function: fnType,
+		})
+	}
 }
 
 func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
@@ -123,5 +160,24 @@ func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 
 	for i, field := range decl.StructType.Fields {
 		ty.Fields[field.Name.Value] = fields[i]
+	}
+}
+
+func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
+	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Interface)
+
+	for _, member := range decl.Members {
+		params := []types.Type{}
+		for _, param := range member.Parameters {
+			params = append(params, t.typeFromAst(param))
+		}
+		fnType := &types.Function{
+			Parameters: params,
+			ReturnType: types.Void,
+		}
+		if member.ReturnType != nil {
+			fnType.ReturnType = t.typeFromAst(member.ReturnType.Type)
+		}
+		ty.Methods[member.Name.Value] = fnType
 	}
 }

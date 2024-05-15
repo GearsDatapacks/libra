@@ -13,6 +13,10 @@ type Type interface {
 	valid(Type) bool
 }
 
+var Context interface {
+	LookupMethod(string, Type, bool) *Function
+}
+
 func Assignable(to, from Type) bool {
 	if to == Invalid || from == Invalid {
 		return true
@@ -42,13 +46,27 @@ func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics
 	return Invalid, diagnostics.CannotIndex(left, index)
 }
 
-func Member(left Type, member string) (Type, *diagnostics.Partial) {
+func Member(left Type, member string, constVal ...values.ConstValue) (Type, *diagnostics.Partial) {
 	if left == Invalid {
 		return Invalid, nil
 	}
-	if hasMember, ok := left.(hasMembers); ok {
-		return hasMember.member(member)
+
+	if left == RuntimeType {
+		ty := constVal[0].(values.TypeValue).Type.(Type)
+		if method := Context.LookupMethod(member, ty, true); method != nil {
+			return method, nil
+		}
+	} else if method := Context.LookupMethod(member, left, false); method != nil {
+		return method, nil
 	}
+
+	if hasMember, ok := left.(hasMembers); ok {
+		ty, diag := hasMember.member(member)
+		if diag == nil {
+			return ty, nil
+		}
+	}
+
 	return Invalid, diagnostics.NoMember(left, member)
 }
 
@@ -386,6 +404,12 @@ func (fn *Function) valid(other Type) bool {
 	return Match(fn.ReturnType, function.ReturnType)
 }
 
+type Method struct {
+	MethodOf Type
+	Static   bool
+	Function *Function
+}
+
 type Alias struct {
 	Type
 }
@@ -435,6 +459,36 @@ func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
 		return ty, nil
 	}
 	return Invalid, diagnostics.NoMember(s, member)
+}
+
+type Interface struct {
+	Name    string
+	Methods map[string]*Function
+}
+
+func (i *Interface) String() string {
+	return i.Name
+}
+
+func (i *Interface) valid(other Type) bool {
+	for name, ty := range i.Methods {
+		member, diag := Member(other, name)
+		if diag != nil {
+			return false
+		}
+		if !Assignable(ty, member) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (i *Interface) member(member string) (Type, *diagnostics.Partial) {
+	if ty, ok := i.Methods[member]; ok {
+		return ty, nil
+	}
+	return Invalid, diagnostics.NoMember(i, member)
 }
 
 type pseudo interface {

@@ -48,6 +48,8 @@ func AssignableExpr(expr Expression) bool {
 		return true
 	case *IndexExpression:
 		return AssignableExpr(e.Left)
+	case *MemberExpression:
+		return AssignableExpr(e.Left)
 	case *InvalidExpression:
 		return true
 	default:
@@ -60,6 +62,8 @@ func MutableExpr(expr Expression) bool {
 	case *VariableExpression:
 		return e.Symbol.IsMut
 	case *IndexExpression:
+		return MutableExpr(e.Left)
+	case *MemberExpression:
 		return MutableExpr(e.Left)
 	case *InvalidExpression:
 		return true
@@ -76,4 +80,11 @@ func Index(left, index Expression) (types.Type, *diagnostics.Partial) {
 		return types.Index(left.Type(), index.Type(), index.ConstValue())
 	}
 	return types.Index(left.Type(), index.Type())
+}
+
+func Member(left Expression, member string) (types.Type, *diagnostics.Partial) {
+	if left.IsConst() {
+		return types.Member(left.Type(), member, left.ConstValue())
+	}
+	return types.Member(left.Type(), member)
 }

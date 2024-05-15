@@ -1,5 +1,7 @@
 package symbols
 
+import "github.com/gearsdatapacks/libra/type_checker/types"
+
 type Table struct {
 	Parent    *Table
 	variables map[string]Symbol
@@ -9,6 +11,9 @@ type Table struct {
 func New() *Table {
 	return &Table{
 		variables: map[string]Symbol{},
+		Context: &GlobalContext{
+			Methods: map[string][]types.Method{},
+		},
 	}
 }
 
@@ -44,4 +49,34 @@ func (t *Table) Lookup(name string) Symbol {
 		return t.Parent.Lookup(name)
 	}
 	return nil
+}
+
+func (t *Table) globalScope() *Table {
+	if t.Parent == nil {
+		return t
+	}
+	return t.Parent.globalScope()
+}
+
+func (t *Table) LookupMethod(name string, methodOf types.Type, static bool) *types.Function {
+	context := t.globalScope().Context.(*GlobalContext)
+	methods, ok := context.Methods[name]
+	if !ok {
+		return nil
+	}
+	for _, method := range methods {
+		if method.Static == static && types.Assignable(method.MethodOf, methodOf) {
+			return method.Function
+		}
+	}
+	return nil
+}
+
+func (t *Table) RegisterMethod(name string, method types.Method) {
+	context := t.globalScope().Context.(*GlobalContext)
+	methods, ok := context.Methods[name]
+	if !ok {
+		context.Methods[name] = []types.Method{method}
+	}
+	context.Methods[name] = append(methods, method)
 }

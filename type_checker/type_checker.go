@@ -34,11 +34,14 @@ func (t *typeChecker) TypeCheckProgram(program *ast.Program) *ir.Program {
 }
 
 func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
+	oldContext := types.Context
+	types.Context = t.symbols
 	t.registerDeclarations(mod)
 	t.typeCheckDeclarations(mod)
 	t.typeCheckFunctions(mod)
 	stmts := t.typeCheckStatements(mod)
 
+	types.Context = oldContext
 	return &ir.Program{
 		Statements: stmts,
 	}

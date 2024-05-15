@@ -156,6 +156,5 @@ func (r *ReturnStatement) String() string {
 }
 
 // TODO:
-// InterfaceDeclaration
 // ImportStatement
 // EnumDeclaration

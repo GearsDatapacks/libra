@@ -682,7 +682,7 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 
 func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir.Expression {
 	left := t.typeCheckExpression(member.Left)
-	ty, diag := types.Member(left.Type(), member.Member.Value)
+	ty, diag := ir.Member(left, member.Member.Value)
 
 	memberExpr := &ir.MemberExpression{
 		Left:     left,

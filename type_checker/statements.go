@@ -31,7 +31,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckFunctionDeclaration(stmt)
 	case *ast.ReturnStatement:
 		return t.typeCheckReturn(stmt)
-	case *ast.TypeDeclaration, *ast.StructDeclaration:
+	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration:
 		return &ir.Block{
 			Statements: []ir.Statement{},
 		}
@@ -165,7 +165,14 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
 }
 
 func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration) ir.Statement {
-	fnType := t.symbols.Lookup(funcDec.Name.Value).GetType().(*types.Function)
+	var fnType *types.Function
+	if funcDec.MethodOf != nil {
+		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.typeFromAst(funcDec.MethodOf.Type), false)
+	} else if funcDec.MemberOf != nil {
+		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.lookupType(funcDec.MemberOf.Name.Value), true)
+	} else {
+		fnType = t.symbols.Lookup(funcDec.Name.Value).GetType().(*types.Function)
+	}
 
 	t.enterScope(symbols.FunctionContext{ReturnType: fnType.ReturnType})
 	defer t.exitScope()
@@ -180,6 +187,16 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		}
 		t.symbols.Register(symbol)
 		params = append(params, param.Name.Value)
+	}
+
+	if funcDec.MethodOf != nil {
+		symbol := &symbols.Variable{
+			Name:       "this",
+			IsMut:      funcDec.MethodOf.Mutable != nil,
+			Type:       t.typeFromAst(funcDec.MethodOf.Type),
+			ConstValue: nil,
+		}
+		t.symbols.Register(symbol)
 	}
 
 	body := t.typeCheckBlock(funcDec.Body, false)
