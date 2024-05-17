@@ -840,3 +840,88 @@ Therefore, Hello, world is just a single line of Libra:
 ```rust
 print("Hello, world!")
 ```
+
+## WIP
+This section is a working in progress, and these concepts are all likely to change. This is simply somewhere for me to note down ideas as I come up with them; they will be refined later.
+
+### Context
+Every program has a context. This stores important information about the program state such as the currently active allocator.  
+Context is passed by copy, to prevent called functions changing state that might mess up behaviour in the current function.
+
+Example:
+```rust
+context.allocator = some_allocator
+let alloced = alloc(i32)
+// This is guaranteed not to change the current allocator, so it is safe to assume that context.allocator is still some_allocator
+my_sub_fn()
+free(alloced)
+```
+
+### Allocators
+An allocator is a type that is responsible for allocating and freeing memory. Any type that stores data on the heap (such as lists or maps) uses an allocator to store that data.  
+An allocator is any type that implements to the `Allocator` interface, defined in the `std:memory` library:
+```go
+interface Allocator {
+  alloc(Type): *mut Type!
+  free(*Type)
+}
+```
+
+By default, all allocations in Libra use the default allocator, `CAllocator`. This uses `malloc` and `free` from LibC.  
+You can change the allocator by modifying `allocator` field in the program context:
+```rust
+// Allocated using CAllocator
+let my_4_ints: *mut i32[_] = alloc(i32[4])! // alloc is a builtin function that calls context.allocator.alloc
+context.allocator = MyCustomAllocator{...}
+// Allocated using MyCustomAllocator
+let my_custom_4_ints: *mut i32[_] = alloc(i32[4])!
+```
+
+**Note**: The builtin `free` function calls the `free` method on the current allocator, so if the allocator has changed since something was allocated, the old allocator will need to be rememberer and used to free it.
+
+Example:
+```rust
+let old_allocator = context.allocator
+let old_alloced: *i32 = alloc(i32)!
+context.allocator = other_allocator
+let new_alloced: *i32 = alloc(i32)!
+free(new_alloced) // This is fine, new_alloced was allocated using the current allocator
+free(old_alloced) // This won't work since the current allocator didn't allocate old_alloced
+// Do this instead:
+old_allocator.free(old_alloced)
+```
+
+### Defer
+A defer statement allows you to delay code execution until the end of a scope. This can be used, for example, to free anything allocated within a function.  
+This is useful because it allows you to keep the code that frees data in the same place as where it is allocated, and also if you return from multiple places in the function, you only need to free it once.
+
+For example, this code, which needs to free `my_thing` in three places:
+```rust
+let my_thing = alloc(Thing)
+
+if foo {
+  free(my_thing)
+  return bar
+} else if bar {
+  free(my_thing)
+  return foo
+} else {
+  free(my_thing)
+  return baz
+}
+```
+
+Can be replaced with this:
+```rust
+let my_thing = alloc(Thing)
+// Gets automatically freed in all three cases
+defer free(my_thing)
+
+if foo {
+  return bar
+} else if bar {
+  return foo
+} else {
+  return baz
+}
+```
