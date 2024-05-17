@@ -602,7 +602,7 @@ Type aliases follow a similar syntax to variable declarations, and can also be r
 
 Example:
 ```rust
-type ComplexType = {string: [2]i32}[]
+type ComplexType = {string: i32[2]}[]
 let complex_value: ComplexType = [{"values": [1,2]}]
 ```
 

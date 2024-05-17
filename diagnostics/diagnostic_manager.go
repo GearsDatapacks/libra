@@ -266,3 +266,8 @@ func NoStructMember(location text.Location, name, member string) Diagnostic {
 	msg := fmt.Sprintf("Struct %q does not have member %q", name, member)
 	return makeError(msg, location)
 }
+
+func CannotUseStatementOutsideLoop(location text.Location, stmtKind string) Diagnostic {
+	msg := fmt.Sprintf("Cannot use %s outside of a loop", stmtKind)
+	return makeError(msg, location)
+}

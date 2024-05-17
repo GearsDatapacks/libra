@@ -155,6 +155,22 @@ func (r *ReturnStatement) String() string {
 	return "return"
 }
 
+type BreakStatement struct {
+	statement
+}
+
+func (*BreakStatement) String() string {
+	return "break"
+}
+
+type ContinueStatement struct {
+	statement
+}
+
+func (*ContinueStatement) String() string {
+	return "continue"
+}
+
 // TODO:
 // ImportStatement
 // EnumDeclaration

@@ -55,6 +55,18 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseForLoop()
 	}
 
+	if p.isKeyword("break") {
+		return &ast.BreakStatement{
+			Keyword: p.consume(),
+		}
+	}
+
+	if p.isKeyword("continue") {
+		return &ast.ContinueStatement{
+			Keyword: p.consume(),
+		}
+	}
+
 	if p.isKeyword("fn") {
 		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Function declaration"))
 		return p.parseFunctionDeclaration()

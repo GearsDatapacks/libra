@@ -390,6 +390,32 @@ func (r *ReturnStatement) String() string {
 	return result.String()
 }
 
+type BreakStatement struct {
+	statement
+	Keyword token.Token
+}
+
+func (b *BreakStatement) Tokens() []token.Token {
+	return []token.Token{b.Keyword}
+}
+
+func (*BreakStatement) String() string {
+	return "break"
+}
+
+type ContinueStatement struct {
+	statement
+	Keyword token.Token
+}
+
+func (c *ContinueStatement) Tokens() []token.Token {
+	return []token.Token{c.Keyword}
+}
+
+func (*ContinueStatement) String() string {
+	return "continue"
+}
+
 type TypeDeclaration struct {
 	statement
 	Keyword token.Token

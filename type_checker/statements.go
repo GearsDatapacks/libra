@@ -31,6 +31,10 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckFunctionDeclaration(stmt)
 	case *ast.ReturnStatement:
 		return t.typeCheckReturn(stmt)
+	case *ast.BreakStatement:
+		return t.typeCheckBreak(stmt)
+	case *ast.ContinueStatement:
+		return t.typeCheckContinue(stmt)
 	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration:
 		return &ir.Block{
 			Statements: []ir.Statement{},
@@ -131,7 +135,9 @@ func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Statement {
 		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(loop.Condition.Location()))
 	}
 
-	body := t.typeCheckBlock(loop.Body, true)
+	t.enterScope(symbols.LoopContext{})
+	defer t.exitScope()
+	body := t.typeCheckBlock(loop.Body, false)
 	return &ir.WhileLoop{
 		Condition: condition,
 		Body:      body,
@@ -152,7 +158,8 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Statement {
 		Type:       itemType,
 		ConstValue: nil,
 	}
-	t.enterScope()
+	
+	t.enterScope(symbols.LoopContext{})
 	defer t.exitScope()
 	t.symbols.Register(&variable)
 	body := t.typeCheckBlock(loop.Body, false)
@@ -242,4 +249,36 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 	return &ir.ReturnStatement{
 		Value: value,
 	}
+}
+
+func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
+	symbolTable := t.symbols
+	for symbolTable != nil {
+		if _, ok := symbolTable.Context.(symbols.LoopContext); ok {
+			break
+		}
+		symbolTable = symbolTable.Parent
+	}
+
+	if symbolTable == nil {
+		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Keyword.Location, "break"))
+	}
+
+	return &ir.BreakStatement{}
+}
+
+func (t *typeChecker) typeCheckContinue(c *ast.ContinueStatement) ir.Statement {
+	symbolTable := t.symbols
+	for symbolTable != nil {
+		if _, ok := symbolTable.Context.(symbols.LoopContext); ok {
+			break
+		}
+		symbolTable = symbolTable.Parent
+	}
+
+	if symbolTable == nil {
+		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Keyword.Location, "continue"))
+	}
+
+	return &ir.ContinueStatement{}
 }
