@@ -438,6 +438,11 @@ fn add(a, b: i32): i32 {
 }
 ```
 
+If the function doesn't perform any intermediate operations, and simply returns a value, a shorthand syntax can be used:
+```rust
+fn add(a, b: i32): i32 => a + b
+```
+
 Functions can be called the function name, followed by `(`, `)` enclosing comma-separated arguments.
 Function calls produce the value that the function returns, if any.
 
@@ -590,6 +595,144 @@ bar()
 
 import * from "module"
 baz() // Exported by module
+```
+
+## Statements and expressions
+Many statements can also be used as expressions. This allows them to produce values and be used wherever expressions would be.
+
+### If/else expressions
+Libra has no ternary operator. Instead, the if/else construct can be used as an expression. The resulting value can be obtained using the `yield` keyword.  
+If there is only one expression in the block, the yield keyword can be omitted.  
+If/else expressions don't require an else branch, but if one is not present, the resulting value is optional (`T?`).
+
+Example:
+```rust
+let my_ternary = if foo {bar} else {baz}
+
+let my_if_expr = if condition1 {
+  do_thing()
+  yield 1
+} else if condition2 {
+  do_other_thing()
+  yield 2
+} else {
+  do_final_thing()
+  yield 0
+}
+```
+
+### Block expressions
+Block expressions are just like if/else expressions, but they run a single block unconditionally. This can be used to calculate a value without polluting the scope with all the intermediate values used, and without creating a separate function for the logic.  
+Since block syntax conflicts with map syntax, the `do` keyword must be used when a block is treated as an expression.
+
+Example:
+```rust
+let result = do {
+  let x = 3.4
+  let x_squared = x ** 2
+  let two_x = x * 2
+  let five = 5
+  yield x_squared + two_x + five
+}
+// Only result is still in scope
+```
+
+### Function expressions
+In Libra, functions are values. You can reference declared functions by name, but sometimes you want to create a function inline, without declaring is globally. For this you can use anonymous functions.  
+Anonymous functions are just like regular functions except that they are created without a name and can be used inline as expressions.  
+Additionally, anonymous functions can omit their return type as it can be inferred.
+
+An example of how you might achieve some behaviour without anonymous functions:
+```rust
+fn my_filter(x: i32): bool => x % 2 == 0 || x < 5
+
+[1, 2, 4, 5, 6, 7, 91, 24].filter(my_filter)
+// my_filter is now a global function
+```
+
+Here's how you could do it with anonymous functions:
+```rust
+[1, 2, 4, 5, 6, 7, 91, 24].filter(fn(x: i32) => x % 2 == 0 || x < 5)
+// Anonymous function only exists within the scope of filter
+```
+
+A function value with arguments of type `A` and `B` and a return value of type `C` has the type: `fn(A, B): C`
+
+### Loop expressions
+In Libra, loops can produce values just like if statements. When loops are terminated using `break`, an optional value can be supplied. The loop expression will evaluate to this value.  
+Since loops cannot be guaranteed to break with a value or even run at all, this returns an optional value. To remove the optional, use an `else` branch.
+
+Example:
+```rust
+let result = for i in 1..10 {
+  if i > 10 {
+    break i
+  }
+} else {-1}
+```
+
+### Then/else
+Then/else provides a neat way of handling optional values. Any expression that implements the `Chain` interface can be used with then/else.  
+The `then` branch is run if the value is present, the `else` branch if otherwise. Examples of types that implement `Chain` by default are `T?` and `T!`.  
+The `Chain` interface is defined as such:
+```go
+// P = Present, A = Absent
+interface Chain<P, A> {
+  chain(): P | A
+}
+```
+Both branches are optional, but if the `else` branch is omitted, the resulting value will still be optional.  
+Both branches can use block captures to receive the values from the optional value (`else` branch will receive a void value on `T?`).
+
+Example:
+```rust
+fn safe_divide(a, b: f32): f32? {
+  if b == 0 {
+    return void
+  }
+  return a / b
+}
+
+fn unsafe_divide(a, b: f32): f32 {
+  return safe_divide(a, b) else {
+    panic("Tried to divide by zero")
+  }
+}
+
+fn nan_divide_plus_one(a, b: f32): f32 {
+  return safe_divide(a, b) then |result| {
+    result + 1
+  } else {
+    f32.NaN
+  }
+}
+```
+
+Then/else can be used to implement the `?` and `!` operators:
+```rust
+fn foo(): i32? {
+  return safe_divide() else {return void} + 1
+}
+
+fn bar(): i32 {
+  return safe_divide() else {panic("Tried to unwrap void option")} + 1
+}
+```
+
+Then/else can also be used with loops, to check whether the loop executed.
+
+Example:
+```rust
+fn sum(values: i32[]): i32! {
+  mut sum = 0
+  for i in values {
+    sum += i
+  } then {
+    return sum
+  } else {
+    return Err.new("Please provide at least one value to sum")
+  }
+}
 ```
 
 ## Type-declaration statements
@@ -923,5 +1066,74 @@ if foo {
   return foo
 } else {
   return baz
+}
+```
+
+### Type parameters
+Functions can take type parameters, parameters of type `const Type`, which can be used in the signature of the function.
+
+Example:
+```rust
+fn add(T: const Type, a, b: T): T {
+  if T == i32 {
+    return add_i32(a, b)
+  } else if T == f32 {
+    return add_f32(a, b)
+  } else {
+    panic("Cannot add non-number types")
+  }
+}
+```
+
+In many cases, type parameters can be inferred, and the shorthand syntax can be used: `$T`.
+
+Example:
+```rust
+fn add(a, b: $T): T {
+  // Body is the same
+  ...
+}
+
+add(1, 2) // T can be inferred as i32
+add(3.1, 2.5) // T can be inferred as f32
+```
+
+Custom types can also take type parameters, in `<`, `>`. Since type parameters of custom types can't always be inferred, there is no shorthand syntax, but the parameters are optional if it they can be.
+
+Example:
+```rust
+union Option<T> {
+  T, void
+}
+
+let my_option: Option = 1 // T can be inferred as i32
+let my_other_option: Option<string> = void // T cannot be inferred and must be provided
+```
+
+Type constraints can be added to type parameters to limit what types can be given.
+
+Example:
+```rust
+fn add(a, b: $T: Add): T {
+  return a + b
+}
+```
+
+```rust
+import {Add, Subtract as Sub, Multiple as Mul, Divide as Div} from "math"
+
+enum Operation {Add, Sub, Mul, Div}
+struct Expression<T: Add & Sub & Mul & Div> {
+  left, right: T,
+  operation: Operation
+}
+
+fn (Expression<$T>) calculate(): T {
+  return switch this.operation {
+    case .Add => this.left + this.right
+    case .Sub => this.left - this.right
+    case .Mul => this.left * this.right
+    case .Div => this.left / this.right
+  }
 }
 ```
