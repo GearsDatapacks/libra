@@ -67,6 +67,8 @@ const (
 	TILDE
 	SEMICOLON
 
+	COMMENT
+
 	PLUS_EQUALS =  PLUS + EQUALS
 	MINUS_EQUALS = MINUS + EQUALS
 	STAR_EQUALS = STAR + EQUALS
@@ -180,6 +182,8 @@ func (kind Kind) String() string {
 		return "string"
 	case IDENTIFIER:
 		return "identifier"
+	case COMMENT:
+		return "comment"
 	default:
 		return "?"
 	}

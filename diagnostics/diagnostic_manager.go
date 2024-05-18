@@ -33,6 +33,11 @@ func UnterminatedString(location text.Location) Diagnostic {
 	return makeError(msg, location)
 }
 
+func UnterminatedComment(location text.Location) Diagnostic {
+	msg := "Unterminated block comment"
+	return makeError(msg, location)
+}
+
 func InvalidEscapeSequence(location text.Location, char byte) Diagnostic {
 	msg := fmt.Sprintf("Invalid escape sequence: '\\%c'", char)
 	return makeError(msg, location)

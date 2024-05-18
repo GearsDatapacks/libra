@@ -56,6 +56,12 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.Kind = token.EOF
 		nextToken.Value = "\x00"
 		return nextToken
+	} else if next == '/' && l.peek(1) == '/' {
+		nextToken.Kind = token.COMMENT
+		nextToken.Value = l.parseLineComment()
+	} else if next == '/' && l.peek(1) == '*' {
+		nextToken.Kind = token.COMMENT
+		nextToken.Value = l.parseBlockComment()
 	} else if kind, ok := l.parsePunctuation(); ok {
 		nextToken.Kind = kind
 	} else if isNumber(next) {
@@ -74,6 +80,7 @@ func (l *lexer) nextToken() token.Token {
 	}
 
 	nextToken.Location.Span.End = l.col
+	nextToken.Location.Span.EndLine = l.line
 	if nextToken.Value == "" {
 		nextToken.Value = l.file.Text[pos:l.pos]
 	}
@@ -299,6 +306,47 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 	return kind, true
 }
 
+func (l *lexer) parseLineComment() string {
+	l.consume()
+	l.consume()
+	l.skipWhitespace()
+	var result bytes.Buffer
+	for !l.eof() && l.next() != '\n' {
+		result.WriteByte(l.consume())
+	}
+
+	return result.String()
+}
+
+func (l *lexer) parseBlockComment() string {
+	startLine := l.line
+	startCol := l.col
+	l.consume()
+	l.consume()
+	l.skipWhitespace()
+	nestLevel := 1
+	var result bytes.Buffer
+	for !l.eof() && nestLevel > 0 {
+		if l.next() == '/' && l.peek(1) == '*' {
+			nestLevel++
+			result.WriteByte(l.consume())
+			result.WriteByte(l.consume())
+		} else if l.next() == '*' && l.peek(1) == '/' {
+			nestLevel--
+			result.WriteByte(l.consume())
+			result.WriteByte(l.consume())
+		} else {
+			result.WriteByte(l.consume())
+		}
+	}
+
+	if nestLevel > 0 {
+		l.Diagnostics.Report(diagnostics.UnterminatedComment(l.getLocation(startLine, l.line, startCol, l.col)))
+	}
+
+	return result.String()
+}
+
 func (l *lexer) skipWhitespace() {
 	for isWhitespace(l.next()) {
 		l.consume()
@@ -316,7 +364,7 @@ func (l *lexer) peek(n int) byte {
 	return l.file.Text[l.pos+n]
 }
 
-func (l *lexer) consume() {
+func (l *lexer) consume() byte {
 	next := l.next()
 	l.col++
 	l.pos++
@@ -324,6 +372,7 @@ func (l *lexer) consume() {
 		l.line++
 		l.col = 0
 	}
+	return next
 }
 
 func (l *lexer) eof() bool {

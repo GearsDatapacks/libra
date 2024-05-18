@@ -283,7 +283,7 @@ func (p *parser) peek(offset int) token.Token {
 		return p.tokens[len(p.tokens)-1]
 	}
 
-	for p.tokens[p.pos+offset].Kind == token.NEWLINE {
+	for p.tokens[p.pos+offset].Kind == token.NEWLINE || p.tokens[p.pos+offset].Kind == token.COMMENT {
 		offset++
 	}
 
@@ -295,7 +295,12 @@ func (p *parser) nextWithNewlines() token.Token {
 		return p.tokens[len(p.tokens)-1]
 	}
 
-	return p.tokens[p.pos]
+	offset := 0
+	for p.tokens[p.pos+offset].Kind == token.COMMENT {
+		offset++
+	}
+
+	return p.tokens[p.pos+offset]
 }
 
 func (p *parser) canContinue() bool {
@@ -314,7 +319,8 @@ func (p *parser) consume() token.Token {
 
 func (p *parser) consumeNewlines() {
 	for p.tokens[p.pos].Kind == token.NEWLINE ||
-		p.tokens[p.pos].Kind == token.SEMICOLON {
+		p.tokens[p.pos].Kind == token.SEMICOLON ||
+		p.tokens[p.pos].Kind == token.COMMENT {
 		p.pos++
 	}
 }
