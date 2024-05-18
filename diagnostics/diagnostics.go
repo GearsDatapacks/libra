@@ -16,8 +16,8 @@ const (
 )
 
 type Partial struct {
-	Kind     DiagnosticKind
-	Message  string
+	Kind    DiagnosticKind
+	Message string
 }
 
 func partial(kind DiagnosticKind, message string) *Partial {
@@ -65,7 +65,7 @@ func (d *Diagnostic) Print() {
 	ResetColour()
 
 	spanLines := lines[span.StartLine : span.EndLine+1]
-	numLines := span.EndLine + 1 - span.StartLine
+	numLines := len(spanLines)
 
 	fmt.Print(spanLines[0][:span.Column])
 
@@ -73,7 +73,7 @@ func (d *Diagnostic) Print() {
 	if numLines == 1 {
 		fmt.Print(spanLines[0][span.Column:span.End])
 	} else {
-		for i, line := range lines {
+		for i, line := range spanLines {
 			if i == 0 {
 				fmt.Println(line[span.Column:])
 			} else if i == numLines-1 {
