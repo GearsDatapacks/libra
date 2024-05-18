@@ -19,32 +19,3 @@ func isWhitespace(c byte) bool {
   return c == ' ' || c == '\t' || c == '\r'
 }
 
-func escape(c byte) (char byte, ok bool) {
-	switch c {
-  // TODO: \x and \u
-	case '\\':
-		char = '\\'
-	case '"':
-		char = '"'
-	case 'a':
-		char = '\a'
-	case 'b':
-		char = '\b'
-	case 'f':
-		char = '\f'
-	case 'n':
-		char = '\n'
-	case 'r':
-		char = '\r'
-	case 't':
-		char = '\t'
-	case 'v':
-		char = '\v'
-	default:
-    return c, false
-	}
-
-  ok = true
-  return
-}
-

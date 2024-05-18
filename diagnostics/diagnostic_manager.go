@@ -43,6 +43,21 @@ func InvalidEscapeSequence(location text.Location, char byte) Diagnostic {
 	return makeError(msg, location)
 }
 
+func ExpectedEscapeSequence(location text.Location) Diagnostic {
+	msg := "Expected escape sequence, reached end of file"
+	return makeError(msg, location)
+}
+
+func InvalidAsciiSequence(location text.Location, sequence string) Diagnostic {
+	msg := fmt.Sprintf("Invalid ascii escape sequence: '\\x%s'", sequence)
+	return makeError(msg, location)
+}
+
+func InvalidUnicodeSequence(location text.Location, sequence string) Diagnostic {
+	msg := fmt.Sprintf("Invalid unicode escape sequence: '\\x%s'", sequence)
+	return makeError(msg, location)
+}
+
 func NumbersCannotEndWithSeparator(location text.Location) Diagnostic {
 	msg := "Numbers cannot end with numeric separators"
 	return makeError(msg, location)

@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -136,12 +137,14 @@ func (l *lexer) parseString() string {
 	for !l.eof() && l.next() != '"' {
 		if l.next() == '\\' {
 			l.consume()
-			char, ok := escape(l.next())
-			if !ok {
-				l.Diagnostics.Report(diagnostics.InvalidEscapeSequence(
-					l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next()))
+			if l.next() != '\n' {
+				char, ok := l.escape(l.next())
+				if !ok {
+					l.Diagnostics.Report(diagnostics.InvalidEscapeSequence(
+						l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next()))
+				}
+				str.WriteByte(char)
 			}
-			str.WriteByte(char)
 		} else {
 			str.WriteByte(l.next())
 		}
@@ -155,6 +158,67 @@ func (l *lexer) parseString() string {
 
 	l.consume()
 	return str.String()
+}
+
+func (l *lexer) escape(c byte) (char byte, ok bool) {
+	switch c {
+	case '\\':
+		char = '\\'
+	case '"':
+		char = '"'
+	case 'a':
+		char = '\a'
+	case 'b':
+		char = '\b'
+	case 'f':
+		char = '\f'
+	case 'n':
+		char = '\n'
+	case 'r':
+		char = '\r'
+	case 't':
+		char = '\t'
+	case 'v':
+		char = '\v'
+	case '0':
+		char = 0
+	case 'x':
+		if l.pos+3 >= len(l.file.Text) {
+			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.line, l.line, l.col-1, l.col+1)))
+			return 0, true
+		}
+
+		l.consume()
+		nextTwoChars := string(l.next()) + string(l.peek(1))
+		c, e := strconv.ParseUint(nextTwoChars, 16, 8)
+		if e != nil {
+			l.Diagnostics.Report(diagnostics.InvalidAsciiSequence(l.getLocation(l.line, l.line, l.col-2, l.col+2), nextTwoChars))
+		} else {
+			l.consume()
+		}
+		char = byte(c)
+	case 'u':
+		if l.pos+5 >= len(l.file.Text) {
+			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.line, l.line, l.col-1, l.col+1)))
+			return 0, true
+		}
+
+		l.consume()
+		nextFourChars := string(l.next()) + string(l.peek(1)) + string(l.peek(2)) + string(l.peek(3))
+		// TODO: support more than one byte utf8 sequences
+		c, e := strconv.ParseUint(nextFourChars, 16, 8)
+		if e != nil {
+			l.Diagnostics.Report(diagnostics.InvalidUnicodeSequence(l.getLocation(l.line, l.line, l.col-2, l.col+4), nextFourChars))
+		} else {
+			l.consumeMany(3)
+		}
+		char = byte(c)
+	default:
+		return c, false
+	}
+
+	ok = true
+	return
 }
 
 func (l *lexer) parsePunctuation() (token.Kind, bool) {
@@ -365,6 +429,9 @@ func (l *lexer) peek(n int) byte {
 }
 
 func (l *lexer) consume() byte {
+	if l.pos >= len(l.file.Text) {
+		return l.next()
+	}
 	next := l.next()
 	l.col++
 	l.pos++
@@ -373,6 +440,12 @@ func (l *lexer) consume() byte {
 		l.col = 0
 	}
 	return next
+}
+
+func (l *lexer) consumeMany(n int) {
+	for range n {
+		l.consume()
+	}
 }
 
 func (l *lexer) eof() bool {
