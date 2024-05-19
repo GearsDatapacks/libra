@@ -196,14 +196,15 @@ func CannotCast(location text.Location, from, to tcType) Diagnostic {
 	return makeError(msg, location)
 }
 
-func CannotIncDec(location text.Location, incDec string) Diagnostic {
+func CannotIncDec(incDec string) *Partial {
 	msg := fmt.Sprintf("Cannot %s a non-variable value", incDec)
-	return makeError(msg, location)
+	return partial(Error, msg)
 }
 
+var ValueImmutablePartial = partial(Error, "Cannot modify value, it is immutable")
+
 func ValueImmutable(location text.Location) Diagnostic {
-	msg := "Cannot modify value, it is immutable"
-	return makeError(msg, location)
+	return ValueImmutablePartial.Location(location)
 }
 
 var NotConstPartial = partial(Error, "Value must be known at compile time")

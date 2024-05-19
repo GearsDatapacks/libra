@@ -305,22 +305,11 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 		}
 	}
 
-	operator := t.getPostfixOperator(unExpr.Operator.Kind, operand)
-	plainOp := operator & ^ir.UntypedBit
+	operator, diag := t.getPostfixOperator(unExpr.Operator.Kind, operand)
 
-	if plainOp >= ir.IncrecementInt && plainOp <= ir.DecrementFloat {
-		if !ir.AssignableExpr(operand) {
-			incDec := "increment"
-			if plainOp >= ir.DecrecementInt {
-				incDec = "decrement"
-			}
-			t.Diagnostics.Report(diagnostics.CannotIncDec(unExpr.Operand.Location(), incDec))
-		} else if !ir.MutableExpr(operand) {
-			t.Diagnostics.Report(diagnostics.ValueImmutable(unExpr.Operand.Location()))
-		}
-	}
-
-	if operator == 0 {
+	if diag != nil {
+		t.Diagnostics.Report(diag.Location(unExpr.Operand.Location()))
+	} else if operator == 0 {
 		t.Diagnostics.Report(diagnostics.UnaryOperatorUndefined(unExpr.Operator.Location, unExpr.Operator.Value, operand.Type()))
 	}
 
@@ -371,7 +360,7 @@ func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperat
 	return unOp
 }
 
-func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
+func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expression) (ir.UnaryOperator, *diagnostics.Partial) {
 	var unOp ir.UnaryOperator
 	opType := operand.Type()
 
@@ -383,9 +372,13 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 	}
 
 	switch tokKind {
-	// TODO: Check that it's incrementing a variable
 	case token.DOUBLE_PLUS:
 		if numeric {
+			if !ir.AssignableExpr(operand) {
+				return 0, diagnostics.CannotIncDec("increment")
+			} else if !ir.MutableExpr(operand) {
+				return 0, diagnostics.ValueImmutablePartial
+			}
 			if isFloat {
 				unOp = ir.IncrementFloat
 			} else {
@@ -394,6 +387,11 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 		}
 	case token.DOUBLE_MINUS:
 		if numeric {
+			if !ir.AssignableExpr(operand) {
+				return 0, diagnostics.CannotIncDec("decrement")
+			} else if !ir.MutableExpr(operand) {
+				return 0, diagnostics.ValueImmutablePartial
+			}
 			if isFloat {
 				unOp = ir.DecrementFloat
 			} else {
@@ -410,7 +408,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 	if untyped && unOp != 0 {
 		unOp = unOp | ir.UntypedBit
 	}
-	return unOp
+	return unOp, nil
 }
 
 func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {
