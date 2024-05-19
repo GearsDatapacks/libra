@@ -349,10 +349,10 @@ func TestMaps(t *testing.T) {
 		valueType types.Type
 		keyValues [][2]any
 	}{
-		{"{1: 2, 3: 4}", types.Int, types.Int, [][2]any{{1, 2}, {3, 4}}},
-		{`{"one": 1, "two": 2, "three": 3}`, types.String, types.Int, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
-		{`{true: "true", false: "false"}`, types.Bool, types.String, [][2]any{{true, "true"}, {false, "false"}}},
-		{`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}`, types.String, types.Int, [][2]any{{"12", 3}, {"74", 11}}},
+		{"({1: 2, 3: 4})", types.Int, types.Int, [][2]any{{1, 2}, {3, 4}}},
+		{`({"one": 1, "two": 2, "three": 3})`, types.String, types.Int, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
+		{`({true: "true", false: "false"})`, types.Bool, types.String, [][2]any{{true, "true"}, {false, "false"}}},
+		{`({"1" + "2": 1 + 2, "7" + "4": 7 + 4})`, types.String, types.Int, [][2]any{{"12", 3}, {"74", 11}}},
 	}
 
 	for _, test := range tests {
@@ -472,7 +472,7 @@ func TestTypeChecks(t *testing.T) {
 	}{
 		{"1 is i32", types.UntypedInt, types.Int},
 		{"true is bool[1]", types.Bool, &types.ArrayType{ElemType: types.Bool, Length: 1}},
-		{"{1: 1.0, 3: 3.14} is {i32: f32}",
+		{"({1: 1.0, 3: 3.14}) is {i32: f32}",
 			&types.MapType{KeyType: types.Int, ValueType: types.Float},
 			&types.MapType{KeyType: types.Int, ValueType: types.Float},
 		},

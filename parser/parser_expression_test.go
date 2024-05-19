@@ -92,15 +92,16 @@ func TestMapExpression(t *testing.T) {
 		src       string
 		keyValues [][2]any
 	}{
-		{"{}", [][2]any{}},
-		{"{1: 2, 2: 3, 3:4}", [][2]any{{1, 2}, {2, 3}, {3, 4}}},
-		{`{"foo": "bar", "hello": "world"}`, [][2]any{{"foo", "bar"}, {"hello", "world"}}},
-		{`{hi: "there", "x": computed}`, [][2]any{{"$hi", "there"}, {"x", "$computed"}}},
+		{"({})", [][2]any{}},
+		{"({1: 2, 2: 3, 3:4})", [][2]any{{1, 2}, {2, 3}, {3, 4}}},
+		{`({"foo": "bar", "hello": "world"})`, [][2]any{{"foo", "bar"}, {"hello", "world"}}},
+		{`({hi: "there", "x": computed})`, [][2]any{{"$hi", "there"}, {"x", "$computed"}}},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		mapLit := getExpr[*ast.MapLiteral](t, program)
+		parenExpr := getExpr[*ast.ParenthesisedExpression](t, program)
+		mapLit := parenExpr.Expression.(*ast.MapLiteral)
 		testLiteral(t, mapLit, tt.keyValues)
 	}
 }
@@ -133,15 +134,16 @@ func TestIndexExpression(t *testing.T) {
 		left  any
 		index any
 	}{
-		{"arr[7]", "$arr", 7},
-		{`{"a": 1}["b"]`, [][2]any{{"a", 1}}, "b"},
+		{"(arr[7])", "$arr", 7},
+		{`({"a": 1}["b"])`, [][2]any{{"a", 1}}, "b"},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		call := getExpr[*ast.IndexExpression](t, program)
-		testLiteral(t, call.Left, tt.left)
-		testLiteral(t, call.Index, tt.index)
+		parenExpr := getExpr[*ast.ParenthesisedExpression](t, program)
+		index := parenExpr.Expression.(*ast.IndexExpression)
+		testLiteral(t, index.Left, tt.left)
+		testLiteral(t, index.Index, tt.index)
 	}
 }
 

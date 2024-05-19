@@ -35,6 +35,10 @@ func (p *parser) parseTopLevelStatement() ast.Statement {
 }
 
 func (p *parser) parseStatement() ast.Statement {
+	if p.next().Kind == token.LEFT_BRACE {
+		return p.parseBlockStatement()
+	}
+
 	if p.isKeyword("const") || p.isKeyword("let") || p.isKeyword("mut") {
 		return p.parseVariableDeclaration()
 	}
