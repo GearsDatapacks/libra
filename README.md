@@ -973,9 +973,9 @@ mut num: Number = 15.6
 num = 7
 
 union Property {
-  Height(f32),
-  Weight(f32),
-  Age(u32)
+  Height: f32,
+  Weight: f32,
+  Age: u32,
 }
 
 // Can be inferred: only one member has type u32

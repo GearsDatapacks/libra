@@ -59,7 +59,6 @@ func (d *Diagnostic) Print() {
 	fileName := d.Location.File.FileName
 	span := d.Location.Span
 	lines := d.Location.File.Lines
-	fmt.Println(span)
 
 	SetColour(White)
 	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.Column+1)

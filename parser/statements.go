@@ -27,8 +27,12 @@ func (p *parser) parseTopLevelStatement() ast.Statement {
 		return p.parseImportStatement()
 	}
 
-	if p.isKeyword("enum") || p.isKeyword("union") {
+	if p.isKeyword("enum") {
 		return p.parseEnumDeclaration()
+	}
+
+	if p.isKeyword("union") {
+		return p.parseUnionDeclaration()
 	}
 
 	return p.parseStatement()
@@ -100,8 +104,13 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseImportStatement()
 	}
 
-	if p.isKeyword("enum") || p.isKeyword("union") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, p.next().Value+" declaration"))
+	if p.isKeyword("enum") {
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Enum declaration"))
+		return p.parseEnumDeclaration()
+	}
+
+	if p.isKeyword("union") {
+		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Union declaration"))
 		return p.parseEnumDeclaration()
 	}
 
@@ -463,57 +472,52 @@ func (p *parser) parseImportStatement() ast.Statement {
 	}
 }
 
-func (p *parser) parseEnumMember(isUnion bool) ast.EnumMember {
-	var name token.Token
-	var types *ast.TypeList
-	var structType *ast.StructBody
-	var value *ast.ValueAssignment
-
-	if isUnion {
-		name = p.delcareIdentifier()
-	} else {
-		name = p.expect(token.IDENTIFIER)
-	}
-
-	switch p.next().Kind {
-	case token.LEFT_PAREN:
-		types = &ast.TypeList{}
-		types.LeftParen = p.consume()
-		types.Types, types.RightParen = parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
-
-	case token.LEFT_BRACE:
-		structType = &ast.StructBody{}
-		structType.LeftBrace = p.consume()
-		structType.Fields, structType.RightBrace = parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
-	case token.EQUALS:
-		value = &ast.ValueAssignment{}
-		value.Equals = p.consume()
-		value.Value = p.parseExpression()
-	}
+func (p *parser) parseEnumMember() ast.EnumMember {
+	name := p.expect(token.IDENTIFIER)
+	value := p.parserOptionalDefaultValue()
 
 	return ast.EnumMember{
-		Name:   name,
-		Types:  types,
-		Struct: structType,
-		Value:  value,
+		Name:  name,
+		Value: value,
 	}
 }
 
 func (p *parser) parseEnumDeclaration() ast.Statement {
 	keyword := p.consume()
-	isUnion := keyword.Value == "union"
 	name := p.delcareIdentifier()
 	valueType := p.parseOptionalTypeAnnotation()
 	leftBrace := p.expect(token.LEFT_BRACE)
-	members, rightBrace := parseDelimExprList(p,
-		token.RIGHT_BRACE,
-		func() ast.EnumMember { return p.parseEnumMember(isUnion) },
-	)
+	members, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseEnumMember)
 
 	return &ast.EnumDeclaration{
 		Keyword:    keyword,
 		Name:       name,
 		ValueType:  valueType,
+		LeftBrace:  leftBrace,
+		Members:    members,
+		RightBrace: rightBrace,
+	}
+}
+
+func (p *parser) parseUnionMember() ast.UnionMember {
+	name := p.expect(token.IDENTIFIER)
+	ty := p.parseOptionalTypeAnnotation()
+
+	return ast.UnionMember{
+		Name: name,
+		Type: ty,
+	}
+}
+
+func (p *parser) parseUnionDeclaration() ast.Statement {
+	keyword := p.consume()
+	name := p.delcareIdentifier()
+	leftBrace := p.expect(token.LEFT_BRACE)
+	members, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseUnionMember)
+
+	return &ast.UnionDeclaration{
+		Keyword:    keyword,
+		Name:       name,
 		LeftBrace:  leftBrace,
 		Members:    members,
 		RightBrace: rightBrace,

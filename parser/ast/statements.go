@@ -715,34 +715,13 @@ type StructBody struct {
 	RightBrace token.Token
 }
 
-type ValueAssignment struct {
-	Equals token.Token
-	Value  Expression
-}
-
 type EnumMember struct {
-	Name   token.Token
-	Types  *TypeList
-	Struct *StructBody
-	Value  *ValueAssignment
+	Name  token.Token
+	Value *DefaultValue
 }
 
 func (e *EnumMember) Tokens() []token.Token {
 	tokens := []token.Token{e.Name}
-	if e.Types != nil {
-		tokens = append(tokens, e.Types.LeftParen)
-		for _, ty := range e.Types.Types {
-			tokens = append(tokens, ty.Tokens()...)
-		}
-		tokens = append(tokens, e.Types.RightParen)
-	}
-	if e.Struct != nil {
-		tokens = append(tokens, e.Struct.LeftBrace)
-		for _, field := range e.Struct.Fields {
-			tokens = append(tokens, field.Tokens()...)
-		}
-		tokens = append(tokens, e.Struct.RightBrace)
-	}
 	if e.Value != nil {
 		tokens = append(tokens, e.Value.Equals)
 		tokens = append(tokens, e.Value.Value.Tokens()...)
@@ -755,28 +734,6 @@ func (e *EnumMember) String() string {
 	var result bytes.Buffer
 	result.WriteString(e.Name.Value)
 
-	if e.Types != nil {
-		result.WriteByte('(')
-		for i, ty := range e.Types.Types {
-			if i != 0 {
-				result.WriteString(", ")
-			}
-
-			result.WriteString(ty.String())
-		}
-		result.WriteByte(')')
-	}
-	if e.Struct != nil {
-		result.WriteString("{ ")
-		for i, field := range e.Struct.Fields {
-			if i != 0 {
-				result.WriteString(", ")
-			}
-
-			result.WriteString(field.String())
-		}
-		result.WriteString(" }")
-	}
 	if e.Value != nil {
 		result.WriteString(" = ")
 		result.WriteString(e.Value.Value.String())
@@ -821,6 +778,69 @@ func (e *EnumDeclaration) String() string {
 
 	result.WriteString(" {\n")
 	for i, member := range e.Members {
+		if i != 0 {
+			result.WriteString(",\n")
+		}
+		result.WriteString(member.String())
+	}
+	result.WriteString("\n}")
+
+	return result.String()
+}
+
+type UnionMember struct {
+	Name token.Token
+	Type *TypeAnnotation
+}
+
+func (u *UnionMember) Tokens() []token.Token {
+	tokens := []token.Token{u.Name}
+	if u.Type != nil {
+		tokens = append(tokens, u.Type.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (u *UnionMember) String() string {
+	var result bytes.Buffer
+	result.WriteString(u.Name.Value)
+
+	if u.Type != nil {
+		result.WriteString(u.Type.String())
+	}
+
+	return result.String()
+}
+
+type UnionDeclaration struct {
+	statement
+	Keyword    token.Token
+	Name       token.Token
+	LeftBrace  token.Token
+	Members    []UnionMember
+	RightBrace token.Token
+}
+
+func (u *UnionDeclaration) Tokens() []token.Token {
+	tokens := []token.Token{u.Keyword, u.Name, u.LeftBrace}
+
+	for _, member := range u.Members {
+		tokens = append(tokens, member.Tokens()...)
+	}
+	tokens = append(tokens, u.RightBrace)
+	return tokens
+}
+
+func (u *UnionDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(u.Keyword.Value)
+	result.WriteByte(' ')
+	result.WriteString(u.Name.Value)
+
+	result.WriteString(" {\n")
+	for i, member := range u.Members {
 		if i != 0 {
 			result.WriteString(",\n")
 		}
