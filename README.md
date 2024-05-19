@@ -796,29 +796,11 @@ struct Unit
 let empty_value = Unit
 ```
 
-### Error types
-An error type is a special kind of type in Libra. An error type is a struct, except all error types are assignable to the builtin `error` type.
-Error type declarations look almost identical to struct declarations, but using the `error` keyword instead.
-
-Example:
-```rust
-error FileNotFound {
-  file_name: string
-}
-
-error GenericError {
-  message: string
-}
-
-mut err: error = FileNotFound{file_name: "foo.txt"}
-err = GenericError{message: "An error occurred"}
-```
-
 ### Result and Option types
 Results and options are ways of specifying types that might have some kind of error.
 The option type is a union between `None`, a void value, and some type `T`. This is useful when a value might not be there, such as returning the element of a map. The syntax for an option type is `T?`.
 
-A result type is a union between a type `T` and the `error` type. This allows for returning a value from a function that might error. The syntax for a result type is `T!`.
+A result type is a union between a type `T` and the `Error` tag. This allows for returning a value from a function that might error. The syntax for a result type is `T!`.
 
 ### Interfaces
 An interface is a type that doesn't describe to a specific value, but rather a constraint on values.
@@ -867,6 +849,64 @@ live(Person { name: "Julie", emotion: "Happy" })
 live(Robot { state: 94 })
 // Invalid! i32 doesn't have either method required by Sentient
 live(7)
+```
+
+### Explicit interfaces
+By default, any type with the methods described by an interface are assignable to that interface. A type only conforms to an explicit interface if all methods of that type required by the interface are tagged as implementing that interface.  
+Using explicit interfaces is only recommended for simple interfaces which might pick up methods by chance due to common names.  
+
+Example:
+```rust
+explicit interface Foo {
+  foo(): i32
+  bar(): f32
+}
+
+struct Fooer
+fn (Fooer) foo(): i32 => 10 // does not explicitly implement Foo
+fn (Fooer) bar(): f32 => 3.14
+
+struct Barer
+
+@impl Foo
+fn (Barer) foo(): i32 => Fooer.foo() - 3
+@impl Foo
+fn (Barer) bar(): f32 => 9.3
+```
+
+#### impl blocks
+If you need to conform to a large explicit interface, you will have to tag a lot of methods. To avoid this, you can use impl blocks. And impl block is a block that automatically tags all methods inside it.
+
+Example:
+```rust
+explicit interface MyBigInterface {
+  a(): A
+  b(): B
+  ...
+  z(): Z
+}
+
+struct ThankGodForImplBlocks
+
+@impl MyBigInterface {
+  fn (ThankGodForImplBlocks) a(): A {...}
+  fn (ThankGodForImplBlocks) b(): B {...}
+  ...
+  fn (ThankGodForImplBlocks) z(): Z {...}
+}
+```
+
+### Tags
+A tag is similar to an explicit interface, except that it has no required methods. Tags are implemented by anything which specifies it.
+
+Example:
+```rust
+tag MyTag
+
+@tag MyTag
+struct MyTagImpl
+
+let my_tagged_value: MyTag = MyTagImpl
 ```
 
 ### Enums
