@@ -18,21 +18,19 @@ func (p *parser) parseTopLevelStatement() ast.Statement {
 
 func (p *parser) parseStatement() ast.Statement {
 	if p.next().Kind == token.LEFT_BRACE {
-		return p.parseBlockStatement()
+		return p.parseBlock()
 	}
 
 	for _, kwd := range p.keywords {
 		if p.isKeyword(kwd.Name) {
-			if kwd.TopLevel {
+			if kwd.Kind == decl {
 				p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, kwd.StmtName))
 			}
 			return kwd.Fn()
 		}
 	}
 
-	return &ast.ExpressionStatement{
-		Expression: p.parseExpression(),
-	}
+	return p.parseExpression()
 }
 
 func (p *parser) parseVariableDeclaration() ast.Statement {
@@ -53,21 +51,28 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 	}
 }
 
-func (p *parser) parseBlockStatement(noScope ...bool) *ast.BlockStatement {
+func (p *parser) parseBlock(noScope ...bool) *ast.Block {
 	leftBrace := p.expect(token.LEFT_BRACE)
 	if len(noScope) == 0 || !noScope[0] {
 		defer p.exitScope(p.enterScope())
 	}
 	statements, rightBrace := parseDelimStmtList(p, token.RIGHT_BRACE, p.parseStatement)
 
-	return &ast.BlockStatement{
+	return &ast.Block{
 		LeftBrace:  leftBrace,
 		Statements: statements,
 		RightBrace: rightBrace,
 	}
 }
 
-func (p *parser) parseIfStatement() ast.Statement {
+func (p *parser) parseBlockExpression() ast.Expression {
+	if p.isKeyword("do") {
+		p.consume()
+	}
+	return p.parseBlock()
+}
+
+func (p *parser) parseIfExpression() ast.Expression {
 	keyword := p.consume()
 
 	p.noBraces = true
@@ -76,20 +81,20 @@ func (p *parser) parseIfStatement() ast.Statement {
 	p.noBraces = false
 	p.bracketLevel--
 
-	body := p.parseBlockStatement()
+	body := p.parseBlock()
 	var elseBranch *ast.ElseBranch
 
 	if p.isKeyword("else") {
 		elseBranch = &ast.ElseBranch{}
 		elseBranch.ElseKeyword = p.consume()
 		if p.isKeyword("if") {
-			elseBranch.Statement = p.parseIfStatement()
+			elseBranch.Statement = p.parseIfExpression()
 		} else {
-			elseBranch.Statement = p.parseBlockStatement()
+			elseBranch.Statement = p.parseBlock()
 		}
 	}
 
-	return &ast.IfStatement{
+	return &ast.IfExpression{
 		Keyword:    keyword,
 		Condition:  condition,
 		Body:       body,
@@ -97,7 +102,7 @@ func (p *parser) parseIfStatement() ast.Statement {
 	}
 }
 
-func (p *parser) parseWhileLoop() ast.Statement {
+func (p *parser) parseWhileLoop() ast.Expression {
 	keyword := p.consume()
 
 	p.noBraces = true
@@ -106,7 +111,7 @@ func (p *parser) parseWhileLoop() ast.Statement {
 	p.bracketLevel--
 	p.noBraces = false
 
-	body := p.parseBlockStatement()
+	body := p.parseBlock()
 
 	return &ast.WhileLoop{
 		Keyword:   keyword,
@@ -115,7 +120,7 @@ func (p *parser) parseWhileLoop() ast.Statement {
 	}
 }
 
-func (p *parser) parseForLoop() ast.Statement {
+func (p *parser) parseForLoop() ast.Expression {
 	forKeyword := p.consume()
 	defer p.exitScope(p.enterScope())
 
@@ -128,7 +133,7 @@ func (p *parser) parseForLoop() ast.Statement {
 	p.bracketLevel--
 	p.noBraces = false
 
-	body := p.parseBlockStatement(true)
+	body := p.parseBlock(true)
 
 	return &ast.ForLoop{
 		ForKeyword: forKeyword,
@@ -223,7 +228,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 	}
 
 	returnType := p.parseOptionalTypeAnnotation()
-	body := p.parseBlockStatement(true)
+	body := p.parseBlock(true)
 
 	return &ast.FunctionDeclaration{
 		Keyword:    keyword,

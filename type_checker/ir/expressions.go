@@ -1094,15 +1094,142 @@ func (m *MemberExpression) Type() types.Type {
 	return m.DataType
 }
 
-func (m*MemberExpression) IsConst() bool {
+func (m *MemberExpression) IsConst() bool {
 	return m.Left.IsConst()
 }
 
-func (m*MemberExpression) ConstValue() values.ConstValue {
+func (m *MemberExpression) ConstValue() values.ConstValue {
 	if !m.IsConst() {
 		return nil
 	}
 	return m.Left.ConstValue().Member(m.Member)
+}
+
+type Block struct {
+	expression
+	Statements []Statement
+}
+
+func (b *Block) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	if len(b.Statements) > 0 {
+		result.WriteByte('\n')
+	}
+	for _, stmt := range b.Statements {
+		result.WriteString(stmt.String())
+		result.WriteByte('\n')
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
+func (*Block) Type() types.Type {
+	return types.Void
+}
+
+func (*Block) IsConst() bool {
+	return false
+}
+
+func (*Block) ConstValue() values.ConstValue {
+	return nil
+}
+
+type IfExpression struct {
+	expression
+	Condition  Expression
+	Body       *Block
+	ElseBranch Statement
+}
+
+func (i *IfExpression) String() string {
+	var result bytes.Buffer
+	result.WriteString("if ")
+	result.WriteString(i.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(i.Body.String())
+
+	if i.ElseBranch != nil {
+		result.WriteString("\nelse ")
+		result.WriteString(i.ElseBranch.String())
+	}
+
+	return result.String()
+}
+
+func (*IfExpression) Type() types.Type {
+	return types.Void
+}
+
+func (*IfExpression) IsConst() bool {
+	return false
+}
+
+func (*IfExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
+type WhileLoop struct {
+	expression
+	Condition Expression
+	Body      *Block
+}
+
+func (w *WhileLoop) String() string {
+	var result bytes.Buffer
+	result.WriteString("while ")
+	result.WriteString(w.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(w.Body.String())
+
+	return result.String()
+}
+
+func (*WhileLoop) Type() types.Type {
+	return types.Void
+}
+
+func (*WhileLoop) IsConst() bool {
+	return false
+}
+
+func (*WhileLoop) ConstValue() values.ConstValue {
+	return nil
+}
+
+type ForLoop struct {
+	expression
+	Variable symbols.Variable
+	Iterator Expression
+	Body     *Block
+}
+
+func (f *ForLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("for ")
+	result.WriteString(f.Variable.Name)
+	result.WriteString(" in ")
+	result.WriteString(f.Iterator.String())
+	result.WriteByte(' ')
+	result.WriteString(f.Body.String())
+
+	return result.String()
+}
+
+func (*ForLoop) Type() types.Type {
+	return types.Void
+}
+
+func (*ForLoop) IsConst() bool {
+	return false
+}
+
+func (*ForLoop) ConstValue() values.ConstValue {
+	return nil
 }
 
 // TODO:

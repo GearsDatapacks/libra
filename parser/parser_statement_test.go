@@ -67,17 +67,17 @@ func TestIfStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		stmt := getStmt[*ast.IfStatement](t, program)
+		stmt := getStmt[*ast.IfExpression](t, program)
 		testIfStatement(t, stmt, tt.condition, tt.bodyValue, tt.elseBranch)
 	}
 }
 
-func testIfStatement(t *testing.T, stmt *ast.IfStatement, condition any, bodyValue any, elseBranch *elseBranch) {
+func testIfStatement(t *testing.T, stmt *ast.IfExpression, condition any, bodyValue any, elseBranch *elseBranch) {
 	testLiteral(t, stmt.Condition, condition)
 	bodyStmt := utils.AssertSingle(t, stmt.Body.Statements)
-	exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
-	utils.Assert(t, ok, "Body is not an expression statement")
-	testLiteral(t, exprStmt.Expression, bodyValue)
+	expr, ok := bodyStmt.(ast.Expression)
+	utils.Assert(t, ok, "Body is not an expression")
+	testLiteral(t, expr, bodyValue)
 
 	if elseBranch != nil {
 		utils.Assert(t, stmt.ElseBranch != nil, "Expected else branch")
@@ -89,14 +89,14 @@ func testIfStatement(t *testing.T, stmt *ast.IfStatement, condition any, bodyVal
 
 func testElseBranch(t *testing.T, branch *ast.ElseBranch, expected *elseBranch) {
 	if expected.condition == nil {
-		block, ok := branch.Statement.(*ast.BlockStatement)
+		block, ok := branch.Statement.(*ast.Block)
 		utils.Assert(t, ok, "Else branch is not a block")
 		bodyStmt := utils.AssertSingle(t, block.Statements)
-		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "Body is not an expression statement")
-		testLiteral(t, exprStmt.Expression, expected.bodyValue)
+		expr, ok := bodyStmt.(ast.Expression)
+		utils.Assert(t, ok, "Body is not an expression")
+		testLiteral(t, expr, expected.bodyValue)
 	} else {
-		ifStmt, ok := branch.Statement.(*ast.IfStatement)
+		ifStmt, ok := branch.Statement.(*ast.IfExpression)
 		utils.Assert(t, ok, "Else branch is not an if statement")
 		testIfStatement(t, ifStmt, expected.condition, expected.bodyValue, expected.elseBranch)
 	}
@@ -132,9 +132,9 @@ func TestWhileLoop(t *testing.T) {
 
 		testLiteral(t, loop.Condition, tt.condition)
 		bodyStmt := utils.AssertSingle(t, loop.Body.Statements)
-		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "Body is not an expression statement")
-		testLiteral(t, exprStmt.Expression, tt.bodyValue)
+		expr, ok := bodyStmt.(ast.Expression)
+		utils.Assert(t, ok, "Body is not an expression")
+		testLiteral(t, expr, tt.bodyValue)
 	}
 }
 
@@ -156,9 +156,9 @@ func TestForLoop(t *testing.T) {
 		utils.AssertEq(t, loop.Variable.Value, tt.ident)
 		testLiteral(t, loop.Iterator, tt.iterator)
 		bodyStmt := utils.AssertSingle(t, loop.Body.Statements)
-		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "Body is not an expression statement")
-		testLiteral(t, exprStmt.Expression, tt.bodyValue)
+		expr, ok := bodyStmt.(ast.Expression)
+		utils.Assert(t, ok, "Body is not an expression")
+		testLiteral(t, expr, tt.bodyValue)
 	}
 }
 
@@ -256,9 +256,9 @@ func TestFunctionDeclaration(t *testing.T) {
 		}
 
 		bodyStmt := utils.AssertSingle(t, fn.Body.Statements)
-		exprStmt, ok := bodyStmt.(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "Body is not an expression statement")
-		testLiteral(t, exprStmt.Expression, test.bodyValue)
+		expr, ok := bodyStmt.(ast.Expression)
+		utils.Assert(t, ok, "Body is not an expression")
+		testLiteral(t, expr, test.bodyValue)
 	}
 }
 
@@ -581,8 +581,8 @@ func TestUnionDeclaration(t *testing.T) {
 
 func TestTagDeclaration(t *testing.T) {
 	tests := []struct {
-		src     string
-		name    string
+		src  string
+		name string
 	}{
 		{"tag MyTag", "MyTag"},
 		{"tag Test124", "Test124"},

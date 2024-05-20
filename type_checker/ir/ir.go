@@ -8,17 +8,12 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
-type Node interface {
+type Statement interface {
 	String() string
 }
 
-type Statement interface {
-	Node
-	irStmt()
-}
-
 type Expression interface {
-	Node
+	Statement
 	Type() types.Type
 	IsConst() bool
 	ConstValue() values.ConstValue

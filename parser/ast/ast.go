@@ -7,24 +7,19 @@ import (
 	"github.com/gearsdatapacks/libra/text"
 )
 
-type Node interface {
+type Statement interface {
 	Tokens() []token.Token
 	String() string
 }
 
-type Statement interface {
-	Node
-	statementNode()
-}
-
 type Expression interface {
-	Node
+	Statement
 	expressionNode()
 	Location() text.Location
 }
 
 type TypeExpression interface {
-	Node
+	Statement
 	typeNode()
 	Location() text.Location
 }
@@ -59,7 +54,6 @@ func (p *Program) String() string {
 
 type ErrorNode struct {
 	expression
-	statement
 	typeExpression
 }
 

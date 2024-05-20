@@ -31,7 +31,7 @@ func (p *parser) parseExpression() ast.Expression {
 }
 
 func (p *parser) parseSubExpression(precedence int) ast.Expression {
-	nudFn := p.lookupNudFn(p.next().Kind)
+	nudFn := p.lookupNudFn()
 
 	if nudFn == nil {
 		p.Diagnostics.Report(diagnostics.ExpectedExpression(p.next().Location, p.next().Kind))

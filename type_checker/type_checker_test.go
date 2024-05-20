@@ -24,7 +24,7 @@ func TestIntegerLiteral(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	integer := getExpr[*ir.IntegerLiteral](t, program)
+	integer := getStmt[*ir.IntegerLiteral](t, program)
 
 	utils.AssertEq(t, integer.Value, int64(val))
 	utils.AssertEq[types.Type](t, integer.Type(), types.UntypedInt)
@@ -36,7 +36,7 @@ func TestFloatLiteral(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	float := getExpr[*ir.FloatLiteral](t, program)
+	float := getStmt[*ir.FloatLiteral](t, program)
 
 	utils.AssertEq(t, float.Value, val)
 	utils.AssertEq[types.Type](t, float.Type(), types.UntypedFloat)
@@ -47,7 +47,7 @@ func TestBooleanLiteral(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	boolean := getExpr[*ir.BooleanLiteral](t, program)
+	boolean := getStmt[*ir.BooleanLiteral](t, program)
 
 	utils.AssertEq(t, boolean.Value, true)
 	utils.AssertEq[types.Type](t, boolean.Type(), types.Bool)
@@ -59,7 +59,7 @@ func TestStringLiteral(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	str := getExpr[*ir.StringLiteral](t, program)
+	str := getStmt[*ir.StringLiteral](t, program)
 
 	utils.AssertEq(t, str.Value, val)
 	utils.AssertEq[types.Type](t, str.Type(), types.String)
@@ -86,9 +86,7 @@ func TestVariables(t *testing.T) {
 
 		program = getProgram(t, test.src+"\n"+test.varName)
 		utils.AssertEq(t, len(program.Statements), 2)
-		exprStmt, ok := program.Statements[1].(*ir.ExpressionStatement)
-		utils.Assert(t, ok, "Statement is not an expressions statement")
-		variable, ok := exprStmt.Expression.(*ir.VariableExpression)
+		variable, ok := program.Statements[1].(*ir.VariableExpression)
 		utils.Assert(t, ok, "Expression is not a variable")
 
 		utils.AssertEq(t, variable.Symbol.Name, test.varName)
@@ -116,25 +114,25 @@ func TestIfStatements(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		stmt := getStmt[*ir.IfStatement](t, program)
+		stmt := getStmt[*ir.IfExpression](t, program)
 		testIfStatement(t, stmt, test.bodyValue, test.elseBranch)
 	}
 }
 
-func testIfStatement(t *testing.T, stmt *ir.IfStatement, expectedValue any, elseBranch *elseBranch) {
+func testIfStatement(t *testing.T, stmt *ir.IfExpression, expectedValue any, elseBranch *elseBranch) {
 	utils.AssertEq(t, stmt.Condition.Type(), types.Type(types.Bool))
-	bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+	bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(ir.Expression)
 	utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
 	utils.AssertEq(t, bodyValue.ConstValue(), constValue(expectedValue))
 
 	if elseBranch == nil {
 		utils.Assert(t, stmt.ElseBranch == nil)
 	} else if elseBranch.hasCondition {
-		ifStmt := stmt.ElseBranch.(*ir.IfStatement)
+		ifStmt := stmt.ElseBranch.(*ir.IfExpression)
 		testIfStatement(t, ifStmt, elseBranch.bodyValue, elseBranch.elseBranch)
 	} else {
 		block := stmt.ElseBranch.(*ir.Block)
-		bodyValue := utils.AssertSingle(t, block.Statements).(*ir.ExpressionStatement).Expression
+		bodyValue := utils.AssertSingle(t, block.Statements).(ir.Expression)
 		utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
 		utils.AssertEq(t, bodyValue.ConstValue(), constValue(elseBranch.bodyValue))
 	}
@@ -154,7 +152,7 @@ func TestWhileLoops(t *testing.T) {
 		stmt := getStmt[*ir.WhileLoop](t, program)
 
 		utils.AssertEq(t, stmt.Condition.Type(), types.Type(types.Bool))
-		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(ir.Expression)
 		utils.Assert(t, bodyValue.IsConst(), "Body value was not constant")
 		utils.AssertEq(t, bodyValue.ConstValue(), constValue(test.bodyValue))
 	}
@@ -179,7 +177,7 @@ func TestForLoops(t *testing.T) {
 
 		utils.Assert(t, types.Assignable(test.itemType, stmt.Variable.Type))
 		utils.Assert(t, types.Assignable(test.iterType, stmt.Iterator.Type()))
-		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(*ir.ExpressionStatement).Expression
+		bodyValue := utils.AssertSingle(t, stmt.Body.Statements).(ir.Expression)
 		utils.Assert(t, types.Assignable(test.itemType, bodyValue.Type()))
 	}
 }
@@ -221,7 +219,7 @@ func TestBinaryExpression(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		binExpr := getExpr[*ir.BinaryExpression](t, program)
+		binExpr := getStmt[*ir.BinaryExpression](t, program)
 
 		utils.AssertEq(t, binExpr.Left.Type(), test.left)
 		op := binExpr.Operator & ^ir.UntypedBit
@@ -253,7 +251,7 @@ func TestUnaryExpression(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		unExpr := getExpr[*ir.UnaryExpression](t, program)
+		unExpr := getStmt[*ir.UnaryExpression](t, program)
 
 		utils.AssertEq(t, unExpr.Operand.Type(), test.operand)
 		op := unExpr.Operator & ^ir.UntypedBit
@@ -279,7 +277,7 @@ func TestCastExpression(t *testing.T) {
 		// note: if the conversion doesn't change the type (true -> bool),
 		// the compiler removes the conversion completely, so we can't assume
 		// the expression will be a *ir.Conversion
-		expr := getExpr[ir.Expression](t, program)
+		expr := getStmt[ir.Expression](t, program)
 
 		utils.AssertEq(t, expr.Type(), test.result)
 	}
@@ -310,7 +308,7 @@ func TestCompileTimeValues(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[ir.Expression](t, program)
+		expr := getStmt[ir.Expression](t, program)
 
 		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
 		utils.AssertEq(t, expr.ConstValue(), constValue(test.value))
@@ -330,7 +328,7 @@ func TestArrays(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[*ir.ArrayExpression](t, program)
+		expr := getStmt[*ir.ArrayExpression](t, program)
 
 		utils.AssertEq(t, expr.Type().(*types.ArrayType).ElemType, test.elemType)
 		utils.Assert(t, expr.IsConst(), "Expression was not compile-time known")
@@ -357,7 +355,7 @@ func TestMaps(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[*ir.MapExpression](t, program)
+		expr := getStmt[*ir.MapExpression](t, program)
 
 		ty := expr.Type().(*types.MapType)
 		utils.AssertEq(t, ty.KeyType, test.keyType)
@@ -387,7 +385,7 @@ func TestTuples(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[*ir.TupleExpression](t, program)
+		expr := getStmt[*ir.TupleExpression](t, program)
 
 		types := expr.Type().(*types.TupleType).Types
 		utils.AssertEq(t, len(types), len(test.types))
@@ -439,7 +437,7 @@ func TestIndexExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[*ir.IndexExpression](t, program)
+		expr := getStmt[*ir.IndexExpression](t, program)
 
 		utils.AssertEq(t, expr.Type(), test.dataType)
 	}
@@ -458,7 +456,7 @@ func TestAssignmentExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := program.Statements[1].(*ir.ExpressionStatement).Expression.(*ir.Assignment)
+		expr := program.Statements[1].(*ir.Assignment)
 
 		utils.AssertEq(t, expr.Type(), test.dataType)
 	}
@@ -480,7 +478,7 @@ func TestTypeChecks(t *testing.T) {
 
 	for _, test := range tests {
 		program := getProgram(t, test.src)
-		expr := getExpr[*ir.TypeCheck](t, program)
+		expr := getStmt[*ir.TypeCheck](t, program)
 
 		utils.Assert(t, types.Match(expr.Value.Type(), test.valueType))
 		utils.Assert(t, types.Match(expr.DataType, test.dataType))
@@ -625,14 +623,4 @@ func getStmt[T ir.Statement](t *testing.T, program *ir.Program) T {
 	utils.Assert(t, ok, fmt.Sprintf(
 		"Statement is not %T (is %T)", struct{ t T }{}.t, stmt))
 	return stmt
-}
-
-func getExpr[T ir.Expression](t *testing.T, program *ir.Program) T {
-	t.Helper()
-
-	exprStmt := getStmt[*ir.ExpressionStatement](t, program)
-	expr, ok := exprStmt.Expression.(T)
-	utils.Assert(t, ok, fmt.Sprintf(
-		"expression is not %T (is %T)", struct{ t T }{}.t, exprStmt.Expression))
-	return expr
 }

@@ -4,23 +4,8 @@ import (
 	"bytes"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
+	"github.com/gearsdatapacks/libra/text"
 )
-
-type statement struct{}
-
-func (statement) statementNode() {}
-
-type ExpressionStatement struct {
-	statement
-	Expression Expression
-}
-
-func (es *ExpressionStatement) Tokens() []token.Token {
-	return es.Expression.Tokens()
-}
-func (es *ExpressionStatement) String() string {
-	return es.Expression.String()
-}
 
 type TypeAnnotation struct {
 	Colon token.Token
@@ -44,7 +29,6 @@ func (ta *TypeAnnotation) String() string {
 }
 
 type VariableDeclaration struct {
-	statement
 	Keyword    token.Token
 	Identifier token.Token
 	Type       *TypeAnnotation
@@ -80,14 +64,14 @@ func (varDec *VariableDeclaration) String() string {
 	return result.String()
 }
 
-type BlockStatement struct {
-	statement
+type Block struct {
+	expression
 	LeftBrace  token.Token
 	Statements []Statement
 	RightBrace token.Token
 }
 
-func (b *BlockStatement) Tokens() []token.Token {
+func (b *Block) Tokens() []token.Token {
 	tokens := []token.Token{b.LeftBrace}
 
 	for _, stmt := range b.Statements {
@@ -98,7 +82,7 @@ func (b *BlockStatement) Tokens() []token.Token {
 	return tokens
 }
 
-func (b *BlockStatement) String() string {
+func (b *Block) String() string {
 	var result bytes.Buffer
 
 	result.WriteByte('{')
@@ -111,41 +95,49 @@ func (b *BlockStatement) String() string {
 	return result.String()
 }
 
-type IfStatement struct {
-	statement
+func (b *Block) Location() text.Location {
+	return b.LeftBrace.Location
+}
+
+type IfExpression struct {
+	expression
 	Keyword    token.Token
 	Condition  Expression
-	Body       *BlockStatement
+	Body       *Block
 	ElseBranch *ElseBranch
 }
 
-func (is *IfStatement) Tokens() []token.Token {
-	tokens := []token.Token{is.Keyword}
-	tokens = append(tokens, is.Condition.Tokens()...)
-	tokens = append(tokens, is.Body.Tokens()...)
+func (i *IfExpression) Tokens() []token.Token {
+	tokens := []token.Token{i.Keyword}
+	tokens = append(tokens, i.Condition.Tokens()...)
+	tokens = append(tokens, i.Body.Tokens()...)
 
-	if is.ElseBranch != nil {
-		tokens = append(tokens, is.ElseBranch.ElseKeyword)
-		tokens = append(tokens, is.ElseBranch.Statement.Tokens()...)
+	if i.ElseBranch != nil {
+		tokens = append(tokens, i.ElseBranch.ElseKeyword)
+		tokens = append(tokens, i.ElseBranch.Statement.Tokens()...)
 	}
 
 	return tokens
 }
 
-func (is *IfStatement) String() string {
+func (i *IfExpression) String() string {
 	var result bytes.Buffer
 
 	result.WriteString("if ")
-	result.WriteString(is.Condition.String())
+	result.WriteString(i.Condition.String())
 	result.WriteByte(' ')
-	result.WriteString(is.Body.String())
+	result.WriteString(i.Body.String())
 
-	if is.ElseBranch != nil {
+	if i.ElseBranch != nil {
 		result.WriteString(" else ")
-		result.WriteString(is.ElseBranch.Statement.String())
+		result.WriteString(i.ElseBranch.Statement.String())
 	}
 
 	return result.String()
+}
+
+func (i *IfExpression) Location() text.Location {
+	return i.Keyword.Location
 }
 
 type ElseBranch struct {
@@ -154,10 +146,10 @@ type ElseBranch struct {
 }
 
 type WhileLoop struct {
-	statement
+	expression
 	Keyword   token.Token
 	Condition Expression
-	Body      *BlockStatement
+	Body      *Block
 }
 
 func (wl *WhileLoop) Tokens() []token.Token {
@@ -178,13 +170,17 @@ func (wl *WhileLoop) String() string {
 	return result.String()
 }
 
+func (w *WhileLoop) Location() text.Location {
+	return w.Keyword.Location
+}
+
 type ForLoop struct {
-	statement
+	expression
 	ForKeyword token.Token
 	Variable   token.Token
 	InKeyword  token.Token
 	Iterator   Expression
-	Body       *BlockStatement
+	Body       *Block
 }
 
 func (fl *ForLoop) Tokens() []token.Token {
@@ -205,6 +201,10 @@ func (fl *ForLoop) String() string {
 	result.WriteString(fl.Body.String())
 
 	return result.String()
+}
+
+func (f *ForLoop) Location() text.Location {
+	return f.ForKeyword.Location
 }
 
 type DefaultValue struct {
@@ -303,7 +303,6 @@ func (m *MemberOf) String() string {
 }
 
 type FunctionDeclaration struct {
-	statement
 	Keyword    token.Token
 	MethodOf   *MethodOf
 	MemberOf   *MemberOf
@@ -312,7 +311,7 @@ type FunctionDeclaration struct {
 	Parameters []Parameter
 	RightParen token.Token
 	ReturnType *TypeAnnotation
-	Body       *BlockStatement
+	Body       *Block
 }
 
 func (fd *FunctionDeclaration) Tokens() []token.Token {
@@ -365,7 +364,6 @@ func (fd *FunctionDeclaration) String() string {
 }
 
 type ReturnStatement struct {
-	statement
 	Keyword token.Token
 	Value   Expression
 }
@@ -391,7 +389,6 @@ func (r *ReturnStatement) String() string {
 }
 
 type BreakStatement struct {
-	statement
 	Keyword token.Token
 }
 
@@ -404,7 +401,6 @@ func (*BreakStatement) String() string {
 }
 
 type ContinueStatement struct {
-	statement
 	Keyword token.Token
 }
 
@@ -417,7 +413,6 @@ func (*ContinueStatement) String() string {
 }
 
 type TypeDeclaration struct {
-	statement
 	Keyword token.Token
 	Name    token.Token
 	Equals  token.Token
@@ -467,7 +462,6 @@ func (s *StructField) String() string {
 }
 
 type StructDeclaration struct {
-	statement
 	Keyword    token.Token
 	Name       token.Token
 	StructType *Struct
@@ -579,7 +573,6 @@ func (i *InterfaceMember) String() string {
 }
 
 type InterfaceDeclaration struct {
-	statement
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
@@ -658,7 +651,6 @@ func (s *ImportedSymbols) String() string {
 }
 
 type ImportStatement struct {
-	statement
 	Keyword token.Token
 	Symbols *ImportedSymbols
 	All     *ImportAll
@@ -743,7 +735,6 @@ func (e *EnumMember) String() string {
 }
 
 type EnumDeclaration struct {
-	statement
 	Keyword    token.Token
 	Name       token.Token
 	ValueType  *TypeAnnotation
@@ -814,7 +805,6 @@ func (u *UnionMember) String() string {
 }
 
 type UnionDeclaration struct {
-	statement
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
@@ -852,7 +842,6 @@ func (u *UnionDeclaration) String() string {
 }
 
 type TagDeclaration struct {
-	statement
 	Keyword token.Token
 	Name    token.Token
 }

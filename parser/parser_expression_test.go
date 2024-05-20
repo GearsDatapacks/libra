@@ -18,7 +18,7 @@ func TestIdentifierExpression(t *testing.T) {
 	input := "hello_World123"
 	program := getProgram(t, input)
 
-	ident := getExpr[*ast.Identifier](t, program)
+	ident := getStmt[*ast.Identifier](t, program)
 
 	utils.AssertEq(t, ident.Name, input)
 	utils.AssertEq(t, ident.Token.Kind, token.IDENTIFIER)
@@ -32,7 +32,7 @@ func TestIntegerExpression(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	integer := getExpr[*ast.IntegerLiteral](t, program)
+	integer := getStmt[*ast.IntegerLiteral](t, program)
 
 	utils.AssertEq(t, integer.Value, int64(val))
 
@@ -47,7 +47,7 @@ func TestFloatExpression(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	float := getExpr[*ast.FloatLiteral](t, program)
+	float := getStmt[*ast.FloatLiteral](t, program)
 
 	utils.AssertEq(t, float.Value, val)
 
@@ -61,7 +61,7 @@ func TestBooleanExpression(t *testing.T) {
 
 	program := getProgram(t, input)
 
-	boolean := getExpr[*ast.BooleanLiteral](t, program)
+	boolean := getStmt[*ast.BooleanLiteral](t, program)
 
 	utils.AssertEq(t, boolean.Value, true)
 	utils.AssertEq(t, boolean.Token.Kind, token.IDENTIFIER)
@@ -82,7 +82,7 @@ func TestListExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		list := getExpr[*ast.ListLiteral](t, program)
+		list := getStmt[*ast.ListLiteral](t, program)
 		testLiteral(t, list, tt.values)
 	}
 }
@@ -100,7 +100,7 @@ func TestMapExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		parenExpr := getExpr[*ast.ParenthesisedExpression](t, program)
+		parenExpr := getStmt[*ast.ParenthesisedExpression](t, program)
 		mapLit := parenExpr.Expression.(*ast.MapLiteral)
 		testLiteral(t, mapLit, tt.keyValues)
 	}
@@ -118,7 +118,7 @@ func TestFunctionCall(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		call := getExpr[*ast.FunctionCall](t, program)
+		call := getStmt[*ast.FunctionCall](t, program)
 		ident, ok := call.Callee.(*ast.Identifier)
 		utils.Assert(t, ok, "Callee is not an identifier")
 		utils.AssertEq(t, tt.name, ident.Name)
@@ -140,7 +140,7 @@ func TestIndexExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		parenExpr := getExpr[*ast.ParenthesisedExpression](t, program)
+		parenExpr := getStmt[*ast.ParenthesisedExpression](t, program)
 		index := parenExpr.Expression.(*ast.IndexExpression)
 		testLiteral(t, index.Left, tt.left)
 		testLiteral(t, index.Index, tt.index)
@@ -161,7 +161,7 @@ func TestMemberExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		member := getExpr[*ast.MemberExpression](t, program)
+		member := getStmt[*ast.MemberExpression](t, program)
 		testLiteral(t, member.Left, tt.left)
 		utils.AssertEq(t, tt.member, member.Member.Value)
 	}
@@ -188,7 +188,7 @@ func TestStructExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		structExpr := getExpr[*ast.StructExpression](t, program)
+		structExpr := getStmt[*ast.StructExpression](t, program)
 		if tt.name == "." {
 			_, ok := structExpr.Struct.(*ast.InferredExpression)
 			utils.Assert(t, ok, "Struct's type should be inferred")
@@ -219,7 +219,7 @@ func TestCastExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		cast := getExpr[*ast.CastExpression](t, program)
+		cast := getStmt[*ast.CastExpression](t, program)
 
 		testLiteral(t, cast.Left, tt.left)
 		ident, ok := cast.Type.(*ast.TypeName)
@@ -241,7 +241,7 @@ func TestTypeCheckExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		typeCheck := getExpr[*ast.TypeCheckExpression](t, program)
+		typeCheck := getStmt[*ast.TypeCheckExpression](t, program)
 
 		testLiteral(t, typeCheck.Left, tt.left)
 		ident, ok := typeCheck.Type.(*ast.TypeName)
@@ -262,7 +262,7 @@ func TestRangeExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		rangeExpr := getExpr[*ast.RangeExpression](t, program)
+		rangeExpr := getStmt[*ast.RangeExpression](t, program)
 		testLiteral(t, rangeExpr.Start, tt.start)
 		testLiteral(t, rangeExpr.End, tt.end)
 	}
@@ -288,7 +288,7 @@ func TestBinaryExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.BinaryExpression](t, program)
+		expr := getStmt[*ast.BinaryExpression](t, program)
 
 		testLiteral(t, expr.Left, tt.left)
 		utils.AssertEq(t, expr.Operator.Value, tt.op)
@@ -310,7 +310,7 @@ func TestAssignmentExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.AssignmentExpression](t, program)
+		expr := getStmt[*ast.AssignmentExpression](t, program)
 
 		testLiteral(t, expr.Assignee, tt.assignee)
 		utils.AssertEq(t, expr.Operator.Value, tt.op)
@@ -332,7 +332,7 @@ func TestPrefixExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.PrefixExpression](t, program)
+		expr := getStmt[*ast.PrefixExpression](t, program)
 
 		utils.AssertEq(t, expr.Operator.Value, tt.operator)
 		testLiteral(t, expr.Operand, tt.operand)
@@ -352,7 +352,7 @@ func TestPostfixExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.PostfixExpression](t, program)
+		expr := getStmt[*ast.PostfixExpression](t, program)
 
 		testLiteral(t, expr.Operand, tt.operand)
 		utils.AssertEq(t, expr.Operator.Value, tt.operator)
@@ -372,7 +372,7 @@ func TestParenthesisedExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.ParenthesisedExpression](t, program)
+		expr := getStmt[*ast.ParenthesisedExpression](t, program)
 		binExpr, ok := expr.Expression.(*ast.BinaryExpression)
 		utils.Assert(t, ok, fmt.Sprintf(
 			"Expression was not binary expression (was %T)", expr.Expression))
@@ -395,7 +395,7 @@ func TestTupleExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[*ast.TupleExpression](t, program)
+		expr := getStmt[*ast.TupleExpression](t, program)
 		utils.AssertEq(t, len(tt.values), len(expr.Values))
 
 		for i, value := range expr.Values {
@@ -434,7 +434,7 @@ func TestOperatorPrecedence(t *testing.T) {
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		expr := getExpr[ast.HasPrecedence](t, program)
+		expr := getStmt[ast.HasPrecedence](t, program)
 
 		utils.AssertEq(t, expr.PrecedenceString(), tt.res)
 	}
@@ -511,7 +511,7 @@ func TestErrorExpression(t *testing.T) {
 	msg := "Expected expression, found `)`"
 	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 0, 1))
 
-	getExpr[*ast.ErrorNode](t, program)
+	getStmt[*ast.ErrorNode](t, program)
 }
 
 func getSpans(sourceText string) (string, []text.Span) {
@@ -563,23 +563,6 @@ func getProgram(t *testing.T, input string) *ast.Program {
 		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics)))
 
 	return program
-}
-
-func getExpr[T ast.Expression](t *testing.T, program *ast.Program) T {
-	t.Helper()
-
-	utils.AssertEq(t, len(program.Statements), 1,
-		fmt.Sprintf("Program does not contain one statement. (has %d)",
-			len(program.Statements)))
-
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	utils.Assert(t, ok, fmt.Sprintf(
-		"Statement is not an expression statement (is %T)", program.Statements[0]))
-
-	expr, ok := stmt.Expression.(T)
-	utils.Assert(t, ok, fmt.Sprintf("Expression is not %T (is %T)",
-		struct{ t T }{}.t, stmt.Expression))
-	return expr
 }
 
 func testLiteral(t *testing.T, expr ast.Expression, expected any) {

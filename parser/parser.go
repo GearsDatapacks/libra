@@ -63,11 +63,19 @@ type nudFn func() ast.Expression
 type ledFn func(ast.Expression) ast.Expression
 type lookupFn func(ast.Expression) (opInfo, bool)
 
+type kwdKind int
+
+const (
+	expr kwdKind = iota
+	stmt
+	decl
+)
+
 type keyword struct {
 	Name     string
 	StmtName string
 	Fn       func() ast.Statement
-	TopLevel bool
+	Kind     kwdKind
 }
 
 type opInfo struct {
@@ -80,14 +88,14 @@ func (p *parser) registerNudFn(kind token.Kind, fn nudFn) {
 	p.nudFns[kind] = fn
 }
 
-func (p *parser) registerKeyword(kwd string, fn func() ast.Statement, topLevel bool, name ...string) {
+func (p *parser) registerKeyword(kwd string, fn func() ast.Statement, kind kwdKind, name ...string) {
 	stmtName := append(name, "")[0]
 
 	p.keywords = append(p.keywords, keyword{
 		Name:     kwd,
 		StmtName: stmtName,
 		Fn:       fn,
-		TopLevel: topLevel,
+		Kind:     kind,
 	})
 }
 
@@ -120,12 +128,17 @@ func (p *parser) registerLedLookup(fn lookupFn) {
 	p.ledOps = append(p.ledOps, fn)
 }
 
-func (p *parser) lookupNudFn(kind token.Kind) nudFn {
-	fn, ok := p.nudFns[kind]
-	if !ok {
-		return nil
+func (p *parser) lookupNudFn() nudFn {
+	for _, kwd := range p.keywords {
+		if kwd.Kind == expr && p.isKeyword(kwd.Name) {
+			return func() ast.Expression { return kwd.Fn().(ast.Expression) }
+		}
 	}
-	return fn
+	fn, ok := p.nudFns[p.next().Kind]
+	if ok {
+		return fn
+	}
+	return nil
 }
 
 func (p *parser) lookupLedOp(left ast.Expression) (opInfo, bool) {
@@ -164,37 +177,37 @@ func (p *parser) rightPrecedence(left ast.Expression) int {
 }
 
 func (p *parser) register() {
-	p.registerKeyword("fn", p.parseFunctionDeclaration, true, "Function declaration")
-	p.registerKeyword("type", p.parseTypeDeclaration, true, "Type declaration")
-	p.registerKeyword("struct", p.parseStructDeclaration, true, "Struct declaration")
-	p.registerKeyword("interface", p.parseInterfaceDeclaration, true, "Interface declaration")
-	p.registerKeyword("import", p.parseImportStatement, true, "Import")
-	p.registerKeyword("enum", p.parseEnumDeclaration, true, "Enum declaration")
-	p.registerKeyword("union", p.parseUnionDeclaration, true, "Union declaration")
-	p.registerKeyword("tag", p.parseTagDeclaration, true, "Tag declaration")
+	p.registerKeyword("fn", p.parseFunctionDeclaration, decl, "Function declaration")
+	p.registerKeyword("type", p.parseTypeDeclaration, decl, "Type declaration")
+	p.registerKeyword("struct", p.parseStructDeclaration, decl, "Struct declaration")
+	p.registerKeyword("interface", p.parseInterfaceDeclaration, decl, "Interface declaration")
+	p.registerKeyword("import", p.parseImportStatement, decl, "Import")
+	p.registerKeyword("enum", p.parseEnumDeclaration, decl, "Enum declaration")
+	p.registerKeyword("union", p.parseUnionDeclaration, decl, "Union declaration")
+	p.registerKeyword("tag", p.parseTagDeclaration, decl, "Tag declaration")
 
-	p.registerKeyword("const", p.parseVariableDeclaration, false)
-	p.registerKeyword("let", p.parseVariableDeclaration, false)
-	p.registerKeyword("mut", p.parseVariableDeclaration, false)
-	p.registerKeyword("if", p.parseIfStatement, false)
+	p.registerKeyword("const", p.parseVariableDeclaration, stmt)
+	p.registerKeyword("let", p.parseVariableDeclaration, stmt)
+	p.registerKeyword("mut", p.parseVariableDeclaration, stmt)
+	p.registerKeyword("do", func() ast.Statement { return p.parseBlockExpression() }, expr)
+	p.registerKeyword("if", func() ast.Statement { return p.parseIfExpression() }, expr)
 	p.registerKeyword("else", func() ast.Statement {
 		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
-		p.consume()
 		return &ast.ErrorNode{}
-	}, false)
-	p.registerKeyword("while", p.parseWhileLoop, false)
-	p.registerKeyword("for", p.parseForLoop, false)
-	p.registerKeyword("return", p.parseReturnStatement, false)
+	}, expr)
+	p.registerKeyword("while", func() ast.Statement { return p.parseWhileLoop() }, expr)
+	p.registerKeyword("for", func() ast.Statement { return p.parseForLoop() }, expr)
+	p.registerKeyword("return", p.parseReturnStatement, stmt)
 	p.registerKeyword("break", func() ast.Statement {
 		return &ast.BreakStatement{
 			Keyword: p.consume(),
 		}
-	}, false)
+	}, stmt)
 	p.registerKeyword("continue", func() ast.Statement {
 		return &ast.ContinueStatement{
 			Keyword: p.consume(),
 		}
-	}, false)
+	}, stmt)
 
 	// Literals
 	p.registerNudFn(token.INTEGER, p.parseInteger)

@@ -36,6 +36,7 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckMap(expr)
 	case *ast.TupleExpression:
 		return t.typeCheckTuple(expr)
+
 	case *ast.Identifier:
 		return t.typeCheckIdentifier(expr)
 	case *ast.BinaryExpression:
@@ -60,6 +61,16 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckStructExpression(expr)
 	case *ast.MemberExpression:
 		return t.typeCheckMemberExpression(expr)
+
+	case *ast.Block:
+		return t.typeCheckBlock(expr, true)
+	case *ast.IfExpression:
+		return t.typeCheckIfExpression(expr)
+	case *ast.WhileLoop:
+		return t.typeCheckWhileLoop(expr)
+	case *ast.ForLoop:
+		return t.typeCheckForLoop(expr)
+
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
 	}
@@ -693,4 +704,79 @@ func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir
 	}
 
 	return memberExpr
+}
+
+func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Block {
+	if createScope {
+		t.enterScope()
+		defer t.exitScope()
+	}
+
+	stmts := []ir.Statement{}
+	for _, stmt := range block.Statements {
+		stmts = append(stmts, t.typeCheckStatement(stmt))
+	}
+	return &ir.Block{
+		Statements: stmts,
+	}
+}
+
+func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Expression {
+	condition := t.typeCheckExpression(ifStmt.Condition)
+	if !types.Assignable(types.Bool, condition.Type()) {
+		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(ifStmt.Condition.Location()))
+	}
+
+	body := t.typeCheckBlock(ifStmt.Body, true)
+	var elseBranch ir.Statement
+	if ifStmt.ElseBranch != nil {
+		elseBranch = t.typeCheckStatement(ifStmt.ElseBranch.Statement)
+	}
+	return &ir.IfExpression{
+		Condition:  condition,
+		Body:       body,
+		ElseBranch: elseBranch,
+	}
+}
+
+func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Expression {
+	condition := t.typeCheckExpression(loop.Condition)
+	if !types.Assignable(types.Bool, condition.Type()) {
+		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(loop.Condition.Location()))
+	}
+
+	t.enterScope(symbols.LoopContext{})
+	defer t.exitScope()
+	body := t.typeCheckBlock(loop.Body, false)
+	return &ir.WhileLoop{
+		Condition: condition,
+		Body:      body,
+	}
+}
+
+func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Expression {
+	iter := t.typeCheckExpression(loop.Iterator)
+	var itemType types.Type = types.Invalid
+	if iterator, ok := iter.Type().(types.Iterator); ok {
+		itemType = iterator.Item()
+	} else {
+		t.Diagnostics.Report(diagnostics.NotIterable(loop.Iterator.Location()))
+	}
+	variable := symbols.Variable{
+		Name:       loop.Variable.Value,
+		IsMut:      false,
+		Type:       itemType,
+		ConstValue: nil,
+	}
+
+	t.enterScope(symbols.LoopContext{})
+	defer t.exitScope()
+	t.symbols.Register(&variable)
+	body := t.typeCheckBlock(loop.Body, false)
+
+	return &ir.ForLoop{
+		Variable: variable,
+		Iterator: iter,
+		Body:     body,
+	}
 }
