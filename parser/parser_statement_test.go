@@ -578,3 +578,20 @@ func TestUnionDeclaration(t *testing.T) {
 		}
 	}
 }
+
+func TestTagDeclaration(t *testing.T) {
+	tests := []struct {
+		src     string
+		name    string
+	}{
+		{"tag MyTag", "MyTag"},
+		{"tag Test124", "Test124"},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		stmt := getStmt[*ast.TagDeclaration](t, program)
+
+		utils.AssertEq(t, stmt.Name.Value, test.name)
+	}
+}

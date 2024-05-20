@@ -850,3 +850,23 @@ func (u *UnionDeclaration) String() string {
 
 	return result.String()
 }
+
+type TagDeclaration struct {
+	statement
+	Keyword token.Token
+	Name    token.Token
+}
+
+func (t *TagDeclaration) Tokens() []token.Token {
+	return []token.Token{t.Keyword, t.Name}
+}
+
+func (t *TagDeclaration) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(t.Keyword.Value)
+	result.WriteByte(' ')
+	result.WriteString(t.Name.Value)
+
+	return result.String()
+}

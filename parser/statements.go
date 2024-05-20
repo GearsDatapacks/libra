@@ -7,32 +7,10 @@ import (
 )
 
 func (p *parser) parseTopLevelStatement() ast.Statement {
-	if p.isKeyword("fn") {
-		return p.parseFunctionDeclaration()
-	}
-
-	if p.isKeyword("type") {
-		return p.parseTypeDeclaration()
-	}
-
-	if p.isKeyword("struct") {
-		return p.parseStructDeclaration()
-	}
-
-	if p.isKeyword("interface") {
-		return p.parseInterfaceDeclaration()
-	}
-
-	if p.isKeyword("import") {
-		return p.parseImportStatement()
-	}
-
-	if p.isKeyword("enum") {
-		return p.parseEnumDeclaration()
-	}
-
-	if p.isKeyword("union") {
-		return p.parseUnionDeclaration()
+	for _, kwd := range p.keywords {
+		if p.isKeyword(kwd.Name) {
+			return kwd.Fn()
+		}
 	}
 
 	return p.parseStatement()
@@ -43,75 +21,13 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseBlockStatement()
 	}
 
-	if p.isKeyword("const") || p.isKeyword("let") || p.isKeyword("mut") {
-		return p.parseVariableDeclaration()
-	}
-
-	if p.isKeyword("if") {
-		return p.parseIfStatement()
-	}
-
-	if p.isKeyword("else") {
-		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
-	}
-
-	if p.isKeyword("while") {
-		return p.parseWhileLoop()
-	}
-
-	if p.isKeyword("for") {
-		return p.parseForLoop()
-	}
-
-	if p.isKeyword("break") {
-		return &ast.BreakStatement{
-			Keyword: p.consume(),
+	for _, kwd := range p.keywords {
+		if p.isKeyword(kwd.Name) {
+			if kwd.TopLevel {
+				p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, kwd.StmtName))
+			}
+			return kwd.Fn()
 		}
-	}
-
-	if p.isKeyword("continue") {
-		return &ast.ContinueStatement{
-			Keyword: p.consume(),
-		}
-	}
-
-	if p.isKeyword("fn") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Function declaration"))
-		return p.parseFunctionDeclaration()
-	}
-
-	if p.isKeyword("return") {
-		return p.parseReturnStatement()
-	}
-
-	if p.isKeyword("type") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Type declaration"))
-		return p.parseTypeDeclaration()
-	}
-
-	if p.isKeyword("struct") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Struct declaration"))
-		return p.parseStructDeclaration()
-	}
-
-	if p.isKeyword("interface") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Interface declaration"))
-		return p.parseInterfaceDeclaration()
-	}
-
-	if p.isKeyword("import") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Import statement"))
-		return p.parseImportStatement()
-	}
-
-	if p.isKeyword("enum") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Enum declaration"))
-		return p.parseEnumDeclaration()
-	}
-
-	if p.isKeyword("union") {
-		p.Diagnostics.Report(diagnostics.OnlyTopLevelStatement(p.next().Location, "Union declaration"))
-		return p.parseEnumDeclaration()
 	}
 
 	return &ast.ExpressionStatement{
@@ -521,5 +437,15 @@ func (p *parser) parseUnionDeclaration() ast.Statement {
 		LeftBrace:  leftBrace,
 		Members:    members,
 		RightBrace: rightBrace,
+	}
+}
+
+func (p *parser) parseTagDeclaration() ast.Statement {
+	keyword := p.consume()
+	name := p.delcareIdentifier()
+
+	return &ast.TagDeclaration{
+		Keyword: keyword,
+		Name:    name,
 	}
 }

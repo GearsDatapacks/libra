@@ -453,7 +453,7 @@ func TestParserDiagnostics(t *testing.T) {
 		{"let a = [;]", []diagnostic{{"Expected expression, found `;`", diagnostics.Error}}},
 		{"1 [2]", []diagnostic{{"Expected newline after statement, found integer", diagnostics.Error}}},
 		{"(1 + 2[]", []diagnostic{{"Expected `)`, found <Eof>", diagnostics.Error}}},
-		{"[else] {}", []diagnostic{{"Else statement not allowed without preceding if", diagnostics.Error}}},
+		{"[else]\n {}", []diagnostic{{"Else statement not allowed without preceding if", diagnostics.Error}}},
 		{"for i [42] {}", []diagnostic{{`Expected "in" keyword, found integer`, diagnostics.Error}}},
 		{"let [in] = 1\nfor i [in] 20 {}", []diagnostic{
 			{`Expected "in" keyword, but it has been overwritten by a variable`, diagnostics.Error},

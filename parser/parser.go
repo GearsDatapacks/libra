@@ -13,6 +13,7 @@ type parser struct {
 	pos          int
 	nudFns       map[token.Kind]nudFn
 	ledOps       []lookupFn
+	keywords     []keyword
 	identifiers  map[string]text.Location
 	noBraces     bool
 	bracketLevel uint
@@ -21,12 +22,15 @@ type parser struct {
 
 func New(tokens []token.Token, diagnostics diagnostics.Manager) *parser {
 	p := &parser{
-		tokens:      tokens,
-		pos:         0,
-		nudFns:      map[token.Kind]nudFn{},
-		ledOps:      []lookupFn{},
-		identifiers: map[string]text.Location{},
-		Diagnostics: diagnostics,
+		tokens:       tokens,
+		pos:          0,
+		nudFns:       map[token.Kind]nudFn{},
+		ledOps:       []lookupFn{},
+		keywords:     []keyword{},
+		identifiers:  map[string]text.Location{},
+		noBraces:     false,
+		bracketLevel: 0,
+		Diagnostics:  diagnostics,
 	}
 
 	p.register()
@@ -59,6 +63,13 @@ type nudFn func() ast.Expression
 type ledFn func(ast.Expression) ast.Expression
 type lookupFn func(ast.Expression) (opInfo, bool)
 
+type keyword struct {
+	Name     string
+	StmtName string
+	Fn       func() ast.Statement
+	TopLevel bool
+}
+
 type opInfo struct {
 	leftPrecedence  int
 	rightPrecedence int
@@ -67,6 +78,17 @@ type opInfo struct {
 
 func (p *parser) registerNudFn(kind token.Kind, fn nudFn) {
 	p.nudFns[kind] = fn
+}
+
+func (p *parser) registerKeyword(kwd string, fn func() ast.Statement, topLevel bool, name ...string) {
+	stmtName := append(name, "")[0]
+
+	p.keywords = append(p.keywords, keyword{
+		Name:     kwd,
+		StmtName: stmtName,
+		Fn:       fn,
+		TopLevel: topLevel,
+	})
 }
 
 func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, rightAssociative ...bool) {
@@ -142,6 +164,38 @@ func (p *parser) rightPrecedence(left ast.Expression) int {
 }
 
 func (p *parser) register() {
+	p.registerKeyword("fn", p.parseFunctionDeclaration, true, "Function declaration")
+	p.registerKeyword("type", p.parseTypeDeclaration, true, "Type declaration")
+	p.registerKeyword("struct", p.parseStructDeclaration, true, "Struct declaration")
+	p.registerKeyword("interface", p.parseInterfaceDeclaration, true, "Interface declaration")
+	p.registerKeyword("import", p.parseImportStatement, true, "Import")
+	p.registerKeyword("enum", p.parseEnumDeclaration, true, "Enum declaration")
+	p.registerKeyword("union", p.parseUnionDeclaration, true, "Union declaration")
+	p.registerKeyword("tag", p.parseTagDeclaration, true, "Tag declaration")
+
+	p.registerKeyword("const", p.parseVariableDeclaration, false)
+	p.registerKeyword("let", p.parseVariableDeclaration, false)
+	p.registerKeyword("mut", p.parseVariableDeclaration, false)
+	p.registerKeyword("if", p.parseIfStatement, false)
+	p.registerKeyword("else", func() ast.Statement {
+		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
+		p.consume()
+		return &ast.ErrorNode{}
+	}, false)
+	p.registerKeyword("while", p.parseWhileLoop, false)
+	p.registerKeyword("for", p.parseForLoop, false)
+	p.registerKeyword("return", p.parseReturnStatement, false)
+	p.registerKeyword("break", func() ast.Statement {
+		return &ast.BreakStatement{
+			Keyword: p.consume(),
+		}
+	}, false)
+	p.registerKeyword("continue", func() ast.Statement {
+		return &ast.ContinueStatement{
+			Keyword: p.consume(),
+		}
+	}, false)
+
 	// Literals
 	p.registerNudFn(token.INTEGER, p.parseInteger)
 	p.registerNudFn(token.FLOAT, p.parseFloat)
