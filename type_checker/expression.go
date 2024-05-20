@@ -716,6 +716,15 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 	for _, stmt := range block.Statements {
 		stmts = append(stmts, t.typeCheckStatement(stmt))
 	}
+	if len(stmts) == 1 {
+		if expr, ok := stmts[0].(ir.Expression); ok {
+			return &ir.Block{
+				Statements: stmts,
+				ResultType: expr.Type(),
+			}
+		}
+	}
+	
 	var resultType types.Type = types.Void
 	if createScope {
 		resultType = t.symbols.Context.(*symbols.BlockContext).ResultType
@@ -777,7 +786,7 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Expression {
 		ConstValue: nil,
 	}
 
-	t.enterScope(symbols.LoopContext{ResultType: types.Void})
+	t.enterScope(&symbols.LoopContext{ResultType: types.Void})
 	defer t.exitScope()
 
 	t.symbols.Register(&variable)
