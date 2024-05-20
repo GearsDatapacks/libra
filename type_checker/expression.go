@@ -708,7 +708,7 @@ func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir
 
 func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Block {
 	if createScope {
-		t.enterScope()
+		t.enterScope(&symbols.BlockContext{ResultType: types.Void})
 		defer t.exitScope()
 	}
 
@@ -716,8 +716,13 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 	for _, stmt := range block.Statements {
 		stmts = append(stmts, t.typeCheckStatement(stmt))
 	}
+	var resultType types.Type = types.Void
+	if createScope {
+		resultType = t.symbols.Context.(*symbols.BlockContext).ResultType
+	}
 	return &ir.Block{
 		Statements: stmts,
+		ResultType: resultType,
 	}
 }
 
@@ -745,9 +750,12 @@ func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Expression {
 		t.Diagnostics.Report(diagnostics.ConditionMustBeBool(loop.Condition.Location()))
 	}
 
-	t.enterScope(symbols.LoopContext{})
+	t.enterScope(&symbols.LoopContext{ResultType: types.Void})
 	defer t.exitScope()
+
 	body := t.typeCheckBlock(loop.Body, false)
+	body.ResultType = t.symbols.Context.(*symbols.LoopContext).ResultType
+
 	return &ir.WhileLoop{
 		Condition: condition,
 		Body:      body,
@@ -769,10 +777,12 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Expression {
 		ConstValue: nil,
 	}
 
-	t.enterScope(symbols.LoopContext{})
+	t.enterScope(symbols.LoopContext{ResultType: types.Void})
 	defer t.exitScope()
+
 	t.symbols.Register(&variable)
 	body := t.typeCheckBlock(loop.Body, false)
+	body.ResultType = t.symbols.Context.(*symbols.LoopContext).ResultType
 
 	return &ir.ForLoop{
 		Variable: variable,

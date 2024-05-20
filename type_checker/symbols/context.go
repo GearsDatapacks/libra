@@ -6,7 +6,12 @@ type FunctionContext struct {
 	ReturnType types.Type
 }
 
-type LoopContext struct{}
+type LoopContext struct {
+	ResultType types.Type
+}
+type BlockContext struct {
+	ResultType types.Type
+}
 
 type GlobalContext struct {
 	Methods map[string][]types.Method

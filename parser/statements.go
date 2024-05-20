@@ -255,6 +255,28 @@ func (p *parser) parseReturnStatement() ast.Statement {
 	}
 }
 
+func (p *parser) parseYieldStatement() ast.Statement {
+	keyword := p.consume()
+	value := p.parseExpression()
+
+	return &ast.YieldStatement{
+		Keyword: keyword,
+		Value:   value,
+	}
+}
+
+func (p *parser) parseBreakStatement() ast.Statement {
+	keyword := p.consume()
+	var value ast.Expression
+	if !p.eof() && p.canContinue() {
+		value = p.parseExpression()
+	}
+	return &ast.BreakStatement{
+		Keyword: keyword,
+		Value:   value,
+	}
+}
+
 func (p *parser) parseTypeDeclaration() ast.Statement {
 	keyword := p.consume()
 	name := p.delcareIdentifier()

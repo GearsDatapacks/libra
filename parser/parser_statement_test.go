@@ -284,6 +284,45 @@ func TestReturnStatement(t *testing.T) {
 	}
 }
 
+func TestBreakStatement(t *testing.T) {
+	tests := []struct {
+		src   string
+		value any
+	}{
+		{"break", nil},
+		{"break true", true},
+		{"break [1,2,3]", []any{1, 2, 3}},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		brk := getStmt[*ast.BreakStatement](t, program)
+
+		if test.value == nil {
+			utils.Assert(t, brk.Value == nil, "Expected no value value")
+		} else {
+			testLiteral(t, brk.Value, test.value)
+		}
+	}
+}
+
+func TestYieldStatement(t *testing.T) {
+	tests := []struct {
+		src   string
+		value any
+	}{
+		{"yield 73", 73},
+		{`yield "foo"`, "foo"},
+	}
+
+	for _, test := range tests {
+		program := getProgram(t, test.src)
+		yield := getStmt[*ast.YieldStatement](t, program)
+
+		testLiteral(t, yield.Value, test.value)
+	}
+}
+
 func TestTypeDeclaration(t *testing.T) {
 	tests := []struct {
 		src      string

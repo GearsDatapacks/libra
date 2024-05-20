@@ -388,16 +388,49 @@ func (r *ReturnStatement) String() string {
 	return result.String()
 }
 
+type YieldStatement struct {
+	Keyword token.Token
+	Value   Expression
+}
+
+func (y *YieldStatement) Tokens() []token.Token {
+	tokens := []token.Token{y.Keyword}
+	tokens = append(tokens, y.Value.Tokens()...)
+	return tokens
+}
+
+func (y *YieldStatement) String() string {
+	var result bytes.Buffer
+	result.WriteString(" ")
+
+	result.WriteString(y.Value.String())
+
+	return result.String()
+}
+
 type BreakStatement struct {
 	Keyword token.Token
+	Value   Expression
 }
 
 func (b *BreakStatement) Tokens() []token.Token {
-	return []token.Token{b.Keyword}
+	tokens := []token.Token{b.Keyword}
+	if b.Value != nil {
+		tokens = append(tokens, b.Value.Tokens()...)
+	}
+	return tokens
 }
 
-func (*BreakStatement) String() string {
-	return "break"
+func (b *BreakStatement) String() string {
+	var result bytes.Buffer
+	result.WriteString("break")
+
+	if b.Value != nil {
+		result.WriteByte(' ')
+		result.WriteString(b.Value.String())
+	}
+
+	return result.String()
 }
 
 type ContinueStatement struct {

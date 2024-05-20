@@ -198,11 +198,8 @@ func (p *parser) register() {
 	p.registerKeyword("while", func() ast.Statement { return p.parseWhileLoop() }, expr)
 	p.registerKeyword("for", func() ast.Statement { return p.parseForLoop() }, expr)
 	p.registerKeyword("return", p.parseReturnStatement, stmt)
-	p.registerKeyword("break", func() ast.Statement {
-		return &ast.BreakStatement{
-			Keyword: p.consume(),
-		}
-	}, stmt)
+	p.registerKeyword("yield", p.parseYieldStatement, stmt)
+	p.registerKeyword("break", p.parseBreakStatement, stmt)
 	p.registerKeyword("continue", func() ast.Statement {
 		return &ast.ContinueStatement{
 			Keyword: p.consume(),

@@ -58,10 +58,23 @@ func (r *ReturnStatement) String() string {
 	return "return"
 }
 
-type BreakStatement struct{}
+type BreakStatement struct {
+	Value Expression
+}
 
-func (*BreakStatement) String() string {
-	return "break"
+func (b *BreakStatement) String() string {
+	if b.Value == nil {
+		return "break"
+	}
+	return fmt.Sprintf("break %s", b.Value.String())
+}
+
+type YieldStatement struct {
+	Value Expression
+}
+
+func (y *YieldStatement) String() string {
+	return fmt.Sprintf("yield %s", y.Value.String())
 }
 
 type ContinueStatement struct{}

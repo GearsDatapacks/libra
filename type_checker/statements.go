@@ -15,12 +15,22 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 	switch stmt := statement.(type) {
 	case *ast.VariableDeclaration:
 		return t.typeCheckVariableDeclaration(stmt)
+	case *ast.Block:
+		return t.typeCheckBlock(stmt, true)
+	case *ast.IfExpression:
+		return t.typeCheckIfExpression(stmt)
+	case *ast.WhileLoop:
+		return t.typeCheckWhileLoop(stmt)
+	case *ast.ForLoop:
+		return t.typeCheckForLoop(stmt)
 	case *ast.FunctionDeclaration:
 		return t.typeCheckFunctionDeclaration(stmt)
 	case *ast.ReturnStatement:
 		return t.typeCheckReturn(stmt)
 	case *ast.BreakStatement:
 		return t.typeCheckBreak(stmt)
+	case *ast.YieldStatement:
+		return t.typeCheckYield(stmt)
 	case *ast.ContinueStatement:
 		return t.typeCheckContinue(stmt)
 	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration:
@@ -168,24 +178,51 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 
 func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 	symbolTable := t.symbols
+	var context *symbols.LoopContext
 	for symbolTable != nil {
-		if _, ok := symbolTable.Context.(symbols.LoopContext); ok {
+		if ctx, ok := symbolTable.Context.(*symbols.LoopContext); ok {
+			context = ctx
 			break
 		}
 		symbolTable = symbolTable.Parent
 	}
 
-	if symbolTable == nil {
+	var value ir.Expression
+	if b.Value != nil {
+		value = t.typeCheckExpression(b.Value)
+	}
+	if context == nil {
 		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Keyword.Location, "break"))
+	} else if value != nil {
+		context.ResultType = value.Type()
 	}
 
-	return &ir.BreakStatement{}
+	return &ir.BreakStatement{
+		Value: value,
+	}
+}
+
+func (t *typeChecker) typeCheckYield(yield *ast.YieldStatement) ir.Statement {
+	symbolTable := t.symbols
+	var context *symbols.BlockContext
+	context, ok := symbolTable.Context.(*symbols.BlockContext)
+
+	value := t.typeCheckExpression(yield.Value)
+	if !ok {
+		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideBlock(yield.Keyword.Location, "yield"))
+	} else {
+		context.ResultType = value.Type()
+	}
+
+	return &ir.YieldStatement{
+		Value: value,
+	}
 }
 
 func (t *typeChecker) typeCheckContinue(c *ast.ContinueStatement) ir.Statement {
 	symbolTable := t.symbols
 	for symbolTable != nil {
-		if _, ok := symbolTable.Context.(symbols.LoopContext); ok {
+		if _, ok := symbolTable.Context.(*symbols.LoopContext); ok {
 			break
 		}
 		symbolTable = symbolTable.Parent

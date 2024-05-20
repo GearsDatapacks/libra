@@ -1108,6 +1108,7 @@ func (m *MemberExpression) ConstValue() values.ConstValue {
 type Block struct {
 	expression
 	Statements []Statement
+	ResultType types.Type
 }
 
 func (b *Block) String() string {
@@ -1126,8 +1127,8 @@ func (b *Block) String() string {
 	return result.String()
 }
 
-func (*Block) Type() types.Type {
-	return types.Void
+func (b *Block) Type() types.Type {
+	return b.ResultType
 }
 
 func (*Block) IsConst() bool {
@@ -1160,8 +1161,8 @@ func (i *IfExpression) String() string {
 	return result.String()
 }
 
-func (*IfExpression) Type() types.Type {
-	return types.Void
+func (i *IfExpression) Type() types.Type {
+	return i.Body.Type()
 }
 
 func (*IfExpression) IsConst() bool {
@@ -1188,8 +1189,8 @@ func (w *WhileLoop) String() string {
 	return result.String()
 }
 
-func (*WhileLoop) Type() types.Type {
-	return types.Void
+func (w *WhileLoop) Type() types.Type {
+	return w.Body.Type()
 }
 
 func (*WhileLoop) IsConst() bool {
@@ -1220,8 +1221,8 @@ func (f *ForLoop) String() string {
 	return result.String()
 }
 
-func (*ForLoop) Type() types.Type {
-	return types.Void
+func (f *ForLoop) Type() types.Type {
+	return f.Body.Type()
 }
 
 func (*ForLoop) IsConst() bool {

@@ -292,3 +292,8 @@ func CannotUseStatementOutsideLoop(location text.Location, stmtKind string) Diag
 	msg := fmt.Sprintf("Cannot use %s outside of a loop", stmtKind)
 	return makeError(msg, location)
 }
+
+func CannotUseStatementOutsideBlock(location text.Location, stmtKind string) Diagnostic {
+	msg := fmt.Sprintf("Cannot use %s outside of a block", stmtKind)
+	return makeError(msg, location)
+}
