@@ -226,6 +226,96 @@ func (p *PostfixExpression) PrecedenceString() string {
 	return result.String()
 }
 
+type DerefExpression struct {
+	expression
+	Operator token.Token
+	Mutable  *token.Token
+	Operand  Expression
+}
+
+func (d *DerefExpression) Tokens() []token.Token {
+	tokens := []token.Token{d.Operator}
+	if d.Mutable != nil {
+		tokens = append(tokens, *d.Mutable)
+	}
+	return append(tokens, d.Operand.Tokens()...)
+}
+
+func (d *DerefExpression) Location() text.Location {
+	return d.Operator.Location.To(d.Operand.Location())
+}
+
+func (d *DerefExpression) String() string {
+	var result bytes.Buffer
+	result.WriteByte('*')
+	if d.Mutable != nil {
+		result.WriteString("mut ")
+	}
+
+	result.WriteString(d.Operand.String())
+	return result.String()
+}
+
+func (d *DerefExpression) PrecedenceString() string {
+	var result bytes.Buffer
+
+	result.WriteByte('*')
+	if d.Mutable != nil {
+		result.WriteString("mut ")
+	}
+
+	result.WriteByte('(')
+	result.WriteString(maybePrecedence(d.Operand))
+	result.WriteByte(')')
+
+	return result.String()
+}
+
+type RefExpression struct {
+	expression
+	Operator token.Token
+	Mutable  *token.Token
+	Operand  Expression
+}
+
+func (r *RefExpression) Tokens() []token.Token {
+	tokens := []token.Token{r.Operator}
+	if r.Mutable != nil {
+		tokens = append(tokens, *r.Mutable)
+	}
+	return append(tokens, r.Operand.Tokens()...)
+}
+
+func (r *RefExpression) Location() text.Location {
+	return r.Operator.Location.To(r.Operand.Location())
+}
+
+func (r *RefExpression) String() string {
+	var result bytes.Buffer
+	result.WriteByte('&')
+	if r.Mutable != nil {
+		result.WriteString("mut ")
+	}
+
+	result.WriteString(r.Operand.String())
+	return result.String()
+}
+
+func (r *RefExpression) PrecedenceString() string {
+	var result bytes.Buffer
+
+	result.WriteByte('&')
+	if r.Mutable != nil {
+		result.WriteString("mut ")
+	}
+
+	result.WriteByte('(')
+	result.WriteString(maybePrecedence(r.Operand))
+	result.WriteByte(')')
+
+	return result.String()
+}
+
 // We don't store the tokens of the commas because they probably won't be needed
 type ListLiteral struct {
 	expression
@@ -603,7 +693,7 @@ type CastExpression struct {
 	expression
 	Left  Expression
 	Arrow token.Token
-	Type  TypeExpression
+	Type  Expression
 }
 
 func (ce *CastExpression) Tokens() []token.Token {
@@ -632,7 +722,7 @@ type TypeCheckExpression struct {
 	expression
 	Left     Expression
 	Operator token.Token
-	Type     TypeExpression
+	Type     Expression
 }
 
 func (tc *TypeCheckExpression) Tokens() []token.Token {

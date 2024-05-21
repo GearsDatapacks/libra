@@ -9,7 +9,7 @@ import (
 
 type TypeAnnotation struct {
 	Colon token.Token
-	Type  TypeExpression
+	Type  Expression
 }
 
 func (ta *TypeAnnotation) Tokens() []token.Token {
@@ -256,7 +256,7 @@ func (p *Parameter) String() string {
 type MethodOf struct {
 	LeftParen  token.Token
 	Mutable    *token.Token
-	Type       TypeExpression
+	Type       Expression
 	RightParen token.Token
 }
 
@@ -449,7 +449,7 @@ type TypeDeclaration struct {
 	Keyword token.Token
 	Name    token.Token
 	Equals  token.Token
-	Type    TypeExpression
+	Type    Expression
 }
 
 func (t *TypeDeclaration) Tokens() []token.Token {
@@ -509,7 +509,7 @@ type Struct struct {
 
 type TupleStruct struct {
 	LeftParen  token.Token
-	Types      []TypeExpression
+	Types      []Expression
 	RightParen token.Token
 }
 
@@ -567,7 +567,7 @@ func (s *StructDeclaration) String() string {
 type InterfaceMember struct {
 	Name       token.Token
 	LeftParen  token.Token
-	Parameters []TypeExpression
+	Parameters []Expression
 	RightParen token.Token
 	ReturnType *TypeAnnotation
 }
@@ -730,7 +730,7 @@ func (i *ImportStatement) String() string {
 
 type TypeList struct {
 	LeftParen  token.Token
-	Types      []TypeExpression
+	Types      []Expression
 	RightParen token.Token
 }
 

@@ -474,6 +474,10 @@ func TestTypeChecks(t *testing.T) {
 			&types.MapType{KeyType: types.Int, ValueType: types.Float},
 			&types.MapType{KeyType: types.Int, ValueType: types.Float},
 		},
+		{`(1, 3.1, "hi") is (i32, f32, string)`,
+			&types.TupleType{Types: []types.Type{types.Int, types.Float, types.String}},
+			&types.TupleType{Types: []types.Type{types.Int, types.Float, types.String}},
+		},
 	}
 
 	for _, test := range tests {
@@ -496,7 +500,7 @@ func TestTCDiagnostics(t *testing.T) {
 		src         string
 		diagnostics []diagnostic
 	}{
-		{"let x: [foo] = 1", []diagnostic{{`Type "foo" is not defined`, diagnostics.Error}}},
+		{"let x: [foo] = 1", []diagnostic{{`Variable "foo" is not defined`, diagnostics.Error}}},
 		{"const text: string = [false]", []diagnostic{{`Value of type "bool" is not assignable to type "string"`, diagnostics.Error}}},
 		{"let foo = 1; let [foo] = 2", []diagnostic{{`Variable "foo" is already defined`, diagnostics.Error}}},
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},

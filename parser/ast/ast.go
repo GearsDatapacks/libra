@@ -18,12 +18,6 @@ type Expression interface {
 	Location() text.Location
 }
 
-type TypeExpression interface {
-	Statement
-	typeNode()
-	Location() text.Location
-}
-
 type Program struct {
 	Statements []Statement
 }
@@ -54,7 +48,6 @@ func (p *Program) String() string {
 
 type ErrorNode struct {
 	expression
-	typeExpression
 }
 
 func (e *ErrorNode) Tokens() []token.Token {

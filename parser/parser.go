@@ -16,6 +16,7 @@ type parser struct {
 	keywords     []keyword
 	identifiers  map[string]text.Location
 	noBraces     bool
+	typeExpr     bool
 	bracketLevel uint
 	Diagnostics  diagnostics.Manager
 }
@@ -82,6 +83,7 @@ type opInfo struct {
 	leftPrecedence  int
 	rightPrecedence int
 	parseFn         ledFn
+	typeSyntax      bool
 }
 
 func (p *parser) registerNudFn(kind token.Kind, fn nudFn) {
@@ -99,15 +101,19 @@ func (p *parser) registerKeyword(kwd string, fn func() ast.Statement, kind kwdKi
 	})
 }
 
-func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, rightAssociative ...bool) {
-	isRightassociative := false
-	if len(rightAssociative) != 0 {
-		isRightassociative = rightAssociative[0]
+func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, extra ...bool) {
+	rightassociative := false
+	typeSyntax := false
+	if len(extra) > 0 {
+		rightassociative = extra[0]
+	}
+	if len(extra) > 1 {
+		typeSyntax = extra[1]
 	}
 
 	leftPrecedence := precedence
 	rightPrecedence := precedence
-	if isRightassociative {
+	if rightassociative {
 		rightPrecedence -= 1
 	}
 
@@ -117,6 +123,7 @@ func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, rightA
 				leftPrecedence:  leftPrecedence,
 				rightPrecedence: rightPrecedence,
 				parseFn:         fn,
+				typeSyntax:      typeSyntax,
 			}, true
 		}
 
@@ -155,6 +162,9 @@ func (p *parser) lookupLedOp(left ast.Expression) (opInfo, bool) {
 func (p *parser) lookupLedFn(left ast.Expression) ledFn {
 	info, ok := p.lookupLedOp(left)
 	if !ok {
+		return nil
+	}
+	if p.typeExpr && !info.typeSyntax {
 		return nil
 	}
 	return info.parseFn
@@ -219,8 +229,8 @@ func (p *parser) register() {
 
 	// Postfix expressions
 	p.registerLedOp(token.LEFT_PAREN, Postfix, p.parseFunctionCall)
-	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression)
-	p.registerLedOp(token.DOT, Postfix, p.parseMember)
+	p.registerLedOp(token.LEFT_SQUARE, Postfix, p.parseIndexExpression, false, true)
+	p.registerLedOp(token.DOT, Postfix, p.parseMember, false, true)
 	p.registerLedOp(token.ARROW, Postfix, p.parseCastExpression)
 	p.registerLedOp(token.DOUBLE_DOT, Range, p.parseRangeExpression)
 
@@ -250,15 +260,15 @@ func (p *parser) register() {
 	// Postfix operators
 	p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
 	p.registerLedOp(token.DOUBLE_MINUS, Postfix, p.parsePostfixExpression)
-	p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression)
-	p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression)
+	p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression, false, true)
+	p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression, false, true)
 
 	// Prefix operators
 	p.registerNudFn(token.MINUS, p.parsePrefixExpression)
 	p.registerNudFn(token.PLUS, p.parsePrefixExpression)
 	p.registerNudFn(token.BANG, p.parsePrefixExpression)
-	p.registerNudFn(token.STAR, p.parsePrefixExpression)
-	p.registerNudFn(token.AMPERSAND, p.parsePrefixExpression)
+	p.registerNudFn(token.STAR, p.parseRefDeref)
+	p.registerNudFn(token.AMPERSAND, p.parseRefDeref)
 	p.registerNudFn(token.TILDE, p.parsePrefixExpression)
 
 	// Assignment
@@ -282,7 +292,7 @@ func (p *parser) register() {
 
 	p.registerLedOp(token.DOUBLE_LEFT_ANGLE, Bitwise, p.parseBinaryExpression)
 	p.registerLedOp(token.DOUBLE_RIGHT_ANGLE, Bitwise, p.parseBinaryExpression)
-	p.registerLedOp(token.PIPE, Bitwise, p.parseBinaryExpression)
+	p.registerLedOp(token.PIPE, Bitwise, p.parseBinaryExpression, false, true)
 	p.registerLedOp(token.AMPERSAND, Bitwise, p.parseBinaryExpression)
 
 	p.registerLedOp(token.PLUS, Additive, p.parseBinaryExpression)

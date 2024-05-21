@@ -50,10 +50,18 @@ func (p *parser) parseOptionalTypeAnnotation() *ast.TypeAnnotation {
 	}
 
 	colon := p.consume()
-	ty := p.parseType()
+	ty := p.parseTypeExpression()
 
 	return &ast.TypeAnnotation{
 		Colon: colon,
 		Type:  ty,
 	}
+}
+
+func (p *parser) parseTypeExpression() ast.Expression {
+	old := p.typeExpr
+	p.typeExpr = true
+	ty := p.parseExpression()
+	p.typeExpr = old
+	return ty
 }

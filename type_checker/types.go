@@ -1,18 +1,16 @@
 package typechecker
 
 import (
-	"fmt"
-
 	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
+	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
-func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
-	switch ty := node.(type) {
-	case *ast.TypeName:
-		return t.lookupType(ty.Name.Value)
+/*
 	case *ast.ArrayType:
 		elemType := t.typeFromAst(ty.Type)
 
@@ -59,31 +57,40 @@ func (t *typeChecker) typeFromAst(node ast.TypeExpression) types.Type {
 	default:
 		panic(fmt.Sprintf("TODO: Types from %T", ty))
 	}
+}*/
+
+func (t *typeChecker) typeCheckType(expression ast.Expression) types.Type {
+	return t.typeFromExpr(t.typeCheckExpression(expression), expression.Location())
 }
 
-func (t *typeChecker) lookupType(name string) types.Type {
-	switch name {
-	case "i32":
-		return types.Int
-	case "f32":
-		return types.Float
-	case "bool":
-		return types.Bool
-	case "string":
-		return types.String
-	case "Type":
-		return types.RuntimeType
-	default:
-		variable := t.symbols.Lookup(name)
-		if variable == nil {
-			return nil
-		}
-		if variable.GetType() != types.RuntimeType {
-			return nil
-		}
-		if variable.Value() == nil {
-			return nil
-		}
-		return variable.Value().(values.TypeValue).Type.(types.Type)
+func (t *typeChecker) typeFromExpr(expr ir.Expression, location text.Location) types.Type {
+	if expr.Type() == types.Invalid {
+		return types.Invalid
 	}
+	if expr.Type() != types.RuntimeType {
+		t.Diagnostics.Report(diagnostics.ExpressionNotType(location, expr.Type()))
+		return types.Invalid
+	}
+	if !expr.IsConst() {
+		t.Diagnostics.Report(diagnostics.NotConst(location))
+		return types.Invalid
+	}
+	return expr.ConstValue().(values.TypeValue).Type.(types.Type)
+}
+
+func (t *typeChecker) lookupType(tok token.Token) types.Type {
+	symbol := t.symbols.Lookup(tok.Value)
+	if symbol == nil {
+		t.Diagnostics.Report(diagnostics.UndefinedType(tok.Location, tok.Value))
+		return types.Invalid
+	}
+	if symbol.GetType() != types.RuntimeType {
+		t.Diagnostics.Report(diagnostics.ExpressionNotType(tok.Location, symbol.GetType()))
+		return types.Invalid
+	}
+	if symbol.Value() == nil {
+		t.Diagnostics.Report(diagnostics.NotConst(tok.Location))
+		return types.Invalid
+	}
+	return symbol.Value().(values.TypeValue).Type.(types.Type)
 }

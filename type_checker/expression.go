@@ -424,7 +424,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 
 func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {
 	value := t.typeCheckExpression(expr.Left)
-	ty := t.typeFromAst(expr.Type)
+	ty := t.typeCheckType(expr.Type)
 	conversion := convert(value, ty, explicit)
 	if conversion == nil {
 		t.Diagnostics.Report(diagnostics.CannotCast(expr.Left.Location(), value.Type(), ty))
@@ -464,6 +464,35 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 
 func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) ir.Expression {
 	left := t.typeCheckExpression(indexExpr.Left)
+
+	if left.Type() == types.RuntimeType {
+		elemType := t.typeFromExpr(left, indexExpr.Left.Location())
+
+		if indexExpr.Index == nil {
+			return &ir.TypeExpression{DataType: &types.ListType{ElemType: elemType}}
+		}
+
+		length := -1
+
+		if ident, ok := indexExpr.Index.(*ast.Identifier); !ok || ident.Name != "_" {
+			expr := convert(t.typeCheckExpression(indexExpr.Index), types.Int, implicit)
+			if expr == nil {
+				t.Diagnostics.Report(diagnostics.CountMustBeInt(indexExpr.Index.Location()))
+			} else if expr.IsConst() {
+				value := expr.ConstValue().(values.IntValue)
+				length = int(value.Value)
+			} else {
+				t.Diagnostics.Report(diagnostics.NotConst(indexExpr.Index.Location()))
+			}
+		}
+
+		return &ir.TypeExpression{DataType: &types.ArrayType{
+			ElemType: elemType,
+			Length:   length,
+			CanInfer: false,
+		}}
+	}
+
 	index := t.typeCheckExpression(indexExpr.Index)
 	ty, diag := ir.Index(left, index)
 
@@ -510,6 +539,15 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 			Key:   key,
 			Value: value,
 		})
+	}
+
+	if len(keyValues) == 1 && keyType == types.RuntimeType && valueType == types.RuntimeType {
+		return &ir.TypeExpression{
+			DataType: &types.MapType{
+				KeyType:   t.typeFromExpr(keyValues[0].Key, mapLit.KeyValues[0].Key.Location()),
+				ValueType: t.typeFromExpr(keyValues[0].Value, mapLit.KeyValues[0].Value.Location()),
+			},
+		}
 	}
 
 	mapExpr := &ir.MapExpression{
@@ -570,12 +608,28 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 	dataTypes := []types.Type{}
 	values := []ir.Expression{}
+	isType := true
 
 	for _, value := range tuple.Values {
 		expr := t.typeCheckExpression(value)
 		ty := types.ToReal(expr.Type())
 		dataTypes = append(dataTypes, ty)
+		if ty != types.RuntimeType {
+			isType = false
+		}
 		values = append(values, convert(expr, ty, implicit))
+	}
+
+	if isType && len(dataTypes) != 0 {
+		tupleMembers := []types.Type{}
+		for i, val := range values {
+			tupleMembers = append(tupleMembers, t.typeFromExpr(val, tuple.Values[i].Location()))
+		}
+		return &ir.TypeExpression{
+			DataType: &types.TupleType{
+				Types: tupleMembers,
+			},
+		}
 	}
 
 	return &ir.TupleExpression{
@@ -588,7 +642,7 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 
 func (t *typeChecker) typeCheckTypeCheck(tc *ast.TypeCheckExpression) ir.Expression {
 	value := t.typeCheckExpression(tc.Left)
-	ty := t.typeFromAst(tc.Type)
+	ty := t.typeCheckType(tc.Type)
 
 	return &ir.TypeCheck{
 		Value:    value,
@@ -724,7 +778,7 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 			}
 		}
 	}
-	
+
 	var resultType types.Type = types.Void
 	if createScope {
 		resultType = t.symbols.Context.(*symbols.BlockContext).ResultType

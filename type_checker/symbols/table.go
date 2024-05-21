@@ -3,45 +3,47 @@ package symbols
 import "github.com/gearsdatapacks/libra/type_checker/types"
 
 type Table struct {
-	Parent    *Table
-	variables map[string]Symbol
-	Context   any
+	Parent  *Table
+	symbols map[string]Symbol
+	Context any
 }
 
 func New() *Table {
-	return &Table{
-		variables: map[string]Symbol{},
+	t := &Table{
+		symbols: map[string]Symbol{},
 		Context: &GlobalContext{
 			Methods: map[string][]types.Method{},
 		},
 	}
+	t.registerGlobals()
+	return t
 }
 
 func (t *Table) Child() *Table {
 	return &Table{
-		Parent:    t,
-		variables: map[string]Symbol{},
+		Parent:  t,
+		symbols: map[string]Symbol{},
 	}
 }
 
 func (t *Table) ChildWithContext(context any) *Table {
 	return &Table{
-		Parent:    t,
-		variables: map[string]Symbol{},
-		Context:   context,
+		Parent:  t,
+		symbols: map[string]Symbol{},
+		Context: context,
 	}
 }
 
 func (t *Table) Register(symbol Symbol) bool {
-	if _, exists := t.variables[symbol.GetName()]; exists {
+	if _, exists := t.symbols[symbol.GetName()]; exists {
 		return false
 	}
-	t.variables[symbol.GetName()] = symbol
+	t.symbols[symbol.GetName()] = symbol
 	return true
 }
 
 func (t *Table) Lookup(name string) Symbol {
-	symbol, ok := t.variables[name]
+	symbol, ok := t.symbols[name]
 	if ok {
 		return symbol
 	}
@@ -79,4 +81,12 @@ func (t *Table) RegisterMethod(name string, method types.Method) {
 		context.Methods[name] = []types.Method{method}
 	}
 	context.Methods[name] = append(methods, method)
+}
+
+func (t *Table) registerGlobals() {
+	t.Register(&Type{"i32", types.Int})
+	t.Register(&Type{"f32", types.Float})
+	t.Register(&Type{"bool", types.Bool})
+	t.Register(&Type{"string", types.String})
+	t.Register(&Type{"Type", types.RuntimeType})
 }

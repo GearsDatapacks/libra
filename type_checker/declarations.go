@@ -87,7 +87,7 @@ func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaratio
 
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
-	symbol.Type.(*types.Alias).Type = t.typeFromAst(typeDec.Type)
+	symbol.Type.(*types.Alias).Type = t.typeCheckType(typeDec.Type)
 }
 
 func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
@@ -103,7 +103,7 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 
 	for _, param := range fn.Parameters {
 		if param.Type != nil {
-			paramType := t.typeFromAst(param.Type.Type)
+			paramType := t.typeCheckType(param.Type.Type)
 			for i := len(fnType.Parameters) - 1; i >= 0; i-- {
 				if fnType.Parameters[i] == nil {
 					fnType.Parameters[i] = paramType
@@ -118,18 +118,18 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	}
 
 	if fn.ReturnType != nil {
-		fnType.ReturnType = t.typeFromAst(fn.ReturnType.Type)
+		fnType.ReturnType = t.typeCheckType(fn.ReturnType.Type)
 	}
 
 	if fn.MethodOf != nil {
-		methodOf := t.typeFromAst(fn.MethodOf.Type)
+		methodOf := t.typeCheckType(fn.MethodOf.Type)
 		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
 			MethodOf: methodOf,
 			Static:   false,
 			Function: fnType,
 		})
 	} else if fn.MemberOf != nil {
-		methodOf := t.lookupType(fn.MemberOf.Name.Value)
+		methodOf := t.lookupType(fn.MemberOf.Name)
 		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
 			MethodOf: methodOf,
 			Static:   true,
@@ -146,7 +146,7 @@ func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 		if field.Type == nil {
 			fields = append(fields, nil)
 		} else {
-			ty := t.typeFromAst(field.Type.Type)
+			ty := t.typeCheckType(field.Type.Type)
 			for i := len(fields) - 1; i >= 0; i-- {
 				if fields[i] == nil {
 					fields[i] = ty
@@ -169,14 +169,14 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 	for _, member := range decl.Members {
 		params := []types.Type{}
 		for _, param := range member.Parameters {
-			params = append(params, t.typeFromAst(param))
+			params = append(params, t.typeCheckType(param))
 		}
 		fnType := &types.Function{
 			Parameters: params,
 			ReturnType: types.Void,
 		}
 		if member.ReturnType != nil {
-			fnType.ReturnType = t.typeFromAst(member.ReturnType.Type)
+			fnType.ReturnType = t.typeCheckType(member.ReturnType.Type)
 		}
 		ty.Methods[member.Name.Value] = fnType
 	}

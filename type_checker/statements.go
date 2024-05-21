@@ -50,11 +50,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	value := t.typeCheckExpression(varDec.Value)
 	var expectedType types.Type = nil
 	if varDec.Type != nil {
-		expectedType = t.typeFromAst(varDec.Type.Type)
-		if expectedType == nil {
-			name := varDec.Type.Type.(*ast.TypeName)
-			t.Diagnostics.Report(diagnostics.UndefinedType(name.Location(), name.Name.Value))
-		}
+		expectedType = t.typeCheckType(varDec.Type.Type)
 	}
 
 	if expectedType != nil {
@@ -99,9 +95,9 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration) ir.Statement {
 	var fnType *types.Function
 	if funcDec.MethodOf != nil {
-		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.typeFromAst(funcDec.MethodOf.Type), false)
+		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.typeCheckType(funcDec.MethodOf.Type), false)
 	} else if funcDec.MemberOf != nil {
-		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.lookupType(funcDec.MemberOf.Name.Value), true)
+		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.lookupType(funcDec.MemberOf.Name), true)
 	} else {
 		fnType = t.symbols.Lookup(funcDec.Name.Value).GetType().(*types.Function)
 	}
@@ -125,7 +121,7 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		symbol := &symbols.Variable{
 			Name:       "this",
 			IsMut:      funcDec.MethodOf.Mutable != nil,
-			Type:       t.typeFromAst(funcDec.MethodOf.Type),
+			Type:       t.typeCheckType(funcDec.MethodOf.Type),
 			ConstValue: nil,
 		}
 		t.symbols.Register(symbol)

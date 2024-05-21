@@ -297,3 +297,8 @@ func CannotUseStatementOutsideBlock(location text.Location, stmtKind string) Dia
 	msg := fmt.Sprintf("Cannot use %s outside of a block", stmtKind)
 	return makeError(msg, location)
 }
+
+func ExpressionNotType(location text.Location, ty tcType) Diagnostic {
+	msg := fmt.Sprintf("Expected a type, found value of type %q", ty.String())
+	return makeError(msg, location)
+}

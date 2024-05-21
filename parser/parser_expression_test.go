@@ -222,9 +222,9 @@ func TestCastExpression(t *testing.T) {
 		cast := getStmt[*ast.CastExpression](t, program)
 
 		testLiteral(t, cast.Left, tt.left)
-		ident, ok := cast.Type.(*ast.TypeName)
+		ident, ok := cast.Type.(*ast.Identifier)
 		utils.Assert(t, ok, "Didn't cast to a type name")
-		utils.AssertEq(t, tt.to, ident.Name.Value)
+		utils.AssertEq(t, tt.to, ident.Name)
 	}
 }
 
@@ -244,9 +244,9 @@ func TestTypeCheckExpression(t *testing.T) {
 		typeCheck := getStmt[*ast.TypeCheckExpression](t, program)
 
 		testLiteral(t, typeCheck.Left, tt.left)
-		ident, ok := typeCheck.Type.(*ast.TypeName)
+		ident, ok := typeCheck.Type.(*ast.Identifier)
 		utils.Assert(t, ok, "Didn't check for a type name")
-		utils.AssertEq(t, tt.typeName, ident.Name.Value)
+		utils.AssertEq(t, tt.typeName, ident.Name)
 	}
 }
 
@@ -356,6 +356,54 @@ func TestPostfixExpressions(t *testing.T) {
 
 		testLiteral(t, expr.Operand, tt.operand)
 		utils.AssertEq(t, expr.Operator.Value, tt.operator)
+	}
+}
+
+func TestDerefExpressions(t *testing.T) {
+	tests := []struct {
+		src     string
+		mut     bool
+		operand any
+	}{
+		{"*ptr", false, "$ptr"},
+		{"*mut i32", true, "$i32"},
+		{"*91", false, 91},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getStmt[*ast.DerefExpression](t, program)
+
+		if tt.mut {
+			utils.Assert(t, expr.Mutable != nil, "Expected a mutable pointer")
+		} else {
+			utils.Assert(t, expr.Mutable == nil, "Expected a plain deref")
+		}
+		testLiteral(t, expr.Operand, tt.operand)
+	}
+}
+
+func TestRefExpressions(t *testing.T) {
+	tests := []struct {
+		src     string
+		mut     bool
+		operand any
+	}{
+		{"&13", false, 13},
+		{"&mut my_var", true, "$my_var"},
+		{"&false", false, false},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getStmt[*ast.RefExpression](t, program)
+
+		if tt.mut {
+			utils.Assert(t, expr.Mutable != nil, "Expected a mutable reference")
+		} else {
+			utils.Assert(t, expr.Mutable == nil, "Expected an immutable reference")
+		}
+		testLiteral(t, expr.Operand, tt.operand)
 	}
 }
 
@@ -546,6 +594,7 @@ func testDiagnostic(t *testing.T,
 	kind diagnostics.DiagnosticKind,
 	msg string,
 	span text.Span) {
+	t.Helper()
 	utils.AssertEq(t, diagnostic.Kind, kind)
 	utils.AssertEq(t, diagnostic.Message, msg)
 	utils.AssertEq(t, diagnostic.Location.Span, span)

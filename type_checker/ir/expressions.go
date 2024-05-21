@@ -545,7 +545,6 @@ const (
 	DecrementFloat
 	PropagateError
 	CrashError
-	// TODO: Deref and ref
 )
 
 func (u UnaryOperator) String() string {
@@ -1233,5 +1232,28 @@ func (*ForLoop) ConstValue() values.ConstValue {
 	return nil
 }
 
+type TypeExpression struct {
+	expression
+	DataType types.Type
+}
+
+func (t *TypeExpression) String() string {
+	return t.DataType.String()
+}
+
+func (t *TypeExpression) Type() types.Type {
+	return types.RuntimeType
+}
+
+func (t *TypeExpression) IsConst() bool {
+	return true
+}
+
+func (t *TypeExpression) ConstValue() values.ConstValue {
+	return values.TypeValue{Type: t.DataType}
+}
+
 // TODO:
+// RefExpression
+// DerefExpression
 // RangeExpression

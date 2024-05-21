@@ -506,3 +506,9 @@ type hasMembers interface {
 type Iterator interface {
 	Item() Type
 }
+
+// TODO:
+// Union
+// PointerType
+// ErrorType
+// OptionType

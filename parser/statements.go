@@ -188,7 +188,7 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 			tok := p.consume()
 			mutable = &tok
 		}
-		ty := p.parseType()
+		ty := p.parseTypeExpression()
 		rightParen := p.expect(token.RIGHT_PAREN)
 
 		methodOf = &ast.MethodOf{
@@ -281,7 +281,7 @@ func (p *parser) parseTypeDeclaration() ast.Statement {
 	keyword := p.consume()
 	name := p.delcareIdentifier()
 	equals := p.expect(token.EQUALS)
-	ty := p.parseType()
+	ty := p.parseTypeExpression()
 
 	return &ast.TypeDeclaration{
 		Keyword: keyword,
@@ -327,7 +327,7 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 		}
 	} else if p.canContinue() && p.next().Kind == token.LEFT_PAREN {
 		leftParen := p.consume()
-		types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
+		types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 
 		structDecl.TupleType = &ast.TupleStruct{
 			LeftParen:  leftParen,
@@ -342,7 +342,7 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 func (p *parser) parseInterfaceMember() ast.InterfaceMember {
 	name := p.expect(token.IDENTIFIER)
 	leftParen := p.expect(token.LEFT_PAREN)
-	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseType)
+	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 	returnType := p.parseOptionalTypeAnnotation()
 
 	return ast.InterfaceMember{

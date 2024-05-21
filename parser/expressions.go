@@ -34,7 +34,11 @@ func (p *parser) parseSubExpression(precedence int) ast.Expression {
 	nudFn := p.lookupNudFn()
 
 	if nudFn == nil {
-		p.Diagnostics.Report(diagnostics.ExpectedExpression(p.next().Location, p.next().Kind))
+		if p.typeExpr {
+			p.Diagnostics.Report(diagnostics.ExpectedType(p.next().Location, p.next().Kind))
+		} else {
+			p.Diagnostics.Report(diagnostics.ExpectedExpression(p.next().Location, p.next().Kind))
+		}
 		return &ast.ErrorNode{}
 	}
 
@@ -96,6 +100,29 @@ func (p *parser) parsePostfixExpression(operand ast.Expression) ast.Expression {
 	}
 }
 
+func (p *parser) parseRefDeref() ast.Expression {
+	operator := p.consume()
+	var mut *token.Token
+	if p.isKeyword("mut") {
+		tok := p.consume()
+		mut = &tok
+	}
+	operand := p.parseSubExpression(Prefix)
+
+	if operator.Kind == token.STAR {
+		return &ast.DerefExpression{
+			Operator: operator,
+			Mutable:  mut,
+			Operand:  operand,
+		}
+	}
+	return &ast.RefExpression{
+		Operator: operator,
+		Mutable:  mut,
+		Operand:  operand,
+	}
+}
+
 func (p *parser) parseFunctionCall(callee ast.Expression) ast.Expression {
 	leftParen := p.consume()
 	arguments, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
@@ -110,7 +137,11 @@ func (p *parser) parseFunctionCall(callee ast.Expression) ast.Expression {
 
 func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	leftSquare := p.consume()
-	index := p.parseExpression()
+	var index ast.Expression
+
+	if p.next().Kind != token.RIGHT_SQUARE {
+		index = p.parseExpression()
+	}
 	rightSquare := p.expect(token.RIGHT_SQUARE)
 
 	return &ast.IndexExpression{
@@ -178,7 +209,7 @@ func (p *parser) parseStructExpression(instanceOf ast.Expression) ast.Expression
 
 func (p *parser) parseCastExpression(left ast.Expression) ast.Expression {
 	arrow := p.consume()
-	toType := p.parseType()
+	toType := p.parseTypeExpression()
 
 	return &ast.CastExpression{
 		Left:  left,
@@ -189,12 +220,12 @@ func (p *parser) parseCastExpression(left ast.Expression) ast.Expression {
 
 func (p *parser) parseTypeCheckExpression(left ast.Expression) ast.Expression {
 	operator := p.consume()
-	toType := p.parseType()
+	ty := p.parseTypeExpression()
 
 	return &ast.TypeCheckExpression{
 		Left:     left,
 		Operator: operator,
-		Type:     toType,
+		Type:     ty,
 	}
 }
 

@@ -34,9 +34,9 @@ func TestVariableDeclaration(t *testing.T) {
 
 		if tt.ty != nil {
 			utils.Assert(t, stmt.Type != nil, "Expected no type, but got one")
-			typeName, ok := stmt.Type.Type.(*ast.TypeName)
+			typeName, ok := stmt.Type.Type.(*ast.Identifier)
 			utils.Assert(t, ok, "Type is not a type name")
-			utils.AssertEq(t, typeName.Name.Value, *tt.ty)
+			utils.AssertEq(t, typeName.Name, *tt.ty)
 		}
 
 		testLiteral(t, stmt.Value, tt.value)
@@ -198,9 +198,9 @@ func TestFunctionDeclaration(t *testing.T) {
 			utils.Assert(t, fn.MethodOf == nil, "Expected not to be a method")
 		} else {
 			utils.Assert(t, fn.MethodOf != nil, "Expected to be a method")
-			name, ok := fn.MethodOf.Type.(*ast.TypeName)
+			name, ok := fn.MethodOf.Type.(*ast.Identifier)
 			utils.Assert(t, ok, "MethodOf is not a type name")
-			utils.AssertEq(t, name.Name.Value, test.methodOf)
+			utils.AssertEq(t, name.Name, test.methodOf)
 
 			if test.thisMut {
 				utils.Assert(t, fn.MethodOf.Mutable != nil, "Expected this to be mutable")
@@ -227,9 +227,9 @@ func TestFunctionDeclaration(t *testing.T) {
 				utils.Assert(t, fnParam.Type == nil, "Expected no type annotation")
 			} else {
 				utils.Assert(t, fnParam.Type != nil, "Expected a type annotation")
-				name, ok := fnParam.Type.Type.(*ast.TypeName)
+				name, ok := fnParam.Type.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Param type is not a type name")
-				utils.AssertEq(t, name.Name.Value, param.dataType)
+				utils.AssertEq(t, name.Name, param.dataType)
 			}
 
 			if param.value == nil {
@@ -250,9 +250,9 @@ func TestFunctionDeclaration(t *testing.T) {
 			utils.Assert(t, fn.ReturnType == nil, "Expected no return type")
 		} else {
 			utils.Assert(t, fn.ReturnType != nil, "Expected a return type")
-			name, ok := fn.ReturnType.Type.(*ast.TypeName)
+			name, ok := fn.ReturnType.Type.(*ast.Identifier)
 			utils.Assert(t, ok, "ReturnType is not a type name")
-			utils.AssertEq(t, name.Name.Value, test.returnType)
+			utils.AssertEq(t, name.Name, test.returnType)
 		}
 
 		bodyStmt := utils.AssertSingle(t, fn.Body.Statements)
@@ -339,9 +339,9 @@ func TestTypeDeclaration(t *testing.T) {
 		td := getStmt[*ast.TypeDeclaration](t, program)
 
 		utils.AssertEq(t, td.Name.Value, test.name)
-		typeName, ok := td.Type.(*ast.TypeName)
+		typeName, ok := td.Type.(*ast.Identifier)
 		utils.Assert(t, ok, "Type is not a type name")
-		utils.AssertEq(t, typeName.Name.Value, test.typeName)
+		utils.AssertEq(t, typeName.Name, test.typeName)
 	}
 }
 
@@ -379,9 +379,9 @@ func TestStructDeclaration(t *testing.T) {
 					utils.Assert(t, structField.Type == nil, "Expected no type annotation")
 				} else {
 					utils.Assert(t, structField.Type != nil, "Expected a type annotation")
-					typeName, ok := structField.Type.Type.(*ast.TypeName)
+					typeName, ok := structField.Type.Type.(*ast.Identifier)
 					utils.Assert(t, ok, "Type is not a type name")
-					utils.AssertEq(t, typeName.Name.Value, field[1])
+					utils.AssertEq(t, typeName.Name, field[1])
 				}
 			}
 
@@ -392,9 +392,9 @@ func TestStructDeclaration(t *testing.T) {
 
 			for i, ty := range fields {
 				tupleType := sd.TupleType.Types[i]
-				typeName, ok := tupleType.(*ast.TypeName)
+				typeName, ok := tupleType.(*ast.Identifier)
 				utils.Assert(t, ok, "Type is not a type name")
-				utils.AssertEq(t, typeName.Name.Value, ty)
+				utils.AssertEq(t, typeName.Name, ty)
 			}
 
 		case nil:
@@ -444,18 +444,18 @@ func TestInterfaceDeclaration(t *testing.T) {
 			utils.AssertEq(t, len(intField.Parameters), len(field.params), "Incorrect number of parameters")
 			for i, param := range field.params {
 				intParam := intField.Parameters[i]
-				name, ok := intParam.(*ast.TypeName)
+				name, ok := intParam.(*ast.Identifier)
 				utils.Assert(t, ok, "Parameter is not a type name")
-				utils.AssertEq(t, name.Name.Value, param)
+				utils.AssertEq(t, name.Name, param)
 			}
 
 			if field.returnType == "" {
 				utils.Assert(t, intField.ReturnType == nil, "Expected no return type")
 			} else {
 				utils.Assert(t, intField.ReturnType != nil, "Expected return type")
-				name, ok := intField.ReturnType.Type.(*ast.TypeName)
+				name, ok := intField.ReturnType.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Return type is not a type name")
-				utils.AssertEq(t, name.Name.Value, field.returnType)
+				utils.AssertEq(t, name.Name, field.returnType)
 			}
 		}
 	}
@@ -540,9 +540,9 @@ func TestEnumDeclaration(t *testing.T) {
 		} else {
 			utils.Assert(t, stmt.ValueType != nil, "Expected type annotation")
 
-			name, ok := stmt.ValueType.Type.(*ast.TypeName)
+			name, ok := stmt.ValueType.Type.(*ast.Identifier)
 			utils.Assert(t, ok, "Type is not a type name")
-			utils.AssertEq(t, name.Name.Value, test.dataType)
+			utils.AssertEq(t, name.Name, test.dataType)
 		}
 
 		utils.AssertEq(t, len(stmt.Members), len(test.members))
@@ -610,9 +610,9 @@ func TestUnionDeclaration(t *testing.T) {
 			} else {
 				utils.Assert(t, unionMember.Type != nil)
 
-				name, ok := unionMember.Type.Type.(*ast.TypeName)
+				name, ok := unionMember.Type.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Type is not a type name")
-				utils.AssertEq(t, name.Name.Value, expected.ty)
+				utils.AssertEq(t, name.Name, expected.ty)
 			}
 		}
 	}
