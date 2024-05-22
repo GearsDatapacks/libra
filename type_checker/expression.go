@@ -70,6 +70,8 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckWhileLoop(expr)
 	case *ast.ForLoop:
 		return t.typeCheckForLoop(expr)
+	case *ast.FunctionExpression:
+		return t.typeCheckFunctionExpression(expr)
 
 	default:
 		panic(fmt.Sprintf("TODO: Type-check %T", expr))
@@ -851,5 +853,85 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Expression {
 		Variable: variable,
 		Iterator: iter,
 		Body:     body,
+	}
+}
+
+func (t *typeChecker) typeCheckFunctionExpression(fn *ast.FunctionExpression) ir.Expression {
+	// TODO: infer return type
+	var returnType types.Type = types.Void
+	if fn.ReturnType != nil {
+		returnType = t.typeCheckType(fn.ReturnType.Type)
+	}
+
+	if fn.Body == nil {
+		params := []types.Type{}
+		for _, param := range fn.Parameters {
+			if param.Name != nil {
+				if param.Type == nil {
+					if param.Mutable != nil {
+						t.Diagnostics.Report(diagnostics.MutWithoutParamName(param.Mutable.Location))
+					}
+					params = append(params, t.lookupType(*param.Name))
+				} else {
+					t.Diagnostics.Report(diagnostics.NamedParamInFnType(param.Name.Location))
+				}
+			} else if param.Type != nil {
+				params = append(params, t.typeCheckType(param.Type))
+			}
+		}
+
+		return &ir.TypeExpression{DataType: &types.Function{
+			Parameters: params,
+			ReturnType: returnType,
+		}}
+	}
+
+	t.enterScope(symbols.FunctionContext{ReturnType: returnType})
+	defer t.exitScope()
+	params := []string{}
+	paramTypes := []types.Type{}
+
+
+	for _, param := range fn.Parameters {
+		if param.Type != nil {
+			paramType := t.typeCheckType(param.Type)
+			for i := len(paramTypes) - 1; i >= 0; i-- {
+				if paramTypes[i] == nil {
+					paramTypes[i] = paramType
+				} else {
+					break
+				}
+			}
+			paramTypes = append(paramTypes, paramType)
+		} else {
+			paramTypes = append(paramTypes, nil)
+		}
+	}
+
+	for i, param := range fn.Parameters {
+		paramType := paramTypes[i]
+		if param.Name == nil {
+			t.Diagnostics.Report(diagnostics.UnnamedParameter(param.Type.Location()))
+			continue
+		}
+		symbol := &symbols.Variable{
+			Name:       param.Name.Value,
+			IsMut:      param.Mutable != nil,
+			Type:       paramType,
+			ConstValue: nil,
+		}
+		t.symbols.Register(symbol)
+		params = append(params, param.Name.Value)
+	}
+
+	body := t.typeCheckBlock(fn.Body, false)
+
+	return &ir.FunctionExpression{
+		Parameters: params,
+		Body:       body,
+		DataType: &types.Function{
+			Parameters: paramTypes,
+			ReturnType: returnType,
+		},
 	}
 }

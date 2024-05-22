@@ -776,6 +776,62 @@ func (r *RangeExpression) String() string {
 	return result.String()
 }
 
+type FunctionExpression struct {
+	expression
+	Keyword    token.Token
+	LeftParen  token.Token
+	Parameters []Parameter
+	RightParen token.Token
+	ReturnType *TypeAnnotation
+	Body       *Block
+}
+
+func (f *FunctionExpression) Location() text.Location {
+	return f.Keyword.Location
+}
+
+func (f *FunctionExpression) Tokens() []token.Token {
+	tokens := []token.Token{f.Keyword, f.LeftParen}
+	for _, param := range f.Parameters {
+		tokens = append(tokens, param.Tokens()...)
+	}
+
+	tokens = append(tokens, f.RightParen)
+	if f.ReturnType != nil {
+		tokens = append(tokens, f.ReturnType.Tokens()...)
+	}
+	if f.Body != nil {
+		tokens = append(tokens, f.Body.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (f *FunctionExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("fn(")
+
+	for i, param := range f.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(param.String())
+	}
+
+	result.WriteByte(')')
+	if f.ReturnType != nil {
+		result.WriteString(f.ReturnType.String())
+	}
+	
+	if f.Body != nil {
+		result.WriteByte(' ')
+		result.WriteString(f.Body.String())
+	}
+
+	return result.String()
+}
+
 type HasPrecedence interface {
 	Expression
 	PrecedenceString() string

@@ -214,15 +214,22 @@ type DefaultValue struct {
 
 type Parameter struct {
 	Mutable *token.Token
-	Name    token.Token
-	Type    *TypeAnnotation
+	Name    *token.Token
+	Colon   *token.Token
+	Type    Expression
 	Default *DefaultValue
 }
 
 func (p *Parameter) Tokens() []token.Token {
-	tokens := []token.Token{p.Name}
+	tokens := []token.Token{}
 	if p.Mutable != nil {
 		tokens = append(tokens, *p.Mutable)
+	}
+	if p.Name != nil {
+		tokens = append(tokens, *p.Name)
+	}
+	if p.Colon != nil {
+		tokens = append(tokens, *p.Colon)
 	}
 	if p.Type != nil {
 		tokens = append(tokens, p.Type.Tokens()...)
@@ -241,7 +248,12 @@ func (p *Parameter) String() string {
 	if p.Mutable != nil {
 		result.WriteString("mut ")
 	}
-	result.WriteString(p.Name.Value)
+	if p.Name != nil {
+		result.WriteString(p.Name.Value)
+	}
+	if p.Colon != nil {
+		result.WriteString(": ")
+	}
 	if p.Type != nil {
 		result.WriteString(p.Type.String())
 	}

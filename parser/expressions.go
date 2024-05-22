@@ -343,3 +343,26 @@ func (p *parser) parseMap() ast.Expression {
 		RightBrace: rightBrace,
 	}
 }
+
+func (p *parser) parseFunctionExpression() ast.Expression {
+	keyword := p.consume()
+
+	leftParen := p.expect(token.LEFT_PAREN)
+	defer p.exitScope(p.enterScope())
+	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseParameter)
+
+	returnType := p.parseOptionalTypeAnnotation()
+	var body *ast.Block
+	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
+		body = p.parseBlock(true)
+	}
+
+	return &ast.FunctionExpression{
+		Keyword:    keyword,
+		LeftParen:  leftParen,
+		Parameters: params,
+		RightParen: rightParen,
+		ReturnType: returnType,
+		Body:       body,
+	}
+}

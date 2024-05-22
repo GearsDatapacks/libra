@@ -1253,6 +1253,43 @@ func (t *TypeExpression) ConstValue() values.ConstValue {
 	return values.TypeValue{Type: t.DataType}
 }
 
+type FunctionExpression struct {
+	expression
+	Parameters []string
+	Body       *Block
+	DataType   *types.Function
+}
+
+func (f *FunctionExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("fn(")
+
+	for i, param := range f.Parameters {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(param)
+	}
+
+	result.WriteString(") ")
+	result.WriteString(f.Body.String())
+
+	return result.String()
+}
+
+func (f *FunctionExpression) Type() types.Type {
+	return f.DataType
+}
+
+func (t *FunctionExpression) IsConst() bool {
+	return false
+}
+
+func (t *FunctionExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
 // RefExpression
 // DerefExpression

@@ -107,6 +107,10 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 	params := []string{}
 
 	for i, param := range funcDec.Parameters {
+		if param.Name == nil {
+			t.Diagnostics.Report(diagnostics.UnnamedParameter(param.Type.Location()))
+			continue
+		}
 		symbol := &symbols.Variable{
 			Name:       param.Name.Value,
 			IsMut:      param.Mutable != nil,

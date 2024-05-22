@@ -158,19 +158,37 @@ func (p *parser) parserOptionalDefaultValue() *ast.DefaultValue {
 }
 
 func (p *parser) parseParameter() ast.Parameter {
-	var mutable *token.Token
+	var mutable, name, colon *token.Token
+	var ty ast.Expression
+	var value *ast.DefaultValue
 	if p.isKeyword("mut") {
 		tok := p.consume()
 		mutable = &tok
 	}
 
-	name := p.delcareIdentifier()
-	ty := p.parseOptionalTypeAnnotation()
-	value := p.parserOptionalDefaultValue()
+	initial := p.parseTypeExpression()
+	if ident, ok := initial.(*ast.Identifier); ok {
+		name = &ident.Token
+		p.identifiers[ident.Token.Value] = ident.Token.Location
+
+		if p.next().Kind == token.COLON {
+			tok := p.consume()
+			colon = &tok
+			ty = p.parseTypeExpression()
+		}
+		value = p.parserOptionalDefaultValue()
+	} else {
+		if mutable != nil {
+			p.Diagnostics.Report(diagnostics.MutWithoutParamName(mutable.Location))
+		}
+
+		ty = initial
+	}
 
 	return ast.Parameter{
 		Mutable: mutable,
 		Name:    name,
+		Colon:   colon,
 		Type:    ty,
 		Default: value,
 	}

@@ -438,9 +438,9 @@ fn add(a, b: i32): i32 {
 }
 ```
 
-If the function doesn't perform any intermediate operations, and simply returns a value, a shorthand syntax can be used:
+If the function doesn't perform any intermediate operations, and simply returns a value, the `return` keyword can be omitted:
 ```rust
-fn add(a, b: i32): i32 => a + b
+fn add(a, b: i32): i32 {a + b}
 ```
 
 Functions can be called the function name, followed by `(`, `)` enclosing comma-separated arguments.
@@ -644,7 +644,7 @@ Additionally, anonymous functions can omit their return type as it can be inferr
 
 An example of how you might achieve some behaviour without anonymous functions:
 ```rust
-fn my_filter(x: i32): bool => x % 2 == 0 || x < 5
+fn my_filter(x: i32): bool {x % 2 == 0 || x < 5}
 
 [1, 2, 4, 5, 6, 7, 91, 24].filter(my_filter)
 // my_filter is now a global function
@@ -652,7 +652,7 @@ fn my_filter(x: i32): bool => x % 2 == 0 || x < 5
 
 Here's how you could do it with anonymous functions:
 ```rust
-[1, 2, 4, 5, 6, 7, 91, 24].filter(fn(x: i32) => x % 2 == 0 || x < 5)
+[1, 2, 4, 5, 6, 7, 91, 24].filter(fn(x: i32) {x % 2 == 0 || x < 5})
 // Anonymous function only exists within the scope of filter
 ```
 
@@ -863,15 +863,15 @@ explicit interface Foo {
 }
 
 struct Fooer
-fn (Fooer) foo(): i32 => 10 // does not explicitly implement Foo
-fn (Fooer) bar(): f32 => 3.14
+fn (Fooer) foo(): i32 {10} // does not explicitly implement Foo
+fn (Fooer) bar(): f32 {3.14}
 
 struct Barer
 
 @impl Foo
-fn (Barer) foo(): i32 => Fooer.foo() - 3
+fn (Barer) foo(): i32 {Fooer.foo() - 3}
 @impl Foo
-fn (Barer) bar(): f32 => 9.3
+fn (Barer) bar(): f32 {9.3}
 ```
 
 #### impl blocks

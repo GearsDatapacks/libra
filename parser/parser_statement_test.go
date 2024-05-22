@@ -227,7 +227,7 @@ func TestFunctionDeclaration(t *testing.T) {
 				utils.Assert(t, fnParam.Type == nil, "Expected no type annotation")
 			} else {
 				utils.Assert(t, fnParam.Type != nil, "Expected a type annotation")
-				name, ok := fnParam.Type.Type.(*ast.Identifier)
+				name, ok := fnParam.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Param type is not a type name")
 				utils.AssertEq(t, name.Name, param.dataType)
 			}

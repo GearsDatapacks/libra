@@ -103,7 +103,7 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 
 	for _, param := range fn.Parameters {
 		if param.Type != nil {
-			paramType := t.typeCheckType(param.Type.Type)
+			paramType := t.typeCheckType(param.Type)
 			for i := len(fnType.Parameters) - 1; i >= 0; i-- {
 				if fnType.Parameters[i] == nil {
 					fnType.Parameters[i] = paramType

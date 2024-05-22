@@ -115,6 +115,11 @@ func LastParameterMustHaveType(location text.Location, fnLocation text.Location)
 	return diagnostics
 }
 
+func MutWithoutParamName(location text.Location) Diagnostic {
+	msg := `"mut" must be followed by a parameter name`
+	return makeError(msg, location)
+}
+
 func LastStructFieldMustHaveType(location text.Location, structLoc text.Location) []Diagnostic {
 	errMsg := "The last field of a struct must have a type annotation"
 	diagnostics := []Diagnostic{makeError(errMsg, location)}
@@ -300,5 +305,15 @@ func CannotUseStatementOutsideBlock(location text.Location, stmtKind string) Dia
 
 func ExpressionNotType(location text.Location, ty tcType) Diagnostic {
 	msg := fmt.Sprintf("Expected a type, found value of type %q", ty.String())
+	return makeError(msg, location)
+}
+
+func NamedParamInFnType(location text.Location) Diagnostic {
+	msg := "Parameters in function types must be unnamed"
+	return makeError(msg, location)
+}
+
+func UnnamedParameter(location text.Location) Diagnostic {
+	msg := "Unnamed parameters are only allowed in function types"
 	return makeError(msg, location)
 }
