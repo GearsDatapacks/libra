@@ -149,6 +149,7 @@ const (
 	LeftShift
 	RightShift
 	BitwiseOr
+	Union
 	BitwiseAnd
 	AddInt
 	AddFloat
@@ -198,6 +199,8 @@ func (b BinaryOperator) String() string {
 	case RightShift:
 		return ">>"
 
+	case Union:
+		fallthrough
 	case BitwiseOr:
 		return "|"
 
@@ -277,6 +280,9 @@ func (b BinaryOperator) Type() types.Type {
 
 	case BitwiseOr:
 		ty = types.Int
+
+	case Union:
+		ty = types.RuntimeType
 
 	case BitwiseAnd:
 		ty = types.Int
@@ -432,6 +438,13 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value | right.Value,
+		}
+
+	case Union:
+		left := b.Left.ConstValue().(values.TypeValue).Type.(types.Type)
+		right := b.Right.ConstValue().(values.TypeValue).Type.(types.Type)
+		return values.TypeValue{
+			Type: types.MakeUnion(left, right),
 		}
 
 	case BitwiseAnd:
@@ -721,19 +734,24 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	switch {
-	case types.Match(c.To, types.Float):
+	if types.Match(c.To, types.Float) {
 		return values.FloatValue{
 			Value: values.NumericValue(c.Expression.ConstValue()),
 		}
-	case types.Match(c.To, types.Int):
+	}
+
+	if types.Match(c.To, types.Int) {
 		num := values.NumericValue(c.Expression.ConstValue())
 		return values.IntValue{
 			Value: int64(num),
 		}
-	default:
-		panic("unreachable")
 	}
+
+	if _, ok := c.To.(*types.Union); ok {
+		return c.Expression.ConstValue()
+	}
+
+	panic("unreachable")
 }
 
 type InvalidExpression struct {

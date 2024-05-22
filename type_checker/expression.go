@@ -267,6 +267,9 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.BitwiseOr
 		}
+		if types.Assignable(types.RuntimeType, lType) && types.Assignable(types.RuntimeType, rType) {
+			binOp = ir.Union
+		}
 	case token.AMPERSAND:
 		if types.Assignable(types.Int, lType) && types.Assignable(types.Int, rType) {
 			binOp = ir.BitwiseAnd

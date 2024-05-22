@@ -491,6 +491,61 @@ func (i *Interface) member(member string) (Type, *diagnostics.Partial) {
 	return Invalid, diagnostics.NoMember(i, member)
 }
 
+type Union struct {
+	Types []Type
+}
+
+func (u *Union) String() string {
+	var result bytes.Buffer
+
+	for i, ty := range u.Types {
+		if i != 0 {
+			result.WriteString(" | ")
+		}
+		result.WriteString(ty.String())
+	}
+
+	return result.String()
+}
+
+func (u *Union) valid(other Type) bool {
+	if union, ok := other.(*Union); ok {
+		for _, ty := range union.Types {
+			if !Assignable(u, ty) {
+				return false
+			}
+		}
+		return true
+	} else {
+		for _, ty := range u.Types {
+			if Assignable(ty, other) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func MakeUnion(a, b Type) Type {
+	types := []Type{}
+	if union, ok := a.(*Union); ok {
+		types = append(types, union.Types...)
+	} else {
+		types = append(types, a)
+	}
+
+	if union, ok := b.(*Union); ok {
+		types = append(types, union.Types...)
+	} else {
+		types = append(types, b)
+	}
+
+	return &Union{
+		Types: types,
+	}
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -508,7 +563,6 @@ type Iterator interface {
 }
 
 // TODO:
-// Union
 // PointerType
 // ErrorType
 // OptionType
