@@ -9,73 +9,169 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
+type tcStage int
+
+const (
+	tcNone tcStage = iota
+	tcRegister
+	tcImports
+	tcDecls
+	tcFns
+	tcStmts
+)
+
 type typeChecker struct {
-	Diagnostics diagnostics.Manager
+	diagnostics *diagnostics.Manager
+	module      *module.Module
 	symbols     *symbols.Table
+	subModules  map[string]*typeChecker
+	stage        tcStage
 }
 
-func New(diagnostics diagnostics.Manager) *typeChecker {
-	return &typeChecker{
-		Diagnostics: diagnostics,
+var mods = map[string]*typeChecker{}
+
+func new(mod *module.Module, diagnostics *diagnostics.Manager) *typeChecker {
+	t := &typeChecker{
+		diagnostics: diagnostics,
+		module:      mod,
 		symbols:     symbols.New(),
+		subModules:  map[string]*typeChecker{},
+		stage:        tcNone,
 	}
+	mods[mod.Path] = t
+
+	for name, subMod := range mod.Imported {
+		if mod, ok := mods[subMod.Path]; ok {
+			t.subModules[name] = mod
+			continue
+		}
+		mods[subMod.Path] = new(subMod, diagnostics)
+		t.subModules[name] = mods[subMod.Path]
+	}
+	return t
 }
 
-func (t *typeChecker) TypeCheckProgram(program *ast.Program) *ir.Program {
-	stmts := []ir.Statement{}
+type typeContext struct {
+	*symbols.Table
+	id uint
+}
 
-	for _, stmt := range program.Statements {
-		stmts = append(stmts, t.typeCheckStatement(stmt))
-	}
+func (t *typeContext) Id() uint {
+	return t.id
+}
+
+func TypeCheck(mod *module.Module, manager diagnostics.Manager) (*ir.Program, diagnostics.Manager) {
+	t := new(mod, &manager)
+
+	t.registerDeclarations()
+	t.typeCheckImports()
+	t.typeCheckDeclarations()
+	t.typeCheckFunctions()
+
+	stmts := t.typeCheckStatements()
 
 	return &ir.Program{
 		Statements: stmts,
+	}, *t.diagnostics
+}
+
+func (t *typeChecker) updateContext() {
+	types.Context = &typeContext{
+		Table: t.symbols,
+		id:    t.module.Id,
 	}
 }
 
-func (t *typeChecker) TypeCheck(mod *module.Module) *ir.Program {
-	oldContext := types.Context
-	types.Context = t.symbols
-	t.registerDeclarations(mod)
-	t.typeCheckDeclarations(mod)
-	t.typeCheckFunctions(mod)
-	stmts := t.typeCheckStatements(mod)
-
-	types.Context = oldContext
-	return &ir.Program{
-		Statements: stmts,
+func (t *typeChecker) registerDeclarations() {
+	if t.stage >= tcRegister {
+		return
 	}
-}
-
-func (t *typeChecker) registerDeclarations(mod *module.Module) {
-	for _, file := range mod.Files {
+	t.stage = tcRegister
+	
+	for _, subMod := range t.subModules {
+		subMod.registerDeclarations()
+	}
+	
+	t.updateContext()
+	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
-			 t.registerDeclaration(stmt)
+			t.registerDeclaration(stmt)
 		}
 	}
 }
 
-func (t *typeChecker) typeCheckDeclarations(mod *module.Module) {
-	for _, file := range mod.Files {
+func (t *typeChecker) typeCheckImports() {
+	if t.stage >= tcImports {
+		return
+	}
+	t.stage = tcImports
+
+	for _, subMod := range t.subModules {
+		subMod.typeCheckImports()
+	}
+
+	t.updateContext()
+	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
-			 t.typeCheckDeclaration(stmt)
+			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
+				t.typeCheckImport(importStmt)
+			}
 		}
 	}
 }
 
-func (t *typeChecker) typeCheckFunctions(mod *module.Module) {
-	for _, file := range mod.Files {
+func (t *typeChecker) typeCheckDeclarations() {
+	if t.stage >= tcDecls {
+		return
+	}
+	t.stage = tcDecls
+
+	for _, subMod := range t.subModules {
+		subMod.typeCheckDeclarations()
+	}
+
+	t.updateContext()
+	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
-			 if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
+			t.typeCheckDeclaration(stmt)
+		}
+	}
+}
+
+func (t *typeChecker) typeCheckFunctions() {
+	if t.stage >= tcFns {
+		return
+	}
+	t.stage = tcFns
+
+	for _, subMod := range t.subModules {
+		subMod.typeCheckFunctions()
+	}
+
+	t.updateContext()
+	for _, file := range t.module.Files {
+		for _, stmt := range file.Ast.Statements {
+			if fn, ok := stmt.(*ast.FunctionDeclaration); ok {
 				t.typeCheckFunctionType(fn)
-			 }
+			}
 		}
 	}
 }
 
-func (t *typeChecker) typeCheckStatements(mod *module.Module) []ir.Statement {
+// TODO: return ir for other modules too
+func (t *typeChecker) typeCheckStatements() []ir.Statement {
+	if t.stage >= tcStmts {
+		return []ir.Statement{}
+	}
+	t.stage = tcStmts
+	
+	for _, subMod := range t.subModules {
+		subMod.typeCheckStatements()
+	}
+	
+	t.updateContext()
 	stmts := []ir.Statement{}
-	for _, file := range mod.Files {
+	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
 			stmts = append(stmts, t.typeCheckStatement(stmt))
 		}

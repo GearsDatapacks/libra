@@ -83,6 +83,41 @@ func (*ContinueStatement) String() string {
 	return "continue"
 }
 
+type ImportStatement struct {
+	Module    string
+	Name      string
+	Symbols   []string
+	ImportAll bool
+}
+
+func (i *ImportStatement) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("import ")
+	if i.ImportAll {
+		result.WriteString("* from ")
+	} else if i.Symbols != nil {
+		result.WriteByte('{')
+		for i, symbol := range i.Symbols {
+			if i != 0 {
+				result.WriteString(", ")
+			}
+			result.WriteString(symbol)
+		}
+		result.WriteString("} ")
+	}
+
+	result.WriteByte('"')
+	result.WriteString(i.Module)
+	result.WriteByte('"')
+
+	if !i.ImportAll && i.Symbols == nil {
+		result.WriteString(" as ")
+		result.WriteString(i.Name)
+	}
+
+	return result.String()
+}
+
 // TODO:
-// ImportStatement
 // EnumDeclaration

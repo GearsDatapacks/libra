@@ -531,27 +531,24 @@ func TestTCDiagnostics(t *testing.T) {
 		p := parser.New(tokens, lexer.Diagnostics)
 		program := p.Parse()
 		utils.AssertEq(t, len(p.Diagnostics), 0, "Expected no parser diagnostics")
-		tc := typechecker.New(p.Diagnostics)
-		tc.TypeCheck(fakeModule(program))
+		_, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
 
-		utils.AssertEq(t, len(tc.Diagnostics), len(test.diagnostics),
-			fmt.Sprintf("Incorrect number of diagnostics (expected %d, got %d)", len(test.diagnostics), len(tc.Diagnostics)))
+		utils.AssertEq(t, len(diags), len(test.diagnostics),
+			fmt.Sprintf("Incorrect number of diagnostics (expected %d, got %d)", len(test.diagnostics), len(diags)))
 
 		for i, diag := range test.diagnostics {
 			// FIXME: Do this in a better way
 			span := spans[len(spans)-i-1]
-			testDiagnostic(t, tc.Diagnostics[i], diag.kind, diag.message, span)
+			testDiagnostic(t, diags[i], diag.kind, diag.message, span)
 		}
 	}
 }
 
 func fakeModule(program *ast.Program) *module.Module {
 	return &module.Module{
-		Name: "test",
-		Files: []module.File{{
-			Path: "test.lb",
-			Ast:  program,
-		}},
+		Id:       1,
+		Name:     "test",
+		Files:    []module.File{{Path: "test.lb", Ast: program}},
 		Imported: map[string]*module.Module{},
 	}
 }
@@ -612,10 +609,9 @@ func getProgram(t *testing.T, input string) *ir.Program {
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
-	tc := typechecker.New(p.Diagnostics)
-	irProgram := tc.TypeCheckProgram(program)
-	utils.AssertEq(t, len(tc.Diagnostics), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(tc.Diagnostics)))
+	irProgram, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
+	utils.AssertEq(t, len(diags), 0,
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
 
 	return irProgram
 }

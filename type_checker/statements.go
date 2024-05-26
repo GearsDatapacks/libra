@@ -33,7 +33,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckYield(stmt)
 	case *ast.ContinueStatement:
 		return t.typeCheckContinue(stmt)
-	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration:
+	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration, *ast.ImportStatement:
 		return &ir.Block{
 			Statements: []ir.Statement{},
 		}
@@ -56,7 +56,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	if expectedType != nil {
 		conversion := convert(value, expectedType, implicit)
 		if conversion == nil {
-			t.Diagnostics.Report(diagnostics.NotAssignable(varDec.Value.Location(), expectedType, value.Type()))
+			t.diagnostics.Report(diagnostics.NotAssignable(varDec.Value.Location(), expectedType, value.Type()))
 		} else {
 			value = conversion
 		}
@@ -70,7 +70,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	if constant && !value.IsConst() {
-		t.Diagnostics.Report(diagnostics.NotConst(varDec.Value.Location()))
+		t.diagnostics.Report(diagnostics.NotConst(varDec.Value.Location()))
 	}
 	var constVal values.ConstValue
 	if !mutable && value.IsConst() {
@@ -84,7 +84,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		ConstValue: constVal,
 	}
 	if !t.symbols.Register(variable) {
-		t.Diagnostics.Report(diagnostics.VariableDefined(varDec.Identifier.Location, variable.Name))
+		t.diagnostics.Report(diagnostics.VariableDefined(varDec.Identifier.Location, variable.Name))
 	}
 	return &ir.VariableDeclaration{
 		Name:  variable.Name,
@@ -108,7 +108,7 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 
 	for i, param := range funcDec.Parameters {
 		if param.Name == nil {
-			t.Diagnostics.Report(diagnostics.UnnamedParameter(param.Type.Location()))
+			t.diagnostics.Report(diagnostics.UnnamedParameter(param.Type.Location()))
 			continue
 		}
 		symbol := &symbols.Variable{
@@ -151,13 +151,13 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 		symbolTable = symbolTable.Parent
 	}
 	if expectedType == nil {
-		t.Diagnostics.Report(diagnostics.NoReturnOutsideFunction(ret.Keyword.Location))
+		t.diagnostics.Report(diagnostics.NoReturnOutsideFunction(ret.Keyword.Location))
 		expectedType = types.Invalid
 	}
 
 	if ret.Value == nil {
 		if expectedType != types.Void {
-			t.Diagnostics.Report(diagnostics.ExpectedReturnValue(ret.Keyword.Location))
+			t.diagnostics.Report(diagnostics.ExpectedReturnValue(ret.Keyword.Location))
 		}
 		return &ir.ReturnStatement{
 			Value: nil,
@@ -168,7 +168,7 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 	if conversion := convert(value, expectedType, implicit); conversion != nil {
 		value = conversion
 	} else {
-		t.Diagnostics.Report(diagnostics.NotAssignable(ret.Value.Location(), expectedType, value.Type()))
+		t.diagnostics.Report(diagnostics.NotAssignable(ret.Value.Location(), expectedType, value.Type()))
 	}
 
 	return &ir.ReturnStatement{
@@ -192,7 +192,7 @@ func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 		value = t.typeCheckExpression(b.Value)
 	}
 	if context == nil {
-		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Keyword.Location, "break"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Keyword.Location, "break"))
 	} else if value != nil {
 		context.ResultType = value.Type()
 	}
@@ -209,7 +209,7 @@ func (t *typeChecker) typeCheckYield(yield *ast.YieldStatement) ir.Statement {
 
 	value := t.typeCheckExpression(yield.Value)
 	if !ok {
-		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideBlock(yield.Keyword.Location, "yield"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideBlock(yield.Keyword.Location, "yield"))
 	} else {
 		context.ResultType = value.Type()
 	}
@@ -229,7 +229,7 @@ func (t *typeChecker) typeCheckContinue(c *ast.ContinueStatement) ir.Statement {
 	}
 
 	if symbolTable == nil {
-		t.Diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Keyword.Location, "continue"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Keyword.Location, "continue"))
 	}
 
 	return &ir.ContinueStatement{}

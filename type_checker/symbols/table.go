@@ -1,6 +1,8 @@
 package symbols
 
-import "github.com/gearsdatapacks/libra/type_checker/types"
+import (
+	"github.com/gearsdatapacks/libra/type_checker/types"
+)
 
 type Table struct {
 	Parent  *Table
@@ -11,8 +13,10 @@ type Table struct {
 func New() *Table {
 	t := &Table{
 		symbols: map[string]Symbol{},
-		Context: &GlobalContext{
-			Methods: map[string][]types.Method{},
+		Context: &globalContext{
+			methods:         map[string][]*Method{},
+			exportedMethods: map[string][]*Method{},
+			exports:         map[string]Symbol{},
 		},
 	}
 	t.registerGlobals()
@@ -34,11 +38,17 @@ func (t *Table) ChildWithContext(context any) *Table {
 	}
 }
 
-func (t *Table) Register(symbol Symbol) bool {
+func (t *Table) Register(symbol Symbol, exported ...bool) bool {
 	if _, exists := t.symbols[symbol.GetName()]; exists {
 		return false
 	}
 	t.symbols[symbol.GetName()] = symbol
+
+	if len(exported) > 0 && exported[0] {
+		context := t.Context.(*globalContext)
+		context.exports[symbol.GetName()] = symbol
+	}
+
 	return true
 }
 
@@ -53,6 +63,22 @@ func (t *Table) Lookup(name string) Symbol {
 	return nil
 }
 
+func (t *Table) LookupExport(name string) Symbol {
+	symbol, ok := t.globalScope().Context.(*globalContext).exports[name]
+	if ok {
+		return symbol
+	}
+	return nil
+}
+
+func (t *Table) LookupExportType(name string) types.Type {
+	symbol := t.LookupExport(name)
+	if symbol != nil {
+		return symbol.GetType()
+	}
+	return nil
+}
+
 func (t *Table) globalScope() *Table {
 	if t.Parent == nil {
 		return t
@@ -61,8 +87,8 @@ func (t *Table) globalScope() *Table {
 }
 
 func (t *Table) LookupMethod(name string, methodOf types.Type, static bool) *types.Function {
-	context := t.globalScope().Context.(*GlobalContext)
-	methods, ok := context.Methods[name]
+	context := t.globalScope().Context.(*globalContext)
+	methods, ok := context.methods[name]
 	if !ok {
 		return nil
 	}
@@ -74,13 +100,37 @@ func (t *Table) LookupMethod(name string, methodOf types.Type, static bool) *typ
 	return nil
 }
 
-func (t *Table) RegisterMethod(name string, method types.Method) {
-	context := t.globalScope().Context.(*GlobalContext)
-	methods, ok := context.Methods[name]
+func (t *Table) RegisterMethod(name string, method *Method, exported bool) {
+	context := t.globalScope().Context.(*globalContext)
+	methods, ok := context.methods[name]
 	if !ok {
-		context.Methods[name] = []types.Method{method}
+		context.methods[name] = []*Method{method}
 	}
-	context.Methods[name] = append(methods, method)
+	context.methods[name] = append(methods, method)
+	if exported {
+		t.addExportedMethod(name, method)
+	}
+}
+
+func (t *Table) addExportedMethod(name string, method *Method) {
+	context := t.globalScope().Context.(*globalContext)
+	methods, ok := context.exportedMethods[name]
+	if !ok {
+		context.exportedMethods[name] = []*Method{method}
+	}
+	context.exportedMethods[name] = append(methods, method)
+}
+
+func (t *Table) Extend(other *Table) {
+	context := other.globalScope().Context.(*globalContext)
+	for _, export := range context.exports {
+		t.Register(export)
+	}
+	for name, methods := range context.exportedMethods {
+		for _, method := range methods {
+			t.RegisterMethod(name, method, false)
+		}
+	}
 }
 
 func (t *Table) registerGlobals() {

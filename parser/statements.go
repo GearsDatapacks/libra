@@ -9,7 +9,11 @@ import (
 func (p *parser) parseTopLevelStatement() ast.Statement {
 	for _, kwd := range p.keywords {
 		if p.isKeyword(kwd.Name) {
-			return kwd.Fn()
+			if kwd.Kind == decl {
+				return kwd.Fn()
+			} else {
+				return kwd.Fn()
+			}
 		}
 	}
 
@@ -48,99 +52,6 @@ func (p *parser) parseVariableDeclaration() ast.Statement {
 		Type:       typeAnnotation,
 		Equals:     equals,
 		Value:      value,
-	}
-}
-
-func (p *parser) parseBlock(noScope ...bool) *ast.Block {
-	leftBrace := p.expect(token.LEFT_BRACE)
-	if len(noScope) == 0 || !noScope[0] {
-		defer p.exitScope(p.enterScope())
-	}
-	statements, rightBrace := parseDelimStmtList(p, token.RIGHT_BRACE, p.parseStatement)
-
-	return &ast.Block{
-		LeftBrace:  leftBrace,
-		Statements: statements,
-		RightBrace: rightBrace,
-	}
-}
-
-func (p *parser) parseBlockExpression() ast.Expression {
-	if p.isKeyword("do") {
-		p.consume()
-	}
-	return p.parseBlock()
-}
-
-func (p *parser) parseIfExpression() ast.Expression {
-	keyword := p.consume()
-
-	p.noBraces = true
-	p.bracketLevel++
-	condition := p.parseSubExpression(Lowest)
-	p.noBraces = false
-	p.bracketLevel--
-
-	body := p.parseBlock()
-	var elseBranch *ast.ElseBranch
-
-	if p.isKeyword("else") {
-		elseBranch = &ast.ElseBranch{}
-		elseBranch.ElseKeyword = p.consume()
-		if p.isKeyword("if") {
-			elseBranch.Statement = p.parseIfExpression()
-		} else {
-			elseBranch.Statement = p.parseBlock()
-		}
-	}
-
-	return &ast.IfExpression{
-		Keyword:    keyword,
-		Condition:  condition,
-		Body:       body,
-		ElseBranch: elseBranch,
-	}
-}
-
-func (p *parser) parseWhileLoop() ast.Expression {
-	keyword := p.consume()
-
-	p.noBraces = true
-	p.bracketLevel++
-	condition := p.parseSubExpression(Lowest)
-	p.bracketLevel--
-	p.noBraces = false
-
-	body := p.parseBlock()
-
-	return &ast.WhileLoop{
-		Keyword:   keyword,
-		Condition: condition,
-		Body:      body,
-	}
-}
-
-func (p *parser) parseForLoop() ast.Expression {
-	forKeyword := p.consume()
-	defer p.exitScope(p.enterScope())
-
-	variable := p.delcareIdentifier()
-	inKeyword := p.expectKeyword("in")
-
-	p.noBraces = true
-	p.bracketLevel++
-	iterator := p.parseSubExpression(Lowest)
-	p.bracketLevel--
-	p.noBraces = false
-
-	body := p.parseBlock(true)
-
-	return &ast.ForLoop{
-		ForKeyword: forKeyword,
-		Variable:   variable,
-		InKeyword:  inKeyword,
-		Iterator:   iterator,
-		Body:       body,
 	}
 }
 
@@ -310,10 +221,16 @@ func (p *parser) parseTypeDeclaration() ast.Statement {
 }
 
 func (p *parser) parseStructField() ast.StructField {
+	var pub *token.Token
+	if p.isKeyword("pub") {
+		tok := p.consume()
+		pub = &tok
+	}
 	name := p.expect(token.IDENTIFIER)
 	ty := p.parseOptionalTypeAnnotation()
 
 	return ast.StructField{
+		Pub:  pub,
 		Name: name,
 		Type: ty,
 	}
@@ -493,4 +410,15 @@ func (p *parser) parseTagDeclaration() ast.Statement {
 		Keyword: keyword,
 		Name:    name,
 	}
+}
+
+func (p *parser) parsePubStatement() ast.Statement {
+	pub := p.consume()
+	stmt := p.parseTopLevelStatement()
+	if decl, ok := stmt.(ast.Declaration); ok {
+		decl.MarkExport()
+		return decl
+	}
+	p.Diagnostics.Report(diagnostics.CannotExport(pub.Location))
+	return stmt
 }

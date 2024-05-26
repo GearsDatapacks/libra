@@ -106,6 +106,19 @@ func (s StructValue) Member(member string) ConstValue {
 	return s.Members[member]
 }
 
+type ModuleValue struct {
+	constValue
+	Module interface{LookupExport(string) interface{Value() ConstValue}}
+}
+
+func (m ModuleValue) Member(member string) ConstValue {
+	export := m.Module.LookupExport(member)
+	if export == nil {
+		return nil
+	}
+	return export.Value()
+}
+
 func NumericValue(v ConstValue) float64 {
 	switch val := v.(type) {
 	case FloatValue:

@@ -1112,7 +1112,7 @@ func (m *MemberExpression) Type() types.Type {
 }
 
 func (m *MemberExpression) IsConst() bool {
-	return m.Left.IsConst()
+	return m.Left.IsConst() && m.Left.ConstValue().Member(m.Member) != nil
 }
 
 func (m *MemberExpression) ConstValue() values.ConstValue {

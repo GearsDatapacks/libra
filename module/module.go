@@ -30,7 +30,9 @@ func loadFile(path string) (*File, diagnostics.Manager) {
 	return file, p.Diagnostics
 }
 
-func loadModule(modPath string) ([]File, diagnostics.Manager) {
+var moduleId uint = 0
+
+func loadModule(modPath string) (*Module, diagnostics.Manager) {
 	dir, err := os.ReadDir(modPath)
 	if err != nil {
 		panic(err)
@@ -49,11 +51,23 @@ func loadModule(modPath string) ([]File, diagnostics.Manager) {
 		}
 	}
 
-	return files, diagnostics
+	_, name := path.Split(modPath)
+	moduleId++
+	mod := &Module{
+		Id:       moduleId,
+		Name:     name,
+		Path:     modPath,
+		Files:    files,
+		Imported: map[string]*Module{},
+	}
+
+	return mod, diagnostics
 }
 
 type Module struct {
+	Id       uint
 	Name     string
+	Path     string
 	Files    []File
 	Imported map[string]*Module
 }
@@ -69,20 +83,14 @@ func Load(filePath string) (*Module, diagnostics.Manager) {
 		return fetched, diagnostics.Manager{}
 	}
 
-	files, diagnostics := loadModule(modPath)
-	_, name := path.Split(modPath)
-	mod := &Module{
-		Name:     name,
-		Files:    files,
-		Imported: map[string]*Module{},
-	}
+	mod, diagnostics := loadModule(modPath)
 	fetchedModules[modPath] = mod
 
 	if len(diagnostics) != 0 {
 		return mod, diagnostics
 	}
 
-	for _, file := range files {
+	for _, file := range mod.Files {
 		for _, stmt := range file.Ast.Statements {
 			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
 				importedPath := path.Join(modPath, importStmt.Module.Value)

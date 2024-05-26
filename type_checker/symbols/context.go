@@ -13,6 +13,8 @@ type BlockContext struct {
 	ResultType types.Type
 }
 
-type GlobalContext struct {
-	Methods map[string][]types.Method
+type globalContext struct {
+	methods map[string][]*Method
+	exportedMethods map[string][]*Method
+	exports map[string]Symbol
 }

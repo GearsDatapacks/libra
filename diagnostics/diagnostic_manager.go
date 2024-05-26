@@ -160,6 +160,12 @@ func ExpectedType(location text.Location, kind token.Kind) Diagnostic {
 	return makeError(msg, location)
 }
 
+func CannotExport(location text.Location) Diagnostic {
+	msg := "Only top-level declarations can be exported"
+
+	return makeError(msg, location)
+}
+
 // Type-checker Diagnostics
 
 type tcType interface {
@@ -278,6 +284,11 @@ func NoMember(leftType tcType, member string) *Partial {
 	return partial(Error, msg)
 }
 
+func FieldPrivate(leftType tcType, member string) *Partial {
+	msg := fmt.Sprintf("Field %q of type %q is private", member, leftType.String())
+	return partial(Error, msg)
+}
+
 func OnlyConstructTypes(location text.Location) Diagnostic {
 	msg := "Cannot construct value, not a type"
 	return makeError(msg, location)
@@ -315,5 +326,10 @@ func NamedParamInFnType(location text.Location) Diagnostic {
 
 func UnnamedParameter(location text.Location) Diagnostic {
 	msg := "Unnamed parameters are only allowed in function types"
+	return makeError(msg, location)
+}
+
+func NoExport(location text.Location, module, member string) Diagnostic {
+	msg := fmt.Sprintf("Module %q does not export member %q", module, member)
 	return makeError(msg, location)
 }

@@ -55,3 +55,9 @@ func (t *Type) GetName() string {
 func (*Type) Mutable() bool {
 	return false
 }
+
+type Method struct {
+	MethodOf types.Type
+	Static   bool
+	Function *types.Function
+}

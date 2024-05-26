@@ -187,6 +187,7 @@ func (p *parser) rightPrecedence(left ast.Expression) int {
 }
 
 func (p *parser) register() {
+	p.registerKeyword("pub", p.parsePubStatement, decl, "Exported statement")
 	p.registerKeyword("fn", p.parseFunctionDeclaration, decl, "Function declaration")
 	p.registerKeyword("fn", func() ast.Statement { return p.parseFunctionExpression() }, expr)
 	p.registerKeyword("type", p.parseTypeDeclaration, decl, "Type declaration")

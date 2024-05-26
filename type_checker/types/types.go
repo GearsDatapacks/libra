@@ -15,6 +15,7 @@ type Type interface {
 
 var Context interface {
 	LookupMethod(string, Type, bool) *Function
+	Id() uint
 }
 
 func Assignable(to, from Type) bool {
@@ -65,6 +66,7 @@ func Member(left Type, member string, constVal ...values.ConstValue) (Type, *dia
 		if diag == nil {
 			return ty, nil
 		}
+		return Invalid, diag
 	}
 
 	return Invalid, diagnostics.NoMember(left, member)
@@ -404,12 +406,6 @@ func (fn *Function) valid(other Type) bool {
 	return Match(fn.ReturnType, function.ReturnType)
 }
 
-type Method struct {
-	MethodOf Type
-	Static   bool
-	Function *Function
-}
-
 type Alias struct {
 	Type
 }
@@ -418,9 +414,15 @@ func (a *Alias) toReal() Type {
 	return ToReal(a.Type)
 }
 
+type StructField struct {
+	Type     Type
+	Exported bool
+}
+
 type Struct struct {
-	Name   string
-	Fields map[string]Type
+	Name     string
+	ModuleId uint
+	Fields   map[string]StructField
 }
 
 func (s *Struct) String() string {
@@ -441,12 +443,13 @@ func (s *Struct) valid(other Type) bool {
 		return false
 	}
 
-	for name, ty := range s.Fields {
-		if struc.Fields[name] == nil {
-			fmt.Println(struc.Fields)
-			return false
-		}
-		if !Match(ty, struc.Fields[name]) {
+	for name, field := range s.Fields {
+		ty := field.Type
+		if field, ok := struc.Fields[name]; ok {
+			if !Match(ty, field.Type) {
+				return false
+			}
+		} else {
 			return false
 		}
 	}
@@ -455,8 +458,11 @@ func (s *Struct) valid(other Type) bool {
 }
 
 func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
-	if ty, ok := s.Fields[member]; ok {
-		return ty, nil
+	if field, ok := s.Fields[member]; ok {
+		if s.ModuleId != Context.Id() && !field.Exported {
+			return Invalid, diagnostics.FieldPrivate(s, member)
+		}
+		return field.Type, nil
 	}
 	return Invalid, diagnostics.NoMember(s, member)
 }
@@ -544,6 +550,28 @@ func MakeUnion(a, b Type) Type {
 	return &Union{
 		Types: types,
 	}
+}
+
+type Module struct {
+	Name   string
+	Module interface {
+		LookupExportType(string) Type
+	}
+}
+
+func (m *Module) String() string {
+	return m.Name
+}
+
+func (*Module) valid(Type) bool {
+	return false
+}
+
+func (m *Module) member(member string) (Type, *diagnostics.Partial) {
+	if ty := m.Module.LookupExportType(member); ty != nil {
+		return ty, nil
+	}
+	return Invalid, diagnostics.NoMember(m, member)
 }
 
 type pseudo interface {

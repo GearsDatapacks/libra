@@ -844,3 +844,147 @@ func maybePrecedence(expr Expression) string {
 
 	return expr.String()
 }
+
+
+type Block struct {
+	expression
+	LeftBrace  token.Token
+	Statements []Statement
+	RightBrace token.Token
+}
+
+func (b *Block) Tokens() []token.Token {
+	tokens := []token.Token{b.LeftBrace}
+
+	for _, stmt := range b.Statements {
+		tokens = append(tokens, stmt.Tokens()...)
+	}
+
+	tokens = append(tokens, b.RightBrace)
+	return tokens
+}
+
+func (b *Block) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	for _, stmt := range b.Statements {
+		result.WriteByte('\n')
+		result.WriteString(stmt.String())
+	}
+	result.WriteString("\n}")
+
+	return result.String()
+}
+
+func (b *Block) Location() text.Location {
+	return b.LeftBrace.Location
+}
+
+type IfExpression struct {
+	expression
+	Keyword    token.Token
+	Condition  Expression
+	Body       *Block
+	ElseBranch *ElseBranch
+}
+
+func (i *IfExpression) Tokens() []token.Token {
+	tokens := []token.Token{i.Keyword}
+	tokens = append(tokens, i.Condition.Tokens()...)
+	tokens = append(tokens, i.Body.Tokens()...)
+
+	if i.ElseBranch != nil {
+		tokens = append(tokens, i.ElseBranch.ElseKeyword)
+		tokens = append(tokens, i.ElseBranch.Statement.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (i *IfExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("if ")
+	result.WriteString(i.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(i.Body.String())
+
+	if i.ElseBranch != nil {
+		result.WriteString(" else ")
+		result.WriteString(i.ElseBranch.Statement.String())
+	}
+
+	return result.String()
+}
+
+func (i *IfExpression) Location() text.Location {
+	return i.Keyword.Location
+}
+
+type ElseBranch struct {
+	ElseKeyword token.Token
+	Statement   Statement
+}
+
+type WhileLoop struct {
+	expression
+	Keyword   token.Token
+	Condition Expression
+	Body      *Block
+}
+
+func (wl *WhileLoop) Tokens() []token.Token {
+	tokens := []token.Token{wl.Keyword}
+	tokens = append(tokens, wl.Condition.Tokens()...)
+	tokens = append(tokens, wl.Body.Tokens()...)
+	return tokens
+}
+
+func (wl *WhileLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("while ")
+	result.WriteString(wl.Condition.String())
+	result.WriteByte(' ')
+	result.WriteString(wl.Body.String())
+
+	return result.String()
+}
+
+func (w *WhileLoop) Location() text.Location {
+	return w.Keyword.Location
+}
+
+type ForLoop struct {
+	expression
+	ForKeyword token.Token
+	Variable   token.Token
+	InKeyword  token.Token
+	Iterator   Expression
+	Body       *Block
+}
+
+func (fl *ForLoop) Tokens() []token.Token {
+	tokens := []token.Token{fl.ForKeyword, fl.Variable, fl.InKeyword}
+	tokens = append(tokens, fl.Iterator.Tokens()...)
+	tokens = append(tokens, fl.Body.Tokens()...)
+	return tokens
+}
+
+func (fl *ForLoop) String() string {
+	var result bytes.Buffer
+
+	result.WriteString("for ")
+	result.WriteString(fl.Variable.Value)
+	result.WriteString(" in ")
+	result.WriteString(fl.Iterator.String())
+	result.WriteByte(' ')
+	result.WriteString(fl.Body.String())
+
+	return result.String()
+}
+
+func (f *ForLoop) Location() text.Location {
+	return f.ForKeyword.Location
+}

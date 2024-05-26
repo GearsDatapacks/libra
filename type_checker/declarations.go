@@ -5,6 +5,7 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 func (t *typeChecker) registerDeclaration(statement ast.Statement) {
@@ -44,8 +45,8 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 	}
 
 	if fn.MethodOf == nil && fn.MemberOf == nil {
-		if !t.symbols.Register(symbol) {
-			t.Diagnostics.Report(diagnostics.VariableDefined(fn.Name.Location, fn.Name.Value))
+		if !t.symbols.Register(symbol, fn.Exported) {
+			t.diagnostics.Report(diagnostics.VariableDefined(fn.Name.Location, fn.Name.Value))
 		}
 	}
 }
@@ -55,7 +56,7 @@ func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 		Name: typeDec.Name.Value,
 		Type: &types.Alias{Type: types.Void},
 	}
-	t.symbols.Register(symbol)
+	t.symbols.Register(symbol, typeDec.Exported)
 }
 
 func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
@@ -65,12 +66,13 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 	symbol := &symbols.Type{
 		Name: decl.Name.Value,
 		Type: &types.Struct{
-			Name:   decl.Name.Value,
-			Fields: map[string]types.Type{},
+			Name:     decl.Name.Value,
+			ModuleId: t.module.Id,
+			Fields:   map[string]types.StructField{},
 		},
 	}
 
-	t.symbols.Register(symbol)
+	t.symbols.Register(symbol, decl.Exported)
 }
 
 func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
@@ -82,7 +84,7 @@ func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaratio
 		},
 	}
 
-	t.symbols.Register(symbol)
+	t.symbols.Register(symbol, decl.Exported)
 }
 
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
@@ -123,38 +125,40 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 
 	if fn.MethodOf != nil {
 		methodOf := t.typeCheckType(fn.MethodOf.Type)
-		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
+		t.symbols.RegisterMethod(fn.Name.Value, &symbols.Method{
 			MethodOf: methodOf,
 			Static:   false,
 			Function: fnType,
-		})
+		}, fn.Exported)
 	} else if fn.MemberOf != nil {
 		methodOf := t.lookupType(fn.MemberOf.Name)
-		t.symbols.RegisterMethod(fn.Name.Value, types.Method{
+		t.symbols.RegisterMethod(fn.Name.Value, &symbols.Method{
 			MethodOf: methodOf,
 			Static:   true,
 			Function: fnType,
-		})
+		}, fn.Exported)
 	}
 }
 
 func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Struct)
 
-	fields := []types.Type{}
+	fields := []types.StructField{}
 	for _, field := range decl.StructType.Fields {
+		structField := types.StructField{Type: nil, Exported: field.Pub != nil}
 		if field.Type == nil {
-			fields = append(fields, nil)
+			fields = append(fields, structField)
 		} else {
 			ty := t.typeCheckType(field.Type.Type)
 			for i := len(fields) - 1; i >= 0; i-- {
-				if fields[i] == nil {
-					fields[i] = ty
+				if fields[i].Type == nil {
+					fields[i].Type = ty
 				} else {
 					break
 				}
 			}
-			fields = append(fields, ty)
+			structField.Type = ty
+			fields = append(fields, structField)
 		}
 	}
 
@@ -179,5 +183,45 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 			fnType.ReturnType = t.typeCheckType(member.ReturnType.Type)
 		}
 		ty.Methods[member.Name.Value] = fnType
+	}
+}
+
+type moduleWrapper struct{ t *symbols.Table }
+
+func (mod moduleWrapper) LookupExport(name string) interface{ Value() values.ConstValue } {
+	return mod.t.LookupExport(name)
+}
+
+func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
+	module := t.subModules[importStmt.Module.Value]
+	if importStmt.All != nil {
+		t.symbols.Extend(module.symbols)
+	} else if importStmt.Symbols != nil {
+		for _, symbol := range importStmt.Symbols.Symbols {
+			export := module.symbols.LookupExport(symbol.Value)
+			if export != nil {
+				t.symbols.Register(export)
+			} else {
+				t.diagnostics.Report(diagnostics.NoExport(symbol.Location, module.module.Name, symbol.Value))
+			}
+		}
+	} else {
+		moduleType := &types.Module{
+			Name:   module.module.Name,
+			Module: module.symbols,
+		}
+		name := module.module.Name
+		if importStmt.Alias != nil {
+			name = importStmt.Alias.Alias.Value
+		}
+		symbol := &symbols.Variable{
+			Name:  name,
+			IsMut: false,
+			Type:  moduleType,
+			ConstValue: values.ModuleValue{
+				Module: moduleWrapper{module.symbols},
+			},
+		}
+		t.symbols.Register(symbol)
 	}
 }

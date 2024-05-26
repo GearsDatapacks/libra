@@ -18,10 +18,9 @@ func main() {
 		return
 	}
 
-	tc := typechecker.New(diags)
-	program := tc.TypeCheck(mod)
+	program, diags := typechecker.TypeCheck(mod, diags)
 
-	for _, diag := range tc.Diagnostics {
+	for _, diag := range diags {
 		diag.Print()
 	}
 
