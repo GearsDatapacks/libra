@@ -45,6 +45,8 @@ func AssignableExpr(expr Expression) bool {
 		return AssignableExpr(e.Left)
 	case *MemberExpression:
 		return AssignableExpr(e.Left)
+	case *DerefExpression:
+		return AssignableExpr(e.Value)
 	case *InvalidExpression:
 		return true
 	default:
@@ -54,12 +56,16 @@ func AssignableExpr(expr Expression) bool {
 
 func MutableExpr(expr Expression) bool {
 	switch e := expr.(type) {
+	// FIXME: Currently, when trying to assing to a field of a referenced struct, this will check if the pointer variable itself is mutable,
+	// not whether the pointer is a mutable pointer, which means it will often be incorrect. This needs to be fixed somehow
 	case *VariableExpression:
 		return e.Symbol.IsMut
 	case *IndexExpression:
 		return MutableExpr(e.Left)
 	case *MemberExpression:
 		return MutableExpr(e.Left)
+	case *DerefExpression:
+		return e.Value.Type().(*types.Pointer).Mutable
 	case *InvalidExpression:
 		return true
 	default:

@@ -574,6 +574,35 @@ func (m *Module) member(member string) (Type, *diagnostics.Partial) {
 	return Invalid, diagnostics.NoMember(m, member)
 }
 
+type Pointer struct {
+	Underlying Type
+	Mutable    bool
+}
+
+func (p *Pointer) String() string {
+	if p.Mutable {
+		return fmt.Sprintf("*mut %s", p.Underlying.String())
+	}
+	return fmt.Sprintf("*%s", p.Underlying.String())
+}
+
+func (p *Pointer) valid(other Type) bool {
+	ptr, ok := other.(*Pointer)
+	if !ok {
+		return false
+	}
+
+	if !Assignable(p.Underlying, ptr.Underlying) {
+		return false
+	}
+
+	return !p.Mutable || ptr.Mutable
+}
+
+func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
+	return Member(p.Underlying, member)
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -591,6 +620,5 @@ type Iterator interface {
 }
 
 // TODO:
-// PointerType
 // ErrorType
 // OptionType

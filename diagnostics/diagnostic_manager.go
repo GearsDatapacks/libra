@@ -333,3 +333,18 @@ func NoExport(location text.Location, module, member string) Diagnostic {
 	msg := fmt.Sprintf("Module %q does not export member %q", module, member)
 	return makeError(msg, location)
 }
+
+func CannotDeref(location text.Location, ty tcType) Diagnostic {
+	msg := fmt.Sprintf("Cannot dereference non-pointer value of type %q", ty.String())
+	return makeError(msg, location)
+}
+
+func MutDerefNotAllowed(location text.Location) Diagnostic {
+	msg := "`mut` keyword is only allowed in pointer types"
+	return makeError(msg, location)
+}
+
+func MutRefOfNotMut(location text.Location) Diagnostic {
+	msg := "Cannot take a mutable reference to an immutable value"
+	return makeError(msg, location)
+}

@@ -1308,7 +1308,57 @@ func (t *FunctionExpression) ConstValue() values.ConstValue {
 	return nil
 }
 
+type RefExpression struct {
+	expression
+	Value   Expression
+	Mutable bool
+}
+
+func (r *RefExpression) String() string {
+	if r.Mutable {
+		return fmt.Sprintf("&mut %s", r.Value.String())
+	}
+	return fmt.Sprintf("&%s", r.Value.String())
+}
+
+func (r *RefExpression) Type() types.Type {
+	return &types.Pointer{
+		Underlying: r.Value.Type(),
+		Mutable:    r.Mutable,
+	}
+}
+
+func (*RefExpression) IsConst() bool {
+	return false
+}
+
+func (*RefExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
+type DerefExpression struct {
+	expression
+	Value   Expression
+}
+
+func (d *DerefExpression) String() string {
+	return fmt.Sprintf("*%s", d.Value.String())
+}
+
+func (d *DerefExpression) Type() types.Type {
+	if ptr, ok := d.Value.Type().(*types.Pointer); ok {
+		return ptr.Underlying
+	}
+	return types.Invalid
+}
+
+func (*DerefExpression) IsConst() bool {
+	return false
+}
+
+func (*DerefExpression) ConstValue() values.ConstValue {
+	return nil
+}
+
 // TODO:
-// RefExpression
-// DerefExpression
 // RangeExpression
