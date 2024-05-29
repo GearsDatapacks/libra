@@ -68,40 +68,52 @@ func (p *parser) parserOptionalDefaultValue() *ast.DefaultValue {
 	}
 }
 
-func (p *parser) parseParameter() ast.Parameter {
-	var mutable, name, colon *token.Token
+func (p *parser) parseTypeOrIdent(declare bool) ast.TypeOrIdent {
+	var name, colon *token.Token
 	var ty ast.Expression
-	var value *ast.DefaultValue
-	if p.isKeyword("mut") {
-		tok := p.consume()
-		mutable = &tok
-	}
 
 	initial := p.parseTypeExpression()
 	if ident, ok := initial.(*ast.Identifier); ok {
 		name = &ident.Token
-		p.identifiers[ident.Token.Value] = ident.Token.Location
+		if declare {
+			p.identifiers[ident.Token.Value] = ident.Token.Location
+		}
 
 		if p.next().Kind == token.COLON {
 			tok := p.consume()
 			colon = &tok
 			ty = p.parseTypeExpression()
 		}
-		value = p.parserOptionalDefaultValue()
 	} else {
-		if mutable != nil {
-			p.Diagnostics.Report(diagnostics.MutWithoutParamName(mutable.Location))
-		}
-
 		ty = initial
 	}
 
+	return ast.TypeOrIdent{
+		Name:  name,
+		Colon: colon,
+		Type:  ty,
+	}
+}
+
+func (p *parser) parseParameter() ast.Parameter {
+	var mutable *token.Token
+	var value *ast.DefaultValue
+	if p.isKeyword("mut") {
+		tok := p.consume()
+		mutable = &tok
+	}
+
+	name := p.parseTypeOrIdent(true)
+	if name.Name != nil {
+		value = p.parserOptionalDefaultValue()
+	} else if mutable != nil {
+		p.Diagnostics.Report(diagnostics.MutWithoutParamName(mutable.Location))
+	}
+
 	return ast.Parameter{
-		Mutable: mutable,
-		Name:    name,
-		Colon:   colon,
-		Type:    ty,
-		Default: value,
+		Mutable:     mutable,
+		TypeOrIdent: name,
+		Default:     value,
 	}
 }
 
@@ -151,8 +163,8 @@ func (p *parser) parseFunctionDeclaration() ast.Statement {
 
 	if len(params) > 0 {
 		lastParam := params[len(params)-1]
-		if lastParam.Type == nil && lastParam.Default == nil {
-			p.Diagnostics.Report(diagnostics.LastParameterMustHaveType(lastParam.Name.Location, name.Location)...)
+		if lastParam.TypeOrIdent.Type == nil && lastParam.Default == nil {
+			p.Diagnostics.Report(diagnostics.LastParameterMustHaveType(lastParam.TypeOrIdent.Name.Location, name.Location)...)
 		}
 	}
 
@@ -226,13 +238,11 @@ func (p *parser) parseStructField() ast.StructField {
 		tok := p.consume()
 		pub = &tok
 	}
-	name := p.expect(token.IDENTIFIER)
-	ty := p.parseOptionalTypeAnnotation()
+	typeOrIdent := p.parseTypeOrIdent(false)
 
 	return ast.StructField{
-		Pub:  pub,
-		Name: name,
-		Type: ty,
+		Pub:         pub,
+		TypeOrIdent: typeOrIdent,
 	}
 }
 
@@ -248,26 +258,10 @@ func (p *parser) parseStructDeclaration() ast.Statement {
 		leftBrace := p.consume()
 		fields, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
 
-		if len(fields) > 0 {
-			last := fields[len(fields)-1]
-			if last.Type == nil {
-				p.Diagnostics.Report(diagnostics.LastStructFieldMustHaveType(last.Name.Location, name.Location)...)
-			}
-		}
-
-		structDecl.StructType = &ast.Struct{
+		structDecl.Body = &ast.StructBody{
 			LeftBrace:  leftBrace,
 			Fields:     fields,
 			RightBrace: rightBrace,
-		}
-	} else if p.canContinue() && p.next().Kind == token.LEFT_PAREN {
-		leftParen := p.consume()
-		types, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
-
-		structDecl.TupleType = &ast.TupleStruct{
-			LeftParen:  leftParen,
-			Types:      types,
-			RightParen: rightParen,
 		}
 	}
 

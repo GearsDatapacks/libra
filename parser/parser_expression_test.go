@@ -512,11 +512,6 @@ func TestParserDiagnostics(t *testing.T) {
 			{"The last parameter of a function must have a type annotation", diagnostics.Error},
 			{"Parameter of this function", diagnostics.Info},
 		}},
-		{"struct Rect { w: i32, [h] }", []diagnostic{{"The last field of a struct must have a type annotation", diagnostics.Error}}},
-		{"struct [Wrapper] {\n[value]\n}", []diagnostic{
-			{"The last field of a struct must have a type annotation", diagnostics.Error},
-			{"Field in this struct", diagnostics.Info},
-		}},
 		{"fn (string) [bool].maybe() {}", []diagnostic{{"Functions cannot be both methods and static members", diagnostics.Error}}},
 		{`import * from "io" [as] in_out`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},
 		{`import {read, write} from [*] from "io"`, []diagnostic{{"Only one import modifier is allowed", diagnostics.Error}}},

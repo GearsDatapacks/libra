@@ -348,3 +348,28 @@ func MutRefOfNotMut(location text.Location) Diagnostic {
 	msg := "Cannot take a mutable reference to an immutable value"
 	return makeError(msg, location)
 }
+
+func MixedNamedUnnamedStructFields(location text.Location) Diagnostic {
+	msg := "Cannot mix named and unnamed struct fields"
+	return makeError(msg, location)
+}
+
+func WrongNumberTupleValues(location text.Location, expected, found int) Diagnostic {
+	msg := fmt.Sprintf("Incorrect number of values supplied to struct (expected %d, found %d)", expected, found)
+	return makeError(msg, location)
+}
+
+func TupleStructWithNames(location text.Location) Diagnostic {
+	msg := "Field names not allowed when constructing tuple structs"
+	return makeError(msg, location)
+}
+
+func NoNameStructMember(location text.Location) Diagnostic {
+	msg := "Struct members must all be named"
+	return makeError(msg, location)
+}
+
+func PubUnnamedStructField(location text.Location) Diagnostic {
+	msg := "`pub` keyword not allowed for unnamed fields"
+	return makeError(msg, location)
+}

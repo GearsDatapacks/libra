@@ -467,6 +467,51 @@ func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
 	return Invalid, diagnostics.NoMember(s, member)
 }
 
+type TupleStruct struct {
+	Name  string
+	Types []Type
+}
+
+func (t *TupleStruct) String() string {
+	return t.Name
+}
+
+func (t *TupleStruct) valid(other Type) bool {
+	tuple, ok := other.(*TupleStruct)
+	if !ok {
+		return false
+	}
+
+	if t.Name != tuple.Name {
+		return false
+	}
+
+	if len(t.Types) != len(tuple.Types) {
+		return false
+	}
+
+	for i, ty := range t.Types {
+		if !Assignable(ty, tuple.Types[i]) && !Assignable(tuple.Types[i], ty) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (a *TupleStruct) indexBy(t Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
+	if !Assignable(Int, t) {
+		return Invalid, diagnostics.CannotIndex(a, t)
+	}
+
+	if len(constVals) == 0 {
+		return Invalid, diagnostics.NotConstPartial
+	}
+
+	index := constVals[0].(values.IntValue).Value
+	return a.Types[index], nil
+}
+
 type Interface struct {
 	Name    string
 	Methods map[string]*Function

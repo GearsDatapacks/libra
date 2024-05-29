@@ -775,15 +775,14 @@ let bob = Person {
 let bob_name = bob.name // "Bob"
 ```
 
-### Tuple structs
-A tuple struct is like a struct, but the values are denoted by order rather than name. Syntax is similar to a tuple.
+Structs can be defined without field names. This allows fields to be accessed the same a in tuples or arrays.
 
 Example:
 ```rust
-struct Coordinate3D(f32, f32, f32)
+struct Coordinate3D { f32, f32, f32 }
 
-let coords = Coordinate3D(1.4, 82.3, -9.3)
-let x = coords[0]
+let coords = Coordinate3D { 1.4, 82.3, -9.3 }
+let x = coords[0] // 1.4
 ```
 
 ### Unit structs
@@ -971,11 +970,19 @@ union Number {
 mut num: Number = 15.6
 // Number.i32
 num = 7
+```
 
+Unions can also contain compound data-types, which can be defined within the body of the union.  
+To access a type of the union, a cast can be used to try and cast to one of the specified members. Or, a shorthand syntax can be used.
+
+```rust
 union Property {
   Height: f32,
   Weight: f32,
   Age: u32,
+  Name {
+    first, last: string
+  },
 }
 
 // Can be inferred: only one member has type u32
@@ -988,6 +995,11 @@ let weight: Property = .Weight(61.3)
 
 print(height == .Weight(1.67)) // False: one is weight, one is height
 print(age == .Age(102)) // True: they completely match
+
+let my_prop = Property.Name {first: "John", last: "Doe"}
+print((my_prop -> .Name).first) // John
+// Shorthand syntax
+print(my_prop.Name.last) // Doe
 ```
 
 A shorthand for unions can be used: `<type1> | <type2> | ... | <type>`. This allows for inlining a union type without declaring a type for it, but it doesn't support naming of fields and therefore doesn't allow duplicate types.
@@ -1138,16 +1150,16 @@ add(1, 2) // T can be inferred as i32
 add(3.1, 2.5) // T can be inferred as f32
 ```
 
-Custom types can also take type parameters, in `<`, `>`. Since type parameters of custom types can't always be inferred, there is no shorthand syntax, but the parameters are optional if it they can be.
+Custom types can also take type parameters. Since type parameters of custom types can't always be inferred, there is no shorthand syntax, but the parameters are optional if it they can be.
 
 Example:
 ```rust
-union Option<T> {
+union Option(T) {
   T, void
 }
 
 let my_option: Option = 1 // T can be inferred as i32
-let my_other_option: Option<string> = void // T cannot be inferred and must be provided
+let my_other_option: Option(string) = void // T cannot be inferred and must be provided
 ```
 
 Type constraints can be added to type parameters to limit what types can be given.
@@ -1163,12 +1175,12 @@ fn add(a, b: $T: Add): T {
 import {Add, Subtract as Sub, Multiple as Mul, Divide as Div} from "math"
 
 enum Operation {Add, Sub, Mul, Div}
-struct Expression<T: Add & Sub & Mul & Div> {
+struct Expression(T: Add & Sub & Mul & Div) {
   left, right: T,
   operation: Operation
 }
 
-fn (Expression<$T>) calculate(): T {
+fn (Expression($T)) calculate(): T {
   return switch this.operation {
     case .Add => this.left + this.right
     case .Sub => this.left - this.right

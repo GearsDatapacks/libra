@@ -68,11 +68,46 @@ type DefaultValue struct {
 	Value  Expression
 }
 
+type TypeOrIdent struct {
+	Name  *token.Token
+	Colon *token.Token
+	Type  Expression
+}
+
+func (t *TypeOrIdent) Tokens() []token.Token {
+	tokens := []token.Token{}
+	if t.Name != nil {
+		tokens = append(tokens, *t.Name)
+	}
+	if t.Colon != nil {
+		tokens = append(tokens, *t.Colon)
+	}
+	if t.Type != nil {
+		tokens = append(tokens, t.Type.Tokens()...)
+	}
+
+	return tokens
+}
+
+func (t *TypeOrIdent) String() string {
+	var result bytes.Buffer
+
+	if t.Name != nil {
+		result.WriteString(t.Name.Value)
+	}
+	if t.Colon != nil {
+		result.WriteString(": ")
+	}
+	if t.Type != nil {
+		result.WriteString(t.Type.String())
+	}
+
+	return result.String()
+}
+
 type Parameter struct {
 	Mutable *token.Token
-	Name    *token.Token
-	Colon   *token.Token
-	Type    Expression
+	TypeOrIdent
 	Default *DefaultValue
 }
 
@@ -81,15 +116,7 @@ func (p *Parameter) Tokens() []token.Token {
 	if p.Mutable != nil {
 		tokens = append(tokens, *p.Mutable)
 	}
-	if p.Name != nil {
-		tokens = append(tokens, *p.Name)
-	}
-	if p.Colon != nil {
-		tokens = append(tokens, *p.Colon)
-	}
-	if p.Type != nil {
-		tokens = append(tokens, p.Type.Tokens()...)
-	}
+	tokens = append(tokens, p.TypeOrIdent.Tokens()...)
 	if p.Default != nil {
 		tokens = append(tokens, p.Default.Equals)
 		tokens = append(tokens, p.Default.Value.Tokens()...)
@@ -104,15 +131,7 @@ func (p *Parameter) String() string {
 	if p.Mutable != nil {
 		result.WriteString("mut ")
 	}
-	if p.Name != nil {
-		result.WriteString(p.Name.Value)
-	}
-	if p.Colon != nil {
-		result.WriteString(": ")
-	}
-	if p.Type != nil {
-		result.WriteString(p.Type.String())
-	}
+	result.WriteString(p.TypeOrIdent.String())
 	if p.Default != nil {
 		result.WriteString(" = ")
 		result.WriteString(p.Default.Value.String())
@@ -341,8 +360,7 @@ func (t *TypeDeclaration) String() string {
 
 type StructField struct {
 	Pub *token.Token
-	Name token.Token
-	Type *TypeAnnotation
+	TypeOrIdent
 }
 
 func (s *StructField) Tokens() []token.Token {
@@ -350,10 +368,7 @@ func (s *StructField) Tokens() []token.Token {
 	if s.Pub != nil {
 		tokens = append(tokens, *s.Pub)
 	}
-	tokens = append(tokens, s.Name)
-	if s.Type != nil {
-		tokens = append(tokens, s.Type.Tokens()...)
-	}
+	tokens = append(tokens, s.TypeOrIdent.Tokens()...)
 
 	return tokens
 }
@@ -361,23 +376,22 @@ func (s *StructField) Tokens() []token.Token {
 func (s *StructField) String() string {
 	var result bytes.Buffer
 
-	result.WriteString(s.Name.Value)
-	if s.Type != nil {
-		result.WriteString(s.Type.String())
+	if s.Pub != nil {
+		result.WriteString("pub ")
 	}
+	result.WriteString(s.TypeOrIdent.String())
 
 	return result.String()
 }
 
 type StructDeclaration struct {
 	decl
-	Keyword    token.Token
-	Name       token.Token
-	StructType *Struct
-	TupleType  *TupleStruct
+	Keyword token.Token
+	Name    token.Token
+	Body    *StructBody
 }
 
-type Struct struct {
+type StructBody struct {
 	LeftBrace  token.Token
 	Fields     []StructField
 	RightBrace token.Token
@@ -392,19 +406,12 @@ type TupleStruct struct {
 func (s *StructDeclaration) Tokens() []token.Token {
 	tokens := []token.Token{s.Keyword, s.Name}
 
-	if s.StructType != nil {
-		tokens = append(tokens, s.StructType.LeftBrace)
-		for _, field := range s.StructType.Fields {
+	if s.Body != nil {
+		tokens = append(tokens, s.Body.LeftBrace)
+		for _, field := range s.Body.Fields {
 			tokens = append(tokens, field.Tokens()...)
 		}
-		tokens = append(tokens, s.StructType.RightBrace)
-	}
-	if s.TupleType != nil {
-		tokens = append(tokens, s.TupleType.LeftParen)
-		for _, ty := range s.TupleType.Types {
-			tokens = append(tokens, ty.Tokens()...)
-		}
-		tokens = append(tokens, s.TupleType.RightParen)
+		tokens = append(tokens, s.Body.RightBrace)
 	}
 
 	return tokens
@@ -415,26 +422,15 @@ func (s *StructDeclaration) String() string {
 
 	result.WriteString("struct ")
 	result.WriteString(s.Name.Value)
-	if s.StructType != nil {
+	if s.Body != nil {
 		result.WriteString(" {\n")
-		for i, field := range s.StructType.Fields {
+		for i, field := range s.Body.Fields {
 			if i != 0 {
 				result.WriteString(",\n")
 			}
 			result.WriteString(field.String())
 		}
 		result.WriteString("\n}")
-	}
-	if s.TupleType != nil {
-
-		result.WriteByte('(')
-		for i, ty := range s.TupleType.Types {
-			if i != 0 {
-				result.WriteString(", ")
-			}
-			result.WriteString(ty.String())
-		}
-		result.WriteByte(')')
 	}
 
 	return result.String()

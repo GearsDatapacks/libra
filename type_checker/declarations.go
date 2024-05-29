@@ -59,17 +59,33 @@ func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	t.symbols.Register(symbol, typeDec.Exported)
 }
 
+// TODO: unit structs
 func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
-	if decl.StructType == nil {
-		panic("TODO: Tuple struct declarations")
+	isTuple := true
+	for _, field := range decl.Body.Fields {
+		if field.Name != nil && field.Type != nil {
+			isTuple = false
+			break
+		}
 	}
-	symbol := &symbols.Type{
-		Name: decl.Name.Value,
-		Type: &types.Struct{
+
+	var ty types.Type
+	if isTuple {
+		ty = &types.TupleStruct{
+			Name:  decl.Name.Value,
+			Types: []types.Type{},
+		}
+	} else {
+		ty = &types.Struct{
 			Name:     decl.Name.Value,
 			ModuleId: t.module.Id,
 			Fields:   map[string]types.StructField{},
-		},
+		}
+	}
+
+	symbol := &symbols.Type{
+		Name: decl.Name.Value,
+		Type: ty,
 	}
 
 	t.symbols.Register(symbol, decl.Exported)
@@ -141,29 +157,53 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 }
 
 func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
-	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Struct)
+	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type
 
-	fields := []types.StructField{}
-	for _, field := range decl.StructType.Fields {
-		structField := types.StructField{Type: nil, Exported: field.Pub != nil}
-		if field.Type == nil {
-			fields = append(fields, structField)
-		} else {
-			ty := t.typeCheckType(field.Type.Type)
-			for i := len(fields) - 1; i >= 0; i-- {
-				if fields[i].Type == nil {
-					fields[i].Type = ty
-				} else {
-					break
-				}
+	if structTy, ok := ty.(*types.Struct); ok {
+		fields := []types.StructField{}
+		for _, field := range decl.Body.Fields {
+			if field.Name == nil {
+				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.Location()))
 			}
-			structField.Type = ty
-			fields = append(fields, structField)
+			structField := types.StructField{Type: nil, Exported: field.Pub != nil}
+			if field.Type == nil {
+				fields = append(fields, structField)
+			} else {
+				ty := t.typeCheckType(field.Type)
+				for i := len(fields) - 1; i >= 0; i-- {
+					if fields[i].Type == nil {
+						fields[i].Type = ty
+					} else {
+						break
+					}
+				}
+				structField.Type = ty
+				fields = append(fields, structField)
+			}
 		}
-	}
 
-	for i, field := range decl.StructType.Fields {
-		ty.Fields[field.Name.Value] = fields[i]
+		if len(fields) > 0 && fields[len(fields)-1].Type == nil {
+			lastField := decl.Body.Fields[len(fields)-1]
+			t.diagnostics.Report(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, decl.Name.Location)...)
+		}
+
+		for i, field := range decl.Body.Fields {
+			if fields[i].Type == nil {
+				fields[i].Type = types.Invalid
+			}
+			structTy.Fields[field.Name.Value] = fields[i]
+		}
+	} else if structTy, ok := ty.(*types.TupleStruct); ok {
+		for _, field := range decl.Body.Fields {
+			if field.Pub != nil {
+				t.diagnostics.Report(diagnostics.PubUnnamedStructField(field.Pub.Location))
+			}
+			if field.Type == nil {
+				structTy.Types = append(structTy.Types, t.lookupType(*field.Name))
+			} else {
+				structTy.Types = append(structTy.Types, t.typeCheckType(field.Type))
+			}
+		}
 	}
 }
 

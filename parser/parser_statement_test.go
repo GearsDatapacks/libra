@@ -353,8 +353,8 @@ func TestStructDeclaration(t *testing.T) {
 	}{
 		{"struct Unit", "Unit", nil},
 		{"struct Mything123", "Mything123", nil},
-		{"struct Wrapper ( value )", "Wrapper", []string{"value"}},
-		{"struct Three(a,b,c,)", "Three", []string{"a", "b", "c"}},
+		{"struct Wrapper { value }", "Wrapper", []string{"value"}},
+		{"struct Three{a,b,c,}", "Three", []string{"a", "b", "c"}},
 		{"struct Empty {}", "Empty", [][2]string{}},
 		{"struct Rect { w, h: i32 }", "Rect", [][2]string{{"w"}, {"h", "i32"}}},
 		{"struct Vec2{x:f32,y:f32,}", "Vec2", [][2]string{{"x", "f32"}, {"y", "f32"}}},
@@ -368,38 +368,43 @@ func TestStructDeclaration(t *testing.T) {
 
 		switch fields := test.fields.(type) {
 		case [][2]string:
-			utils.Assert(t, sd.StructType != nil, "Expected a curly-brace struct")
-			utils.Assert(t, sd.TupleType == nil, "Cannot be both curly-brace and tupe struct")
-			utils.AssertEq(t, len(sd.StructType.Fields), len(fields), "Field lengths do not match")
+			utils.Assert(t, sd.Body != nil, "Expected a non-unit struct")
+			utils.AssertEq(t, len(sd.Body.Fields), len(fields), "Field lengths do not match")
 			for i, field := range fields {
-				structField := sd.StructType.Fields[i]
+				structField := sd.Body.Fields[i]
+				utils.Assert(t, structField.Name != nil, "Expected named fields")
 				utils.AssertEq(t, field[0], structField.Name.Value)
 
 				if field[1] == "" {
 					utils.Assert(t, structField.Type == nil, "Expected no type annotation")
 				} else {
 					utils.Assert(t, structField.Type != nil, "Expected a type annotation")
-					typeName, ok := structField.Type.Type.(*ast.Identifier)
+					typeName, ok := structField.Type.(*ast.Identifier)
 					utils.Assert(t, ok, "Type is not a type name")
 					utils.AssertEq(t, typeName.Name, field[1])
 				}
 			}
 
 		case []string:
-			utils.Assert(t, sd.TupleType != nil, "Expected a tuple struct")
-			utils.Assert(t, sd.StructType == nil, "Cannot be both curly-brace and tupe struct")
-			utils.AssertEq(t, len(sd.TupleType.Types), len(fields), "Type lengths do not match")
+			utils.Assert(t, sd.Body != nil, "Expected a non-unit struct")
+			utils.AssertEq(t, len(sd.Body.Fields), len(fields), "Type lengths do not match")
 
 			for i, ty := range fields {
-				tupleType := sd.TupleType.Types[i]
-				typeName, ok := tupleType.(*ast.Identifier)
-				utils.Assert(t, ok, "Type is not a type name")
-				utils.AssertEq(t, typeName.Name, ty)
+				structField := sd.Body.Fields[i]
+				var typeName string
+				if structField.Name != nil {
+					typeName = structField.Name.Value
+					utils.Assert(t, structField.Type == nil, "Expected unnamed fields")
+				} else {
+					name, ok := structField.Type.(*ast.Identifier)
+					utils.Assert(t, ok, "Type is not a type name")
+					typeName = name.Name
+				}
+				utils.AssertEq(t, typeName, ty)
 			}
 
 		case nil:
-			utils.Assert(t, sd.StructType == nil, "Expected a unit struct")
-			utils.Assert(t, sd.TupleType == nil, "Expected a unit struct")
+			utils.Assert(t, sd.Body == nil, "Expected a unit struct")
 		default:
 			panic("Invalid test")
 		}

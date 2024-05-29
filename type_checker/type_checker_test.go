@@ -517,6 +517,11 @@ func TestTCDiagnostics(t *testing.T) {
 		{"[1] = 2", []diagnostic{{"Cannot assign to a non-variable value", diagnostics.Error}}},
 		{"[[1, 2, 3]][[ [8] ]]", []diagnostic{{"Index 8 is out of bounds of array of length 3", diagnostics.Error}}},
 		{"if [21] {12}", []diagnostic{{"Condition must be a boolean", diagnostics.Error}}},
+		{"struct Rect { w: i32, [h] }", []diagnostic{{"The last field of a struct must have a type annotation", diagnostics.Error}}},
+		{"struct [Wrapper] {\nfoo: i32, [value]\n}", []diagnostic{
+			{"The last field of a struct must have a type annotation", diagnostics.Error},
+			{"Field in this struct", diagnostics.Info},
+		}},
 	}
 
 	for _, test := range tests {

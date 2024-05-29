@@ -1096,6 +1096,64 @@ func (s *StructExpression) ConstValue() values.ConstValue {
 	}
 }
 
+type TupleStructExpression struct {
+	expression
+	Struct *types.TupleStruct
+	Fields []Expression
+}
+
+func (t *TupleStructExpression) String() string {
+	var result bytes.Buffer
+
+	result.WriteString(t.Struct.Name)
+	result.WriteString(" {")
+	if len(t.Fields) > 0 {
+		result.WriteByte(' ')
+	}
+
+	for i, value := range t.Fields {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(value.String())
+	}
+	if len(t.Fields) > 0 {
+		result.WriteByte(' ')
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
+func (t *TupleStructExpression) Type() types.Type {
+	return t.Struct
+}
+
+func (s *TupleStructExpression) IsConst() bool {
+	for _, expr := range s.Fields {
+		if !expr.IsConst() {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *TupleStructExpression) ConstValue() values.ConstValue {
+	if !s.IsConst() {
+		return nil
+	}
+
+	members := []values.ConstValue{}
+
+	for _, expr := range s.Fields {
+		members = append(members, expr.ConstValue())
+	}
+
+	return values.TupleValue{
+		Values: members,
+	}
+}
+
 type MemberExpression struct {
 	expression
 	Left     Expression
@@ -1338,7 +1396,7 @@ func (*RefExpression) ConstValue() values.ConstValue {
 
 type DerefExpression struct {
 	expression
-	Value   Expression
+	Value Expression
 }
 
 func (d *DerefExpression) String() string {

@@ -609,13 +609,20 @@ func (m *MemberExpression) String() string {
 }
 
 type StructMember struct {
-	Name  token.Token
-	Colon token.Token
+	Name  *token.Token
+	Colon *token.Token
 	Value Expression
 }
 
 func (sm *StructMember) Tokens() []token.Token {
-	return append([]token.Token{sm.Name, sm.Colon}, sm.Value.Tokens()...)
+	tokens := []token.Token{}
+	if sm.Name != nil {
+		tokens = append(tokens, *sm.Name)
+	}
+	if sm.Colon != nil {
+		tokens = append(tokens, *sm.Colon)
+	}
+	return append(tokens, sm.Value.Tokens()...)
 }
 
 func (sm *StructMember) String() string {
@@ -823,7 +830,7 @@ func (f *FunctionExpression) String() string {
 	if f.ReturnType != nil {
 		result.WriteString(f.ReturnType.String())
 	}
-	
+
 	if f.Body != nil {
 		result.WriteByte(' ')
 		result.WriteString(f.Body.String())
@@ -844,7 +851,6 @@ func maybePrecedence(expr Expression) string {
 
 	return expr.String()
 }
-
 
 type Block struct {
 	expression

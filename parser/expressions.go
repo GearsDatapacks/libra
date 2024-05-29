@@ -183,9 +183,21 @@ func (p *parser) parseInferredTypeExpression() ast.Expression {
 }
 
 func (p *parser) parseStructMember() ast.StructMember {
-	name := p.expect(token.IDENTIFIER)
-	colon := p.expect(token.COLON)
-	value := p.parseExpression()
+	var name, colon *token.Token
+	var value ast.Expression
+
+	initial := p.parseExpression()
+	if ident, ok := initial.(*ast.Identifier); ok {
+		name = &ident.Token
+
+		if p.next().Kind == token.COLON {
+			tok := p.consume()
+			colon = &tok
+			value = p.parseExpression()
+		}
+	} else {
+		value = initial
+	}
 
 	return ast.StructMember{
 		Name:  name,

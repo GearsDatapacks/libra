@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
@@ -38,7 +39,7 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 		return t.typeCheckTuple(expr)
 
 	case *ast.Identifier:
-		return t.typeCheckIdentifier(expr)
+		return t.lookupVariable(expr.Token)
 	case *ast.BinaryExpression:
 		return t.typeCheckBinaryExpression(expr)
 	case *ast.ParenthesisedExpression:
@@ -82,12 +83,12 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 	}
 }
 
-func (t *typeChecker) typeCheckIdentifier(ident *ast.Identifier) ir.Expression {
-	symbol := t.symbols.Lookup(ident.Name)
+func (t *typeChecker) lookupVariable(tok token.Token) ir.Expression {
+	symbol := t.symbols.Lookup(tok.Value)
 	if symbol == nil {
-		t.diagnostics.Report(diagnostics.VariableUndefined(ident.Token.Location, ident.Name))
+		t.diagnostics.Report(diagnostics.VariableUndefined(tok.Location, tok.Value))
 		symbol = &symbols.Variable{
-			Name:  ident.Name,
+			Name:  tok.Value,
 			IsMut: true,
 			Type:  types.Invalid,
 		}
@@ -719,37 +720,89 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 		}
 	}
 	ty := struc.ConstValue().(values.TypeValue)
-	structTy, ok := ty.Type.(*types.Struct)
-	if !ok {
+	if structTy, ok := ty.Type.(*types.Struct); ok {
+		fields := map[string]ir.Expression{}
+
+		for _, member := range structExpr.Members {
+			if member.Name == nil {
+				t.diagnostics.Report(diagnostics.NoNameStructMember(member.Value.Location()))
+				continue
+			}
+			field, ok := structTy.Fields[member.Name.Value]
+			if !ok {
+				t.diagnostics.Report(diagnostics.NoStructMember(member.Name.Location, structTy.Name, member.Name.Value))
+				continue
+			}
+			var value ir.Expression
+			if member.Value != nil {
+				value = t.typeCheckExpression(member.Value)
+			} else {
+				value = t.lookupVariable(*member.Name)
+			}
+
+			conversion := convert(value, field.Type, implicit)
+			if conversion != nil {
+				value = conversion
+			} else {
+				t.diagnostics.Report(diagnostics.NotAssignable(member.Value.Location(), field.Type, value.Type()))
+			}
+
+			fields[member.Name.Value] = value
+		}
+
+		return &ir.StructExpression{
+			Struct: structTy,
+			Fields: fields,
+		}
+	} else if tupleTy, ok := ty.Type.(*types.TupleStruct); ok {
+		fields := []ir.Expression{}
+
+		if len(structExpr.Members) != len(tupleTy.Types) {
+			t.diagnostics.Report(diagnostics.WrongNumberTupleValues(structExpr.Struct.Location(), len(tupleTy.Types), len(structExpr.Members)))
+			return &ir.InvalidExpression{
+				Expression: &ir.TupleStructExpression{
+					Struct: tupleTy,
+					Fields: fields,
+				},
+			}
+		}
+
+		for i, member := range structExpr.Members {
+			field := tupleTy.Types[i]
+			var value ir.Expression
+			var location text.Location
+			if member.Value != nil {
+				value = t.typeCheckExpression(member.Value)
+				location = member.Value.Location()
+				if member.Name != nil {
+					t.diagnostics.Report(diagnostics.TupleStructWithNames(member.Name.Location))
+				}
+			} else {
+				value = t.lookupVariable(*member.Name)
+				location = member.Name.Location
+			}
+
+			conversion := convert(value, field, implicit)
+			if conversion != nil {
+				value = conversion
+			} else {
+				t.diagnostics.Report(diagnostics.NotAssignable(location, field, value.Type()))
+			}
+
+			fields = append(fields, value)
+		}
+
+		return &ir.TupleStructExpression{
+			Struct: tupleTy,
+			Fields: fields,
+		}
+	} else {
 		t.diagnostics.Report(diagnostics.CannotConstruct(structExpr.Struct.Location(), ty.Type.(types.Type)))
 		return &ir.InvalidExpression{
 			Expression: &ir.IntegerLiteral{},
 		}
 	}
 
-	fields := map[string]ir.Expression{}
-
-	for _, member := range structExpr.Members {
-		field, ok := structTy.Fields[member.Name.Value]
-		if !ok {
-			t.diagnostics.Report(diagnostics.NoStructMember(member.Name.Location, structTy.Name, member.Name.Value))
-			continue
-		}
-		value := t.typeCheckExpression(member.Value)
-		conversion := convert(value, field.Type, implicit)
-		if conversion != nil {
-			value = conversion
-		} else {
-			t.diagnostics.Report(diagnostics.NotAssignable(member.Value.Location(), field.Type, value.Type()))
-		}
-
-		fields[member.Name.Value] = value
-	}
-
-	return &ir.StructExpression{
-		Struct: structTy,
-		Fields: fields,
-	}
 }
 
 func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir.Expression {
@@ -975,6 +1028,6 @@ func (t *typeChecker) typeCheckDerefExpression(deref *ast.DerefExpression) ir.Ex
 	}
 
 	return &ir.DerefExpression{
-		Value:   value,
+		Value: value,
 	}
 }
