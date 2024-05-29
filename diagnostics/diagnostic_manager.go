@@ -29,12 +29,12 @@ func InvalidCharacter(location text.Location, char byte) Diagnostic {
 }
 
 func UnterminatedString(location text.Location) Diagnostic {
-	msg := "Unterminated string"
+	const msg = "Unterminated string"
 	return makeError(msg, location)
 }
 
 func UnterminatedComment(location text.Location) Diagnostic {
-	msg := "Unterminated block comment"
+	const msg = "Unterminated block comment"
 	return makeError(msg, location)
 }
 
@@ -44,7 +44,7 @@ func InvalidEscapeSequence(location text.Location, char byte) Diagnostic {
 }
 
 func ExpectedEscapeSequence(location text.Location) Diagnostic {
-	msg := "Expected escape sequence, reached end of file"
+	const msg = "Expected escape sequence, reached end of file"
 	return makeError(msg, location)
 }
 
@@ -59,7 +59,7 @@ func InvalidUnicodeSequence(location text.Location, sequence string) Diagnostic 
 }
 
 func NumbersCannotEndWithSeparator(location text.Location) Diagnostic {
-	msg := "Numbers cannot end with numeric separators"
+	const msg = "Numbers cannot end with numeric separators"
 	return makeError(msg, location)
 }
 
@@ -81,7 +81,7 @@ func ExpectedToken(location text.Location, expected token.Kind, actual token.Kin
 }
 
 func ElseStatementWithoutIf(location text.Location) Diagnostic {
-	msg := "Else statement not allowed without preceding if"
+	const msg = "Else statement not allowed without preceding if"
 	return makeError(msg, location)
 }
 
@@ -99,17 +99,17 @@ func KeywordOverwritten(location text.Location, keyword string, declared text.Lo
 	errMsg := fmt.Sprintf(
 		"Expected %q keyword, but it has been overwritten by a variable",
 		keyword)
-	info := "Try removing or renaming this variable"
+	const info = "Try removing or renaming this variable"
 
 	return []Diagnostic{makeError(errMsg, location), makeInfo(info, declared)}
 }
 
 func LastParameterMustHaveType(location text.Location, fnLocation text.Location) []Diagnostic {
-	msg := "The last parameter of a function must have a type annotation"
+	const msg = "The last parameter of a function must have a type annotation"
 	diagnostics := []Diagnostic{makeError(msg, location)}
 
 	if location.Span.StartLine != fnLocation.Span.StartLine {
-		info := "Parameter of this function"
+		const info = "Parameter of this function"
 		diagnostics = append(diagnostics, makeInfo(info, fnLocation))
 	}
 	return diagnostics
@@ -121,18 +121,18 @@ func MutWithoutParamName(location text.Location) Diagnostic {
 }
 
 func LastStructFieldMustHaveType(location text.Location, structLoc text.Location) []Diagnostic {
-	errMsg := "The last field of a struct must have a type annotation"
+	const errMsg = "The last field of a struct must have a type annotation"
 	diagnostics := []Diagnostic{makeError(errMsg, location)}
 
 	if location.Span.StartLine != structLoc.Span.StartLine {
-		info := "Field in this struct"
+		const info = "Field in this struct"
 		diagnostics = append(diagnostics, makeInfo(info, structLoc))
 	}
 	return diagnostics
 }
 
 func MemberAndMethodNotAllowed(location text.Location) Diagnostic {
-	msg := "Functions cannot be both methods and static members"
+	const msg = "Functions cannot be both methods and static members"
 
 	return makeError(msg, location)
 }
@@ -144,7 +144,7 @@ func ExpectedMemberOrStructBody(location text.Location, tok token.Token) Diagnos
 }
 
 func OneImportModifierAllowed(location text.Location) Diagnostic {
-	msg := "Only one import modifier is allowed"
+	const msg = "Only one import modifier is allowed"
 
 	return makeError(msg, location)
 }
@@ -161,7 +161,7 @@ func ExpectedType(location text.Location, kind token.Kind) Diagnostic {
 }
 
 func CannotExport(location text.Location) Diagnostic {
-	msg := "Only top-level declarations can be exported"
+	const msg = "Only top-level declarations can be exported"
 
 	return makeError(msg, location)
 }
@@ -225,7 +225,7 @@ func NotConst(location text.Location) Diagnostic {
 }
 
 func CountMustBeInt(location text.Location) Diagnostic {
-	msg := "Array length must be an integer"
+	const msg = "Array length must be an integer"
 	return makeError(msg, location)
 }
 
@@ -240,7 +240,7 @@ func NotHashable(location text.Location, ty tcType) Diagnostic {
 }
 
 func CannotAssign(location text.Location) Diagnostic {
-	msg := "Cannot assign to a non-variable value"
+	const msg = "Cannot assign to a non-variable value"
 	return makeError(msg, location)
 }
 
@@ -250,22 +250,22 @@ func IndexOutOfBounds(index, len int64) *Partial {
 }
 
 func ConditionMustBeBool(location text.Location) Diagnostic {
-	msg := "Condition must be a boolean"
+	const msg = "Condition must be a boolean"
 	return makeError(msg, location)
 }
 
 func NotIterable(location text.Location) Diagnostic {
-	msg := "Value is not iterable"
+	const msg = "Value is not iterable"
 	return makeError(msg, location)
 }
 
 func NoReturnOutsideFunction(location text.Location) Diagnostic {
-	msg := "Cannot use return outside of a function"
+	const msg = "Cannot use return outside of a function"
 	return makeError(msg, location)
 }
 
 func ExpectedReturnValue(location text.Location) Diagnostic {
-	msg := "Expected a return value"
+	const msg = "Expected a return value"
 	return makeError(msg, location)
 }
 
@@ -290,7 +290,7 @@ func FieldPrivate(leftType tcType, member string) *Partial {
 }
 
 func OnlyConstructTypes(location text.Location) Diagnostic {
-	msg := "Cannot construct value, not a type"
+	const msg = "Cannot construct value, not a type"
 	return makeError(msg, location)
 }
 
@@ -320,12 +320,12 @@ func ExpressionNotType(location text.Location, ty tcType) Diagnostic {
 }
 
 func NamedParamInFnType(location text.Location) Diagnostic {
-	msg := "Parameters in function types must be unnamed"
+	const msg = "Parameters in function types must be unnamed"
 	return makeError(msg, location)
 }
 
 func UnnamedParameter(location text.Location) Diagnostic {
-	msg := "Unnamed parameters are only allowed in function types"
+	const msg = "Unnamed parameters are only allowed in function types"
 	return makeError(msg, location)
 }
 
@@ -340,17 +340,17 @@ func CannotDeref(location text.Location, ty tcType) Diagnostic {
 }
 
 func MutDerefNotAllowed(location text.Location) Diagnostic {
-	msg := "`mut` keyword is only allowed in pointer types"
+	const msg = "`mut` keyword is only allowed in pointer types"
 	return makeError(msg, location)
 }
 
 func MutRefOfNotMut(location text.Location) Diagnostic {
-	msg := "Cannot take a mutable reference to an immutable value"
+	const msg = "Cannot take a mutable reference to an immutable value"
 	return makeError(msg, location)
 }
 
 func MixedNamedUnnamedStructFields(location text.Location) Diagnostic {
-	msg := "Cannot mix named and unnamed struct fields"
+	const msg = "Cannot mix named and unnamed struct fields"
 	return makeError(msg, location)
 }
 
@@ -360,16 +360,16 @@ func WrongNumberTupleValues(location text.Location, expected, found int) Diagnos
 }
 
 func TupleStructWithNames(location text.Location) Diagnostic {
-	msg := "Field names not allowed when constructing tuple structs"
+	const msg = "Field names not allowed when constructing tuple structs"
 	return makeError(msg, location)
 }
 
 func NoNameStructMember(location text.Location) Diagnostic {
-	msg := "Struct members must all be named"
+	const msg = "Struct members must all be named"
 	return makeError(msg, location)
 }
 
 func PubUnnamedStructField(location text.Location) Diagnostic {
-	msg := "`pub` keyword not allowed for unnamed fields"
+	const msg = "`pub` keyword not allowed for unnamed fields"
 	return makeError(msg, location)
 }
