@@ -374,10 +374,21 @@ func (p *parser) parseEnumDeclaration() ast.Statement {
 func (p *parser) parseUnionMember() ast.UnionMember {
 	name := p.expect(token.IDENTIFIER)
 	ty := p.parseOptionalTypeAnnotation()
+	var compound *ast.StructBody
+	if ty == nil && p.next().Kind == token.LEFT_BRACE {
+		leftBrace := p.consume()
+		fields, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseStructField)
+		compound = &ast.StructBody{
+			LeftBrace:  leftBrace,
+			Fields:     fields,
+			RightBrace: rightBrace,
+		}
+	}
 
 	return ast.UnionMember{
-		Name: name,
-		Type: ty,
+		Name:     name,
+		Type:     ty,
+		Compound: compound,
 	}
 }
 

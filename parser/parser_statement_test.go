@@ -571,7 +571,7 @@ func TestEnumDeclaration(t *testing.T) {
 
 type unionField struct {
 	name string
-	ty   string
+	ty   any
 }
 
 func TestUnionDeclaration(t *testing.T) {
@@ -581,20 +581,24 @@ func TestUnionDeclaration(t *testing.T) {
 		members []unionField
 	}{
 		{"union AOrB { a, b }", "AOrB", []unionField{
-			{"a", ""},
-			{"b", ""},
+			{"a", nil},
+			{"b", nil},
 		}},
 		{"union Int { i8, i16, i32, i64 ,}", "Int", []unionField{
-			{"i8", ""},
-			{"i16", ""},
-			{"i32", ""},
-			{"i64", ""},
+			{"i8", nil},
+			{"i16", nil},
+			{"i32", nil},
+			{"i64", nil},
 		}},
 		{"union Property { Age: i32, Height: f32, Weight:f32,string}", "Property", []unionField{
 			{"Age", "i32"},
 			{"Height", "f32"},
 			{"Weight", "f32"},
-			{"string", ""},
+			{"string", nil},
+		}},
+		{"union Shape { Square { f32, f32 }, Circle { radius: f32 } }", "Shape", []unionField{
+			{"Square", []string{"f32", "f32"}},
+			{"Circle", [][2]string{{"radius", "f32"}}},
 		}},
 	}
 
@@ -610,14 +614,56 @@ func TestUnionDeclaration(t *testing.T) {
 			unionMember := stmt.Members[i]
 
 			utils.AssertEq(t, unionMember.Name.Value, expected.name)
-			if expected.ty == "" {
-				utils.Assert(t, unionMember.Type == nil)
-			} else {
+			switch ty := expected.ty.(type) {
+			case string:
 				utils.Assert(t, unionMember.Type != nil)
+				utils.Assert(t, unionMember.Compound == nil)
 
 				name, ok := unionMember.Type.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Type is not a type name")
-				utils.AssertEq(t, name.Name, expected.ty)
+				utils.AssertEq(t, name.Name, ty)
+
+			case [][2]string:
+				utils.Assert(t, unionMember.Type == nil)
+				utils.Assert(t, unionMember.Compound != nil)
+				utils.AssertEq(t, len(unionMember.Compound.Fields), len(ty), "Field lengths do not match")
+				for i, field := range ty {
+					structField := unionMember.Compound.Fields[i]
+					utils.Assert(t, structField.Name != nil, "Expected named fields")
+					utils.AssertEq(t, field[0], structField.Name.Value)
+
+					if field[1] == "" {
+						utils.Assert(t, structField.Type == nil, "Expected no type annotation")
+					} else {
+						utils.Assert(t, structField.Type != nil, "Expected a type annotation")
+						typeName, ok := structField.Type.(*ast.Identifier)
+						utils.Assert(t, ok, "Type is not a type name")
+						utils.AssertEq(t, typeName.Name, field[1])
+					}
+				}
+
+			case []string:
+				utils.Assert(t, unionMember.Type == nil)
+				utils.Assert(t, unionMember.Compound != nil)
+				utils.AssertEq(t, len(unionMember.Compound.Fields), len(ty), "Type lengths do not match")
+
+				for i, ty := range ty {
+					structField := unionMember.Compound.Fields[i]
+					var typeName string
+					if structField.Name != nil {
+						typeName = structField.Name.Value
+						utils.Assert(t, structField.Type == nil, "Expected unnamed fields")
+					} else {
+						name, ok := structField.Type.(*ast.Identifier)
+						utils.Assert(t, ok, "Type is not a type name")
+						typeName = name.Name
+					}
+					utils.AssertEq(t, typeName, ty)
+				}
+
+			case nil:
+				utils.Assert(t, unionMember.Type == nil)
+				utils.Assert(t, unionMember.Compound == nil)
 			}
 		}
 	}

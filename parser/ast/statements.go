@@ -675,14 +675,22 @@ func (e *EnumDeclaration) String() string {
 }
 
 type UnionMember struct {
-	Name token.Token
-	Type *TypeAnnotation
+	Name     token.Token
+	Type     *TypeAnnotation
+	Compound *StructBody
 }
 
 func (u *UnionMember) Tokens() []token.Token {
 	tokens := []token.Token{u.Name}
 	if u.Type != nil {
 		tokens = append(tokens, u.Type.Tokens()...)
+	}
+	if u.Compound != nil {
+		tokens = append(tokens, u.Compound.LeftBrace)
+		for _, field := range u.Compound.Fields {
+			tokens = append(tokens, field.Tokens()...)
+		}
+		tokens = append(tokens, u.Compound.RightBrace)
 	}
 
 	return tokens
@@ -694,6 +702,22 @@ func (u *UnionMember) String() string {
 
 	if u.Type != nil {
 		result.WriteString(u.Type.String())
+	}
+	if u.Compound != nil {
+		result.WriteString(" {")
+		if len(u.Compound.Fields) != 0 {
+			result.WriteByte(' ')
+		}
+		for i, field := range u.Compound.Fields {
+			if i != 0 {
+				result.WriteString(", ")
+			}
+			result.WriteString(field.String())
+		}
+		if len(u.Compound.Fields) != 0 {
+			result.WriteByte(' ')
+		}
+		result.WriteByte('}')
 	}
 
 	return result.String()
