@@ -335,6 +335,7 @@ func (*ContinueStatement) String() string {
 
 type TypeDeclaration struct {
 	decl
+	expl
 	Keyword token.Token
 	Name    token.Token
 	Equals  token.Token
@@ -792,4 +793,17 @@ type decl struct {
 
 func (d *decl) MarkExport() {
 	d.Exported = true
+}
+
+type Explicit interface {
+	Statement
+	MarkExplicit()
+}
+
+type expl struct {
+	Explicit bool
+}
+
+func (d *expl) MarkExplicit() {
+	d.Explicit = true
 }

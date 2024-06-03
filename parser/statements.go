@@ -427,3 +427,14 @@ func (p *parser) parsePubStatement() ast.Statement {
 	p.Diagnostics.Report(diagnostics.CannotExport(pub.Location))
 	return stmt
 }
+
+func (p *parser) parseExplStatement() ast.Statement {
+	kwd := p.consume()
+	stmt := p.parseTopLevelStatement()
+	if expl, ok := stmt.(ast.Explicit); ok {
+		expl.MarkExplicit()
+		return expl
+	}
+	p.Diagnostics.Report(diagnostics.CannotExplicit(kwd.Location))
+	return stmt
+}

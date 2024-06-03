@@ -52,9 +52,15 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 }
 
 func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
+	var ty types.Type
+	if typeDec.Explicit {
+		ty = &types.Explicit{Name: typeDec.Name.Value, Type: types.Void}
+	} else {
+		ty = &types.Alias{Type: types.Void}
+	}
 	symbol := &symbols.Type{
 		Name: typeDec.Name.Value,
-		Type: &types.Alias{Type: types.Void},
+		Type: ty,
 	}
 	t.symbols.Register(symbol, typeDec.Exported)
 }
@@ -105,7 +111,11 @@ func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaratio
 
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
-	symbol.Type.(*types.Alias).Type = t.typeCheckType(typeDec.Type)
+	if typeDec.Explicit {
+		symbol.Type.(*types.Explicit).Type = t.typeCheckType(typeDec.Type)
+	} else {
+		symbol.Type.(*types.Alias).Type = t.typeCheckType(typeDec.Type)
+	}
 }
 
 func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {

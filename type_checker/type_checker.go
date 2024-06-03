@@ -25,7 +25,7 @@ type typeChecker struct {
 	module      *module.Module
 	symbols     *symbols.Table
 	subModules  map[string]*typeChecker
-	stage        tcStage
+	stage       tcStage
 }
 
 var mods = map[string]*typeChecker{}
@@ -36,7 +36,7 @@ func new(mod *module.Module, diagnostics *diagnostics.Manager) *typeChecker {
 		module:      mod,
 		symbols:     symbols.New(),
 		subModules:  map[string]*typeChecker{},
-		stage:        tcNone,
+		stage:       tcNone,
 	}
 	mods[mod.Path] = t
 
@@ -87,11 +87,11 @@ func (t *typeChecker) registerDeclarations() {
 		return
 	}
 	t.stage = tcRegister
-	
+
 	for _, subMod := range t.subModules {
 		subMod.registerDeclarations()
 	}
-	
+
 	t.updateContext()
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
@@ -164,11 +164,11 @@ func (t *typeChecker) typeCheckStatements() []ir.Statement {
 		return []ir.Statement{}
 	}
 	t.stage = tcStmts
-	
+
 	for _, subMod := range t.subModules {
 		subMod.typeCheckStatements()
 	}
-	
+
 	t.updateContext()
 	stmts := []ir.Statement{}
 	for _, file := range t.module.Files {
@@ -204,6 +204,15 @@ const (
 
 func canConvert(from, to types.Type) conversionKind {
 	kind := none
+
+	if expl, ok := to.(*types.Explicit); ok && types.Assignable(expl.Type, from) {
+		return implicit
+	}
+	if expl, ok := from.(*types.Explicit); ok {
+		if canConvert(expl.Type, to) != none {
+			return explicit
+		}
+	}
 
 	if types.Assignable(to, from) {
 		kind = identity

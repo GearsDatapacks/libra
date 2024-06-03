@@ -751,6 +751,10 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		return c.Expression.ConstValue()
 	}
 
+	if _, ok := c.To.(*types.Explicit); ok {
+		return c.Expression.ConstValue()
+	}
+
 	panic("unreachable")
 }
 

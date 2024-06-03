@@ -166,6 +166,12 @@ func CannotExport(location text.Location) Diagnostic {
 	return makeError(msg, location)
 }
 
+func CannotExplicit(location text.Location) Diagnostic {
+	const msg = "Statement cannot be marked explicit"
+
+	return makeError(msg, location)
+}
+
 // Type-checker Diagnostics
 
 type tcType interface {

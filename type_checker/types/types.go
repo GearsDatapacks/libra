@@ -648,6 +648,22 @@ func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
 	return Member(p.Underlying, member)
 }
 
+type Explicit struct {
+	Name string
+	Type
+}
+
+func (e *Explicit) String() string {
+	return e.Name
+}
+
+func (e *Explicit) valid(other Type) bool {
+	if expl, ok := other.(*Explicit); ok {
+		return expl.Name == e.Name && Assignable(expl.Type, e.Type)
+	}
+	return Assignable(e.Type, other)
+}
+
 type pseudo interface {
 	toReal() Type
 }

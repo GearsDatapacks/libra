@@ -93,7 +93,7 @@ func (t *Table) LookupMethod(name string, methodOf types.Type, static bool) *typ
 		return nil
 	}
 	for _, method := range methods {
-		if method.Static == static && types.Assignable(method.MethodOf, methodOf) {
+		if method.Static == static && types.Match(method.MethodOf, methodOf) {
 			return method.Function
 		}
 	}
