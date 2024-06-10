@@ -92,9 +92,20 @@ func (m MapValue) Index(index ConstValue) ConstValue {
 	return m.Values[index.Hash()]
 }
 
+type hasMembers interface {
+	StaticMemberValue(string) ConstValue
+}
+
 type TypeValue struct {
 	constValue
 	Type any // types.Type, but no import cycles :/
+}
+
+func (t TypeValue) Member(member string) ConstValue {
+	if hasMembers, ok := t.Type.(hasMembers); ok {
+		return hasMembers.StaticMemberValue(member)
+	}
+	return nil
 }
 
 type StructValue struct {

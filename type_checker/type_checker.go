@@ -229,6 +229,10 @@ func canConvert(from, to types.Type) conversionKind {
 		return implicit
 	}
 
+	if _, ok := to.(*types.Union); ok && kind == identity {
+		return implicit
+	}
+
 	return kind
 }
 

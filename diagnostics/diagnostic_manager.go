@@ -379,3 +379,8 @@ func PubUnnamedStructField(location text.Location) Diagnostic {
 	const msg = "`pub` keyword not allowed for unnamed fields"
 	return makeError(msg, location)
 }
+
+func NoVariant(unionName, member string) *Partial {
+	msg := fmt.Sprintf("Union %q has no variant %q", unionName, member)
+	return partial(Error, msg)
+}

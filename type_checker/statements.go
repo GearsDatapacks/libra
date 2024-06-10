@@ -33,7 +33,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		return t.typeCheckYield(stmt)
 	case *ast.ContinueStatement:
 		return t.typeCheckContinue(stmt)
-	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration, *ast.ImportStatement:
+	case *ast.TypeDeclaration, *ast.StructDeclaration, *ast.InterfaceDeclaration, *ast.ImportStatement, *ast.UnionDeclaration:
 		return &ir.Block{
 			Statements: []ir.Statement{},
 		}

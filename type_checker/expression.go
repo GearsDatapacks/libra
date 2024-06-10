@@ -706,21 +706,9 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 }
 
 func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression) ir.Expression {
-	struc := t.typeCheckExpression(structExpr.Struct)
-	if !types.Assignable(struc.Type(), types.RuntimeType) {
-		t.diagnostics.Report(diagnostics.OnlyConstructTypes(structExpr.Struct.Location()))
-		return &ir.InvalidExpression{
-			Expression: &ir.IntegerLiteral{},
-		}
-	}
-	if !struc.IsConst() {
-		t.diagnostics.Report(diagnostics.NotConst(structExpr.Struct.Location()))
-		return &ir.InvalidExpression{
-			Expression: &ir.IntegerLiteral{},
-		}
-	}
-	ty := struc.ConstValue().(values.TypeValue)
-	if structTy, ok := ty.Type.(*types.Struct); ok {
+	baseTy := t.typeCheckType(structExpr.Struct)
+	ty := types.Unwrap(baseTy)
+	if structTy, ok := ty.(*types.Struct); ok {
 		fields := map[string]ir.Expression{}
 
 		for _, member := range structExpr.Members {
@@ -751,10 +739,10 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 		}
 
 		return &ir.StructExpression{
-			Struct: structTy,
+			Struct: baseTy,
 			Fields: fields,
 		}
-	} else if tupleTy, ok := ty.Type.(*types.TupleStruct); ok {
+	} else if tupleTy, ok := ty.(*types.TupleStruct); ok {
 		fields := []ir.Expression{}
 
 		if len(structExpr.Members) != len(tupleTy.Types) {
@@ -793,16 +781,15 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 		}
 
 		return &ir.TupleStructExpression{
-			Struct: tupleTy,
+			Struct: baseTy,
 			Fields: fields,
 		}
 	} else {
-		t.diagnostics.Report(diagnostics.CannotConstruct(structExpr.Struct.Location(), ty.Type.(types.Type)))
+		t.diagnostics.Report(diagnostics.CannotConstruct(structExpr.Struct.Location(), ty))
 		return &ir.InvalidExpression{
 			Expression: &ir.IntegerLiteral{},
 		}
 	}
-
 }
 
 func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir.Expression {

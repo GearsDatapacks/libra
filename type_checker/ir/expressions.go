@@ -747,13 +747,18 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		}
 	}
 
-	if _, ok := c.To.(*types.Union); ok {
+	if _, ok := c.To.(*types.SimpleUnion); ok {
 		return c.Expression.ConstValue()
 	}
 
 	if _, ok := c.To.(*types.Explicit); ok {
 		return c.Expression.ConstValue()
 	}
+
+	if _, ok := c.To.(*types.Union); ok {
+		return c.Expression.ConstValue()
+	}
+
 
 	panic("unreachable")
 }
@@ -1040,14 +1045,14 @@ func (f *FunctionCall) ConstValue() values.ConstValue {
 
 type StructExpression struct {
 	expression
-	Struct *types.Struct
+	Struct types.Type
 	Fields map[string]Expression
 }
 
 func (s *StructExpression) String() string {
 	var result bytes.Buffer
 
-	result.WriteString(s.Struct.Name)
+	result.WriteString(s.Struct.String())
 	result.WriteString(" {")
 	if len(s.Fields) > 0 {
 		result.WriteByte(' ')
@@ -1102,14 +1107,14 @@ func (s *StructExpression) ConstValue() values.ConstValue {
 
 type TupleStructExpression struct {
 	expression
-	Struct *types.TupleStruct
+	Struct types.Type
 	Fields []Expression
 }
 
 func (t *TupleStructExpression) String() string {
 	var result bytes.Buffer
 
-	result.WriteString(t.Struct.Name)
+	result.WriteString(t.Struct.String())
 	result.WriteString(" {")
 	if len(t.Fields) > 0 {
 		result.WriteByte(' ')

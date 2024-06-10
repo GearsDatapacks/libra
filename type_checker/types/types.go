@@ -41,7 +41,7 @@ func Index(left, index Type, constVals ...values.ConstValue) (Type, *diagnostics
 	if index == Invalid {
 		return Invalid, nil
 	}
-	if indexable, ok := left.(indexable); ok {
+	if indexable, ok := Unwrap(left).(indexable); ok {
 		return indexable.indexBy(index, constVals)
 	}
 	return Invalid, diagnostics.CannotIndex(left, index)
@@ -52,16 +52,21 @@ func Member(left Type, member string, constVal ...values.ConstValue) (Type, *dia
 		return Invalid, nil
 	}
 
-	if left == RuntimeType {
+	if left == RuntimeType && len(constVal) > 0 {
 		ty := constVal[0].(values.TypeValue).Type.(Type)
 		if method := Context.LookupMethod(member, ty, true); method != nil {
 			return method, nil
+		}
+		if sm, ok := ty.(staticMember); ok {
+			if static, diag := sm.staticMember(member); diag == nil {
+				return static, nil
+			}
 		}
 	} else if method := Context.LookupMethod(member, left, false); method != nil {
 		return method, nil
 	}
 
-	if hasMember, ok := left.(hasMembers); ok {
+	if hasMember, ok := Unwrap(left).(hasMembers); ok {
 		ty, diag := hasMember.member(member)
 		if diag == nil {
 			return ty, nil
@@ -88,6 +93,13 @@ func Hashable(ty Type) bool {
 	default:
 		return false
 	}
+}
+
+func Unwrap(ty Type) Type {
+	if container, ok := ty.(container); ok {
+		return container.unwrap()
+	}
+	return ty
 }
 
 type PrimaryType int
@@ -414,6 +426,10 @@ func (a *Alias) toReal() Type {
 	return ToReal(a.Type)
 }
 
+func (a *Alias) unwrap() Type {
+	return Unwrap(a.Type)
+}
+
 type StructField struct {
 	Type     Type
 	Exported bool
@@ -543,10 +559,85 @@ func (i *Interface) member(member string) (Type, *diagnostics.Partial) {
 }
 
 type Union struct {
-	Types []Type
+	Name    string
+	Members map[string]Type
 }
 
 func (u *Union) String() string {
+	return u.Name
+}
+
+func (u *Union) valid(other Type) bool {
+	if union, ok := other.(*Union); ok {
+		// FIXME: compare more than just the name
+		return u.Name == union.Name
+	} else {
+		canAssign := false
+		for _, ty := range u.Members {
+			if expl, ok := ty.(*Explicit); (ok && Assignable(expl.Type, other)) || Assignable(ty, other) {
+				// TODO: Prevent ambiguity of untyped numbers when assigned to a union
+				if canAssign {
+					// TODO: Make a proper error message for this
+					return false
+				}
+				canAssign = true
+			}
+		}
+		return canAssign
+	}
+}
+
+func (u *Union) member(member string) (Type, *diagnostics.Partial) {
+	if ty, ok := u.Members[member]; ok {
+		return ty, nil
+	}
+	return nil, diagnostics.NoVariant(u.Name, member)
+}
+
+func (u *Union) staticMember(member string) (Type, *diagnostics.Partial) {
+	if _, ok := u.Members[member]; ok {
+		return RuntimeType, nil
+	}
+	return nil, diagnostics.NoVariant(u.Name, member)
+}
+
+func (u *Union) StaticMemberValue(member string) values.ConstValue {
+	if ty, ok := u.Members[member]; ok {
+		return values.TypeValue{Type: ty}
+	}
+	return nil
+}
+
+type UnionVariant struct {
+	Union *Union
+	Name  string
+	Type
+}
+
+func (v *UnionVariant) String() string {
+	return fmt.Sprintf("%s.%s", v.Union.Name, v.Name)
+}
+
+func (v *UnionVariant) valid(other Type) bool {
+	if expl, ok := other.(*UnionVariant); ok {
+		return expl.Name == v.Name && Assignable(expl.Type, v.Type)
+	}
+	return Assignable(v.Type, other)
+}
+
+func (v *UnionVariant) toReal() Type {
+	return v.Union
+}
+
+func (v *UnionVariant) unwrap() Type {
+	return Unwrap(v.Type)
+}
+
+type SimpleUnion struct {
+	Types []Type
+}
+
+func (u *SimpleUnion) String() string {
 	var result bytes.Buffer
 
 	for i, ty := range u.Types {
@@ -559,8 +650,8 @@ func (u *Union) String() string {
 	return result.String()
 }
 
-func (u *Union) valid(other Type) bool {
-	if union, ok := other.(*Union); ok {
+func (u *SimpleUnion) valid(other Type) bool {
+	if union, ok := other.(*SimpleUnion); ok {
 		for _, ty := range union.Types {
 			if !Assignable(u, ty) {
 				return false
@@ -580,19 +671,19 @@ func (u *Union) valid(other Type) bool {
 
 func MakeUnion(a, b Type) Type {
 	types := []Type{}
-	if union, ok := a.(*Union); ok {
+	if union, ok := a.(*SimpleUnion); ok {
 		types = append(types, union.Types...)
 	} else {
 		types = append(types, a)
 	}
 
-	if union, ok := b.(*Union); ok {
+	if union, ok := b.(*SimpleUnion); ok {
 		types = append(types, union.Types...)
 	} else {
 		types = append(types, b)
 	}
 
-	return &Union{
+	return &SimpleUnion{
 		Types: types,
 	}
 }
@@ -664,6 +755,10 @@ func (e *Explicit) valid(other Type) bool {
 	return Assignable(e.Type, other)
 }
 
+func (e *Explicit) unwrap() Type {
+	return Unwrap(e.Type)
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -674,6 +769,14 @@ type indexable interface {
 
 type hasMembers interface {
 	member(string) (Type, *diagnostics.Partial)
+}
+
+type staticMember interface {
+	staticMember(string) (Type, *diagnostics.Partial)
+}
+
+type container interface {
+	unwrap() Type
 }
 
 type Iterator interface {

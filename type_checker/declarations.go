@@ -2,6 +2,7 @@ package typechecker
 
 import (
 	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
@@ -18,6 +19,8 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 		t.registerStructDeclaration(stmt)
 	case *ast.InterfaceDeclaration:
 		t.registerInterfaceDeclaration(stmt)
+	case *ast.UnionDeclaration:
+		t.registerUnionDeclaration(stmt)
 	}
 }
 
@@ -29,6 +32,8 @@ func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
 		t.typeCheckStructDeclaration(stmt)
 	case *ast.InterfaceDeclaration:
 		t.typeCheckInterfaceDeclaration(stmt)
+	case *ast.UnionDeclaration:
+		t.typeCheckUnionDeclaration(stmt)
 	}
 }
 
@@ -109,6 +114,18 @@ func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaratio
 	t.symbols.Register(symbol, decl.Exported)
 }
 
+func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
+	symbol := &symbols.Type{
+		Name: decl.Name.Value,
+		Type: &types.Union{
+			Name:    decl.Name.Value,
+			Members: map[string]types.Type{},
+		},
+	}
+
+	t.symbols.Register(symbol, decl.Exported)
+}
+
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
 	if typeDec.Explicit {
@@ -169,9 +186,13 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type
 
+	t.typeCheckStructBody(decl.Name, decl.Body, ty)
+}
+
+func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody, ty types.Type) {
 	if structTy, ok := ty.(*types.Struct); ok {
 		fields := []types.StructField{}
-		for _, field := range decl.Body.Fields {
+		for _, field := range body.Fields {
 			if field.Name == nil {
 				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.Location()))
 			}
@@ -193,18 +214,18 @@ func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 		}
 
 		if len(fields) > 0 && fields[len(fields)-1].Type == nil {
-			lastField := decl.Body.Fields[len(fields)-1]
-			t.diagnostics.Report(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, decl.Name.Location)...)
+			lastField := body.Fields[len(fields)-1]
+			t.diagnostics.Report(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, name.Location)...)
 		}
 
-		for i, field := range decl.Body.Fields {
+		for i, field := range body.Fields {
 			if fields[i].Type == nil {
 				fields[i].Type = types.Invalid
 			}
 			structTy.Fields[field.Name.Value] = fields[i]
 		}
 	} else if structTy, ok := ty.(*types.TupleStruct); ok {
-		for _, field := range decl.Body.Fields {
+		for _, field := range body.Fields {
 			if field.Pub != nil {
 				t.diagnostics.Report(diagnostics.PubUnnamedStructField(field.Pub.Location))
 			}
@@ -233,6 +254,41 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 			fnType.ReturnType = t.typeCheckType(member.ReturnType.Type)
 		}
 		ty.Methods[member.Name.Value] = fnType
+	}
+}
+
+func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
+	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Union)
+
+	for _, member := range decl.Members {
+		var memberType types.Type
+		if member.Type != nil {
+			memberType = t.typeCheckType(member.Type.Type)
+		} else if member.Compound != nil {
+			structTy := &types.Struct{
+				Name:     member.Name.Value,
+				ModuleId: t.module.Id,
+				Fields:   map[string]types.StructField{},
+			}
+			t.typeCheckStructBody(member.Name, member.Compound, structTy)
+			memberType = structTy
+		} else {
+			memberType = t.lookupType(member.Name)
+		}
+
+		if memberType == nil {
+			continue
+		}
+
+		if member.Type == nil && member.Compound == nil {
+			ty.Members[member.Name.Value] = memberType
+		} else {
+			ty.Members[member.Name.Value] = &types.UnionVariant{
+				Union: ty,
+				Name:  member.Name.Value,
+				Type:  memberType,
+			}
+		}
 	}
 }
 
