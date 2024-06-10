@@ -58,8 +58,11 @@ func Member(left Type, member string, constVal ...values.ConstValue) (Type, *dia
 			return method, nil
 		}
 		if sm, ok := ty.(staticMember); ok {
-			if static, diag := sm.staticMember(member); diag == nil {
+			static, diag := sm.staticMember(member)
+			if diag == nil {
 				return static, nil
+			} else {
+				return Invalid, diag
 			}
 		}
 	} else if method := Context.LookupMethod(member, left, false); method != nil {
