@@ -345,13 +345,38 @@ func (p *parser) parseKeyValue() ast.KeyValue {
 	}
 }
 
-func (p *parser) parseMap() ast.Expression {
+func (p *parser) parseMapOrBlock() ast.Expression {
 	leftBrace := p.consume()
-	keyValues, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseKeyValue)
+	if p.next().Kind == token.RIGHT_BRACE {
+		rightBrace := p.consume()
+		return &ast.MapLiteral{
+			LeftBrace:  leftBrace,
+			KeyValues:  []ast.KeyValue{},
+			RightBrace: rightBrace,
+		}
+	}
 
-	return &ast.MapLiteral{
+	first := p.parseStatement()
+	if key, ok := first.(ast.Expression); ok && p.next().Kind == token.COLON {
+		colon := p.consume()
+		value := p.parseExpression()
+		keyValues, rightBrace := extendDelimExprList(
+			p,
+			ast.KeyValue{Key: key, Colon: colon, Value: value},
+			token.RIGHT_BRACE, p.parseKeyValue,
+		)
+
+		return &ast.MapLiteral{
+			LeftBrace:  leftBrace,
+			KeyValues:  keyValues,
+			RightBrace: rightBrace,
+		}
+	}
+
+	stmts, rightBrace := extendDelimStmtList(p, first, token.RIGHT_BRACE, p.parseStatement)
+	return &ast.Block{
 		LeftBrace:  leftBrace,
-		KeyValues:  keyValues,
+		Statements: stmts,
 		RightBrace: rightBrace,
 	}
 }
@@ -391,13 +416,6 @@ func (p *parser) parseBlock(noScope ...bool) *ast.Block {
 		Statements: statements,
 		RightBrace: rightBrace,
 	}
-}
-
-func (p *parser) parseBlockExpression() ast.Expression {
-	if p.isKeyword("do") {
-		p.consume()
-	}
-	return p.parseBlock()
 }
 
 func (p *parser) parseIfExpression() ast.Expression {

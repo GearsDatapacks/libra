@@ -21,10 +21,6 @@ func (p *parser) parseTopLevelStatement() ast.Statement {
 }
 
 func (p *parser) parseStatement() ast.Statement {
-	if p.next().Kind == token.LEFT_BRACE {
-		return p.parseBlock()
-	}
-
 	for _, kwd := range p.keywords {
 		if p.isKeyword(kwd.Name) {
 			if kwd.Kind == decl {

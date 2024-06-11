@@ -92,16 +92,15 @@ func TestMapExpression(t *testing.T) {
 		src       string
 		keyValues [][2]any
 	}{
-		{"({})", [][2]any{}},
-		{"({1: 2, 2: 3, 3:4})", [][2]any{{1, 2}, {2, 3}, {3, 4}}},
-		{`({"foo": "bar", "hello": "world"})`, [][2]any{{"foo", "bar"}, {"hello", "world"}}},
-		{`({hi: "there", "x": computed})`, [][2]any{{"$hi", "there"}, {"x", "$computed"}}},
+		{"{}", [][2]any{}},
+		{"{1: 2, 2: 3, 3:4}", [][2]any{{1, 2}, {2, 3}, {3, 4}}},
+		{`{"foo": "bar", "hello": "world"}`, [][2]any{{"foo", "bar"}, {"hello", "world"}}},
+		{`{hi: "there", "x": computed}`, [][2]any{{"$hi", "there"}, {"x", "$computed"}}},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
-		parenExpr := getStmt[*ast.ParenthesisedExpression](t, program)
-		mapLit := parenExpr.Expression.(*ast.MapLiteral)
+		mapLit := getStmt[*ast.MapLiteral](t, program)
 		testLiteral(t, mapLit, tt.keyValues)
 	}
 }
@@ -531,6 +530,9 @@ func TestParserDiagnostics(t *testing.T) {
 		p := parser.New(tokens, lexer.Diagnostics)
 		p.Parse()
 		diagnostics := p.Diagnostics
+		if len(diagnostics) != len(test.diagnostics) {
+			fmt.Println(src)
+		}
 		utils.AssertEq(t, len(diagnostics), len(test.diagnostics),
 			fmt.Sprintf("Incorrect number of diagnostics (expected %d, got %d)", len(test.diagnostics), len(diagnostics)))
 
@@ -603,6 +605,11 @@ func getProgram(t *testing.T, input string) *ast.Program {
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
+	if len(p.Diagnostics) !=0 {
+		for _, diag := range p.Diagnostics {
+			diag.Print()
+		}
+	}
 	utils.AssertEq(t, len(p.Diagnostics), 0,
 		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics)))
 

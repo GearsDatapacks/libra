@@ -347,10 +347,10 @@ func TestMaps(t *testing.T) {
 		valueType types.Type
 		keyValues [][2]any
 	}{
-		{"({1: 2, 3: 4})", types.Int, types.Int, [][2]any{{1, 2}, {3, 4}}},
-		{`({"one": 1, "two": 2, "three": 3})`, types.String, types.Int, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
-		{`({true: "true", false: "false"})`, types.Bool, types.String, [][2]any{{true, "true"}, {false, "false"}}},
-		{`({"1" + "2": 1 + 2, "7" + "4": 7 + 4})`, types.String, types.Int, [][2]any{{"12", 3}, {"74", 11}}},
+		{"{1: 2, 3: 4}", types.Int, types.Int, [][2]any{{1, 2}, {3, 4}}},
+		{`{"one": 1, "two": 2, "three": 3}`, types.String, types.Int, [][2]any{{"one", 1}, {"two", 2}, {"three", 3}}},
+		{`{true: "true", false: "false"}`, types.Bool, types.String, [][2]any{{true, "true"}, {false, "false"}}},
+		{`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}`, types.String, types.Int, [][2]any{{"12", 3}, {"74", 11}}},
 	}
 
 	for _, test := range tests {

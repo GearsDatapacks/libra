@@ -25,6 +25,28 @@ func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	return result, delimToken
 }
 
+func extendDelimExprList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+	result = []Elem{first}
+	p.bracketLevel++
+
+	for !p.eof() && p.next().Kind != delim {
+		if p.next().Kind == token.COMMA {
+			p.consume()
+		} else {
+			break
+		}
+
+		if !p.eof() && p.next().Kind != delim {
+			result = append(result, elemFn())
+		}
+	}
+
+	delimToken = p.expect(delim)
+	p.bracketLevel--
+
+	return result, delimToken
+}
+
 func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
 	result = []Elem{}
 
@@ -36,6 +58,27 @@ func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 			p.consumeNewlines()
 		} else {
 			break
+		}
+	}
+
+	delimToken = p.expect(delim)
+
+	return result, delimToken
+}
+
+func extendDelimStmtList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+	result = []Elem{first}
+
+	for !p.eof() && p.next().Kind != delim {
+		next := p.nextWithNewlines().Kind
+		if next == token.NEWLINE || next == token.SEMICOLON {
+			p.consumeNewlines()
+		} else {
+			break
+		}
+
+		if !p.eof() && p.next().Kind != delim {
+			result = append(result, elemFn())
 		}
 	}
 

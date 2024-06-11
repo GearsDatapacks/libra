@@ -623,11 +623,10 @@ let my_if_expr = if condition1 {
 
 ### Block expressions
 Block expressions are just like if/else expressions, but they run a single block unconditionally. This can be used to calculate a value without polluting the scope with all the intermediate values used, and without creating a separate function for the logic.  
-Since block syntax conflicts with map syntax, the `do` keyword must be used when a block is treated as an expression.
 
 Example:
 ```rust
-let result = do {
+let result = {
   let x = 3.4
   let x_squared = x ** 2
   let two_x = x * 2

@@ -202,7 +202,6 @@ func (p *parser) register() {
 	p.registerKeyword("const", p.parseVariableDeclaration, stmt)
 	p.registerKeyword("let", p.parseVariableDeclaration, stmt)
 	p.registerKeyword("mut", p.parseVariableDeclaration, stmt)
-	p.registerKeyword("do", func() ast.Statement { return p.parseBlockExpression() }, expr)
 	p.registerKeyword("if", func() ast.Statement { return p.parseIfExpression() }, expr)
 	p.registerKeyword("else", func() ast.Statement {
 		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
@@ -225,7 +224,7 @@ func (p *parser) register() {
 	p.registerNudFn(token.STRING, p.parseString)
 	p.registerNudFn(token.IDENTIFIER, p.parseIdentifier)
 	p.registerNudFn(token.LEFT_SQUARE, p.parseList)
-	p.registerNudFn(token.LEFT_BRACE, p.parseMap)
+	p.registerNudFn(token.LEFT_BRACE, p.parseMapOrBlock)
 
 	p.registerNudFn(token.LEFT_PAREN, p.parseTuple)
 	p.registerNudFn(token.DOT, p.parseInferredTypeExpression)
