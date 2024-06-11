@@ -11,7 +11,7 @@ import (
 )
 
 func (t *typeChecker) typeCheckType(expression ast.Expression) types.Type {
-	return t.typeFromExpr(t.typeCheckExpression(expression), expression.Location())
+	return t.typeFromExpr(t.doTypeCheckExpression(expression), expression.Location())
 }
 
 func (t *typeChecker) typeFromExpr(expr ir.Expression, location text.Location) types.Type {

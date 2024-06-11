@@ -130,6 +130,11 @@ func (m ModuleValue) Member(member string) ConstValue {
 	return export.Value()
 }
 
+type UnitValue struct {
+	constValue
+	Name string
+}
+
 func NumericValue(v ConstValue) float64 {
 	switch val := v.(type) {
 	case FloatValue:

@@ -762,6 +762,22 @@ func (e *Explicit) unwrap() Type {
 	return Unwrap(e.Type)
 }
 
+type UnitStruct struct {
+	Name string
+}
+
+func (u *UnitStruct) String() string {
+	return u.Name
+}
+
+func (u *UnitStruct) valid(other Type) bool {
+	// FIXME: compare more than just the name
+	if unit, ok := other.(*UnitStruct); ok {
+		return unit.Name == u.Name
+	}
+	return false
+}
+
 type pseudo interface {
 	toReal() Type
 }

@@ -70,27 +70,31 @@ func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	t.symbols.Register(symbol, typeDec.Exported)
 }
 
-// TODO: unit structs
 func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
-	isTuple := true
-	for _, field := range decl.Body.Fields {
-		if field.Name != nil && field.Type != nil {
-			isTuple = false
-			break
-		}
-	}
-
 	var ty types.Type
-	if isTuple {
-		ty = &types.TupleStruct{
-			Name:  decl.Name.Value,
-			Types: []types.Type{},
-		}
+
+	if decl.Body == nil {
+		ty = &types.UnitStruct{Name: decl.Name.Value}
 	} else {
-		ty = &types.Struct{
-			Name:     decl.Name.Value,
-			ModuleId: t.module.Id,
-			Fields:   map[string]types.StructField{},
+		isTuple := true
+		for _, field := range decl.Body.Fields {
+			if field.Name != nil && field.Type != nil {
+				isTuple = false
+				break
+			}
+		}
+
+		if isTuple {
+			ty = &types.TupleStruct{
+				Name:  decl.Name.Value,
+				Types: []types.Type{},
+			}
+		} else {
+			ty = &types.Struct{
+				Name:     decl.Name.Value,
+				ModuleId: t.module.Id,
+				Fields:   map[string]types.StructField{},
+			}
 		}
 	}
 

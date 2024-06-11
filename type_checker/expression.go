@@ -14,6 +14,26 @@ import (
 )
 
 func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expression {
+	expr := t.doTypeCheckExpression(expression)
+	if varExpr, ok := expr.(*ir.VariableExpression); ok && varExpr.Symbol.Type == types.RuntimeType {
+		if unit, ok := varExpr.ConstValue().(values.TypeValue).Type.(*types.UnitStruct); ok {
+			expr = &ir.VariableExpression{
+				Symbol: symbols.Variable{
+					Name:  varExpr.Symbol.Name,
+					IsMut: false,
+					Type:  unit,
+					ConstValue: &values.UnitValue{
+						Name: unit.Name,
+					},
+				},
+			}
+		}
+	}
+
+	return expr
+}
+
+func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expression {
 	switch expr := expression.(type) {
 	case *ast.IntegerLiteral:
 		return &ir.IntegerLiteral{
