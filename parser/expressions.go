@@ -100,7 +100,16 @@ func (p *parser) parsePostfixExpression(operand ast.Expression) ast.Expression {
 	}
 }
 
-func (p *parser) parseRefDeref() ast.Expression {
+func (p *parser) parseDerefExpression(operand ast.Expression) ast.Expression {
+	operator := p.consume()
+
+	return &ast.DerefExpression{
+		Operand:  operand,
+		Operator: operator,
+	}
+}
+
+func (p *parser) parsePtrOrRef() ast.Expression {
 	operator := p.consume()
 	var mut *token.Token
 	if p.isKeyword("mut") {
@@ -110,7 +119,7 @@ func (p *parser) parseRefDeref() ast.Expression {
 	operand := p.parseSubExpression(Prefix)
 
 	if operator.Kind == token.STAR {
-		return &ast.DerefExpression{
+		return &ast.PointerType{
 			Operator: operator,
 			Mutable:  mut,
 			Operand:  operand,
@@ -119,6 +128,16 @@ func (p *parser) parseRefDeref() ast.Expression {
 	return &ast.RefExpression{
 		Operator: operator,
 		Mutable:  mut,
+		Operand:  operand,
+	}
+}
+
+func (p *parser) parseOptionType() ast.Expression {
+	operator := p.consume()
+	operand := p.parseExpression()
+
+	return &ast.OptionType{
+		Operator: operator,
 		Operand:  operand,
 	}
 }

@@ -345,11 +345,6 @@ func CannotDeref(location text.Location, ty tcType) Diagnostic {
 	return makeError(msg, location)
 }
 
-func MutDerefNotAllowed(location text.Location) Diagnostic {
-	const msg = "`mut` keyword is only allowed in pointer types"
-	return makeError(msg, location)
-}
-
 func MutRefOfNotMut(location text.Location) Diagnostic {
 	const msg = "Cannot take a mutable reference to an immutable value"
 	return makeError(msg, location)

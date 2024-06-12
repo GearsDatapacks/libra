@@ -86,6 +86,8 @@ func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expres
 		return t.typeCheckRefExpression(expr)
 	case *ast.DerefExpression:
 		return t.typeCheckDerefExpression(expr)
+	case *ast.PointerType:
+		return t.typeCheckPointerType(expr)
 
 	case *ast.Block:
 		return t.typeCheckBlock(expr, true)
@@ -1018,23 +1020,22 @@ func (t *typeChecker) typeCheckRefExpression(ref *ast.RefExpression) ir.Expressi
 func (t *typeChecker) typeCheckDerefExpression(deref *ast.DerefExpression) ir.Expression {
 	value := t.typeCheckExpression(deref.Operand)
 
-	if value.Type() == types.RuntimeType {
-		return &ir.TypeExpression{
-			DataType: &types.Pointer{
-				Underlying: value.ConstValue().(values.TypeValue).Type.(types.Type),
-				Mutable:    deref.Mutable != nil,
-			},
-		}
-	}
-
-	if deref.Mutable != nil {
-		t.diagnostics.Report(diagnostics.MutDerefNotAllowed(deref.Mutable.Location))
-	}
 	if _, ok := value.Type().(*types.Pointer); !ok {
 		t.diagnostics.Report(diagnostics.CannotDeref(deref.Operand.Location(), value.Type()))
 	}
 
 	return &ir.DerefExpression{
 		Value: value,
+	}
+}
+
+func (t *typeChecker) typeCheckPointerType(ptr *ast.PointerType) ir.Expression {
+	ty := t.typeCheckType(ptr.Operand)
+
+	return &ir.TypeExpression{
+		DataType: &types.Pointer{
+			Underlying: ty,
+			Mutable:    ptr.Mutable != nil,
+		},
 	}
 }

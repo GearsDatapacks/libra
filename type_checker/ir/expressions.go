@@ -1409,7 +1409,7 @@ type DerefExpression struct {
 }
 
 func (d *DerefExpression) String() string {
-	return fmt.Sprintf("*%s", d.Value.String())
+	return fmt.Sprintf("%s.*", d.Value.String())
 }
 
 func (d *DerefExpression) Type() types.Type {

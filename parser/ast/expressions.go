@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/text"
@@ -226,49 +227,94 @@ func (p *PostfixExpression) PrecedenceString() string {
 	return result.String()
 }
 
-type DerefExpression struct {
+type PointerType struct {
 	expression
 	Operator token.Token
 	Mutable  *token.Token
 	Operand  Expression
 }
 
-func (d *DerefExpression) Tokens() []token.Token {
-	tokens := []token.Token{d.Operator}
-	if d.Mutable != nil {
-		tokens = append(tokens, *d.Mutable)
+func (p *PointerType) Tokens() []token.Token {
+	tokens := []token.Token{p.Operator}
+	if p.Mutable != nil {
+		tokens = append(tokens, *p.Mutable)
 	}
-	return append(tokens, d.Operand.Tokens()...)
+	return append(tokens, p.Operand.Tokens()...)
 }
 
-func (d *DerefExpression) Location() text.Location {
-	return d.Operator.Location.To(d.Operand.Location())
+func (p *PointerType) Location() text.Location {
+	return p.Operator.Location.To(p.Operand.Location())
 }
 
-func (d *DerefExpression) String() string {
+func (p *PointerType) String() string {
 	var result bytes.Buffer
 	result.WriteByte('*')
-	if d.Mutable != nil {
+	if p.Mutable != nil {
 		result.WriteString("mut ")
 	}
 
-	result.WriteString(d.Operand.String())
+	result.WriteString(p.Operand.String())
 	return result.String()
 }
 
-func (d *DerefExpression) PrecedenceString() string {
+func (p *PointerType) PrecedenceString() string {
 	var result bytes.Buffer
 
 	result.WriteByte('*')
-	if d.Mutable != nil {
+	if p.Mutable != nil {
 		result.WriteString("mut ")
 	}
 
 	result.WriteByte('(')
-	result.WriteString(maybePrecedence(d.Operand))
+	result.WriteString(maybePrecedence(p.Operand))
 	result.WriteByte(')')
 
 	return result.String()
+}
+
+type OptionType struct {
+	expression
+	Operator token.Token
+	Operand  Expression
+}
+
+func (p *OptionType) Tokens() []token.Token {
+	tokens := []token.Token{p.Operator}
+	return append(tokens, p.Operand.Tokens()...)
+}
+
+func (p *OptionType) Location() text.Location {
+	return p.Operator.Location.To(p.Operand.Location())
+}
+
+func (p *OptionType) String() string {
+	return fmt.Sprintf("?%s", p.Operand.String())
+	}
+	
+	func (p *OptionType) PrecedenceString() string {
+	return fmt.Sprintf("?(%s)", p.Operand.String())
+}
+
+type DerefExpression struct {
+	expression
+	Operand  Expression
+	Operator token.Token
+}
+
+func (d *DerefExpression) Tokens() []token.Token {
+	return append(d.Operand.Tokens(), d.Operator)
+}
+
+func (d *DerefExpression) Location() text.Location {
+	return d.Operand.Location().To(d.Operator.Location)
+}
+
+func (d *DerefExpression) String() string {
+	return fmt.Sprintf("%s.*", d.Operand)
+}
+
+func (d *DerefExpression) PrecedenceString() string {
+	return fmt.Sprintf("(%s).*", d.Operand)
 }
 
 type RefExpression struct {

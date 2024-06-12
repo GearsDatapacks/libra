@@ -58,6 +58,7 @@ const (
 	DOUBLE_PLUS
 	DOUBLE_MINUS
 	DOUBLE_DOT
+	DOT_STAR
 
 	BANG
 
@@ -69,10 +70,10 @@ const (
 
 	COMMENT
 
-	PLUS_EQUALS =  PLUS + EQUALS
-	MINUS_EQUALS = MINUS + EQUALS
-	STAR_EQUALS = STAR + EQUALS
-	SLASH_EQUALS = SLASH + EQUALS
+	PLUS_EQUALS    = PLUS + EQUALS
+	MINUS_EQUALS   = MINUS + EQUALS
+	STAR_EQUALS    = STAR + EQUALS
+	SLASH_EQUALS   = SLASH + EQUALS
 	PERCENT_EQUALS = PERCENT + EQUALS
 )
 
@@ -156,6 +157,8 @@ func (kind Kind) String() string {
 		return "`--`"
 	case DOUBLE_DOT:
 		return "`..`"
+	case DOT_STAR:
+		return "`.*`"
 	case BANG:
 		return "`!`"
 	case PIPE:

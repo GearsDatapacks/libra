@@ -361,22 +361,39 @@ func TestPostfixExpressions(t *testing.T) {
 func TestDerefExpressions(t *testing.T) {
 	tests := []struct {
 		src     string
-		mut     bool
 		operand any
 	}{
-		{"*ptr", false, "$ptr"},
-		{"*mut i32", true, "$i32"},
-		{"*91", false, 91},
+		{"ptr.*", "$ptr"},
+		{"72.*", 72},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
 		expr := getStmt[*ast.DerefExpression](t, program)
 
+		testLiteral(t, expr.Operand, tt.operand)
+	}
+}
+
+func TestPointerTypes(t *testing.T) {
+	tests := []struct {
+		src     string
+		mut     bool
+		operand any
+	}{
+		{"*string", false, "$string"},
+		{"*mut i32", true, "$i32"},
+		{"*91", false, 91},
+	}
+
+	for _, tt := range tests {
+		program := getProgram(t, tt.src)
+		expr := getStmt[*ast.PointerType](t, program)
+
 		if tt.mut {
 			utils.Assert(t, expr.Mutable != nil, "Expected a mutable pointer")
 		} else {
-			utils.Assert(t, expr.Mutable == nil, "Expected a plain deref")
+			utils.Assert(t, expr.Mutable == nil, "Expected an immutable pointer")
 		}
 		testLiteral(t, expr.Operand, tt.operand)
 	}

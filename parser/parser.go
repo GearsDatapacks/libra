@@ -262,15 +262,17 @@ func (p *parser) register() {
 	// Postfix operators
 	p.registerLedOp(token.DOUBLE_PLUS, Postfix, p.parsePostfixExpression)
 	p.registerLedOp(token.DOUBLE_MINUS, Postfix, p.parsePostfixExpression)
-	p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression, false, true)
-	p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression, false, true)
+	p.registerLedOp(token.DOT_STAR, Postfix, p.parseDerefExpression)
+	p.registerLedOp(token.QUESTION, Postfix, p.parsePostfixExpression)
+	p.registerLedOp(token.BANG, Postfix, p.parsePostfixExpression)
 
 	// Prefix operators
 	p.registerNudFn(token.MINUS, p.parsePrefixExpression)
 	p.registerNudFn(token.PLUS, p.parsePrefixExpression)
 	p.registerNudFn(token.BANG, p.parsePrefixExpression)
-	p.registerNudFn(token.STAR, p.parseRefDeref)
-	p.registerNudFn(token.AMPERSAND, p.parseRefDeref)
+	p.registerNudFn(token.QUESTION, p.parseOptionType)
+	p.registerNudFn(token.STAR, p.parsePtrOrRef)
+	p.registerNudFn(token.AMPERSAND, p.parsePtrOrRef)
 	p.registerNudFn(token.TILDE, p.parsePrefixExpression)
 
 	// Assignment

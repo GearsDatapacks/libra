@@ -261,6 +261,9 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 		if l.next() == '.' {
 			kind = token.DOUBLE_DOT
 			l.consume()
+		} else if l.next() == '*' {
+			kind = token.DOT_STAR
+			l.consume()
 		}
 	case ':':
 		kind = token.COLON
