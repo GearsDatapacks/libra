@@ -180,7 +180,8 @@ func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, *dia
 		var err *diagnostics.Diagnostic
 		index, err = p.parseExpression()
 		if err != nil {
-			return nil, err
+			p.Diagnostics.Report(err)
+			p.consumeUntil(token.RIGHT_SQUARE)
 		}
 	}
 	rightSquare := p.expect(token.RIGHT_SQUARE)
@@ -219,8 +220,7 @@ func (p *parser) parseInferredTypeExpression() (ast.Expression, *diagnostics.Dia
 		return p.parseStructExpression(&ast.InferredExpression{Token: dot})
 	}
 
-	p.Diagnostics.Report(diagnostics.ExpectedMemberOrStructBody(p.next().Location, p.next()))
-	return &ast.InferredExpression{Token: dot}, nil
+	return nil, diagnostics.ExpectedMemberOrStructBody(p.next().Location, p.next())
 }
 
 func (p *parser) parseStructMember() (*ast.StructMember, *diagnostics.Diagnostic) {
@@ -421,13 +421,29 @@ func (p *parser) parseMapOrBlock() (ast.Expression, *diagnostics.Diagnostic) {
 
 	first, err := p.parseStatement()
 	if err != nil {
-		return nil, err
+		p.Diagnostics.Report(err)
+		p.consumeUntil(token.LEFT_BRACE)
+		rightBrace := p.expect(token.LEFT_BRACE)
+
+		return &ast.MapLiteral{
+			LeftBrace:  leftBrace,
+			KeyValues:  []ast.KeyValue{},
+			RightBrace: rightBrace,
+		}, nil
 	}
+
 	if key, ok := first.(ast.Expression); ok && p.next().Kind == token.COLON {
 		colon := p.consume()
 		value, err := p.parseExpression()
 		if err != nil {
-			return nil, err
+			p.consumeUntil(token.LEFT_BRACE)
+			rightBrace := p.expect(token.LEFT_BRACE)
+
+			return &ast.MapLiteral{
+				LeftBrace:  leftBrace,
+				KeyValues:  []ast.KeyValue{},
+				RightBrace: rightBrace,
+			}, nil
 		}
 
 		keyValues, rightBrace := extendDelimExprList(
