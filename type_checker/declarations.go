@@ -219,7 +219,7 @@ func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody
 
 		if len(fields) > 0 && fields[len(fields)-1].Type == nil {
 			lastField := body.Fields[len(fields)-1]
-			t.diagnostics.Report(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, name.Location)...)
+			t.diagnostics.ReportMany(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, name.Location))
 		}
 
 		for i, field := range body.Fields {

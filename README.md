@@ -1188,3 +1188,60 @@ fn (Expression($T)) calculate(): T {
   }
 }
 ```
+
+### Builder pattern
+Libra supports the builder pattern at a language level, allowing structs to provide builder methods instead of being constructed in the usual way.
+
+```rust
+struct Averages {
+  ~values: i32[]
+  mean: f32,
+  mode, median: i32,
+}
+
+fn Averages.new(values: i32[]): ~Averages { Averages { values } }
+
+fn (~Averages) values(values: i32[]): ~Averages {
+  this.values.extend(values)
+  return this
+}
+
+fn (~Averages) value(value: i32): ~Averages {
+  this.values.push(value)
+  return this
+}
+
+fn (~Averages) calculate(): Averages {
+  mut frequencies: {i32: i32} = {}
+  mut sum = 0
+
+  for value in values {
+    frequencies[value]++
+    sum += value
+  }
+
+  this.mode = 0
+  mut max_frequency = 0
+  for (value, freq) in frequencies {
+    if freq > max_frequency {
+      this.mode = value
+      max_frequency = freq
+    }
+  }
+
+  let len = this.values.len()
+  this.median = if len % 2 == 0 {
+    (this.values[len / 2] + this.values[len / 2 + 1]) / 2
+  } else {
+    this.values[len / 2 + 0.5]
+  }
+
+  this.mean = sum / count
+  return this
+}
+
+let averages = Averages.new([1, 2, 3]).values([4, 5, 6]).value(7).calculate()
+let mean = averages.mean
+// ERROR
+averages.value(10)
+```

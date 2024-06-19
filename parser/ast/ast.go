@@ -46,16 +46,16 @@ func (p *Program) String() string {
 	return text.String()
 }
 
-type ErrorNode struct {
-	expression
-}
+// type ErrorNode struct {
+// 	expression
+// }
 
-func (e *ErrorNode) Tokens() []token.Token {
-	return []token.Token{}
-}
-func (e *ErrorNode) Location() text.Location {
-	return text.Location{}
-}
-func (e *ErrorNode) String() string {
-	return ""
-}
+// func (e *ErrorNode) Tokens() []token.Token {
+// 	return []token.Token{}
+// }
+// func (e *ErrorNode) Location() text.Location {
+// 	return text.Location{}
+// }
+// func (e *ErrorNode) String() string {
+// 	return ""
+// }

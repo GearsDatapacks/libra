@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"slices"
+
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -45,23 +47,30 @@ func (p *parser) Parse() *ast.Program {
 	for !p.eof() {
 		pos := p.pos
 
-		program.Statements = append(program.Statements, p.parseTopLevelStatement())
+		next, err :=  p.parseTopLevelStatement()
+		if err != nil {
+			p.Diagnostics.Report(err)
+			p.consumeUntil(token.NEWLINE, token.SEMICOLON, token.EOF)
 
-		if p.pos == pos {
-			p.consume()
+			if p.pos == pos {
+				p.consume()
+			}
+			
+			p.consumeNewlines()
+		} else {
+			program.Statements = append(program.Statements, next)
+
+			if !p.eof() {
+				p.expectNewline()
+			}
 		}
-
-		if !p.eof() {
-			p.expectNewline()
-		}
-
 	}
 
 	return program
 }
 
-type nudFn func() ast.Expression
-type ledFn func(ast.Expression) ast.Expression
+type nudFn func() (ast.Expression, *diagnostics.Diagnostic)
+type ledFn func(ast.Expression) (ast.Expression, *diagnostics.Diagnostic)
 type lookupFn func(ast.Expression) (opInfo, bool)
 
 type kwdKind int
@@ -75,7 +84,7 @@ const (
 type keyword struct {
 	Name     string
 	StmtName string
-	Fn       func() ast.Statement
+	Fn       func() (ast.Statement, *diagnostics.Diagnostic)
 	Kind     kwdKind
 }
 
@@ -90,7 +99,7 @@ func (p *parser) registerNudFn(kind token.Kind, fn nudFn) {
 	p.nudFns[kind] = fn
 }
 
-func (p *parser) registerKeyword(kwd string, fn func() ast.Statement, kind kwdKind, name ...string) {
+func (p *parser) registerKeyword(kwd string, fn func() (ast.Statement, *diagnostics.Diagnostic), kind kwdKind, name ...string) {
 	stmtName := append(name, "")[0]
 
 	p.keywords = append(p.keywords, keyword{
@@ -138,7 +147,13 @@ func (p *parser) registerLedLookup(fn lookupFn) {
 func (p *parser) lookupNudFn() nudFn {
 	for _, kwd := range p.keywords {
 		if kwd.Kind == expr && p.isKeyword(kwd.Name) {
-			return func() ast.Expression { return kwd.Fn().(ast.Expression) }
+			return func() (ast.Expression, *diagnostics.Diagnostic) {
+				expr, diag := kwd.Fn()
+				if diag != nil {
+					return nil, diag
+				}
+				return expr.(ast.Expression), nil
+			}
 		}
 	}
 	fn, ok := p.nudFns[p.next().Kind]
@@ -190,7 +205,7 @@ func (p *parser) register() {
 	p.registerKeyword("pub", p.parsePubStatement, decl, "Exported statement")
 	p.registerKeyword("explicit", p.parseExplStatement, decl, "Explicit statement")
 	p.registerKeyword("fn", p.parseFunctionDeclaration, decl, "Function declaration")
-	p.registerKeyword("fn", func() ast.Statement { return p.parseFunctionExpression() }, expr)
+	p.registerKeyword("fn", func() (ast.Statement, *diagnostics.Diagnostic) { return p.parseFunctionExpression() }, expr)
 	p.registerKeyword("type", p.parseTypeDeclaration, decl, "Type declaration")
 	p.registerKeyword("struct", p.parseStructDeclaration, decl, "Struct declaration")
 	p.registerKeyword("interface", p.parseInterfaceDeclaration, decl, "Interface declaration")
@@ -202,20 +217,21 @@ func (p *parser) register() {
 	p.registerKeyword("const", p.parseVariableDeclaration, stmt)
 	p.registerKeyword("let", p.parseVariableDeclaration, stmt)
 	p.registerKeyword("mut", p.parseVariableDeclaration, stmt)
-	p.registerKeyword("if", func() ast.Statement { return p.parseIfExpression() }, expr)
-	p.registerKeyword("else", func() ast.Statement {
+	p.registerKeyword("if", func() (ast.Statement, *diagnostics.Diagnostic) { return p.parseIfExpression() }, expr)
+	p.registerKeyword("else", func() (ast.Statement, *diagnostics.Diagnostic) {
 		p.Diagnostics.Report(diagnostics.ElseStatementWithoutIf(p.next().Location))
-		return &ast.ErrorNode{}
+		p.consume()
+		return p.parseExpression()
 	}, expr)
-	p.registerKeyword("while", func() ast.Statement { return p.parseWhileLoop() }, expr)
-	p.registerKeyword("for", func() ast.Statement { return p.parseForLoop() }, expr)
+	p.registerKeyword("while", func() (ast.Statement, *diagnostics.Diagnostic) { return p.parseWhileLoop() }, expr)
+	p.registerKeyword("for", func() (ast.Statement, *diagnostics.Diagnostic) { return p.parseForLoop() }, expr)
 	p.registerKeyword("return", p.parseReturnStatement, stmt)
 	p.registerKeyword("yield", p.parseYieldStatement, stmt)
 	p.registerKeyword("break", p.parseBreakStatement, stmt)
-	p.registerKeyword("continue", func() ast.Statement {
+	p.registerKeyword("continue", func() (ast.Statement, *diagnostics.Diagnostic) {
 		return &ast.ContinueStatement{
 			Keyword: p.consume(),
-		}
+		}, nil
 	}, stmt)
 
 	// Literals
@@ -403,6 +419,61 @@ func (p *parser) consumeNewlines() {
 	}
 }
 
+func (p *parser) consumeUntil(kinds ...token.Kind) {
+	hasNewline := slices.Contains(kinds, token.NEWLINE)
+	bracketMatches := map[token.Kind]int{}
+
+	for {
+		var next token.Kind
+		if hasNewline {
+			next = p.nextWithNewlines().Kind
+		} else {
+			next = p.next().Kind
+		}
+
+		switch next {
+		case token.LEFT_PAREN:
+			bracketMatches[token.LEFT_PAREN] += 1
+		case token.RIGHT_PAREN:
+			if bracketMatches[token.LEFT_PAREN] > 0 {
+				bracketMatches[token.LEFT_PAREN] -= 1
+			}
+
+		case token.LEFT_SQUARE:
+			bracketMatches[token.LEFT_SQUARE] += 1
+		case token.RIGHT_SQUARE:
+			if bracketMatches[token.LEFT_SQUARE] > 0 {
+				bracketMatches[token.LEFT_SQUARE] -= 1
+			}
+
+		case token.LEFT_BRACE:
+			bracketMatches[token.LEFT_BRACE] += 1
+		case token.RIGHT_BRACE:
+			if bracketMatches[token.LEFT_BRACE] > 0 {
+				bracketMatches[token.LEFT_BRACE] -= 1
+			}
+		}
+
+		if slices.Contains(kinds, next) {
+			noOpen := true
+			for _, matches := range bracketMatches {
+				if matches != 0 {
+					noOpen = false
+				}
+			}
+
+			if noOpen {
+				break
+			}
+		}
+
+		p.consumeNewlines()
+		if next != token.NEWLINE {
+			p.consume()
+		}
+	}
+}
+
 func (p *parser) expect(kind token.Kind) token.Token {
 	if p.next().Kind == kind {
 		return p.consume()
@@ -423,7 +494,7 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 	}
 
 	if p.next().Kind == token.IDENTIFIER && p.next().Value == keyword {
-		p.Diagnostics.Report(diagnostics.KeywordOverwritten(p.next().Location, keyword, p.identifiers[keyword])...)
+		p.Diagnostics.ReportMany(diagnostics.KeywordOverwritten(p.next().Location, keyword, p.identifiers[keyword]))
 		return p.consume()
 	}
 

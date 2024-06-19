@@ -548,8 +548,11 @@ func TestParserDiagnostics(t *testing.T) {
 		p.Parse()
 		diagnostics := p.Diagnostics
 		if len(diagnostics) != len(test.diagnostics) {
-			fmt.Println(src)
+			for _, diagnostic := range diagnostics {
+				diagnostic.Print()
+			} 
 		}
+
 		utils.AssertEq(t, len(diagnostics), len(test.diagnostics),
 			fmt.Sprintf("Incorrect number of diagnostics (expected %d, got %d)", len(test.diagnostics), len(diagnostics)))
 
@@ -572,8 +575,7 @@ func TestErrorExpression(t *testing.T) {
 	diag := utils.AssertSingle(t, p.Diagnostics)
 	msg := "Expected expression, found `)`"
 	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 0, 1))
-
-	getStmt[*ast.ErrorNode](t, program)
+	utils.AssertEq(t, len(program.Statements), 0, "Expected no valid statements")
 }
 
 func getSpans(sourceText string) (string, []text.Span) {

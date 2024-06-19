@@ -27,7 +27,7 @@ func partial(kind DiagnosticKind, message string) *Partial {
 	}
 }
 
-func (p *Partial) Location(location text.Location) Diagnostic {
+func (p *Partial) Location(location text.Location) *Diagnostic {
 	return new(p.Kind, p.Message, location)
 }
 
@@ -37,8 +37,8 @@ type Diagnostic struct {
 	Location text.Location
 }
 
-func new(kind DiagnosticKind, message string, location text.Location) Diagnostic {
-	return Diagnostic{
+func new(kind DiagnosticKind, message string, location text.Location) *Diagnostic {
+	return &Diagnostic{
 		Kind:     kind,
 		Message:  message,
 		Location: location,

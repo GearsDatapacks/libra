@@ -1,16 +1,24 @@
 package parser
 
 import (
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() (Elem, *diagnostics.Diagnostic)) (result []Elem, delimToken token.Token) {
 	result = []Elem{}
 	p.bracketLevel++
 
 	for !p.eof() && p.next().Kind != delim {
-		result = append(result, elemFn())
+		nextElem, err := elemFn()
+		if err != nil {
+			p.Diagnostics.Report(err)
+			p.consumeUntil(token.COMMA, delim)
+			continue
+		}
+
+		result = append(result, nextElem)
 
 		if p.next().Kind == token.COMMA {
 			p.consume()
@@ -25,7 +33,34 @@ func parseDelimExprList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	return result, delimToken
 }
 
-func extendDelimExprList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+func parseDerefExprList[Elem any](p *parser, delim token.Kind, elemFn func() (*Elem, *diagnostics.Diagnostic)) (result []Elem, delimToken token.Token) {
+	result = []Elem{}
+	p.bracketLevel++
+
+	for !p.eof() && p.next().Kind != delim {
+		nextElem, err := elemFn()
+		if err != nil {
+			p.Diagnostics.Report(err)
+			p.consumeUntil(token.COMMA, delim)
+			continue
+		}
+
+		result = append(result, *nextElem)
+
+		if p.next().Kind == token.COMMA {
+			p.consume()
+		} else {
+			break
+		}
+	}
+
+	delimToken = p.expect(delim)
+	p.bracketLevel--
+
+	return result, delimToken
+}
+
+func extendDelimExprList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() (*Elem, *diagnostics.Diagnostic)) (result []Elem, delimToken token.Token) {
 	result = []Elem{first}
 	p.bracketLevel++
 
@@ -37,7 +72,14 @@ func extendDelimExprList[Elem any](p *parser, first Elem, delim token.Kind, elem
 		}
 
 		if !p.eof() && p.next().Kind != delim {
-			result = append(result, elemFn())
+			nextElem, err := elemFn()
+			if err != nil {
+				p.Diagnostics.Report(err)
+				p.consumeUntil(token.COMMA, delim)
+				continue
+			}
+	
+			result = append(result, *nextElem)
 		}
 	}
 
@@ -47,11 +89,24 @@ func extendDelimExprList[Elem any](p *parser, first Elem, delim token.Kind, elem
 	return result, delimToken
 }
 
-func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() (Elem, *diagnostics.Diagnostic)) (result []Elem, delimToken token.Token) {
 	result = []Elem{}
 
 	for !p.eof() && p.next().Kind != delim {
-		result = append(result, elemFn())
+		nextElem, err := elemFn()
+		if err != nil {
+			p.Diagnostics.Report(err)
+			p.consumeUntil(token.NEWLINE, token.SEMICOLON, delim)
+			continue
+		}
+
+		result = append(result, nextElem)
+
+		if p.next().Kind == token.COMMA {
+			p.consume()
+		} else {
+			break
+		}
 
 		next := p.nextWithNewlines().Kind
 		if next == token.NEWLINE || next == token.SEMICOLON {
@@ -66,7 +121,7 @@ func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() Ele
 	return result, delimToken
 }
 
-func extendDelimStmtList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() Elem) (result []Elem, delimToken token.Token) {
+func extendDelimStmtList[Elem any](p *parser, first Elem, delim token.Kind, elemFn func() (Elem, *diagnostics.Diagnostic)) (result []Elem, delimToken token.Token) {
 	result = []Elem{first}
 
 	for !p.eof() && p.next().Kind != delim {
@@ -78,7 +133,14 @@ func extendDelimStmtList[Elem any](p *parser, first Elem, delim token.Kind, elem
 		}
 
 		if !p.eof() && p.next().Kind != delim {
-			result = append(result, elemFn())
+			nextElem, err := elemFn()
+			if err != nil {
+				p.Diagnostics.Report(err)
+				p.consumeUntil(token.NEWLINE, token.SEMICOLON, delim)
+				continue
+			}
+	
+			result = append(result, nextElem)
 		}
 	}
 
@@ -87,24 +149,27 @@ func extendDelimStmtList[Elem any](p *parser, first Elem, delim token.Kind, elem
 	return result, delimToken
 }
 
-func (p *parser) parseOptionalTypeAnnotation() *ast.TypeAnnotation {
+func (p *parser) parseOptionalTypeAnnotation() (*ast.TypeAnnotation, *diagnostics.Diagnostic) {
 	if p.next().Kind != token.COLON {
-		return nil
+		return nil, nil
 	}
 
 	colon := p.consume()
-	ty := p.parseTypeExpression()
+	ty, err := p.parseTypeExpression()
+	if err != nil {
+		return nil, err
+	}
 
 	return &ast.TypeAnnotation{
 		Colon: colon,
 		Type:  ty,
-	}
+	}, nil
 }
 
-func (p *parser) parseTypeExpression() ast.Expression {
+func (p *parser) parseTypeExpression() (ast.Expression, *diagnostics.Diagnostic) {
 	old := p.typeExpr
 	p.typeExpr = true
-	ty := p.parseExpression()
+	ty, err := p.parseExpression()
 	p.typeExpr = old
-	return ty
+	return ty, err
 }
