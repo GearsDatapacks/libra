@@ -16,6 +16,7 @@ type parser struct {
 	nudFns       map[token.Kind]nudFn
 	ledOps       []lookupFn
 	keywords     []keyword
+	attributes   []attribute
 	identifiers  map[string]text.Location
 	noBraces     bool
 	typeExpr     bool
@@ -47,7 +48,7 @@ func (p *parser) Parse() *ast.Program {
 	for !p.eof() {
 		pos := p.pos
 
-		next, err :=  p.parseTopLevelStatement()
+		next, err := p.parseTopLevelStatement()
 		if err != nil {
 			p.Diagnostics.Report(err)
 			p.consumeUntil(token.NEWLINE, token.SEMICOLON, token.EOF)
@@ -55,7 +56,7 @@ func (p *parser) Parse() *ast.Program {
 			if p.pos == pos {
 				p.consume()
 			}
-			
+
 			p.consumeNewlines()
 		} else {
 			program.Statements = append(program.Statements, next)
@@ -88,6 +89,11 @@ type keyword struct {
 	Kind     kwdKind
 }
 
+type attribute struct {
+	Name string
+	Fn   func() (ast.Attribute, *diagnostics.Diagnostic)
+}
+
 type opInfo struct {
 	leftPrecedence  int
 	rightPrecedence int
@@ -107,6 +113,14 @@ func (p *parser) registerKeyword(kwd string, fn func() (ast.Statement, *diagnost
 		StmtName: stmtName,
 		Fn:       fn,
 		Kind:     kind,
+	})
+}
+
+func (p *parser) registerAttribute(name string, fn func() (ast.Attribute, *diagnostics.Diagnostic)) {
+
+	p.attributes = append(p.attributes, attribute{
+		Name: name,
+		Fn:   fn,
 	})
 }
 
@@ -202,6 +216,7 @@ func (p *parser) rightPrecedence(left ast.Expression) int {
 }
 
 func (p *parser) register() {
+	// Keywords
 	p.registerKeyword("pub", p.parsePubStatement, decl, "Exported statement")
 	p.registerKeyword("explicit", p.parseExplStatement, decl, "Explicit statement")
 	p.registerKeyword("fn", p.parseFunctionDeclaration, decl, "Function declaration")
@@ -233,6 +248,15 @@ func (p *parser) register() {
 			Keyword: p.consume(),
 		}, nil
 	}, stmt)
+
+	// Attributes
+
+	p.registerAttribute("tag", p.parseTagAttribute)
+	p.registerAttribute("impl", p.parseImplAttribute)
+	p.registerAttribute("untagged", p.parseUntaggedAttribue)
+	p.registerAttribute("todo", p.parseTodoAttribue)
+	p.registerAttribute("doc", p.parseDocAttribue)
+	p.registerAttribute("deprecated", p.parseDeprecatedAttribue)
 
 	// Literals
 	p.registerNudFn(token.INTEGER, p.parseInteger)
@@ -423,7 +447,13 @@ func (p *parser) consumeUntil(kinds ...token.Kind) {
 	hasNewline := slices.Contains(kinds, token.NEWLINE)
 	bracketMatches := map[token.Kind]int{}
 
-	for {
+	if hasNewline {
+		p.consumeNewlines()
+	} else {
+		p.consume()
+	}
+
+	for !p.eof() {
 		var next token.Kind
 		if hasNewline {
 			next = p.nextWithNewlines().Kind

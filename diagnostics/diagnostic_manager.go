@@ -178,6 +178,18 @@ func CannotExplicit(location text.Location) *Diagnostic {
 	return makeError(msg, location)
 }
 
+func InvalidAttribute(location text.Location, name string) *Diagnostic {
+	msg := fmt.Sprintf("The attribute %q does not exist", name)
+
+	return makeError(msg, location)
+}
+
+func CannotAttribute(location text.Location) *Diagnostic {
+	const msg = "Statement cannot be marked with attributes"
+
+	return makeError(msg, location)
+}
+
 // Type-checker Diagnostics
 
 type tcType interface {

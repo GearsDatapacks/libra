@@ -19,6 +19,8 @@ const (
 	FLOAT
 	STRING
 	IDENTIFIER
+	ATTRIBUTE_NAME
+	ATTRIBUTE_BODY
 
 	LEFT_PAREN
 	RIGHT_PAREN
@@ -185,6 +187,10 @@ func (kind Kind) String() string {
 		return "string"
 	case IDENTIFIER:
 		return "identifier"
+	case ATTRIBUTE_NAME:
+		return "attribute"
+	case ATTRIBUTE_BODY:
+		return "attribute body"
 	case COMMENT:
 		return "comment"
 	default:

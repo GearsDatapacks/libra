@@ -28,6 +28,7 @@ func (ta *TypeAnnotation) String() string {
 }
 
 type VariableDeclaration struct {
+	attr
 	Keyword    token.Token
 	Identifier token.Token
 	Type       *TypeAnnotation
@@ -190,6 +191,7 @@ func (m *MemberOf) String() string {
 }
 
 type FunctionDeclaration struct {
+	attr
 	decl
 	Keyword    token.Token
 	MethodOf   *MethodOf
@@ -336,6 +338,7 @@ func (*ContinueStatement) String() string {
 type TypeDeclaration struct {
 	decl
 	expl
+	attr
 	Keyword token.Token
 	Name    token.Token
 	Equals  token.Token
@@ -387,6 +390,7 @@ func (s *StructField) String() string {
 
 type StructDeclaration struct {
 	decl
+	attr
 	Keyword token.Token
 	Name    token.Token
 	Body    *StructBody
@@ -480,6 +484,7 @@ func (i *InterfaceMember) String() string {
 
 type InterfaceDeclaration struct {
 	decl
+	attr
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
@@ -631,6 +636,7 @@ func (e *EnumMember) String() string {
 
 type EnumDeclaration struct {
 	decl
+	attr
 	Keyword    token.Token
 	Name       token.Token
 	ValueType  *TypeAnnotation
@@ -726,6 +732,7 @@ func (u *UnionMember) String() string {
 
 type UnionDeclaration struct {
 	decl
+	attr
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
@@ -806,4 +813,16 @@ type expl struct {
 
 func (d *expl) MarkExplicit() {
 	d.Explicit = true
+}
+
+type AcceptsAttributes interface {
+	AddAttributes(...Attribute)
+}
+
+type attr struct {
+	Attributes []Attribute
+}
+
+func (a *attr) AddAttributes(attributes ...Attribute) {
+	a.Attributes = append(a.Attributes, attributes...)
 }

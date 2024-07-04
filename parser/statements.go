@@ -7,9 +7,42 @@ import (
 )
 
 func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnostic) {
+	attributes := []ast.Attribute{}
+	for p.next().Kind == token.ATTRIBUTE_NAME {
+		found := false
+		name := p.next().Value[1:]
+		for _, attr := range p.attributes {
+			if name == attr.Name {
+				attribute, err := attr.Fn()
+				if err != nil {
+					p.Diagnostics.Report(err)
+					p.consumeUntil(token.NEWLINE, token.SEMICOLON)
+				} else {
+					attributes = append(attributes, attribute)
+				}
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			p.Diagnostics.Report(diagnostics.InvalidAttribute(p.next().Location, p.next().Value[1:]))
+			p.consumeUntil(token.NEWLINE, token.SEMICOLON)
+		}
+	}
+
 	for _, kwd := range p.keywords {
 		if p.isKeyword(kwd.Name) {
-			return kwd.Fn()
+			stmt, err := kwd.Fn()
+			if err != nil {
+				return nil, err
+			}
+			if attr, ok := stmt.(ast.AcceptsAttributes); ok {
+				attr.AddAttributes(attributes...)
+			} else if len(attributes) > 0 {
+				p.Diagnostics.Report(diagnostics.CannotAttribute(stmt.Tokens()[0].Location))
+			}
+			return stmt, nil
 		}
 	}
 

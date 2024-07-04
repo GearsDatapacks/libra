@@ -1245,3 +1245,24 @@ let mean = averages.mean
 // ERROR
 averages.value(10)
 ```
+
+### Attributes
+An attribute is an annotation of a certain statement or expression which tells the compiler to treat it in a special or different way. Attributes begin with `@`, and mostly appear above declarations. Attributes are hardcoded in the compiler and cannot be added by programmers.
+
+Example:
+```rs
+tag MyTag
+
+@tag MyTag
+struct MyTaggedStruct {
+  ...
+}
+```
+
+Below is a list of all tags available to developers:
+- `tag` - Adds a defined type to a certain tag
+- `impl` - Marks a method as being an implementation for an interface
+- `untagged` - Marks a union as untagged
+- `todo` - Marks a declaration as incomplete, with a message describing what is missing
+- `doc` - Adds a doc comment to a declaration
+- `deprecated` - Marks a function or type as deprecated

@@ -32,11 +32,19 @@ func (l *lexer) Tokenise() []token.Token {
 
 	for {
 		nextToken := l.nextToken()
+
 		if nextToken.Kind == token.INVALID {
 			continue
 		}
 
 		tokens = append(tokens, nextToken)
+
+		if nextToken.Kind == token.ATTRIBUTE_NAME {
+			body := l.parseAttributeBody(nextToken.Value[1:])
+			if body != nil {
+				tokens = append(tokens, *body)
+			}
+		}
 
 		if nextToken.Kind == token.EOF {
 			break
@@ -75,6 +83,12 @@ func (l *lexer) nextToken() token.Token {
 	} else if next == '"' {
 		nextToken.Kind = token.STRING
 		nextToken.Value = l.parseString()
+	} else if next == '@' {
+		nextToken.Kind = token.ATTRIBUTE_NAME
+		l.consume()
+		for isIdentifierMiddle(l.next()) {
+			l.consume()
+		}
 	} else {
 		l.Diagnostics.Report(diagnostics.InvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next))
 		l.consume()
@@ -412,6 +426,28 @@ func (l *lexer) parseBlockComment() string {
 	}
 
 	return result.String()
+}
+
+func (l *lexer) parseAttributeBody(name string) *token.Token {
+	switch name {
+	// TODO: multiline doc attributes
+	case "todo", "deprecated", "doc":
+		l.skipWhitespace()
+		if l.next() == '\n' {
+			return nil
+		}
+
+		startLine, startCol := l.line, l.col
+		var text bytes.Buffer
+		for !l.eof() && l.next() != '\n' {
+			text.WriteByte(l.consume())
+		}
+
+		tok := token.New(token.ATTRIBUTE_BODY, text.String(), l.getLocation(startLine, l.line, startCol, l.col))
+		return &tok
+	default:
+		return nil
+	}
 }
 
 func (l *lexer) skipWhitespace() {
