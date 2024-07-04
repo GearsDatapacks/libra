@@ -6,46 +6,22 @@ import (
 	"github.com/gearsdatapacks/libra/parser/ast"
 )
 
-func (p *parser) parseTagAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
+func (p *parser) parseIdentifierAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
 	name := p.expect(token.IDENTIFIER)
-	return &ast.TagAttribute{Token: tok, Name: name.Value}, nil
+	return &ast.TextAttribute{Token: tok, Text: name.Value}, nil
 }
 
-func (p *parser) parseImplAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
+func (p *parser) parseFlagAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
-	name := p.expect(token.IDENTIFIER)
-	return &ast.ImplAttribute{Token: tok, Name: name.Value}, nil
+	return &ast.FlagAttribute{Token: tok}, nil
 }
 
-func (p *parser) parseUntaggedAttribue() (ast.Attribute, *diagnostics.Diagnostic) {
-	tok := p.consume()
-	return &ast.UntaggedAttribute{Token: tok}, nil
-}
-
-func (p *parser) parseTodoAttribue() (ast.Attribute, *diagnostics.Diagnostic) {
+func (p *parser) parseAttributeWithOptionalBody() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
 	text := ""
 	if p.next().Kind == token.ATTRIBUTE_BODY {
 		text = p.consume().Value
 	}
-	return &ast.TodoAttribute{Token:   tok, Message: text}, nil
-}
-
-func (p *parser) parseDocAttribue() (ast.Attribute, *diagnostics.Diagnostic) {
-	tok := p.consume()
-	text := ""
-	if p.next().Kind == token.ATTRIBUTE_BODY {
-		text = p.consume().Value
-	}
-	return &ast.DocAttribute{Token:   tok, Message: text}, nil
-}
-
-func (p *parser) parseDeprecatedAttribue() (ast.Attribute, *diagnostics.Diagnostic) {
-	tok := p.consume()
-	text := ""
-	if p.next().Kind == token.ATTRIBUTE_BODY {
-		text = p.consume().Value
-	}
-	return &ast.DeprecatedAttribute{Token:   tok, Message: text}, nil
+	return &ast.TextAttribute{Token: tok, Text: text}, nil
 }

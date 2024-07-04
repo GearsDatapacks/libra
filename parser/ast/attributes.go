@@ -4,58 +4,32 @@ import "github.com/gearsdatapacks/libra/lexer/token"
 
 type Attribute interface {
 	GetToken() token.Token
+	GetName() string
 }
 
-type TagAttribute struct {
+type FlagAttribute struct {
 	Token token.Token
-	Name string
 }
 
-func (t *TagAttribute) GetToken() token.Token {
-	return t.Token
+func (f *FlagAttribute) GetToken() token.Token {
+	return f.Token
+}
+
+func (f *FlagAttribute) GetName() string {
+	return f.Token.Value[1:]
 }
 
 // TODO: impl blocks
-type ImplAttribute struct {
+
+type TextAttribute struct {
 	Token token.Token
-	Name string
+	Text  string
 }
 
-func (i *ImplAttribute) GetToken() token.Token {
-	return i.Token
-}
-
-type UntaggedAttribute struct {
-	Token token.Token
-}
-
-func (u *UntaggedAttribute) GetToken() token.Token {
-	return u.Token
-}
-
-type TodoAttribute struct {
-	Token token.Token
-	Message string
-}
-
-func (t *TodoAttribute) GetToken() token.Token {
+func (t *TextAttribute) GetToken() token.Token {
 	return t.Token
 }
 
-type DocAttribute struct {
-	Token token.Token
-	Message string
-}
-
-func (d *DocAttribute) GetToken() token.Token {
-	return d.Token
-}
-
-type DeprecatedAttribute struct {
-	Token token.Token
-	Message string
-}
-
-func (d *DeprecatedAttribute) GetToken() token.Token {
-	return d.Token
+func (t *TextAttribute) GetName() string {
+	return t.Token.Value[1:]
 }

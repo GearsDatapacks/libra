@@ -28,12 +28,12 @@ func (ta *TypeAnnotation) String() string {
 }
 
 type VariableDeclaration struct {
-	attr
 	Keyword    token.Token
 	Identifier token.Token
 	Type       *TypeAnnotation
 	Equals     token.Token
 	Value      Expression
+	Attributes DeclarationAttributes
 }
 
 func (varDec *VariableDeclaration) Tokens() []token.Token {
@@ -62,6 +62,10 @@ func (varDec *VariableDeclaration) String() string {
 	result.WriteString(varDec.Value.String())
 
 	return result.String()
+}
+
+func (v *VariableDeclaration) tryAddAttribute(attribute Attribute) bool {
+	return v.Attributes.tryAddAttribute(attribute)
 }
 
 type DefaultValue struct {
@@ -191,7 +195,6 @@ func (m *MemberOf) String() string {
 }
 
 type FunctionDeclaration struct {
-	attr
 	decl
 	Keyword    token.Token
 	MethodOf   *MethodOf
@@ -202,6 +205,8 @@ type FunctionDeclaration struct {
 	RightParen token.Token
 	ReturnType *TypeAnnotation
 	Body       *Block
+	Implements *string
+	Attributes DeclarationAttributes
 }
 
 func (fd *FunctionDeclaration) Tokens() []token.Token {
@@ -251,6 +256,15 @@ func (fd *FunctionDeclaration) String() string {
 	result.WriteString(fd.Body.String())
 
 	return result.String()
+}
+
+func (f *FunctionDeclaration) tryAddAttribute(attribute Attribute) bool {
+	if attribute.GetName() == "impl" {
+		f.Implements = &attribute.(*TextAttribute).Text
+		return true
+	}
+
+	return f.Attributes.tryAddAttribute(attribute)
 }
 
 type ReturnStatement struct {
@@ -338,11 +352,11 @@ func (*ContinueStatement) String() string {
 type TypeDeclaration struct {
 	decl
 	expl
-	attr
-	Keyword token.Token
-	Name    token.Token
-	Equals  token.Token
-	Type    Expression
+	Keyword    token.Token
+	Name       token.Token
+	Equals     token.Token
+	Type       Expression
+	Attributes DeclarationAttributes
 }
 
 func (t *TypeDeclaration) Tokens() []token.Token {
@@ -360,6 +374,10 @@ func (t *TypeDeclaration) String() string {
 	result.WriteString(t.Type.String())
 
 	return result.String()
+}
+
+func (t *TypeDeclaration) tryAddAttribute(attribute Attribute) bool {
+	return t.Attributes.tryAddAttribute(attribute)
 }
 
 type StructField struct {
@@ -390,10 +408,11 @@ func (s *StructField) String() string {
 
 type StructDeclaration struct {
 	decl
-	attr
-	Keyword token.Token
-	Name    token.Token
-	Body    *StructBody
+	Keyword    token.Token
+	Name       token.Token
+	Body       *StructBody
+	Tag        *string
+	Attributes DeclarationAttributes
 }
 
 type StructBody struct {
@@ -441,6 +460,15 @@ func (s *StructDeclaration) String() string {
 	return result.String()
 }
 
+func (s *StructDeclaration) tryAddAttribute(attribute Attribute) bool {
+	if attribute.GetName() == "tag" {
+		s.Tag = &attribute.(*TextAttribute).Text
+		return true
+	}
+
+	return s.Attributes.tryAddAttribute(attribute)
+}
+
 type InterfaceMember struct {
 	Name       token.Token
 	LeftParen  token.Token
@@ -484,12 +512,12 @@ func (i *InterfaceMember) String() string {
 
 type InterfaceDeclaration struct {
 	decl
-	attr
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
 	Members    []InterfaceMember
 	RightBrace token.Token
+	Attributes DeclarationAttributes
 }
 
 func (i *InterfaceDeclaration) Tokens() []token.Token {
@@ -519,6 +547,10 @@ func (i *InterfaceDeclaration) String() string {
 
 	result.WriteString("\n}")
 	return result.String()
+}
+
+func (i *InterfaceDeclaration) tryAddAttribute(attribute Attribute) bool {
+	return i.Attributes.tryAddAttribute(attribute)
 }
 
 type ImportAll struct {
@@ -636,13 +668,14 @@ func (e *EnumMember) String() string {
 
 type EnumDeclaration struct {
 	decl
-	attr
 	Keyword    token.Token
 	Name       token.Token
 	ValueType  *TypeAnnotation
 	LeftBrace  token.Token
 	Members    []EnumMember
 	RightBrace token.Token
+	Tag        *string
+	Attributes DeclarationAttributes
 }
 
 func (e *EnumDeclaration) Tokens() []token.Token {
@@ -679,6 +712,15 @@ func (e *EnumDeclaration) String() string {
 	result.WriteString("\n}")
 
 	return result.String()
+}
+
+func (e *EnumDeclaration) tryAddAttribute(attribute Attribute) bool {
+	if attribute.GetName() == "tag" {
+		e.Tag = &attribute.(*TextAttribute).Text
+		return true
+	}
+
+	return e.Attributes.tryAddAttribute(attribute)
 }
 
 type UnionMember struct {
@@ -732,12 +774,14 @@ func (u *UnionMember) String() string {
 
 type UnionDeclaration struct {
 	decl
-	attr
 	Keyword    token.Token
 	Name       token.Token
 	LeftBrace  token.Token
 	Members    []UnionMember
 	RightBrace token.Token
+	Untagged   bool
+	Tag        *string
+	Attributes DeclarationAttributes
 }
 
 func (u *UnionDeclaration) Tokens() []token.Token {
@@ -769,10 +813,24 @@ func (u *UnionDeclaration) String() string {
 	return result.String()
 }
 
+func (u *UnionDeclaration) tryAddAttribute(attribute Attribute) bool {
+	switch attribute.GetName() {
+	case "untagged":
+		u.Untagged = true
+	case "tag":
+		u.Tag = &attribute.(*TextAttribute).Text
+	default:
+		return u.Attributes.tryAddAttribute(attribute)
+	}
+
+	return true
+}
+
 type TagDeclaration struct {
 	decl
-	Keyword token.Token
-	Name    token.Token
+	Keyword    token.Token
+	Name       token.Token
+	Attributes DeclarationAttributes
 }
 
 func (t *TagDeclaration) Tokens() []token.Token {
@@ -787,6 +845,10 @@ func (t *TagDeclaration) String() string {
 	result.WriteString(t.Name.Value)
 
 	return result.String()
+}
+
+func (t *TagDeclaration) tryAddAttribute(attribute Attribute) bool {
+	return t.Attributes.tryAddAttribute(attribute)
 }
 
 type Declaration interface {
@@ -816,13 +878,33 @@ func (d *expl) MarkExplicit() {
 }
 
 type AcceptsAttributes interface {
-	AddAttributes(...Attribute)
+	Statement
+	tryAddAttribute(Attribute) bool
 }
 
-type attr struct {
-	Attributes []Attribute
+func TryAddAttribute(stmt Statement, attribute Attribute) bool {
+	if acceptsAttributes, ok := stmt.(AcceptsAttributes); ok {
+		return acceptsAttributes.tryAddAttribute(attribute)
+	}
+	return false
 }
 
-func (a *attr) AddAttributes(attributes ...Attribute) {
-	a.Attributes = append(a.Attributes, attributes...)
+type DeclarationAttributes struct {
+	TodoMessage       *string
+	Documentation     string
+	DeprecatedMessage *string
+}
+
+func (d *DeclarationAttributes) tryAddAttribute(attribute Attribute) bool {
+	switch attribute.GetName() {
+	case "todo":
+		d.TodoMessage = &attribute.(*TextAttribute).Text
+	case "doc":
+		d.Documentation = attribute.(*TextAttribute).Text
+	case "deprecated":
+		d.DeprecatedMessage = &attribute.(*TextAttribute).Text
+	default:
+		return false
+	}
+	return true
 }

@@ -251,12 +251,12 @@ func (p *parser) register() {
 
 	// Attributes
 
-	p.registerAttribute("tag", p.parseTagAttribute)
-	p.registerAttribute("impl", p.parseImplAttribute)
-	p.registerAttribute("untagged", p.parseUntaggedAttribue)
-	p.registerAttribute("todo", p.parseTodoAttribue)
-	p.registerAttribute("doc", p.parseDocAttribue)
-	p.registerAttribute("deprecated", p.parseDeprecatedAttribue)
+	p.registerAttribute("tag", p.parseIdentifierAttribute)
+	p.registerAttribute("impl", p.parseIdentifierAttribute)
+	p.registerAttribute("untagged", p.parseFlagAttribute)
+	p.registerAttribute("todo", p.parseAttributeWithOptionalBody)
+	p.registerAttribute("doc", p.parseAttributeWithOptionalBody)
+	p.registerAttribute("deprecated", p.parseAttributeWithOptionalBody)
 
 	// Literals
 	p.registerNudFn(token.INTEGER, p.parseInteger)

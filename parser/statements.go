@@ -37,11 +37,13 @@ func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnosti
 			if err != nil {
 				return nil, err
 			}
-			if attr, ok := stmt.(ast.AcceptsAttributes); ok {
-				attr.AddAttributes(attributes...)
-			} else if len(attributes) > 0 {
-				p.Diagnostics.Report(diagnostics.CannotAttribute(stmt.Tokens()[0].Location))
+
+			for _, attribute := range attributes {
+				if !ast.TryAddAttribute(stmt, attribute) {
+					p.Diagnostics.Report(diagnostics.CannotAttribute(stmt.Tokens()[0].Location, attribute.GetName()))
+				}
 			}
+
 			return stmt, nil
 		}
 	}

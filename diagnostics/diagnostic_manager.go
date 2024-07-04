@@ -184,8 +184,8 @@ func InvalidAttribute(location text.Location, name string) *Diagnostic {
 	return makeError(msg, location)
 }
 
-func CannotAttribute(location text.Location) *Diagnostic {
-	const msg = "Statement cannot be marked with attributes"
+func CannotAttribute(location text.Location, attribute string) *Diagnostic {
+	msg := fmt.Sprintf("Statement cannot be marked with attribute %q", attribute)
 
 	return makeError(msg, location)
 }
