@@ -12,6 +12,24 @@ func (p *parser) parseIdentifierAttribute() (ast.Attribute, *diagnostics.Diagnos
 	return &ast.TextAttribute{Token: tok, Text: name.Value}, nil
 }
 
+// func (p *parser) parseExpressionAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
+// 	tok := p.consume()
+// 	expression, err := p.parseExpression()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &ast.ExpressionAttribute{Token: tok, Expression: expression}, nil
+// }
+
+func (p *parser) parseTypeAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
+	tok := p.consume()
+	ty, err := p.parseTypeExpression()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.ExpressionAttribute{Token: tok, Expression: ty}, nil
+}
+
 func (p *parser) parseFlagAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
 	return &ast.FlagAttribute{Token: tok}, nil

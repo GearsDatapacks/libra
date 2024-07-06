@@ -356,6 +356,7 @@ type TypeDeclaration struct {
 	Name       token.Token
 	Equals     token.Token
 	Type       Expression
+	Tag        Expression
 	Attributes DeclarationAttributes
 }
 
@@ -377,6 +378,15 @@ func (t *TypeDeclaration) String() string {
 }
 
 func (t *TypeDeclaration) tryAddAttribute(attribute Attribute) bool {
+	if attribute.GetName() == "tag" {
+		if t.Explicit {
+			t.Tag = attribute.(*ExpressionAttribute).Expression
+			return true
+		}
+		// TODO: Add a proper error message for this
+		return false
+	}
+
 	return t.Attributes.tryAddAttribute(attribute)
 }
 
@@ -411,7 +421,7 @@ type StructDeclaration struct {
 	Keyword    token.Token
 	Name       token.Token
 	Body       *StructBody
-	Tag        *string
+	Tag        Expression
 	Attributes DeclarationAttributes
 }
 
@@ -456,7 +466,7 @@ func (s *StructDeclaration) String() string {
 
 func (s *StructDeclaration) tryAddAttribute(attribute Attribute) bool {
 	if attribute.GetName() == "tag" {
-		s.Tag = &attribute.(*TextAttribute).Text
+		s.Tag = attribute.(*ExpressionAttribute).Expression
 		return true
 	}
 
@@ -668,7 +678,7 @@ type EnumDeclaration struct {
 	LeftBrace  token.Token
 	Members    []EnumMember
 	RightBrace token.Token
-	Tag        *string
+	Tag        Expression
 	Attributes DeclarationAttributes
 }
 
@@ -710,7 +720,7 @@ func (e *EnumDeclaration) String() string {
 
 func (e *EnumDeclaration) tryAddAttribute(attribute Attribute) bool {
 	if attribute.GetName() == "tag" {
-		e.Tag = &attribute.(*TextAttribute).Text
+		e.Tag = attribute.(*ExpressionAttribute).Expression
 		return true
 	}
 
@@ -774,7 +784,7 @@ type UnionDeclaration struct {
 	Members    []UnionMember
 	RightBrace token.Token
 	Untagged   bool
-	Tag        *string
+	Tag        Expression
 	Attributes DeclarationAttributes
 }
 
@@ -812,7 +822,7 @@ func (u *UnionDeclaration) tryAddAttribute(attribute Attribute) bool {
 	case "untagged":
 		u.Untagged = true
 	case "tag":
-		u.Tag = &attribute.(*TextAttribute).Text
+		u.Tag = attribute.(*ExpressionAttribute).Expression
 	default:
 		return u.Attributes.tryAddAttribute(attribute)
 	}

@@ -778,6 +778,28 @@ func (u *UnitStruct) valid(other Type) bool {
 	return false
 }
 
+type Tag struct {
+	Name  string
+	Types []Type
+}
+
+func (t *Tag) String() string {
+	return t.Name
+}
+
+func (t *Tag) valid(other Type) bool {
+	// FIXME: compare more than just the name
+	if tag, ok := other.(*Tag); ok {
+		return tag.Name == t.Name
+	}
+	for _, ty := range t.Types {
+		if Assignable(ty, other) {
+			return true
+		}
+	}
+	return false
+}
+
 type pseudo interface {
 	toReal() Type
 }

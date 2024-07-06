@@ -33,3 +33,16 @@ func (t *TextAttribute) GetToken() token.Token {
 func (t *TextAttribute) GetName() string {
 	return t.Token.Value[1:]
 }
+
+type ExpressionAttribute struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (e *ExpressionAttribute) GetToken() token.Token {
+	return e.Token
+}
+
+func (e *ExpressionAttribute) GetName() string {
+	return e.Token.Value[1:]
+}

@@ -397,3 +397,8 @@ func NoVariant(unionName, member string) *Partial {
 	msg := fmt.Sprintf("Union %q has no variant %q", unionName, member)
 	return partial(Error, msg)
 }
+
+func NotATag(location text.Location, ty tcType) *Diagnostic {
+	msg := fmt.Sprintf("%q is not a tag", ty.String())
+	return makeError(msg, location)
+}

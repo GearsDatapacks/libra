@@ -21,6 +21,8 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 		t.registerInterfaceDeclaration(stmt)
 	case *ast.UnionDeclaration:
 		t.registerUnionDeclaration(stmt)
+	case *ast.TagDeclaration:
+		t.registerTagDeclaration(stmt)
 	}
 }
 
@@ -34,6 +36,8 @@ func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
 		t.typeCheckInterfaceDeclaration(stmt)
 	case *ast.UnionDeclaration:
 		t.typeCheckUnionDeclaration(stmt)
+	case *ast.TagDeclaration:
+		t.typeCheckTagDeclaration(stmt)
 	}
 }
 
@@ -130,12 +134,28 @@ func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
 	t.symbols.Register(symbol, decl.Exported)
 }
 
+func (t *typeChecker) registerTagDeclaration(decl *ast.TagDeclaration) {
+	symbol := &symbols.Type{
+		Name: decl.Name.Value,
+		Type: &types.Tag{
+			Name:  decl.Name.Value,
+			Types: []types.Type{},
+		},
+	}
+
+	t.symbols.Register(symbol, decl.Exported)
+}
+
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
 	if typeDec.Explicit {
 		symbol.Type.(*types.Explicit).Type = t.typeCheckType(typeDec.Type)
 	} else {
 		symbol.Type.(*types.Alias).Type = t.typeCheckType(typeDec.Type)
+	}
+
+	if typeDec.Tag != nil {
+		t.addToTag(typeDec.Tag, symbol.Type)
 	}
 }
 
@@ -191,6 +211,9 @@ func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
 	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type
 
 	t.typeCheckStructBody(decl.Name, decl.Body, ty)
+	if decl.Tag != nil {
+		t.addToTag(decl.Tag, ty)
+	}
 }
 
 func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody, ty types.Type) {
@@ -294,6 +317,34 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
 			}
 		}
 	}
+
+	if decl.Tag != nil {
+		t.addToTag(decl.Tag, ty)
+	}
+}
+
+func (t *typeChecker) typeCheckTagDeclaration(decl *ast.TagDeclaration) {
+	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Tag)
+
+	if decl.Body != nil {
+		for _, member := range decl.Body.Types {
+			ty.Types = append(ty.Types, t.typeCheckType(member))
+		}
+	}
+}
+
+func (t *typeChecker) addToTag(tag ast.Expression, ty types.Type) {
+	typeChecked := t.typeCheckType(tag)
+	if typeChecked == types.Invalid {
+		return
+	}
+	
+	tagType, ok := typeChecked.(*types.Tag)
+	if !ok {
+		t.diagnostics.Report(diagnostics.NotATag(tag.Location(), tag))
+		return
+	}
+	tagType.Types = append(tagType.Types, ty)
 }
 
 type moduleWrapper struct{ t *symbols.Table }
