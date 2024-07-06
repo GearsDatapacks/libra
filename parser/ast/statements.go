@@ -421,12 +421,6 @@ type StructBody struct {
 	RightBrace token.Token
 }
 
-type TupleStruct struct {
-	LeftParen  token.Token
-	Types      []Expression
-	RightParen token.Token
-}
-
 func (s *StructDeclaration) Tokens() []token.Token {
 	tokens := []token.Token{s.Keyword, s.Name}
 
@@ -826,15 +820,58 @@ func (u *UnionDeclaration) tryAddAttribute(attribute Attribute) bool {
 	return true
 }
 
+type TagBody struct {
+	LeftBrace  token.Token
+	Types      []Expression
+	RightBrace token.Token
+}
+
+func (t *TagBody) Tokens() []token.Token {
+	tokens := []token.Token{t.LeftBrace}
+	for _, ty := range t.Types {
+		tokens = append(tokens, ty.Tokens()...)
+	}
+	tokens = append(tokens, t.RightBrace)
+	return tokens
+}
+
+func (t *TagBody) String() string {
+	var result bytes.Buffer
+
+	result.WriteByte('{')
+	if len(t.Types) != 0 {
+		result.WriteByte(' ')
+	}
+
+	for i, ty := range t.Types {
+		if i != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(ty.String())
+	}
+
+	if len(t.Types) != 0 {
+		result.WriteByte(' ')
+	}
+	result.WriteByte('}')
+
+	return result.String()
+}
+
 type TagDeclaration struct {
 	decl
 	Keyword    token.Token
 	Name       token.Token
+	Body       *TagBody
 	Attributes DeclarationAttributes
 }
 
 func (t *TagDeclaration) Tokens() []token.Token {
-	return []token.Token{t.Keyword, t.Name}
+	tokens := []token.Token{t.Keyword, t.Name}
+	if t.Body != nil {
+		tokens = append(tokens, t.Body.Tokens()...)
+	}
+	return tokens
 }
 
 func (t *TagDeclaration) String() string {
@@ -843,6 +880,11 @@ func (t *TagDeclaration) String() string {
 	result.WriteString(t.Keyword.Value)
 	result.WriteByte(' ')
 	result.WriteString(t.Name.Value)
+
+	if t.Body != nil {
+		result.WriteByte(' ')
+		result.WriteString(t.Body.String())
+	}
 
 	return result.String()
 }

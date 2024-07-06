@@ -505,10 +505,22 @@ func (p *parser) parseUnionDeclaration() (ast.Statement, *diagnostics.Diagnostic
 func (p *parser) parseTagDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	keyword := p.consume()
 	name := p.delcareIdentifier()
+	var body *ast.TagBody
+
+	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
+		leftBrace := p.consume()
+		types, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseTypeExpression)
+		body = &ast.TagBody{
+			LeftBrace:  leftBrace,
+			Types:      types,
+			RightBrace: rightBrace,
+		}
+	}
 
 	return &ast.TagDeclaration{
 		Keyword: keyword,
 		Name:    name,
+		Body:    body,
 	}, nil
 }
 

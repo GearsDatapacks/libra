@@ -121,4 +121,3 @@ func (i *ImportStatement) String() string {
 
 // TODO:
 // EnumDeclaration
-// UnionDeclaration

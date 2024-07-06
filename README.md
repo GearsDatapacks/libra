@@ -895,16 +895,23 @@ struct ThankGodForImplBlocks
 ```
 
 ### Tags
-A tag is similar to an explicit interface, except that it has no required methods. Tags are implemented by anything which specifies it.
+A tag is similar to an explicit interface, except that it has no required methods. Tags are implemented by anything which specifies it, or any types specified initially by the tag.
 
 Example:
 ```rust
-tag MyTag
+tag MyTag { i32, f32 }
 
 @tag MyTag
 struct MyTagImpl
 
 let my_tagged_value: MyTag = MyTagImpl
+let my_other_tagged_value: MyTag = 10
+```
+
+Alternatively, if no types are specified by the tag definition itself, the braces can be omitted:
+
+```rust
+tag MyOpenTag
 ```
 
 ### Enums
@@ -1250,7 +1257,7 @@ averages.value(10)
 An attribute is an annotation of a certain statement or expression which tells the compiler to treat it in a special or different way. Attributes begin with `@`, and mostly appear above declarations. Attributes are hardcoded in the compiler and cannot be added by programmers.
 
 Example:
-```rs
+```rust
 tag MyTag
 
 @tag MyTag
