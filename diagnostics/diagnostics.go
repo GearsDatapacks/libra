@@ -2,6 +2,8 @@ package diagnostics
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/gearsdatapacks/libra/colour"
@@ -47,6 +49,13 @@ func new(kind DiagnosticKind, message string, location text.Location) *Diagnosti
 }
 
 func (d *Diagnostic) Print() {
+	d.WriteTo(os.Stdout, true)
+}
+
+func (d *Diagnostic) WriteTo(to io.Writer, printColour bool) {
+	colour.UseColour = printColour
+	colour.Writer = to
+
 	diagColour := colour.Reset
 	switch d.Kind {
 	case Error:
@@ -62,44 +71,44 @@ func (d *Diagnostic) Print() {
 	lines := d.Location.File.Lines
 
 	colour.SetColour(colour.White)
-	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.StartColumn+1)
+	fmt.Fprintf(to, "%s:%d:%d:\n", fileName, span.StartLine+1, span.StartColumn+1)
 	colour.ResetColour()
 
 	spanLines := lines[span.StartLine : span.EndLine+1]
 	numLines := len(spanLines)
 
-	fmt.Print(spanLines[0].Text[:span.StartColumn])
+	fmt.Fprint(to, spanLines[0].Text[:span.StartColumn])
 
 	colour.SetColour(diagColour)
 	if numLines == 1 {
-		fmt.Print(spanLines[0].Text[span.StartColumn:span.EndColumn])
+		fmt.Fprint(to, spanLines[0].Text[span.StartColumn:span.EndColumn])
 	} else {
 		for i, line := range spanLines {
 			line := line.Text
 			if i == 0 {
-				fmt.Println(line[span.StartColumn:])
+				fmt.Fprintln(to, line[span.StartColumn:])
 			} else if i == numLines-1 {
-				fmt.Print(line[:span.EndColumn])
+				fmt.Fprint(to, line[:span.EndColumn])
 			} else {
-				fmt.Println(line)
+				fmt.Fprintln(to, line)
 			}
 		}
 	}
 
 	colour.ResetColour()
 
-	fmt.Println(spanLines[numLines-1].Text[span.EndColumn:])
+	fmt.Fprintln(to, spanLines[numLines-1].Text[span.EndColumn:])
 
 	column := span.StartColumn
 	if numLines > 1 {
 		column = 0
 	}
 	arrow := strings.Repeat(" ", column) + "^"
-	fmt.Print(arrow + " ")
+	fmt.Fprint(to, arrow+" ")
 
 	colour.SetColour(diagColour)
-	fmt.Println(d.Message)
-	fmt.Println()
+	fmt.Fprintln(to, d.Message)
+	fmt.Fprintln(to)
 
 	colour.ResetColour()
 }

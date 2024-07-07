@@ -1,6 +1,9 @@
 package colour
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 type Colour string
 
@@ -33,10 +36,17 @@ const (
 	Location = Cyan
 )
 
+var UseColour = true
+var Writer io.Writer
+
 func SetColour(colour Colour) {
-	fmt.Print(colour)
+	if UseColour {
+		fmt.Fprint(Writer, colour)
+	}
 }
 
 func ResetColour() {
-	fmt.Print(Reset)
+	if UseColour {
+		fmt.Print(Reset)
+	}
 }

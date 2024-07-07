@@ -1273,3 +1273,4 @@ Below is a list of all tags available to developers:
 - `todo` - Marks a declaration as incomplete, with a message describing what is missing
 - `doc` - Adds a doc comment to a declaration
 - `deprecated` - Marks a function or type as deprecated
+- `gen` - Generates methods for a type using a generator function (`fn(Type): $T: fn`)
