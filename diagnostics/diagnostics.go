@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/text"
 )
 
@@ -46,30 +47,30 @@ func new(kind DiagnosticKind, message string, location text.Location) *Diagnosti
 }
 
 func (d *Diagnostic) Print() {
-	colour := Reset
+	diagColour := colour.Reset
 	switch d.Kind {
 	case Error:
-		colour = Red
+		diagColour = colour.Error
 	case Warning:
-		colour = Yellow
+		diagColour = colour.Warning
 	case Info:
-		colour = Cyan
+		diagColour = colour.Info
 	}
 
 	fileName := d.Location.File.FileName
 	span := d.Location.Span
 	lines := d.Location.File.Lines
 
-	SetColour(White)
+	colour.SetColour(colour.White)
 	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.Column+1)
-	ResetColour()
+	colour.ResetColour()
 
 	spanLines := lines[span.StartLine : span.EndLine+1]
 	numLines := len(spanLines)
 
 	fmt.Print(spanLines[0][:span.Column])
 
-	SetColour(colour)
+	colour.SetColour(diagColour)
 	if numLines == 1 {
 		fmt.Print(spanLines[0][span.Column:span.End])
 	} else {
@@ -84,7 +85,7 @@ func (d *Diagnostic) Print() {
 		}
 	}
 
-	ResetColour()
+	colour.ResetColour()
 
 	fmt.Println(spanLines[numLines-1][span.End:])
 
@@ -95,9 +96,9 @@ func (d *Diagnostic) Print() {
 	arrow := strings.Repeat(" ", column) + "^"
 	fmt.Print(arrow + " ")
 
-	SetColour(colour)
+	colour.SetColour(diagColour)
 	fmt.Println(d.Message)
 	fmt.Println()
 
-	ResetColour()
+	colour.ResetColour()
 }

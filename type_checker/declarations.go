@@ -341,7 +341,7 @@ func (t *typeChecker) addToTag(tag ast.Expression, ty types.Type) {
 	
 	tagType, ok := typeChecked.(*types.Tag)
 	if !ok {
-		t.diagnostics.Report(diagnostics.NotATag(tag.Location(), tag))
+		t.diagnostics.Report(diagnostics.NotATag(tag.Location(), typeChecked))
 		return
 	}
 	tagType.Types = append(tagType.Types, ty)

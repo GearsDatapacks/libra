@@ -1,9 +1,7 @@
 package ast
 
 import (
-	"bytes"
-	"fmt"
-
+	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/text"
 )
@@ -24,8 +22,13 @@ func (il *IntegerLiteral) Tokens() []token.Token {
 func (il *IntegerLiteral) Location() text.Location {
 	return il.Token.Location
 }
-func (il *IntegerLiteral) String() string {
-	return il.Token.Value
+func (il *IntegerLiteral) String(context printContext) {
+	context.write(
+		"%sINT_LIT %s%d",
+		context.colour(colour.NodeName),
+		context.colour(colour.Literal),
+		il.Value,
+	)
 }
 
 type FloatLiteral struct {
@@ -40,8 +43,13 @@ func (fl *FloatLiteral) Tokens() []token.Token {
 func (fl *FloatLiteral) Location() text.Location {
 	return fl.Token.Location
 }
-func (fl *FloatLiteral) String() string {
-	return fl.Token.Value
+func (fl *FloatLiteral) String(context printContext) {
+	context.write(
+		"%sFLOAT_LIT %s%f",
+		context.colour(colour.NodeName),
+		context.colour(colour.Literal),
+		fl.Value,
+	)
 }
 
 type BooleanLiteral struct {
@@ -56,8 +64,13 @@ func (bl *BooleanLiteral) Tokens() []token.Token {
 func (bl *BooleanLiteral) Location() text.Location {
 	return bl.Token.Location
 }
-func (bl *BooleanLiteral) String() string {
-	return bl.Token.Value
+func (bl *BooleanLiteral) String(context printContext) {
+	context.write(
+		"%sBOOL_LIT %s%t",
+		context.colour(colour.NodeName),
+		context.colour(colour.Literal),
+		bl.Value,
+	)
 }
 
 type StringLiteral struct {
@@ -72,8 +85,13 @@ func (sl *StringLiteral) Tokens() []token.Token {
 func (sl *StringLiteral) Location() text.Location {
 	return sl.Token.Location
 }
-func (sl *StringLiteral) String() string {
-	return `"` + sl.Token.Value + `"`
+func (sl *StringLiteral) String(context printContext) {
+	context.write(
+		"%sSTRING_LIT %s%q",
+		context.colour(colour.NodeName),
+		context.colour(colour.Literal),
+		sl.Value,
+	)
 }
 
 type Identifier struct {
@@ -88,8 +106,13 @@ func (i *Identifier) Tokens() []token.Token {
 func (i *Identifier) Location() text.Location {
 	return i.Token.Location
 }
-func (i *Identifier) String() string {
-	return i.Name
+func (i *Identifier) String(context printContext) {
+	context.write(
+		"%sIDENT %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		i.Name,
+	)
 }
 
 type BinaryExpression struct {
@@ -111,34 +134,15 @@ func (b *BinaryExpression) Location() text.Location {
 	return b.Left.Location().To(b.Right.Location())
 }
 
-func (b *BinaryExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(b.Left.String())
-	result.WriteByte(' ')
-	result.WriteString(b.Operator.Value)
-	result.WriteByte(' ')
-	result.WriteString(b.Right.String())
-
-	return result.String()
-}
-
-func (b *BinaryExpression) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
-
-	result.WriteString(maybePrecedence(b.Left))
-
-	result.WriteByte(' ')
-	result.WriteString(b.Operator.Value)
-	result.WriteByte(' ')
-
-	result.WriteString(maybePrecedence(b.Right))
-
-	result.WriteByte(')')
-
-	return result.String()
+func (b *BinaryExpression) String(context printContext) {
+	context.write(
+		"%sBIN_EXPR %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Symbol),
+		b.Operator.Value,
+	)
+	context.writeNode(b.Left)
+	context.writeNode(b.Right)
 }
 
 type ParenthesisedExpression struct {
@@ -159,14 +163,12 @@ func (p *ParenthesisedExpression) Location() text.Location {
 	return p.LeftParen.Location.To(p.RightParen.Location)
 }
 
-func (p *ParenthesisedExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
-	result.WriteString(p.Expression.String())
-	result.WriteByte(')')
-
-	return result.String()
+func (p *ParenthesisedExpression) String(context printContext) {
+	context.write(
+		"%sPAREN_EXPR",
+		context.colour(colour.NodeName),
+	)
+	context.writeNode(p.Expression)
 }
 
 type PrefixExpression struct {
@@ -183,19 +185,14 @@ func (p *PrefixExpression) Location() text.Location {
 	return p.Operator.Location.To(p.Operand.Location())
 }
 
-func (p *PrefixExpression) String() string {
-	return p.Operator.Value + p.Operand.String()
-}
-
-func (p *PrefixExpression) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteString(p.Operator.Value)
-	result.WriteByte('(')
-	result.WriteString(maybePrecedence(p.Operand))
-	result.WriteByte(')')
-
-	return result.String()
+func (p *PrefixExpression) String(context printContext) {
+	context.write(
+		"%sPREFIX_EXPR %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Symbol),
+		p.Operator.Value,
+	)
+	context.writeNode(p.Operand)
 }
 
 type PostfixExpression struct {
@@ -212,19 +209,14 @@ func (p *PostfixExpression) Location() text.Location {
 	return p.Operand.Location().To(p.Operator.Location)
 }
 
-func (p *PostfixExpression) String() string {
-	return p.Operand.String() + p.Operator.Value
-}
-
-func (p *PostfixExpression) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
-	result.WriteString(maybePrecedence(p.Operand))
-	result.WriteByte(')')
-	result.WriteString(p.Operator.Value)
-
-	return result.String()
+func (p *PostfixExpression) String(context printContext) {
+	context.write(
+		"%sPOSTFIX_EXPR %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Symbol),
+		p.Operator.Value,
+	)
+	context.writeNode(p.Operand)
 }
 
 type PointerType struct {
@@ -246,30 +238,13 @@ func (p *PointerType) Location() text.Location {
 	return p.Operator.Location.To(p.Operand.Location())
 }
 
-func (p *PointerType) String() string {
-	var result bytes.Buffer
-	result.WriteByte('*')
+func (p *PointerType) String(context printContext) {
+	context.write("%sPTR_TYPE", context.colour(colour.NodeName))
 	if p.Mutable != nil {
-		result.WriteString("mut ")
+		context.write(" %smut", context.colour(colour.Attribute))
 	}
 
-	result.WriteString(p.Operand.String())
-	return result.String()
-}
-
-func (p *PointerType) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteByte('*')
-	if p.Mutable != nil {
-		result.WriteString("mut ")
-	}
-
-	result.WriteByte('(')
-	result.WriteString(maybePrecedence(p.Operand))
-	result.WriteByte(')')
-
-	return result.String()
+	context.writeNode(p.Operand)
 }
 
 type OptionType struct {
@@ -287,12 +262,9 @@ func (p *OptionType) Location() text.Location {
 	return p.Operator.Location.To(p.Operand.Location())
 }
 
-func (p *OptionType) String() string {
-	return fmt.Sprintf("?%s", p.Operand.String())
-	}
-	
-	func (p *OptionType) PrecedenceString() string {
-	return fmt.Sprintf("?(%s)", p.Operand.String())
+func (p *OptionType) String(context printContext) {
+	context.write("%sOPTION_TYPE", context.colour(colour.NodeName))
+	context.writeNode(p.Operand)
 }
 
 type DerefExpression struct {
@@ -309,12 +281,9 @@ func (d *DerefExpression) Location() text.Location {
 	return d.Operand.Location().To(d.Operator.Location)
 }
 
-func (d *DerefExpression) String() string {
-	return fmt.Sprintf("%s.*", d.Operand)
-}
-
-func (d *DerefExpression) PrecedenceString() string {
-	return fmt.Sprintf("(%s).*", d.Operand)
+func (d *DerefExpression) String(context printContext) {
+	context.write("%sDEREF_EXPR", context.colour(colour.NodeName))
+	context.writeNode(d.Operand)
 }
 
 type RefExpression struct {
@@ -336,30 +305,13 @@ func (r *RefExpression) Location() text.Location {
 	return r.Operator.Location.To(r.Operand.Location())
 }
 
-func (r *RefExpression) String() string {
-	var result bytes.Buffer
-	result.WriteByte('&')
+func (r *RefExpression) String(context printContext) {
+
+	context.write("%sREF_EXPR", context.colour(colour.NodeName))
 	if r.Mutable != nil {
-		result.WriteString("mut ")
+		context.write(" %smut", context.colour(colour.Attribute))
 	}
-
-	result.WriteString(r.Operand.String())
-	return result.String()
-}
-
-func (r *RefExpression) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteByte('&')
-	if r.Mutable != nil {
-		result.WriteString("mut ")
-	}
-
-	result.WriteByte('(')
-	result.WriteString(maybePrecedence(r.Operand))
-	result.WriteByte(')')
-
-	return result.String()
+	context.writeNode(r.Operand)
 }
 
 // We don't store the tokens of the commas because they probably won't be needed
@@ -383,20 +335,11 @@ func (l *ListLiteral) Location() text.Location {
 	return l.LeftSquare.Location.To(l.RightSquare.Location)
 }
 
-func (l *ListLiteral) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('[')
-	for i, value := range l.Values {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-
-		result.WriteString(value.String())
+func (l *ListLiteral) String(context printContext) {
+	context.write("%sLIST_EXPR", context.colour(colour.NodeName))
+	if len(l.Values) != 0 {
+		writeNodeList(context.withNest(), l.Values)
 	}
-	result.WriteByte(']')
-
-	return result.String()
 }
 
 type KeyValue struct {
@@ -413,14 +356,10 @@ func (kv *KeyValue) Tokens() []token.Token {
 	return tokens
 }
 
-func (kv *KeyValue) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(kv.Key.String())
-	result.WriteString(": ")
-	result.WriteString(kv.Value.String())
-
-	return result.String()
+func (kv KeyValue) String(context printContext) {
+	context.write("%sKEY_VALUE", context.colour(colour.NodeName))
+	context.writeNode(kv.Key)
+	context.writeNode(kv.Value)
 }
 
 type MapLiteral struct {
@@ -446,22 +385,11 @@ func (m *MapLiteral) Tokens() []token.Token {
 	return tokens
 }
 
-func (m *MapLiteral) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('{')
-
-	for i, kv := range m.KeyValues {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-
-		result.WriteString(kv.String())
+func (m *MapLiteral) String(context printContext) {
+	context.write("%sMAP_EXPR", context.colour(colour.NodeName))
+	if len(m.KeyValues) != 0 {
+		writeNodeList(context.withNest(), m.KeyValues)
 	}
-
-	result.WriteByte('}')
-
-	return result.String()
 }
 
 type FunctionCall struct {
@@ -488,23 +416,12 @@ func (call *FunctionCall) Location() text.Location {
 	return call.Callee.Location().To(call.RightParen.Location)
 }
 
-func (call *FunctionCall) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(call.Callee.String())
-	result.WriteByte('(')
-
-	for i, arg := range call.Arguments {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-
-		result.WriteString(arg.String())
+func (call *FunctionCall) String(context printContext) {
+	context.write("%sFUNCTION_CALL", context.colour(colour.NodeName))
+	context.writeNode(call.Callee)
+	if len(call.Arguments) != 0 {
+		writeNodeList(context.withNest(), call.Arguments)
 	}
-
-	result.WriteByte(')')
-
-	return result.String()
 }
 
 type IndexExpression struct {
@@ -529,17 +446,10 @@ func (index *IndexExpression) Location() text.Location {
 	return index.Left.Location().To(index.RightSquare.Location)
 }
 
-func (index *IndexExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(index.Left.String())
-	result.WriteByte('[')
-
-	result.WriteString(index.Index.String())
-
-	result.WriteByte(']')
-
-	return result.String()
+func (index *IndexExpression) String(context printContext) {
+	context.write("%sINDEX_EXPR", context.colour(colour.NodeName))
+	context.writeNode(index.Index)
+	context.writeNode(index.Left)
 }
 
 type AssignmentExpression struct {
@@ -558,30 +468,15 @@ func (a *AssignmentExpression) Location() text.Location {
 	return a.Assignee.Location().To(a.Value.Location())
 }
 
-func (a *AssignmentExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(a.Assignee.String())
-	result.WriteByte(' ')
-	result.WriteString(a.Operator.Value)
-	result.WriteByte(' ')
-	result.WriteString(a.Value.String())
-
-	return result.String()
-}
-
-func (a *AssignmentExpression) PrecedenceString() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
-	result.WriteString(maybePrecedence(a.Assignee))
-	result.WriteByte(' ')
-	result.WriteString(a.Operator.Value)
-	result.WriteByte(' ')
-	result.WriteString(maybePrecedence(a.Value))
-	result.WriteByte(')')
-
-	return result.String()
+func (a *AssignmentExpression) String(context printContext) {
+	context.write(
+		"%sASSIGNMENT_EXPR %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Symbol),
+		a.Operator.Value,
+	)
+	context.writeNode(a.Assignee)
+	context.writeNode(a.Value)
 }
 
 type TupleExpression struct {
@@ -607,21 +502,11 @@ func (t *TupleExpression) Location() text.Location {
 	return t.LeftParen.Location.To(t.RightParen.Location)
 }
 
-func (t *TupleExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
-
-	for i, value := range t.Values {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(value.String())
+func (t *TupleExpression) String(context printContext) {
+	context.write("%sTUPLE_EXPR", context.colour(colour.NodeName))
+	if len(t.Values) != 0 {
+		writeNodeList(context.withNest(), t.Values)
 	}
-
-	result.WriteByte(')')
-
-	return result.String()
 }
 
 type MemberExpression struct {
@@ -642,16 +527,16 @@ func (m *MemberExpression) Location() text.Location {
 	return m.Left.Location().To(m.Member.Location)
 }
 
-func (m *MemberExpression) String() string {
-	var result bytes.Buffer
-
+func (m *MemberExpression) String(context printContext) {
+	context.write(
+		"%sMEMBER_EXPR %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		m.Member.Value,
+	)
 	if m.Left != nil {
-		result.WriteString(m.Left.String())
+		context.writeNode(m.Left)
 	}
-	result.WriteByte('.')
-	result.WriteString(m.Member.Value)
-
-	return result.String()
 }
 
 type StructMember struct {
@@ -671,14 +556,14 @@ func (sm *StructMember) Tokens() []token.Token {
 	return append(tokens, sm.Value.Tokens()...)
 }
 
-func (sm *StructMember) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(sm.Name.Value)
-	result.WriteString(": ")
-	result.WriteString(sm.Value.String())
-
-	return result.String()
+func (sm StructMember) String(context printContext) {
+	context.write(
+		"%sSTRUCT_MEMBER %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		sm.Name.Value,
+	)
+	context.writeNode(sm.Value)
 }
 
 type InferredExpression struct {
@@ -694,8 +579,8 @@ func (i *InferredExpression) Location() text.Location {
 	return i.Token.Location
 }
 
-func (i *InferredExpression) String() string {
-	return i.Token.Value
+func (i *InferredExpression) String(context printContext) {
+	context.write("%sINFERRED_EXPR", context.colour(colour.NodeName))
 }
 
 type StructExpression struct {
@@ -720,26 +605,12 @@ func (s *StructExpression) Location() text.Location {
 	return s.Struct.Location().To(s.RightBrace.Location)
 }
 
-func (s *StructExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(s.Struct.String())
-	if _, isInferred := s.Struct.(*InferredExpression); !isInferred {
-		result.WriteByte(' ')
+func (s *StructExpression) String(context printContext) {
+	context.write("%sSTRUCT_EXPR", context.colour(colour.NodeName))
+	context.writeNode(s.Struct)
+	if len(s.Members) != 0 {
+		writeNodeList(context.withNest(), s.Members)
 	}
-	result.WriteString("{ ")
-
-	for i, member := range s.Members {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-
-		result.WriteString(member.String())
-	}
-
-	result.WriteString(" }")
-
-	return result.String()
 }
 
 type CastExpression struct {
@@ -761,14 +632,10 @@ func (ce *CastExpression) Location() text.Location {
 	return ce.Left.Location().To(ce.Type.Location())
 }
 
-func (ce *CastExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(ce.Left.String())
-	result.WriteString(" -> ")
-	result.WriteString(ce.Type.String())
-
-	return result.String()
+func (ce *CastExpression) String(context printContext) {
+	context.write("%sCAST_EXPR", context.colour(colour.NodeName))
+	context.writeNode(ce.Left)
+	context.writeNode(ce.Type)
 }
 
 type TypeCheckExpression struct {
@@ -790,14 +657,10 @@ func (ce *TypeCheckExpression) Location() text.Location {
 	return ce.Left.Location().To(ce.Type.Location())
 }
 
-func (tc *TypeCheckExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(tc.Left.String())
-	result.WriteString(" is ")
-	result.WriteString(tc.Type.String())
-
-	return result.String()
+func (tc *TypeCheckExpression) String(context printContext) {
+	context.write("%sTYPE_CHECK_EXPR", context.colour(colour.NodeName))
+	context.writeNode(tc.Left)
+	context.writeNode(tc.Type)
 }
 
 type RangeExpression struct {
@@ -819,14 +682,10 @@ func (r *RangeExpression) Tokens() []token.Token {
 	return tokens
 }
 
-func (r *RangeExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(r.Start.String())
-	result.WriteString("..")
-	result.WriteString(r.End.String())
-
-	return result.String()
+func (r *RangeExpression) String(context printContext) {
+	context.write("%sRANGE_EXPR", context.colour(colour.NodeName))
+	context.writeNode(r.Start)
+	context.writeNode(r.End)
 }
 
 type FunctionExpression struct {
@@ -860,42 +719,24 @@ func (f *FunctionExpression) Tokens() []token.Token {
 	return tokens
 }
 
-func (f *FunctionExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("fn(")
-
-	for i, param := range f.Parameters {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(param.String())
+func (f *FunctionExpression) String(context printContext) {
+	if f.Body != nil {
+		context.write("%sFUNC_EXPR", context.colour(colour.NodeName))
+	} else {
+		context.write("%sFUNC_TYPE", context.colour(colour.NodeName))
 	}
 
-	result.WriteByte(')')
+	if len(f.Parameters) != 0 {
+		writeNodeList(context.withNest(), f.Parameters)
+	}
+
 	if f.ReturnType != nil {
-		result.WriteString(f.ReturnType.String())
+		context.writeNode(f.ReturnType)
 	}
 
 	if f.Body != nil {
-		result.WriteByte(' ')
-		result.WriteString(f.Body.String())
+		context.writeNode(f.Body)
 	}
-
-	return result.String()
-}
-
-type HasPrecedence interface {
-	Expression
-	PrecedenceString() string
-}
-
-func maybePrecedence(expr Expression) string {
-	if prec, ok := expr.(HasPrecedence); ok {
-		return prec.PrecedenceString()
-	}
-
-	return expr.String()
 }
 
 type Block struct {
@@ -916,17 +757,11 @@ func (b *Block) Tokens() []token.Token {
 	return tokens
 }
 
-func (b *Block) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('{')
-	for _, stmt := range b.Statements {
-		result.WriteByte('\n')
-		result.WriteString(stmt.String())
+func (b *Block) String(context printContext) {
+	context.write("%sBLOCK", context.colour(colour.NodeName))
+	if len(b.Statements) != 0 {
+		writeNodeList(context.withNest(), b.Statements)
 	}
-	result.WriteString("\n}")
-
-	return result.String()
 }
 
 func (b *Block) Location() text.Location {
@@ -954,20 +789,16 @@ func (i *IfExpression) Tokens() []token.Token {
 	return tokens
 }
 
-func (i *IfExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("if ")
-	result.WriteString(i.Condition.String())
-	result.WriteByte(' ')
-	result.WriteString(i.Body.String())
+func (i *IfExpression) String(context printContext) {
+	context.write("%sIF_EXPR", context.colour(colour.NodeName))
+	context.writeNode(i.Condition)
+	context.writeNode(i.Body)
 
 	if i.ElseBranch != nil {
-		result.WriteString(" else ")
-		result.WriteString(i.ElseBranch.Statement.String())
+		context = context.withNest()
+		context.write("%sELSE_BRANCH", context.colour(colour.NodeName))
+		context.writeNode(i.ElseBranch.Statement)
 	}
-
-	return result.String()
 }
 
 func (i *IfExpression) Location() text.Location {
@@ -993,15 +824,10 @@ func (wl *WhileLoop) Tokens() []token.Token {
 	return tokens
 }
 
-func (wl *WhileLoop) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("while ")
-	result.WriteString(wl.Condition.String())
-	result.WriteByte(' ')
-	result.WriteString(wl.Body.String())
-
-	return result.String()
+func (wl *WhileLoop) String(context printContext) {
+	context.write("%sWHILE_LOOP", context.colour(colour.NodeName))
+	context.writeNode(wl.Condition)
+	context.writeNode(wl.Body)
 }
 
 func (w *WhileLoop) Location() text.Location {
@@ -1024,17 +850,15 @@ func (fl *ForLoop) Tokens() []token.Token {
 	return tokens
 }
 
-func (fl *ForLoop) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("for ")
-	result.WriteString(fl.Variable.Value)
-	result.WriteString(" in ")
-	result.WriteString(fl.Iterator.String())
-	result.WriteByte(' ')
-	result.WriteString(fl.Body.String())
-
-	return result.String()
+func (fl *ForLoop) String(context printContext) {
+	context.write(
+		"%sFOR_LOOP %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		fl.Variable.Value,
+	)
+	context.writeNode(fl.Iterator)
+	context.writeNode(fl.Body)
 }
 
 func (f *ForLoop) Location() text.Location {

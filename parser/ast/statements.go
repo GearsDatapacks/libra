@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 
+	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/lexer/token"
 )
 
@@ -18,13 +19,9 @@ func (ta *TypeAnnotation) Tokens() []token.Token {
 	return tokens
 }
 
-func (ta *TypeAnnotation) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(": ")
-	result.WriteString(ta.Type.String())
-
-	return result.String()
+func (ta *TypeAnnotation) String(context printContext) {
+	context.write("%sTYPE_ANNOTATION", context.colour(colour.NodeName))
+	context.writeNode(ta.Type)
 }
 
 type VariableDeclaration struct {
@@ -47,21 +44,20 @@ func (varDec *VariableDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (varDec *VariableDeclaration) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(varDec.Keyword.Value)
-	result.WriteByte(' ')
-	result.WriteString(varDec.Identifier.Value)
-
+func (varDec *VariableDeclaration) String(context printContext) {
+	context.write(
+		"%sVAR_DECL %s%s %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		varDec.Keyword.Value,
+		context.colour(colour.Attribute),
+		varDec.Identifier.Value,
+	)
 	if varDec.Type != nil {
-		result.WriteString(varDec.Type.String())
+		context.writeNode(varDec.Type)
 	}
-
-	result.WriteString(" = ")
-	result.WriteString(varDec.Value.String())
-
-	return result.String()
+	context.writeNode(varDec.Value)
+	varDec.Attributes.String(context)
 }
 
 func (v *VariableDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -94,20 +90,14 @@ func (t *TypeOrIdent) Tokens() []token.Token {
 	return tokens
 }
 
-func (t *TypeOrIdent) String() string {
-	var result bytes.Buffer
-
+func (t *TypeOrIdent) String(context printContext) {
+	context.write("%sTYPE_OR_IDENT", context.colour(colour.NodeName))
 	if t.Name != nil {
-		result.WriteString(t.Name.Value)
-	}
-	if t.Colon != nil {
-		result.WriteString(": ")
+		context.write(" %s%s", context.colour(colour.Name), t.Name.Value)
 	}
 	if t.Type != nil {
-		result.WriteString(t.Type.String())
+		context.writeNode(t.Type)
 	}
-
-	return result.String()
 }
 
 type Parameter struct {
@@ -130,19 +120,17 @@ func (p *Parameter) Tokens() []token.Token {
 	return tokens
 }
 
-func (p *Parameter) String() string {
-	var result bytes.Buffer
+func (p Parameter) String(context printContext) {
+	context.write("%sPARAM", context.colour(colour.NodeName))
 
 	if p.Mutable != nil {
-		result.WriteString("mut ")
-	}
-	result.WriteString(p.TypeOrIdent.String())
-	if p.Default != nil {
-		result.WriteString(" = ")
-		result.WriteString(p.Default.Value.String())
+		context.write(" %smut", context.colour(colour.Attribute))
 	}
 
-	return result.String()
+	context.writeNode(&p.TypeOrIdent)
+	if p.Default != nil {
+		context.writeNode(p.Default.Value)
+	}
 }
 
 type MethodOf struct {
@@ -163,17 +151,13 @@ func (m *MethodOf) Tokens() []token.Token {
 	return tokens
 }
 
-func (m *MethodOf) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('(')
+func (m *MethodOf) String(context printContext) {
+	context.write("%sMETHOD_OF", context.colour(colour.NodeName))
 	if m.Mutable != nil {
-		result.WriteString("mut ")
+		context.write(" %smut", context.colour(colour.Name))
 	}
-	result.WriteString(m.Type.String())
-	result.WriteByte(')')
 
-	return result.String()
+	context.writeNode(m.Type)
 }
 
 type MemberOf struct {
@@ -185,13 +169,13 @@ func (m *MemberOf) Tokens() []token.Token {
 	return []token.Token{m.Name, m.Dot}
 }
 
-func (m *MemberOf) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(m.Name.Value)
-	result.WriteByte('.')
-
-	return result.String()
+func (m *MemberOf) String(context printContext) {
+	context.write(
+		"%sMEMBER_OF %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		m.Name.Value,
+	)
 }
 
 type FunctionDeclaration struct {
@@ -224,38 +208,45 @@ func (fd *FunctionDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (fd *FunctionDeclaration) String() string {
-	var result bytes.Buffer
+func (fd *FunctionDeclaration) String(context printContext) {
+	context.write(
+		"%sFUNC_DECL %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		fd.Name.Value,
+	)
 
-	result.WriteString("fn ")
+	if fd.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
+	}
+
+	if fd.Implements != nil {
+		context.write(
+			" %simpl %s%s",
+			context.colour(colour.Attribute),
+			context.colour(colour.Name),
+			*fd.Implements,
+		)
+	}
+
 	if fd.MethodOf != nil {
-		result.WriteString(fd.MethodOf.String())
-		result.WriteByte(' ')
+		context.writeNode(fd.MethodOf)
 	}
 
 	if fd.MemberOf != nil {
-		result.WriteString(fd.MemberOf.String())
+		context.writeNode(fd.MemberOf)
 	}
 
-	result.WriteString(fd.Name.Value)
-	result.WriteByte('(')
-
-	for i, param := range fd.Parameters {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(param.String())
+	if len(fd.Parameters) != 0 {
+		writeNodeList(context.withNest(), fd.Parameters)
 	}
 
-	result.WriteByte(')')
 	if fd.ReturnType != nil {
-		result.WriteString(fd.ReturnType.String())
+		context.writeNode(fd.ReturnType)
 	}
-	result.WriteByte(' ')
 
-	result.WriteString(fd.Body.String())
-
-	return result.String()
+	context.writeNode(fd.Body)
+	fd.Attributes.String(context)
 }
 
 func (f *FunctionDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -280,16 +271,12 @@ func (r *ReturnStatement) Tokens() []token.Token {
 	return tokens
 }
 
-func (r *ReturnStatement) String() string {
-	var result bytes.Buffer
-	result.WriteString("return")
+func (r *ReturnStatement) String(context printContext) {
+	context.write("%sRETURN", context.colour(colour.NodeName))
 
 	if r.Value != nil {
-		result.WriteByte(' ')
-		result.WriteString(r.Value.String())
+		context.writeNode(r.Value)
 	}
-
-	return result.String()
 }
 
 type YieldStatement struct {
@@ -303,13 +290,12 @@ func (y *YieldStatement) Tokens() []token.Token {
 	return tokens
 }
 
-func (y *YieldStatement) String() string {
-	var result bytes.Buffer
-	result.WriteString(" ")
+func (y *YieldStatement) String(context printContext) {
+	context.write("%sYIELD", context.colour(colour.NodeName))
 
-	result.WriteString(y.Value.String())
-
-	return result.String()
+	if y.Value != nil {
+		context.writeNode(y.Value)
+	}
 }
 
 type BreakStatement struct {
@@ -325,16 +311,12 @@ func (b *BreakStatement) Tokens() []token.Token {
 	return tokens
 }
 
-func (b *BreakStatement) String() string {
-	var result bytes.Buffer
-	result.WriteString("break")
+func (b *BreakStatement) String(context printContext) {
+	context.write("%sBREAK", context.colour(colour.NodeName))
 
 	if b.Value != nil {
-		result.WriteByte(' ')
-		result.WriteString(b.Value.String())
+		context.writeNode(b.Value)
 	}
-
-	return result.String()
 }
 
 type ContinueStatement struct {
@@ -345,8 +327,8 @@ func (c *ContinueStatement) Tokens() []token.Token {
 	return []token.Token{c.Keyword}
 }
 
-func (*ContinueStatement) String() string {
-	return "continue"
+func (*ContinueStatement) String(context printContext) {
+	context.write("%sCONTINUE", context.colour(colour.NodeName))
 }
 
 type TypeDeclaration struct {
@@ -366,15 +348,28 @@ func (t *TypeDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (t *TypeDeclaration) String() string {
-	var result bytes.Buffer
+func (t *TypeDeclaration) String(context printContext) {
+	context.write(
+		"%sTYPE_DECL %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		t.Name.Value,
+	)
 
-	result.WriteString("type ")
-	result.WriteString(t.Name.Value)
-	result.WriteString(" = ")
-	result.WriteString(t.Type.String())
+	if t.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
+	}
+	if t.Explicit {
+		context.write(" %sexplicit", context.colour(colour.Attribute))
+	}
 
-	return result.String()
+	context.writeNode(t.Type)
+	t.Attributes.String(context)
+	if t.Tag != nil {
+		nested := context.withNest()
+		nested.write("%stag", nested.colour(colour.Attribute))
+		nested.writeNode(t.Tag)
+	}
 }
 
 func (t *TypeDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -405,15 +400,12 @@ func (s *StructField) Tokens() []token.Token {
 	return tokens
 }
 
-func (s *StructField) String() string {
-	var result bytes.Buffer
-
+func (s StructField) String(context printContext) {
+	context.write("%sSTRUCT_FIELD", context.colour(colour.NodeName))
 	if s.Pub != nil {
-		result.WriteString("pub ")
+		context.write(" %spub", context.colour(colour.Attribute))
 	}
-	result.WriteString(s.TypeOrIdent.String())
-
-	return result.String()
+	context.writeNode(&s.TypeOrIdent)
 }
 
 type StructDeclaration struct {
@@ -445,23 +437,29 @@ func (s *StructDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (s *StructDeclaration) String() string {
-	var result bytes.Buffer
+func (s *StructDeclaration) String(context printContext) {
+	context.write(
+		"%sSTRUCT_DECL %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		s.Name.Value,
+	)
 
-	result.WriteString("struct ")
-	result.WriteString(s.Name.Value)
-	if s.Body != nil {
-		result.WriteString(" {\n")
-		for i, field := range s.Body.Fields {
-			if i != 0 {
-				result.WriteString(",\n")
-			}
-			result.WriteString(field.String())
-		}
-		result.WriteString("\n}")
+	if s.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
 	}
 
-	return result.String()
+	if s.Body != nil {
+		if len(s.Body.Fields) != 0 {
+			writeNodeList(context.withNest(), s.Body.Fields)
+		}
+	}
+	s.Attributes.String(context)
+	if s.Tag != nil {
+		nested := context.withNest()
+		nested.write("%stag", nested.colour(colour.Attribute))
+		nested.writeNode(s.Tag)
+	}
 }
 
 func (s *StructDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -494,24 +492,20 @@ func (i *InterfaceMember) Tokens() []token.Token {
 	return tokens
 }
 
-func (i *InterfaceMember) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(i.Name.Value)
-	result.WriteRune('(')
-	for i, param := range i.Parameters {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(param.String())
+func (i InterfaceMember) String(context printContext) {
+	context.write(
+		"%sINTERFACE_MEMBER %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		i.Name.Value,
+	)
+	if len(i.Parameters) != 0 {
+		writeNodeList(context.withNest(), i.Parameters)
 	}
 
-	result.WriteByte(')')
 	if i.ReturnType != nil {
-		result.WriteString(i.ReturnType.String())
+		context.writeNode(i.ReturnType)
 	}
-
-	return result.String()
 }
 
 type InterfaceDeclaration struct {
@@ -535,22 +529,22 @@ func (i *InterfaceDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (i *InterfaceDeclaration) String() string {
-	var result bytes.Buffer
+func (i *InterfaceDeclaration) String(context printContext) {
+	context.write(
+		"%sINTERFACE_DECL %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		i.Name.Value,
+	)
 
-	result.WriteString("interface ")
-	result.WriteString(i.Name.Value)
-	result.WriteString(" {\n")
-
-	for i, member := range i.Members {
-		if i != 0 {
-			result.WriteString(",\n")
-		}
-		result.WriteString(member.String())
+	if i.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
 	}
 
-	result.WriteString("\n}")
-	return result.String()
+	if len(i.Members) != 0 {
+		writeNodeList(context.withNest(), i.Members)
+	}
+	i.Attributes.String(context)
 }
 
 func (i *InterfaceDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -582,20 +576,11 @@ func (s *ImportedSymbols) Tokens() []token.Token {
 	return tokens
 }
 
-func (s *ImportedSymbols) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("{ ")
-	for i, symbol := range s.Symbols {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(symbol.Value)
+func (s *ImportedSymbols) String(context printContext) {
+	context.write("%sIMPORTED_SYMBOLS", context.colour(colour.NodeName))
+	for _, symbol := range s.Symbols {
+		context.write(" %s%s", context.colour(colour.Name), symbol.Value)
 	}
-
-	result.WriteString(" } from")
-
-	return result.String()
 }
 
 type ImportStatement struct {
@@ -621,26 +606,19 @@ func (i *ImportStatement) Tokens() []token.Token {
 	return tokens
 }
 
-func (i *ImportStatement) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("import ")
-	if i.Symbols != nil {
-		result.WriteString(i.Symbols.String())
-		result.WriteByte(' ')
-	}
+func (i *ImportStatement) String(context printContext) {
+	context.write("%sIMPORT ", context.colour(colour.NodeName))
 	if i.All != nil {
-		result.WriteString("* from ")
+		context.write("%s* ", context.colour(colour.Symbol))
 	}
-	result.WriteByte('"')
-	result.WriteString(i.Module.Value)
-	result.WriteByte('"')
+	context.write("%s%q", context.colour(colour.Literal), i.Module.Value)
 	if i.Alias != nil {
-		result.WriteString(" as ")
-		result.WriteString(i.Alias.Alias.Value)
+		context.write(" %s%s", context.colour(colour.Name), i.Alias.Alias.Value)
 	}
 
-	return result.String()
+	if i.Symbols != nil {
+		context.writeNode(i.Symbols)
+	}
 }
 
 type EnumMember struct {
@@ -658,16 +636,17 @@ func (e *EnumMember) Tokens() []token.Token {
 	return tokens
 }
 
-func (e *EnumMember) String() string {
-	var result bytes.Buffer
-	result.WriteString(e.Name.Value)
+func (e EnumMember) String(context printContext) {
+	context.write(
+		"%sENUM_MEMBER %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		e.Name.Value,
+	)
 
 	if e.Value != nil {
-		result.WriteString(" = ")
-		result.WriteString(e.Value.Value.String())
+		context.writeNode(e.Value.Value)
 	}
-
-	return result.String()
 }
 
 type EnumDeclaration struct {
@@ -695,27 +674,32 @@ func (e *EnumDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (e *EnumDeclaration) String() string {
-	var result bytes.Buffer
+func (e *EnumDeclaration) String(context printContext) {
+	context.write(
+		"%sENUM_DECL %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		e.Name.Value,
+	)
 
-	result.WriteString(e.Keyword.Value)
-	result.WriteByte(' ')
-	result.WriteString(e.Name.Value)
+	if e.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
+	}
+
 
 	if e.ValueType != nil {
-		result.WriteString(e.ValueType.String())
+		context.writeNode(e.ValueType)
 	}
 
-	result.WriteString(" {\n")
-	for i, member := range e.Members {
-		if i != 0 {
-			result.WriteString(",\n")
-		}
-		result.WriteString(member.String())
+	if len(e.Members) != 0 {
+		writeNodeList(context.withNest(), e.Members)
 	}
-	result.WriteString("\n}")
-
-	return result.String()
+	e.Attributes.String(context)
+	if e.Tag != nil {
+		nested := context.withNest()
+		nested.write("%stag", nested.colour(colour.Attribute))
+		nested.writeNode(e.Tag)
+	}
 }
 
 func (e *EnumDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -749,31 +733,22 @@ func (u *UnionMember) Tokens() []token.Token {
 	return tokens
 }
 
-func (u *UnionMember) String() string {
-	var result bytes.Buffer
-	result.WriteString(u.Name.Value)
+func (u UnionMember) String(context printContext) {
+	context.write(
+		"%sUNION_MEMBER %s%s",
+		context.colour(colour.NodeName),
+		context.colour(colour.Name),
+		u.Name.Value,
+	)
 
 	if u.Type != nil {
-		result.WriteString(u.Type.String())
+		context.writeNode(u.Type)
 	}
 	if u.Compound != nil {
-		result.WriteString(" {")
 		if len(u.Compound.Fields) != 0 {
-			result.WriteByte(' ')
+			writeNodeList(context.withNest(), u.Compound.Fields)
 		}
-		for i, field := range u.Compound.Fields {
-			if i != 0 {
-				result.WriteString(", ")
-			}
-			result.WriteString(field.String())
-		}
-		if len(u.Compound.Fields) != 0 {
-			result.WriteByte(' ')
-		}
-		result.WriteByte('}')
 	}
-
-	return result.String()
 }
 
 type UnionDeclaration struct {
@@ -798,23 +773,26 @@ func (u *UnionDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (u *UnionDeclaration) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(u.Keyword.Value)
-	result.WriteByte(' ')
-	result.WriteString(u.Name.Value)
-
-	result.WriteString(" {\n")
-	for i, member := range u.Members {
-		if i != 0 {
-			result.WriteString(",\n")
-		}
-		result.WriteString(member.String())
+func (u *UnionDeclaration) String(context printContext) {
+	context.write("%sUNION_DECL %s", context.colour(colour.NodeName), u.Name.Value)
+	
+	if u.Exported {
+		context.write(" %spub", context.colour(colour.Attribute))
 	}
-	result.WriteString("\n}")
+	if u.Untagged {
+		context.write(" %suntagged", context.colour(colour.Attribute))
+	}
 
-	return result.String()
+	if len(u.Members) != 0 {
+		writeNodeList(context.withNest(), u.Members)
+	}
+
+	u.Attributes.String(context)
+	if u.Tag != nil {
+		nested := context.withNest()
+		nested.write("%stag", nested.colour(colour.Attribute))
+		nested.writeNode(u.Tag)
+	}
 }
 
 func (u *UnionDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -845,29 +823,6 @@ func (t *TagBody) Tokens() []token.Token {
 	return tokens
 }
 
-func (t *TagBody) String() string {
-	var result bytes.Buffer
-
-	result.WriteByte('{')
-	if len(t.Types) != 0 {
-		result.WriteByte(' ')
-	}
-
-	for i, ty := range t.Types {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(ty.String())
-	}
-
-	if len(t.Types) != 0 {
-		result.WriteByte(' ')
-	}
-	result.WriteByte('}')
-
-	return result.String()
-}
-
 type TagDeclaration struct {
 	decl
 	Keyword    token.Token
@@ -884,19 +839,15 @@ func (t *TagDeclaration) Tokens() []token.Token {
 	return tokens
 }
 
-func (t *TagDeclaration) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(t.Keyword.Value)
-	result.WriteByte(' ')
-	result.WriteString(t.Name.Value)
+func (t *TagDeclaration) String(context printContext) {
+	context.write("%sTAG_DECL %s%s", context.colour(colour.NodeName), context.colour(colour.Name), t.Name.Value)
 
 	if t.Body != nil {
-		result.WriteByte(' ')
-		result.WriteString(t.Body.String())
+		if len(t.Body.Types) != 0 {
+			writeNodeList(context.withNest(), t.Body.Types)
+		}
 	}
-
-	return result.String()
+	t.Attributes.String(context)
 }
 
 func (t *TagDeclaration) tryAddAttribute(attribute Attribute) bool {
@@ -959,4 +910,54 @@ func (d *DeclarationAttributes) tryAddAttribute(attribute Attribute) bool {
 		return false
 	}
 	return true
+}
+
+func (d *DeclarationAttributes) String(context printContext) {
+	var result bytes.Buffer
+	writer := context.writer
+	context.writer = &result
+	hasAttributes := false
+
+	context = context.withNest()
+	context.write("%sATTRIBUTES", context.colour(colour.NodeName))
+	context = context.nested()
+	if d.TodoMessage != nil {
+		context.writeNest()
+		context.write(
+			"%stodo %s= %s%q",
+			context.colour(colour.Attribute),
+			context.colour(colour.Symbol),
+			context.colour(colour.Literal),
+			*d.TodoMessage,
+		)
+		hasAttributes = true
+	}
+	if d.Documentation != "" {
+		context.writeNest()
+		context.write(
+			"%sdoc %s= %s%q",
+			context.colour(colour.Attribute),
+			context.colour(colour.Symbol),
+			context.colour(colour.Literal),
+			d.Documentation,
+		)
+		hasAttributes = true
+	}
+	if d.DeprecatedMessage != nil {
+		context.writeNest()
+		context.write(
+			"%sdeprecated %s= %s%q",
+			context.colour(colour.Attribute),
+			context.colour(colour.Symbol),
+			context.colour(colour.Literal),
+			*d.DeprecatedMessage,
+		)
+		hasAttributes = true
+	}
+
+	context.writer = writer
+
+	if hasAttributes {
+		context.write(result.String())
+	}
 }
