@@ -448,8 +448,10 @@ func (index *IndexExpression) Location() text.Location {
 
 func (index *IndexExpression) String(context printContext) {
 	context.write("%sINDEX_EXPR", context.colour(colour.NodeName))
-	context.writeNode(index.Index)
 	context.writeNode(index.Left)
+	if index.Index != nil {
+		context.writeNode(index.Index)
+	}
 }
 
 type AssignmentExpression struct {
@@ -557,13 +559,15 @@ func (sm *StructMember) Tokens() []token.Token {
 }
 
 func (sm StructMember) String(context printContext) {
-	context.write(
-		"%sSTRUCT_MEMBER %s%s",
-		context.colour(colour.NodeName),
-		context.colour(colour.Name),
-		sm.Name.Value,
-	)
-	context.writeNode(sm.Value)
+	context.write("%sSTRUCT_MEMBER", context.colour(colour.NodeName))
+
+	if sm.Name != nil {
+		context.write(" %s%s", context.colour(colour.Name), sm.Name.Value)
+	}
+
+	if sm.Value != nil {
+		context.writeNode(sm.Value)
+	}
 }
 
 type InferredExpression struct {

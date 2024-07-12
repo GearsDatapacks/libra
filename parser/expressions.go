@@ -26,8 +26,11 @@ const (
 )
 
 func (p *parser) parseExpression() (ast.Expression, *diagnostics.Diagnostic) {
+	old := p.noBraces
 	p.noBraces = false
-	return p.parseSubExpression(Lowest)
+	expr, diag := p.parseSubExpression(Lowest)
+	p.noBraces = old
+	return expr, diag
 }
 
 func (p *parser) parseSubExpression(precedence int) (ast.Expression, *diagnostics.Diagnostic) {
@@ -297,7 +300,7 @@ func (p *parser) parseTypeCheckExpression(left ast.Expression) (ast.Expression, 
 
 func (p *parser) parseRangeExpression(start ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
 	operator := p.consume()
-	end, err := p.parseExpression()
+	end, err := p.parseSubExpression(Range)
 	if err != nil {
 		return nil, err
 	}

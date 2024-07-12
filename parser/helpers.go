@@ -101,13 +101,7 @@ func parseDelimStmtList[Elem any](p *parser, delim token.Kind, elemFn func() (El
 		}
 
 		result = append(result, nextElem)
-
-		if p.next().Kind == token.COMMA {
-			p.consume()
-		} else {
-			break
-		}
-
+		
 		next := p.nextWithNewlines().Kind
 		if next == token.NEWLINE || next == token.SEMICOLON {
 			p.consumeNewlines()
