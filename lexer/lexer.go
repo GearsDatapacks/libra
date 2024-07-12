@@ -40,7 +40,7 @@ func (l *lexer) Tokenise() []token.Token {
 		tokens = append(tokens, nextToken)
 
 		if nextToken.Kind == token.ATTRIBUTE_NAME {
-			body := l.parseAttributeBody(nextToken.Value[1:])
+			body := l.parseAttributeBody(nextToken.ExtraValue)
 			if body != nil {
 				tokens = append(tokens, *body)
 			}
@@ -56,25 +56,24 @@ func (l *lexer) Tokenise() []token.Token {
 
 func (l *lexer) nextToken() token.Token {
 	l.skipWhitespace()
-	nextToken := token.New(token.INVALID, "", l.getLocation(l.line, l.line, l.col, l.col))
+	nextToken := token.New(token.INVALID, "", "", l.getLocation(l.line, l.line, l.col, l.col))
 
 	next := l.next()
 	pos := l.pos
 
 	if l.eof() {
 		nextToken.Kind = token.EOF
-		nextToken.Value = "\x00"
 		return nextToken
 	} else if next == '/' && l.peek(1) == '/' {
 		nextToken.Kind = token.COMMENT
-		nextToken.Value = l.parseLineComment()
+		nextToken.ExtraValue = l.parseLineComment()
 	} else if next == '/' && l.peek(1) == '*' {
 		nextToken.Kind = token.COMMENT
-		nextToken.Value = l.parseBlockComment()
+		nextToken.ExtraValue = l.parseBlockComment()
 	} else if kind, ok := l.parsePunctuation(); ok {
 		nextToken.Kind = kind
 	} else if isNumber(next) {
-		nextToken.Kind, nextToken.Value = l.parseNumber()
+		nextToken.Kind, nextToken.ExtraValue = l.parseNumber()
 	} else if isIdentifierStart(next) {
 		nextToken.Kind = token.IDENTIFIER
 		for isIdentifierMiddle(l.next()) {
@@ -82,13 +81,14 @@ func (l *lexer) nextToken() token.Token {
 		}
 	} else if next == '"' {
 		nextToken.Kind = token.STRING
-		nextToken.Value = l.parseString()
+		nextToken.ExtraValue = l.parseString()
 	} else if next == '@' {
 		nextToken.Kind = token.ATTRIBUTE_NAME
 		l.consume()
 		for isIdentifierMiddle(l.next()) {
 			l.consume()
 		}
+		nextToken.ExtraValue = l.file.Text[pos+1 : l.pos]
 	} else {
 		l.Diagnostics.Report(diagnostics.InvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next))
 		l.consume()
@@ -96,9 +96,7 @@ func (l *lexer) nextToken() token.Token {
 
 	nextToken.Location.Span.End = l.col
 	nextToken.Location.Span.EndLine = l.line
-	if nextToken.Value == "" {
-		nextToken.Value = l.file.Text[pos:l.pos]
-	}
+	nextToken.Value = l.file.Text[pos:l.pos]
 
 	return nextToken
 }
@@ -443,7 +441,7 @@ func (l *lexer) parseAttributeBody(name string) *token.Token {
 			text.WriteByte(l.consume())
 		}
 
-		tok := token.New(token.ATTRIBUTE_BODY, text.String(), l.getLocation(startLine, l.line, startCol, l.col))
+		tok := token.New(token.ATTRIBUTE_BODY, text.String(), "", l.getLocation(startLine, l.line, startCol, l.col))
 		return &tok
 	default:
 		return nil

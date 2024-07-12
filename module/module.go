@@ -93,10 +93,10 @@ func Load(filePath string) (*Module, diagnostics.Manager) {
 	for _, file := range mod.Files {
 		for _, stmt := range file.Ast.Statements {
 			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
-				importedPath := path.Join(modPath, importStmt.Module.Value)
+				importedPath := path.Join(modPath, importStmt.Module.ExtraValue)
 				imported, diags := Load(importedPath)
 				diagnostics = append(diagnostics, diags...)
-				mod.Imported[importStmt.Module.Value] = imported
+				mod.Imported[importStmt.Module.ExtraValue] = imported
 			}
 		}
 	}

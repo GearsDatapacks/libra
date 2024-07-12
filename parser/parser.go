@@ -514,7 +514,7 @@ func (p *parser) expect(kind token.Kind) token.Token {
 		Span: span,
 		File: p.next().Location.File,
 	}
-	tok := token.New(kind, "", location)
+	tok := token.New(kind, "", "", location)
 	return tok
 }
 
@@ -534,7 +534,7 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 		Span: span,
 		File: p.next().Location.File,
 	}
-	tok := token.New(token.IDENTIFIER, "", location)
+	tok := token.New(token.IDENTIFIER, "", "", location)
 	return tok
 }
 

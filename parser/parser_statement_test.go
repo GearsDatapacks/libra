@@ -502,7 +502,7 @@ func TestImportStatement(t *testing.T) {
 			utils.Assert(t, stmt.All == nil, "Expected not to import all symbols")
 		}
 
-		utils.AssertEq(t, stmt.Module.Value, test.module)
+		utils.AssertEq(t, stmt.Module.ExtraValue, test.module)
 
 		if test.alias == "" {
 			utils.Assert(t, stmt.Alias == nil, "Expected not to import as an alias")

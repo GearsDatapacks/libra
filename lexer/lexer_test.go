@@ -84,14 +84,14 @@ func TestVariableTokens(t *testing.T) {
 	tokens := []tokenData{
 		tok("17", token.INTEGER),
 		tok("42", token.INTEGER),
-		tok("123_456_789", token.INTEGER, "123456789"),
+		tok("123_456_789", token.INTEGER, "123_456_789"),
 		tok("19.3", token.FLOAT),
-		tok("3.141_592_65", token.FLOAT, "3.14159265"),
+		tok("3.141_592_65", token.FLOAT, "3.141_592_65"),
 		tok("foo_bar", token.IDENTIFIER),
 		tok("HiThere123", token.IDENTIFIER),
-		tok(`"Hi :)"`, token.STRING, "Hi :)"),
-		tok(`"\"How are you?\""`, token.STRING, `"How are you?"`),
-		tok(`"Hello\nworld"`, token.STRING, "Hello\nworld"),
+		tok(`"Hi :)"`, token.STRING, `"Hi :)"`),
+		tok(`"\"How are you?\""`, token.STRING, `"\"How are you?\""`),
+		tok(`"Hello\nworld"`, token.STRING, `"Hello\nworld"`),
 	}
 
 	for _, data := range tokens {
@@ -115,7 +115,7 @@ func TestLexerDiagnostics(t *testing.T) {
 		msg  string
 		span text.Span
 	}{
-		{"foo@bar", "Invalid character: '@'", text.NewSpan(0, 0, 3, 4)},
+		{"foo#bar", "Invalid character: '#'", text.NewSpan(0, 0, 3, 4)},
 		{`"Hello`, "Unterminated string", text.NewSpan(0, 0, 0, 6)},
 		{`"He\llo"`, "Invalid escape sequence: '\\l'", text.NewSpan(0, 0, 3, 5)},
 		{"123_456_", "Numbers cannot end with numeric separators", text.NewSpan(0, 0, 7, 8)},

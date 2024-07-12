@@ -37,7 +37,7 @@ func TestIntegerExpression(t *testing.T) {
 	utils.AssertEq(t, integer.Value, int64(val))
 
 	utils.AssertEq(t, integer.Token.Kind, token.INTEGER)
-	utils.AssertEq(t, integer.Token.Value, "156098")
+	utils.AssertEq(t, integer.Token.Value, input)
 	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 

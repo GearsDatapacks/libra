@@ -10,7 +10,7 @@ func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnosti
 	attributes := []ast.Attribute{}
 	for p.next().Kind == token.ATTRIBUTE_NAME {
 		found := false
-		name := p.next().Value[1:]
+		name := p.next().ExtraValue
 		for _, attr := range p.attributes {
 			if name == attr.Name {
 				attribute, err := attr.Fn()
@@ -26,7 +26,7 @@ func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnosti
 		}
 
 		if !found {
-			p.Diagnostics.Report(diagnostics.InvalidAttribute(p.next().Location, p.next().Value[1:]))
+			p.Diagnostics.Report(diagnostics.InvalidAttribute(p.next().Location, p.next().ExtraValue))
 			p.consumeUntil(token.NEWLINE, token.SEMICOLON)
 		}
 	}

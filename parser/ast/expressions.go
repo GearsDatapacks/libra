@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"fmt"
+
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/text"
@@ -29,6 +31,11 @@ func (il *IntegerLiteral) String(context printContext) {
 		context.colour(colour.Literal),
 		il.Value,
 	)
+
+	litValue := fmt.Sprint(il.Value)
+	if litValue != il.Token.Value {
+		context.write(" %s", il.Token.Value)
+	}
 }
 
 type FloatLiteral struct {
@@ -45,11 +52,16 @@ func (fl *FloatLiteral) Location() text.Location {
 }
 func (fl *FloatLiteral) String(context printContext) {
 	context.write(
-		"%sFLOAT_LIT %s%f",
+		"%sFLOAT_LIT %s%v",
 		context.colour(colour.NodeName),
 		context.colour(colour.Literal),
 		fl.Value,
 	)
+
+	litValue := fmt.Sprint(fl.Value)
+	if litValue != fl.Token.Value {
+		context.write(" %s", fl.Token.Value)
+	}
 }
 
 type BooleanLiteral struct {
@@ -87,10 +99,10 @@ func (sl *StringLiteral) Location() text.Location {
 }
 func (sl *StringLiteral) String(context printContext) {
 	context.write(
-		"%sSTRING_LIT %s%q",
+		"%sSTRING_LIT %s%s",
 		context.colour(colour.NodeName),
 		context.colour(colour.Literal),
-		sl.Value,
+		sl.Token.Value,
 	)
 }
 

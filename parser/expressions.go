@@ -358,7 +358,7 @@ func (p *parser) parseIdentifier() (ast.Expression, *diagnostics.Diagnostic) {
 
 func (p *parser) parseInteger() (ast.Expression, *diagnostics.Diagnostic) {
 	tok := p.consume()
-	value, _ := strconv.ParseInt(tok.Value, 10, 64)
+	value, _ := strconv.ParseInt(tok.ExtraValue, 10, 64)
 	return &ast.IntegerLiteral{
 		Token: tok,
 		Value: value,
@@ -367,7 +367,7 @@ func (p *parser) parseInteger() (ast.Expression, *diagnostics.Diagnostic) {
 
 func (p *parser) parseFloat() (ast.Expression, *diagnostics.Diagnostic) {
 	tok := p.consume()
-	value, _ := strconv.ParseFloat(tok.Value, 64)
+	value, _ := strconv.ParseFloat(tok.ExtraValue, 64)
 	return &ast.FloatLiteral{
 		Token: tok,
 		Value: value,
@@ -378,7 +378,7 @@ func (p *parser) parseString() (ast.Expression, *diagnostics.Diagnostic) {
 	tok := p.consume()
 	return &ast.StringLiteral{
 		Token: tok,
-		Value: tok.Value,
+		Value: tok.ExtraValue,
 	}, nil
 }
 

@@ -5,9 +5,10 @@ import "github.com/gearsdatapacks/libra/text"
 type Kind int
 
 type Token struct {
-	Kind     Kind
-	Value    string
-	Location text.Location
+	Kind       Kind
+	Value      string
+	ExtraValue string
+	Location   text.Location
 }
 
 const (
@@ -79,11 +80,12 @@ const (
 	PERCENT_EQUALS = PERCENT + EQUALS
 )
 
-func New(kind Kind, value string, span text.Location) Token {
+func New(kind Kind, value, extraValue string, span text.Location) Token {
 	return Token{
-		Kind:     kind,
-		Value:    value,
-		Location: span,
+		Kind:       kind,
+		Value:      value,
+		ExtraValue: extraValue,
+		Location:   span,
 	}
 }
 

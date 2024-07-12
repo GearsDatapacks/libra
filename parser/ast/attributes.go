@@ -16,7 +16,7 @@ func (f *FlagAttribute) GetToken() token.Token {
 }
 
 func (f *FlagAttribute) GetName() string {
-	return f.Token.Value[1:]
+	return f.Token.ExtraValue
 }
 
 // TODO: impl blocks
@@ -31,7 +31,7 @@ func (t *TextAttribute) GetToken() token.Token {
 }
 
 func (t *TextAttribute) GetName() string {
-	return t.Token.Value[1:]
+	return t.Token.ExtraValue
 }
 
 type ExpressionAttribute struct {
@@ -44,5 +44,5 @@ func (e *ExpressionAttribute) GetToken() token.Token {
 }
 
 func (e *ExpressionAttribute) GetName() string {
-	return e.Token.Value[1:]
+	return e.Token.ExtraValue
 }
