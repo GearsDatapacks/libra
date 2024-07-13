@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gearsdatapacks/libra/colour"
-	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/text"
 )
 
@@ -16,28 +15,27 @@ const INDENT_STEP = "  "
 
 type Statement interface {
 	printable
-	Tokens() []token.Token
+	GetLocation() text.Location
 }
 
 type Expression interface {
 	Statement
 	expressionNode()
-	Location() text.Location
 }
 
 type Program struct {
 	Statements []Statement
 }
 
-func (p *Program) Tokens() []token.Token {
-	tokens := []token.Token{}
+// func (p *Program) Tokens() []token.Token {
+// 	tokens := []token.Token{}
 
-	for _, statement := range p.Statements {
-		tokens = append(tokens, statement.Tokens()...)
-	}
+// 	for _, statement := range p.Statements {
+// 		tokens = append(tokens, statement.Tokens()...)
+// 	}
 
-	return tokens
-}
+// 	return tokens
+// }
 
 func (p *Program) String() string {
 	var text bytes.Buffer

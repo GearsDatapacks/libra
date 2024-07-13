@@ -30,11 +30,11 @@ func TestVariableDeclaration(t *testing.T) {
 		stmt := getStmt[*ast.VariableDeclaration](t, program)
 
 		utils.AssertEq(t, stmt.Keyword.Value, tt.keyword)
-		utils.AssertEq(t, stmt.Identifier.Value, tt.ident)
+		utils.AssertEq(t, stmt.Name, tt.ident)
 
 		if tt.ty != nil {
 			utils.Assert(t, stmt.Type != nil, "Expected no type, but got one")
-			typeName, ok := stmt.Type.Type.(*ast.Identifier)
+			typeName, ok := stmt.Type.(*ast.Identifier)
 			utils.Assert(t, ok, "Type is not a type name")
 			utils.AssertEq(t, typeName.Name, *tt.ty)
 		}
@@ -87,16 +87,16 @@ func testIfStatement(t *testing.T, stmt *ast.IfExpression, condition any, bodyVa
 	}
 }
 
-func testElseBranch(t *testing.T, branch *ast.ElseBranch, expected *elseBranch) {
+func testElseBranch(t *testing.T, branch ast.Statement, expected *elseBranch) {
 	if expected.condition == nil {
-		block, ok := branch.Statement.(*ast.Block)
+		block, ok := branch.(*ast.Block)
 		utils.Assert(t, ok, "Else branch is not a block")
 		bodyStmt := utils.AssertSingle(t, block.Statements)
 		expr, ok := bodyStmt.(ast.Expression)
 		utils.Assert(t, ok, "Body is not an expression")
 		testLiteral(t, expr, expected.bodyValue)
 	} else {
-		ifStmt, ok := branch.Statement.(*ast.IfExpression)
+		ifStmt, ok := branch.(*ast.IfExpression)
 		utils.Assert(t, ok, "Else branch is not an if statement")
 		testIfStatement(t, ifStmt, expected.condition, expected.bodyValue, expected.elseBranch)
 	}
@@ -153,7 +153,7 @@ func TestForLoop(t *testing.T) {
 		program := getProgram(t, tt.src)
 		loop := getStmt[*ast.ForLoop](t, program)
 
-		utils.AssertEq(t, loop.Variable.Value, tt.ident)
+		utils.AssertEq(t, loop.Variable, tt.ident)
 		testLiteral(t, loop.Iterator, tt.iterator)
 		bodyStmt := utils.AssertSingle(t, loop.Body.Statements)
 		expr, ok := bodyStmt.(ast.Expression)
@@ -203,9 +203,9 @@ func TestFunctionDeclaration(t *testing.T) {
 			utils.AssertEq(t, name.Name, test.methodOf)
 
 			if test.thisMut {
-				utils.Assert(t, fn.MethodOf.Mutable != nil, "Expected this to be mutable")
+				utils.Assert(t, fn.MethodOf.Mutable, "Expected this to be mutable")
 			} else {
-				utils.Assert(t, fn.MethodOf.Mutable == nil, "Expected this not to be mutable")
+				utils.Assert(t, !fn.MethodOf.Mutable, "Expected this not to be mutable")
 			}
 		}
 
@@ -213,15 +213,15 @@ func TestFunctionDeclaration(t *testing.T) {
 			utils.Assert(t, fn.MemberOf == nil, "Expected not to be a member")
 		} else {
 			utils.Assert(t, fn.MemberOf != nil, "Expected to be a member")
-			utils.AssertEq(t, fn.MemberOf.Name.Value, test.memberOf)
+			utils.AssertEq(t, fn.MemberOf.Name, test.memberOf)
 		}
 
-		utils.AssertEq(t, fn.Name.Value, test.name)
+		utils.AssertEq(t, fn.Name, test.name)
 
 		utils.AssertEq(t, len(fn.Parameters), len(test.params))
 		for i, param := range test.params {
 			fnParam := fn.Parameters[i]
-			utils.AssertEq(t, fnParam.Name.Value, param.name)
+			utils.AssertEq(t, *fnParam.Name, param.name)
 
 			if param.dataType == "" {
 				utils.Assert(t, fnParam.Type == nil, "Expected no type annotation")
@@ -236,13 +236,13 @@ func TestFunctionDeclaration(t *testing.T) {
 				utils.Assert(t, fnParam.Default == nil, "Expected no default value")
 			} else {
 				utils.Assert(t, fnParam.Default != nil, "Expected a default value")
-				testLiteral(t, fnParam.Default.Value, param.value)
+				testLiteral(t, fnParam.Default, param.value)
 			}
 
 			if param.mutable {
-				utils.Assert(t, fnParam.Mutable != nil, "Expected param to be mutable")
+				utils.Assert(t, fnParam.Mutable, "Expected param to be mutable")
 			} else {
-				utils.Assert(t, fnParam.Mutable == nil, "Expected param not to be mutable")
+				utils.Assert(t, !fnParam.Mutable, "Expected param not to be mutable")
 			}
 		}
 
@@ -250,7 +250,7 @@ func TestFunctionDeclaration(t *testing.T) {
 			utils.Assert(t, fn.ReturnType == nil, "Expected no return type")
 		} else {
 			utils.Assert(t, fn.ReturnType != nil, "Expected a return type")
-			name, ok := fn.ReturnType.Type.(*ast.Identifier)
+			name, ok := fn.ReturnType.(*ast.Identifier)
 			utils.Assert(t, ok, "ReturnType is not a type name")
 			utils.AssertEq(t, name.Name, test.returnType)
 		}
@@ -338,7 +338,7 @@ func TestTypeDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		td := getStmt[*ast.TypeDeclaration](t, program)
 
-		utils.AssertEq(t, td.Name.Value, test.name)
+		utils.AssertEq(t, td.Name, test.name)
 		typeName, ok := td.Type.(*ast.Identifier)
 		utils.Assert(t, ok, "Type is not a type name")
 		utils.AssertEq(t, typeName.Name, test.typeName)
@@ -364,16 +364,16 @@ func TestStructDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		sd := getStmt[*ast.StructDeclaration](t, program)
 
-		utils.AssertEq(t, sd.Name.Value, test.name)
+		utils.AssertEq(t, sd.Name, test.name)
 
 		switch fields := test.fields.(type) {
 		case [][2]string:
 			utils.Assert(t, sd.Body != nil, "Expected a non-unit struct")
-			utils.AssertEq(t, len(sd.Body.Fields), len(fields), "Field lengths do not match")
+			utils.AssertEq(t, len(sd.Body), len(fields), "Field lengths do not match")
 			for i, field := range fields {
-				structField := sd.Body.Fields[i]
+				structField := sd.Body[i]
 				utils.Assert(t, structField.Name != nil, "Expected named fields")
-				utils.AssertEq(t, field[0], structField.Name.Value)
+				utils.AssertEq(t, field[0], *structField.Name)
 
 				if field[1] == "" {
 					utils.Assert(t, structField.Type == nil, "Expected no type annotation")
@@ -387,13 +387,13 @@ func TestStructDeclaration(t *testing.T) {
 
 		case []string:
 			utils.Assert(t, sd.Body != nil, "Expected a non-unit struct")
-			utils.AssertEq(t, len(sd.Body.Fields), len(fields), "Type lengths do not match")
+			utils.AssertEq(t, len(sd.Body), len(fields), "Type lengths do not match")
 
 			for i, ty := range fields {
-				structField := sd.Body.Fields[i]
+				structField := sd.Body[i]
 				var typeName string
 				if structField.Name != nil {
-					typeName = structField.Name.Value
+					typeName = *structField.Name
 					utils.Assert(t, structField.Type == nil, "Expected unnamed fields")
 				} else {
 					name, ok := structField.Type.(*ast.Identifier)
@@ -440,12 +440,12 @@ func TestInterfaceDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		intDecl := getStmt[*ast.InterfaceDeclaration](t, program)
 
-		utils.AssertEq(t, intDecl.Name.Value, test.name)
+		utils.AssertEq(t, intDecl.Name, test.name)
 		utils.AssertEq(t, len(intDecl.Members), len(test.fields), "Incorrect number of fields")
 
 		for i, field := range test.fields {
 			intField := intDecl.Members[i]
-			utils.AssertEq(t, intField.Name.Value, field.name)
+			utils.AssertEq(t, intField.Name, field.name)
 			utils.AssertEq(t, len(intField.Parameters), len(field.params), "Incorrect number of parameters")
 			for i, param := range field.params {
 				intParam := intField.Parameters[i]
@@ -458,7 +458,7 @@ func TestInterfaceDeclaration(t *testing.T) {
 				utils.Assert(t, intField.ReturnType == nil, "Expected no return type")
 			} else {
 				utils.Assert(t, intField.ReturnType != nil, "Expected return type")
-				name, ok := intField.ReturnType.Type.(*ast.Identifier)
+				name, ok := intField.ReturnType.(*ast.Identifier)
 				utils.Assert(t, ok, "Return type is not a type name")
 				utils.AssertEq(t, name.Name, field.returnType)
 			}
@@ -489,17 +489,17 @@ func TestImportStatement(t *testing.T) {
 			utils.Assert(t, stmt.Symbols == nil, "Expected no imported symbols")
 		} else {
 			utils.Assert(t, stmt.Symbols != nil, "Expected imported symbols")
-			utils.AssertEq(t, len(stmt.Symbols.Symbols), len(test.symbols))
+			utils.AssertEq(t, len(stmt.Symbols), len(test.symbols))
 			for i, symbol := range test.symbols {
-				imported := stmt.Symbols.Symbols[i]
-				utils.AssertEq(t, imported.Value, symbol)
+				imported := stmt.Symbols[i]
+				utils.AssertEq(t, imported.Name, symbol)
 			}
 		}
 
 		if test.all {
-			utils.Assert(t, stmt.All != nil, "Expected to import all symbols")
+			utils.Assert(t, stmt.All, "Expected to import all symbols")
 		} else {
-			utils.Assert(t, stmt.All == nil, "Expected not to import all symbols")
+			utils.Assert(t, !stmt.All, "Expected not to import all symbols")
 		}
 
 		utils.AssertEq(t, stmt.Module.ExtraValue, test.module)
@@ -508,7 +508,7 @@ func TestImportStatement(t *testing.T) {
 			utils.Assert(t, stmt.Alias == nil, "Expected not to import as an alias")
 		} else {
 			utils.Assert(t, stmt.Alias != nil, "Expected to import as an alias")
-			utils.AssertEq(t, stmt.Alias.Alias.Value, test.alias)
+			utils.AssertEq(t, *stmt.Alias, test.alias)
 		}
 	}
 }
@@ -538,14 +538,14 @@ func TestEnumDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		stmt := getStmt[*ast.EnumDeclaration](t, program)
 
-		utils.AssertEq(t, stmt.Name.Value, test.name)
+		utils.AssertEq(t, stmt.Name, test.name)
 
 		if test.dataType == "" {
 			utils.Assert(t, stmt.ValueType == nil, "Expected no type annotation")
 		} else {
 			utils.Assert(t, stmt.ValueType != nil, "Expected type annotation")
 
-			name, ok := stmt.ValueType.Type.(*ast.Identifier)
+			name, ok := stmt.ValueType.(*ast.Identifier)
 			utils.Assert(t, ok, "Type is not a type name")
 			utils.AssertEq(t, name.Name, test.dataType)
 		}
@@ -555,14 +555,14 @@ func TestEnumDeclaration(t *testing.T) {
 		for i, expected := range test.members {
 			enumMember := stmt.Members[i]
 
-			utils.AssertEq(t, enumMember.Name.Value, expected.name)
+			utils.AssertEq(t, enumMember.Name, expected.name)
 
 			if expected.value == nil {
 				utils.Assert(t, enumMember.Value == nil, "Expected no value")
 			} else {
 				utils.Assert(t, enumMember.Value != nil, "Expected a value")
 
-				testLiteral(t, enumMember.Value.Value, expected.value)
+				testLiteral(t, enumMember.Value, expected.value)
 			}
 
 		}
@@ -606,31 +606,31 @@ func TestUnionDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		stmt := getStmt[*ast.UnionDeclaration](t, program)
 
-		utils.AssertEq(t, stmt.Name.Value, test.name)
+		utils.AssertEq(t, stmt.Name, test.name)
 
 		utils.AssertEq(t, len(stmt.Members), len(test.members))
 
 		for i, expected := range test.members {
 			unionMember := stmt.Members[i]
 
-			utils.AssertEq(t, unionMember.Name.Value, expected.name)
+			utils.AssertEq(t, unionMember.Name, expected.name)
 			switch ty := expected.ty.(type) {
 			case string:
 				utils.Assert(t, unionMember.Type != nil)
 				utils.Assert(t, unionMember.Compound == nil)
 
-				name, ok := unionMember.Type.Type.(*ast.Identifier)
+				name, ok := unionMember.Type.(*ast.Identifier)
 				utils.Assert(t, ok, "Type is not a type name")
 				utils.AssertEq(t, name.Name, ty)
 
 			case [][2]string:
 				utils.Assert(t, unionMember.Type == nil)
 				utils.Assert(t, unionMember.Compound != nil)
-				utils.AssertEq(t, len(unionMember.Compound.Fields), len(ty), "Field lengths do not match")
+				utils.AssertEq(t, len(unionMember.Compound), len(ty), "Field lengths do not match")
 				for i, field := range ty {
-					structField := unionMember.Compound.Fields[i]
+					structField := unionMember.Compound[i]
 					utils.Assert(t, structField.Name != nil, "Expected named fields")
-					utils.AssertEq(t, field[0], structField.Name.Value)
+					utils.AssertEq(t, field[0], *structField.Name)
 
 					if field[1] == "" {
 						utils.Assert(t, structField.Type == nil, "Expected no type annotation")
@@ -645,13 +645,13 @@ func TestUnionDeclaration(t *testing.T) {
 			case []string:
 				utils.Assert(t, unionMember.Type == nil)
 				utils.Assert(t, unionMember.Compound != nil)
-				utils.AssertEq(t, len(unionMember.Compound.Fields), len(ty), "Type lengths do not match")
+				utils.AssertEq(t, len(unionMember.Compound), len(ty), "Type lengths do not match")
 
 				for i, ty := range ty {
-					structField := unionMember.Compound.Fields[i]
+					structField := unionMember.Compound[i]
 					var typeName string
 					if structField.Name != nil {
-						typeName = structField.Name.Value
+						typeName = *structField.Name
 						utils.Assert(t, structField.Type == nil, "Expected unnamed fields")
 					} else {
 						name, ok := structField.Type.(*ast.Identifier)
@@ -682,6 +682,6 @@ func TestTagDeclaration(t *testing.T) {
 		program := getProgram(t, test.src)
 		stmt := getStmt[*ast.TagDeclaration](t, program)
 
-		utils.AssertEq(t, stmt.Name.Value, test.name)
+		utils.AssertEq(t, stmt.Name, test.name)
 	}
 }

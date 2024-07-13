@@ -56,13 +56,13 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	value := t.typeCheckExpression(varDec.Value)
 	var expectedType types.Type = nil
 	if varDec.Type != nil {
-		expectedType = t.typeCheckType(varDec.Type.Type)
+		expectedType = t.typeCheckType(varDec.Type)
 	}
 
 	if expectedType != nil {
 		conversion := convert(value, expectedType, implicit)
 		if conversion == nil {
-			t.diagnostics.Report(diagnostics.NotAssignable(varDec.Value.Location(), expectedType, value.Type()))
+			t.diagnostics.Report(diagnostics.NotAssignable(varDec.Value.GetLocation(), expectedType, value.Type()))
 		} else {
 			value = conversion
 		}
@@ -76,7 +76,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	if constant && !value.IsConst() {
-		t.diagnostics.Report(diagnostics.NotConst(varDec.Value.Location()))
+		t.diagnostics.Report(diagnostics.NotConst(varDec.Value.GetLocation()))
 	}
 	var constVal values.ConstValue
 	if !mutable && value.IsConst() {
@@ -84,13 +84,13 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	variable := &symbols.Variable{
-		Name:       varDec.Identifier.Value,
+		Name:       varDec.Name,
 		IsMut:      mutable,
 		Type:       varType,
 		ConstValue: constVal,
 	}
 	if !t.symbols.Register(variable) {
-		t.diagnostics.Report(diagnostics.VariableDefined(varDec.Identifier.Location, variable.Name))
+		t.diagnostics.Report(diagnostics.VariableDefined(varDec.NameLocation, variable.Name))
 	}
 	return &ir.VariableDeclaration{
 		Name:  variable.Name,
@@ -101,11 +101,11 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclaration) ir.Statement {
 	var fnType *types.Function
 	if funcDec.MethodOf != nil {
-		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.typeCheckType(funcDec.MethodOf.Type), false)
+		fnType = t.symbols.LookupMethod(funcDec.Name, t.typeCheckType(funcDec.MethodOf.Type), false)
 	} else if funcDec.MemberOf != nil {
-		fnType = t.symbols.LookupMethod(funcDec.Name.Value, t.lookupType(funcDec.MemberOf.Name), true)
+		fnType = t.symbols.LookupMethod(funcDec.Name, t.lookupType(funcDec.MemberOf.Name, funcDec.MemberOf.Location), true)
 	} else {
-		fnType = t.symbols.Lookup(funcDec.Name.Value).GetType().(*types.Function)
+		fnType = t.symbols.Lookup(funcDec.Name).GetType().(*types.Function)
 	}
 
 	t.enterScope(symbols.FunctionContext{ReturnType: fnType.ReturnType})
@@ -114,23 +114,23 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 
 	for i, param := range funcDec.Parameters {
 		if param.Name == nil {
-			t.diagnostics.Report(diagnostics.UnnamedParameter(param.Type.Location()))
+			t.diagnostics.Report(diagnostics.UnnamedParameter(param.Type.GetLocation()))
 			continue
 		}
 		symbol := &symbols.Variable{
-			Name:       param.Name.Value,
-			IsMut:      param.Mutable != nil,
+			Name:       *param.Name,
+			IsMut:      param.Mutable,
 			Type:       fnType.Parameters[i],
 			ConstValue: nil,
 		}
 		t.symbols.Register(symbol)
-		params = append(params, param.Name.Value)
+		params = append(params, *param.Name)
 	}
 
 	if funcDec.MethodOf != nil {
 		symbol := &symbols.Variable{
 			Name:       "this",
-			IsMut:      funcDec.MethodOf.Mutable != nil,
+			IsMut:      funcDec.MethodOf.Mutable,
 			Type:       t.typeCheckType(funcDec.MethodOf.Type),
 			ConstValue: nil,
 		}
@@ -140,7 +140,7 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 	body := t.typeCheckBlock(funcDec.Body, false)
 
 	return &ir.FunctionDeclaration{
-		Name:       funcDec.Name.Value,
+		Name:       funcDec.Name,
 		Parameters: params,
 		Body:       body,
 	}
@@ -157,13 +157,13 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 		symbolTable = symbolTable.Parent
 	}
 	if expectedType == nil {
-		t.diagnostics.Report(diagnostics.NoReturnOutsideFunction(ret.Keyword.Location))
+		t.diagnostics.Report(diagnostics.NoReturnOutsideFunction(ret.Location))
 		expectedType = types.Invalid
 	}
 
 	if ret.Value == nil {
 		if expectedType != types.Void {
-			t.diagnostics.Report(diagnostics.ExpectedReturnValue(ret.Keyword.Location))
+			t.diagnostics.Report(diagnostics.ExpectedReturnValue(ret.Location))
 		}
 		return &ir.ReturnStatement{
 			Value: nil,
@@ -174,7 +174,7 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 	if conversion := convert(value, expectedType, implicit); conversion != nil {
 		value = conversion
 	} else {
-		t.diagnostics.Report(diagnostics.NotAssignable(ret.Value.Location(), expectedType, value.Type()))
+		t.diagnostics.Report(diagnostics.NotAssignable(ret.Value.GetLocation(), expectedType, value.Type()))
 	}
 
 	return &ir.ReturnStatement{
@@ -198,7 +198,7 @@ func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 		value = t.typeCheckExpression(b.Value)
 	}
 	if context == nil {
-		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Keyword.Location, "break"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(b.Location, "break"))
 	} else if value != nil {
 		context.ResultType = value.Type()
 	}
@@ -215,7 +215,7 @@ func (t *typeChecker) typeCheckYield(yield *ast.YieldStatement) ir.Statement {
 
 	value := t.typeCheckExpression(yield.Value)
 	if !ok {
-		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideBlock(yield.Keyword.Location, "yield"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideBlock(yield.Location, "yield"))
 	} else {
 		context.ResultType = value.Type()
 	}
@@ -235,7 +235,7 @@ func (t *typeChecker) typeCheckContinue(c *ast.ContinueStatement) ir.Statement {
 	}
 
 	if symbolTable == nil {
-		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Keyword.Location, "continue"))
+		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Location, "continue"))
 	}
 
 	return &ir.ContinueStatement{}

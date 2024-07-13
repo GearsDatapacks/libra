@@ -244,9 +244,8 @@ func (p *parser) register() {
 	p.registerKeyword("yield", p.parseYieldStatement, stmt)
 	p.registerKeyword("break", p.parseBreakStatement, stmt)
 	p.registerKeyword("continue", func() (ast.Statement, *diagnostics.Diagnostic) {
-		return &ast.ContinueStatement{
-			Keyword: p.consume(),
-		}, nil
+		p.consume()
+		return &ast.ContinueStatement{}, nil
 	}, stmt)
 
 	// Attributes

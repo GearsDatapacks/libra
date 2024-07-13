@@ -21,9 +21,7 @@ func TestIdentifierExpression(t *testing.T) {
 	ident := getStmt[*ast.Identifier](t, program)
 
 	utils.AssertEq(t, ident.Name, input)
-	utils.AssertEq(t, ident.Token.Kind, token.IDENTIFIER)
-	utils.AssertEq(t, ident.Token.Value, input)
-	utils.AssertEq(t, ident.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, ident.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestIntegerExpression(t *testing.T) {
@@ -64,9 +62,7 @@ func TestBooleanExpression(t *testing.T) {
 	boolean := getStmt[*ast.BooleanLiteral](t, program)
 
 	utils.AssertEq(t, boolean.Value, true)
-	utils.AssertEq(t, boolean.Token.Kind, token.IDENTIFIER)
-	utils.AssertEq(t, boolean.Token.Value, input)
-	utils.AssertEq(t, boolean.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, boolean.Location.Span, text.NewSpan(0, 0, 0, len(input)))
 }
 
 func TestListExpression(t *testing.T) {
@@ -155,14 +151,14 @@ func TestMemberExpression(t *testing.T) {
 		{"foo.bar", "$foo", "bar"},
 		{"1.to_string", 1, "to_string"},
 		{"a\n.b", "$a", "b"},
-		{".None", nil, "None"},
+		{".None", "$", "None"},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
 		member := getStmt[*ast.MemberExpression](t, program)
 		testLiteral(t, member.Left, tt.left)
-		utils.AssertEq(t, tt.member, member.Member.Value)
+		utils.AssertEq(t, tt.member, member.Member)
 	}
 }
 
@@ -199,7 +195,7 @@ func TestStructExpression(t *testing.T) {
 
 		for i, member := range structExpr.Members {
 			tMember := tt.members[i]
-			utils.AssertEq(t, tMember.name, member.Name.Value)
+			utils.AssertEq(t, tMember.name, *member.Name)
 			testLiteral(t, member.Value, tMember.value)
 		}
 	}
@@ -323,17 +319,17 @@ func TestPrefixExpressions(t *testing.T) {
 		operator string
 		operand  any
 	}{
-		{"-2", "-", 2},
-		{"!true", "!", true},
-		{"+foo", "+", "$foo"},
-		{"~123", "~", 123},
+		{"-2", "`-`", 2},
+		{"!true", "`!`", true},
+		{"+foo", "`+`", "$foo"},
+		{"~123", "`~`", 123},
 	}
 
 	for _, tt := range tests {
 		program := getProgram(t, tt.src)
 		expr := getStmt[*ast.PrefixExpression](t, program)
 
-		utils.AssertEq(t, expr.Operator.Value, tt.operator)
+		utils.AssertEq(t, expr.Operator.String(), tt.operator)
 		testLiteral(t, expr.Operand, tt.operand)
 	}
 }
@@ -344,9 +340,9 @@ func TestPostfixExpressions(t *testing.T) {
 		operand  any
 		operator string
 	}{
-		{"a?", "$a", "?"},
-		{"foo++", "$foo", "++"},
-		{"5!", 5, "!"},
+		{"a?", "$a", "`?`"},
+		{"foo++", "$foo", "`++`"},
+		{"5!", 5, "`!`"},
 	}
 
 	for _, tt := range tests {
@@ -354,7 +350,7 @@ func TestPostfixExpressions(t *testing.T) {
 		expr := getStmt[*ast.PostfixExpression](t, program)
 
 		testLiteral(t, expr.Operand, tt.operand)
-		utils.AssertEq(t, expr.Operator.Value, tt.operator)
+		utils.AssertEq(t, expr.Operator.String(), tt.operator)
 	}
 }
 
@@ -391,9 +387,9 @@ func TestPointerTypes(t *testing.T) {
 		expr := getStmt[*ast.PointerType](t, program)
 
 		if tt.mut {
-			utils.Assert(t, expr.Mutable != nil, "Expected a mutable pointer")
+			utils.Assert(t, expr.Mutable, "Expected a mutable pointer")
 		} else {
-			utils.Assert(t, expr.Mutable == nil, "Expected an immutable pointer")
+			utils.Assert(t, !expr.Mutable, "Expected an immutable pointer")
 		}
 		testLiteral(t, expr.Operand, tt.operand)
 	}
@@ -415,9 +411,9 @@ func TestRefExpressions(t *testing.T) {
 		expr := getStmt[*ast.RefExpression](t, program)
 
 		if tt.mut {
-			utils.Assert(t, expr.Mutable != nil, "Expected a mutable reference")
+			utils.Assert(t, expr.Mutable, "Expected a mutable reference")
 		} else {
-			utils.Assert(t, expr.Mutable == nil, "Expected an immutable reference")
+			utils.Assert(t, !expr.Mutable, "Expected an immutable reference")
 		}
 		testLiteral(t, expr.Operand, tt.operand)
 	}
@@ -550,7 +546,7 @@ func TestParserDiagnostics(t *testing.T) {
 		if len(diagnostics) != len(test.diagnostics) {
 			for _, diagnostic := range diagnostics {
 				diagnostic.Print()
-			} 
+			}
 		}
 
 		utils.AssertEq(t, len(diagnostics), len(test.diagnostics),
@@ -624,7 +620,7 @@ func getProgram(t *testing.T, input string) *ast.Program {
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
-	if len(p.Diagnostics) !=0 {
+	if len(p.Diagnostics) != 0 {
 		for _, diag := range p.Diagnostics {
 			diag.Print()
 		}
@@ -657,10 +653,13 @@ func testLiteral(t *testing.T, expr ast.Expression, expected any) {
 		utils.AssertEq(t, boolean.Value, val)
 
 	case string:
-		if val[0] == '$' {
+		if val[0] == '$' && len(val) > 1 {
 			ident, ok := expr.(*ast.Identifier)
 			utils.Assert(t, ok, fmt.Sprintf("Value was not an identifier (was %T)", expr))
 			utils.AssertEq(t, ident.Name, val[1:])
+		} else if val[0] == '$' {
+			_, ok := expr.(*ast.InferredExpression)
+			utils.Assert(t, ok, "Expected inferred expression")
 		} else {
 			str, ok := expr.(*ast.StringLiteral)
 			utils.Assert(t, ok, fmt.Sprintf("Value was not a string (was %T)", expr))

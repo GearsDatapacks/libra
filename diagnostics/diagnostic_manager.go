@@ -222,7 +222,7 @@ func BinaryOperatorUndefined(location text.Location, operator string, left, righ
 }
 
 func UnaryOperatorUndefined(location text.Location, operator string, operand tcType) *Diagnostic {
-	msg := fmt.Sprintf("Operator %q is not defined for operand of type %q", operator, operand.String())
+	msg := fmt.Sprintf("Operator %s is not defined for operand of type %q", operator, operand.String())
 	return makeError(msg, location)
 }
 

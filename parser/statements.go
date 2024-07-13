@@ -4,6 +4,7 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnostic) {
@@ -40,7 +41,7 @@ func (p *parser) parseTopLevelStatement() (ast.Statement, *diagnostics.Diagnosti
 
 			for _, attribute := range attributes {
 				if !ast.TryAddAttribute(stmt, attribute) {
-					p.Diagnostics.Report(diagnostics.CannotAttribute(stmt.Tokens()[0].Location, attribute.GetName()))
+					p.Diagnostics.Report(diagnostics.CannotAttribute(stmt.GetLocation(), attribute.GetName()))
 				}
 			}
 
@@ -73,77 +74,77 @@ func (p *parser) parseVariableDeclaration() (ast.Statement, *diagnostics.Diagnos
 		return nil, err
 	}
 
-	equals := p.expect(token.EQUALS)
+	p.expect(token.EQUALS)
 	value, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.VariableDeclaration{
-		Keyword:    keyword,
-		Identifier: identifier,
-		Type:       typeAnnotation,
-		Equals:     equals,
-		Value:      value,
+		Keyword:      keyword,
+		NameLocation: identifier.Location,
+		Name:         identifier.Value,
+		Type:         typeAnnotation,
+		Value:        value,
 	}, nil
 }
 
-func (p *parser) parserOptionalDefaultValue() (*ast.DefaultValue, *diagnostics.Diagnostic) {
+func (p *parser) parserOptionalDefaultValue() (ast.Expression, *diagnostics.Diagnostic) {
 	if p.next().Kind != token.EQUALS {
 		return nil, nil
 	}
 
-	equals := p.consume()
+	p.consume()
 	value, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
 
-	return &ast.DefaultValue{
-		Equals: equals,
-		Value:  value,
-	}, nil
+	return value, nil
 }
 
 func (p *parser) parseTypeOrIdent(declare bool) (*ast.TypeOrIdent, *diagnostics.Diagnostic) {
-	var name, colon *token.Token
+	var name *string
 	var ty ast.Expression
+	var location text.Location
 
 	initial, err := p.parseTypeExpression()
 	if err != nil {
 		return nil, err
 	}
 	if ident, ok := initial.(*ast.Identifier); ok {
-		name = &ident.Token
+		name = &ident.Name
+		location = ident.Location
 		if declare {
-			p.identifiers[ident.Token.Value] = ident.Token.Location
+			p.identifiers[ident.Name] = ident.Location
 		}
 
 		if p.next().Kind == token.COLON {
-			tok := p.consume()
-			colon = &tok
+			p.consume()
 			ty, err = p.parseTypeExpression()
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
+		location = initial.GetLocation()
 		ty = initial
 	}
 
 	return &ast.TypeOrIdent{
-		Name:  name,
-		Colon: colon,
-		Type:  ty,
+		Location: location,
+		Name:     name,
+		Type:     ty,
 	}, nil
 }
 
 func (p *parser) parseParameter() (*ast.Parameter, *diagnostics.Diagnostic) {
-	var mutable *token.Token
-	var value *ast.DefaultValue
-	if p.isKeyword("mut") {
-		tok := p.consume()
-		mutable = &tok
+	var value ast.Expression
+	var location text.Location
+	mutable := p.isKeyword("mut")
+
+	if mutable {
+		location = p.consume().Location
 	}
 
 	name, err := p.parseTypeOrIdent(true)
@@ -157,11 +158,16 @@ func (p *parser) parseParameter() (*ast.Parameter, *diagnostics.Diagnostic) {
 			return nil, err
 		}
 
-	} else if mutable != nil {
-		p.Diagnostics.Report(diagnostics.MutWithoutParamName(mutable.Location))
+	} else if mutable {
+		p.Diagnostics.Report(diagnostics.MutWithoutParamName(location))
+	}
+
+	if !mutable {
+		location = name.Location
 	}
 
 	return &ast.Parameter{
+		Location:    location,
 		Mutable:     mutable,
 		TypeOrIdent: *name,
 		Default:     value,
@@ -169,29 +175,26 @@ func (p *parser) parseParameter() (*ast.Parameter, *diagnostics.Diagnostic) {
 }
 
 func (p *parser) parseFunctionDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 	var methodOf *ast.MethodOf
 	var memberOf *ast.MemberOf
 
 	if p.next().Kind == token.LEFT_PAREN {
-		leftParen := p.consume()
-		var mutable *token.Token
-		if p.isKeyword("mut") {
-			tok := p.consume()
-			mutable = &tok
+		p.consume()
+		mutable := p.isKeyword("mut")
+		if mutable {
+			p.consume()
 		}
 		ty, err := p.parseTypeExpression()
 		if err != nil {
 			return nil, err
 		}
 
-		rightParen := p.expect(token.RIGHT_PAREN)
+		p.expect(token.RIGHT_PAREN)
 
 		methodOf = &ast.MethodOf{
-			LeftParen:  leftParen,
-			Mutable:    mutable,
-			Type:       ty,
-			RightParen: rightParen,
+			Mutable: mutable,
+			Type:    ty,
 		}
 	}
 
@@ -202,24 +205,24 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, *diagnostics.Diagnos
 			p.Diagnostics.Report(diagnostics.MemberAndMethodNotAllowed(name.Location))
 		}
 
-		dot := p.consume()
+		p.consume()
 		memberOf = &ast.MemberOf{
-			Name: name,
-			Dot:  dot,
+			Location: name.Location,
+			Name:     name.Value,
 		}
 		name = p.expect(token.IDENTIFIER)
 	} else if methodOf == nil {
 		p.identifiers[name.Value] = name.Location
 	}
 
-	leftParen := p.expect(token.LEFT_PAREN)
+	p.expect(token.LEFT_PAREN)
 	defer p.exitScope(p.enterScope())
-	params, rightParen := parseDerefExprList(p, token.RIGHT_PAREN, p.parseParameter)
+	params := parseDerefExprList(p, token.RIGHT_PAREN, p.parseParameter)
 
 	if len(params) > 0 {
 		lastParam := params[len(params)-1]
 		if lastParam.TypeOrIdent.Type == nil && lastParam.Default == nil {
-			p.Diagnostics.ReportMany(diagnostics.LastParameterMustHaveType(lastParam.TypeOrIdent.Name.Location, name.Location))
+			p.Diagnostics.ReportMany(diagnostics.LastParameterMustHaveType(lastParam.TypeOrIdent.Location, name.Location))
 		}
 	}
 
@@ -233,20 +236,19 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, *diagnostics.Diagnos
 	}
 
 	return &ast.FunctionDeclaration{
-		Keyword:    keyword,
-		MethodOf:   methodOf,
-		MemberOf:   memberOf,
-		Name:       name,
-		LeftParen:  leftParen,
-		Parameters: params,
-		RightParen: rightParen,
-		ReturnType: returnType,
-		Body:       body,
+		Location:     location,
+		NameLocation: name.Location,
+		MethodOf:     methodOf,
+		MemberOf:     memberOf,
+		Name:         name.Value,
+		Parameters:   params,
+		ReturnType:   returnType,
+		Body:         body,
 	}, nil
 }
 
 func (p *parser) parseReturnStatement() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 	var value ast.Expression
 	if !p.eof() && p.canContinue() {
 		var err *diagnostics.Diagnostic
@@ -256,26 +258,26 @@ func (p *parser) parseReturnStatement() (ast.Statement, *diagnostics.Diagnostic)
 		}
 	}
 	return &ast.ReturnStatement{
-		Keyword: keyword,
-		Value:   value,
+		Location: location,
+		Value:    value,
 	}, nil
 }
 
 func (p *parser) parseYieldStatement() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 	value, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.YieldStatement{
-		Keyword: keyword,
-		Value:   value,
+		Location: location,
+		Value:    value,
 	}, nil
 }
 
 func (p *parser) parseBreakStatement() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 	var value ast.Expression
 	if !p.eof() && p.canContinue() {
 		var err *diagnostics.Diagnostic
@@ -285,71 +287,73 @@ func (p *parser) parseBreakStatement() (ast.Statement, *diagnostics.Diagnostic) 
 		}
 	}
 	return &ast.BreakStatement{
-		Keyword: keyword,
-		Value:   value,
+		Location: location,
+		Value:    value,
 	}, nil
 }
 
 func (p *parser) parseTypeDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	name := p.delcareIdentifier()
-	equals := p.expect(token.EQUALS)
+	location := p.consume().Location
+	name := p.delcareIdentifier().Value
+	p.expect(token.EQUALS)
 	ty, err := p.parseTypeExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.TypeDeclaration{
-		Keyword: keyword,
-		Name:    name,
-		Equals:  equals,
-		Type:    ty,
+		Location:   location,
+		Name:       name,
+		Type:       ty,
+		Tag:        nil,
+		Attributes: ast.DeclarationAttributes{},
 	}, nil
 }
 
 func (p *parser) parseStructField() (*ast.StructField, *diagnostics.Diagnostic) {
-	var pub *token.Token
-	if p.isKeyword("pub") {
-		tok := p.consume()
-		pub = &tok
+	var location text.Location
+	pub := p.isKeyword("pub")
+	if pub {
+		location = p.consume().Location
 	}
 	typeOrIdent, err := p.parseTypeOrIdent(false)
 	if err != nil {
 		return nil, err
 	}
 
+	if !pub {
+		location = typeOrIdent.Location
+	}
+
 	return &ast.StructField{
+		Location:    location,
 		Pub:         pub,
 		TypeOrIdent: *typeOrIdent,
 	}, nil
 }
 
 func (p *parser) parseStructDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 	name := p.delcareIdentifier()
-	structDecl := &ast.StructDeclaration{
-		Keyword: keyword,
-		Name:    name,
-	}
+	var body []ast.StructField
 
 	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
-		leftBrace := p.consume()
-		fields, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructField)
-
-		structDecl.Body = &ast.StructBody{
-			LeftBrace:  leftBrace,
-			Fields:     fields,
-			RightBrace: rightBrace,
-		}
+		p.consume()
+		body = parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructField)
 	}
 
-	return structDecl, nil
+	return &ast.StructDeclaration{
+		Location:     location,
+		NameLocation: name.Location,
+		Name:         name.Value,
+		Body:         body,
+	}, nil
 }
 
 func (p *parser) parseInterfaceMember() (*ast.InterfaceMember, *diagnostics.Diagnostic) {
-	name := p.expect(token.IDENTIFIER)
-	leftParen := p.expect(token.LEFT_PAREN)
-	params, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
+	name := p.expect(token.IDENTIFIER).Value
+	p.expect(token.LEFT_PAREN)
+	params := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 	returnType, err := p.parseOptionalTypeAnnotation()
 	if err != nil {
 		return nil, err
@@ -357,79 +361,79 @@ func (p *parser) parseInterfaceMember() (*ast.InterfaceMember, *diagnostics.Diag
 
 	return &ast.InterfaceMember{
 		Name:       name,
-		LeftParen:  leftParen,
 		Parameters: params,
-		RightParen: rightParen,
 		ReturnType: returnType,
 	}, nil
 }
 
 func (p *parser) parseInterfaceDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	name := p.delcareIdentifier()
-	leftBrace := p.expect(token.LEFT_BRACE)
-	members, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseInterfaceMember)
+	location := p.consume().Location
+	name := p.delcareIdentifier().Value
+	p.expect(token.LEFT_BRACE)
+	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseInterfaceMember)
 
 	return &ast.InterfaceDeclaration{
-		Keyword:    keyword,
+		Location:   location,
 		Name:       name,
-		LeftBrace:  leftBrace,
 		Members:    members,
-		RightBrace: rightBrace,
+		Attributes: ast.DeclarationAttributes{},
 	}, nil
 }
 
 func (p *parser) parseImportStatement() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	var symbols *ast.ImportedSymbols
+	location := p.consume().Location
+	var symbols []ast.ImportedSymbol
 
 	if p.next().Kind == token.LEFT_BRACE {
-		symbols = &ast.ImportedSymbols{}
-
-		symbols.LeftBrace = p.consume()
-		symbols.Symbols, symbols.RightBrace = parseDelimExprList(
+		p.consume()
+		symbols = parseDelimExprList(
 			p, token.RIGHT_BRACE,
-			func() (token.Token, *diagnostics.Diagnostic) { return p.delcareIdentifier(), nil },
+			func() (ast.ImportedSymbol, *diagnostics.Diagnostic) {
+				ident := p.delcareIdentifier()
+				return ast.ImportedSymbol{
+					Location: ident.Location,
+					Name:     ident.Value,
+				}, nil
+			},
 		)
-		symbols.From = p.expectKeyword("from")
+		p.expectKeyword("from")
 	}
 
-	var all *ast.ImportAll
+	all := p.next().Kind == token.STAR
 
-	if p.next().Kind == token.STAR {
+	if all {
 		if symbols != nil {
 			p.Diagnostics.Report(diagnostics.OneImportModifierAllowed(p.next().Location))
 		}
-		all = &ast.ImportAll{}
 
-		all.Star = p.consume()
-		all.From = p.expectKeyword("from")
+		p.consume()
+		p.expectKeyword("from")
 	}
 
 	module := p.expect(token.STRING)
 
-	var alias *ast.ImportAlias
+	var alias *string
 
 	if p.canContinue() && p.isKeyword("as") {
-		if symbols != nil || all != nil {
+		if symbols != nil || all {
 			p.Diagnostics.Report(diagnostics.OneImportModifierAllowed(p.next().Location))
 		}
-		alias = &ast.ImportAlias{}
-		alias.As = p.consume()
-		alias.Alias = p.delcareIdentifier()
+		p.consume()
+		name := p.delcareIdentifier().Value
+		alias = &name
 	}
 
 	return &ast.ImportStatement{
-		Keyword: keyword,
-		Symbols: symbols,
-		All:     all,
-		Module:  module,
-		Alias:   alias,
+		Location: location,
+		Symbols:  symbols,
+		All:      all,
+		Module:   module,
+		Alias:    alias,
 	}, nil
 }
 
 func (p *parser) parseEnumMember() (*ast.EnumMember, *diagnostics.Diagnostic) {
-	name := p.expect(token.IDENTIFIER)
+	name := p.expect(token.IDENTIFIER).Value
 	value, err := p.parserOptionalDefaultValue()
 	if err != nil {
 		return nil, err
@@ -442,23 +446,21 @@ func (p *parser) parseEnumMember() (*ast.EnumMember, *diagnostics.Diagnostic) {
 }
 
 func (p *parser) parseEnumDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	name := p.delcareIdentifier()
+	location := p.consume().Location
+	name := p.delcareIdentifier().Value
 	valueType, err := p.parseOptionalTypeAnnotation()
 	if err != nil {
 		return nil, err
 	}
 
-	leftBrace := p.expect(token.LEFT_BRACE)
-	members, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseEnumMember)
+	p.expect(token.LEFT_BRACE)
+	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseEnumMember)
 
 	return &ast.EnumDeclaration{
-		Keyword:    keyword,
-		Name:       name,
-		ValueType:  valueType,
-		LeftBrace:  leftBrace,
-		Members:    members,
-		RightBrace: rightBrace,
+		Location:  location,
+		Name:      name,
+		ValueType: valueType,
+		Members:   members,
 	}, nil
 }
 
@@ -469,58 +471,48 @@ func (p *parser) parseUnionMember() (*ast.UnionMember, *diagnostics.Diagnostic) 
 		return nil, err
 	}
 
-	var compound *ast.StructBody
+	var compound []ast.StructField
 	if ty == nil && p.next().Kind == token.LEFT_BRACE {
-		leftBrace := p.consume()
-		fields, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructField)
-		compound = &ast.StructBody{
-			LeftBrace:  leftBrace,
-			Fields:     fields,
-			RightBrace: rightBrace,
-		}
+		p.consume()
+		compound = parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructField)
 	}
 
 	return &ast.UnionMember{
-		Name:     name,
-		Type:     ty,
-		Compound: compound,
+		NameLocation: name.Location,
+		Name:         name.Value,
+		Type:         ty,
+		Compound:     compound,
 	}, nil
 }
 
 func (p *parser) parseUnionDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	name := p.delcareIdentifier()
-	leftBrace := p.expect(token.LEFT_BRACE)
-	members, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseUnionMember)
+	location := p.consume().Location
+	name := p.delcareIdentifier().Value
+	p.expect(token.LEFT_BRACE)
+	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseUnionMember)
 
 	return &ast.UnionDeclaration{
-		Keyword:    keyword,
-		Name:       name,
-		LeftBrace:  leftBrace,
-		Members:    members,
-		RightBrace: rightBrace,
+		Location: location,
+		Name:     name,
+		Members:  members,
+		Untagged: false,
 	}, nil
 }
 
 func (p *parser) parseTagDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
-	keyword := p.consume()
-	name := p.delcareIdentifier()
-	var body *ast.TagBody
+	location := p.consume().Location
+	name := p.delcareIdentifier().Value
+	var body []ast.Expression
 
 	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
-		leftBrace := p.consume()
-		types, rightBrace := parseDelimExprList(p, token.RIGHT_BRACE, p.parseTypeExpression)
-		body = &ast.TagBody{
-			LeftBrace:  leftBrace,
-			Types:      types,
-			RightBrace: rightBrace,
-		}
+		p.consume()
+		body = parseDelimExprList(p, token.RIGHT_BRACE, p.parseTypeExpression)
 	}
 
 	return &ast.TagDeclaration{
-		Keyword: keyword,
-		Name:    name,
-		Body:    body,
+		Location: location,
+		Name:     name,
+		Body:     body,
 	}, nil
 }
 

@@ -9,7 +9,11 @@ import (
 func (p *parser) parseIdentifierAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
 	name := p.expect(token.IDENTIFIER)
-	return &ast.TextAttribute{Token: tok, Text: name.Value}, nil
+	return &ast.TextAttribute{
+		Location: tok.Location,
+		Name: tok.ExtraValue,
+		Text: name.Value,
+	}, nil
 }
 
 // func (p *parser) parseExpressionAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
@@ -27,12 +31,16 @@ func (p *parser) parseTypeAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	if err != nil {
 		return nil, err
 	}
-	return &ast.ExpressionAttribute{Token: tok, Expression: ty}, nil
+	return &ast.ExpressionAttribute{
+		Location: tok.Location,
+		Name: tok.ExtraValue,
+		Expression: ty,
+	}, nil
 }
 
 func (p *parser) parseFlagAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 	tok := p.consume()
-	return &ast.FlagAttribute{Token: tok}, nil
+	return &ast.FlagAttribute{Location: tok.Location, Name: tok.ExtraValue}, nil
 }
 
 func (p *parser) parseAttributeWithOptionalBody() (ast.Attribute, *diagnostics.Diagnostic) {
@@ -41,5 +49,9 @@ func (p *parser) parseAttributeWithOptionalBody() (ast.Attribute, *diagnostics.D
 	if p.next().Kind == token.ATTRIBUTE_BODY {
 		text = p.consume().Value
 	}
-	return &ast.TextAttribute{Token: tok, Text: text}, nil
+	return &ast.TextAttribute{
+		Location: tok.Location,
+		Name: tok.ExtraValue,
+		Text: text,
+	}, nil
 }

@@ -505,7 +505,7 @@ func TestTCDiagnostics(t *testing.T) {
 		{"let foo = 1; let [foo] = 2", []diagnostic{{`Variable "foo" is already defined`, diagnostics.Error}}},
 		{"let a = [b]", []diagnostic{{`Variable "b" is not defined`, diagnostics.Error}}},
 		{`mut result = 1 [+] "hi"`, []diagnostic{{`Operator "+" is not defined for types "untyped int" and "string"`, diagnostics.Error}}},
-		{"const neg_bool = [-]true", []diagnostic{{`Operator "-" is not defined for operand of type "bool"`, diagnostics.Error}}},
+		{"const neg_bool = [-]true", []diagnostic{{"Operator `-` is not defined for operand of type \"bool\"", diagnostics.Error}}},
 		{"let truthy: bool = [1] -> bool", []diagnostic{{`Cannot cast value of type "untyped int" to type "bool"`, diagnostics.Error}}},
 		{"let i = 0; [i] = 1", []diagnostic{{`Cannot modify value, it is immutable`, diagnostics.Error}}},
 		{"1 + [2]--", []diagnostic{{`Cannot decrement a non-variable value`, diagnostics.Error}}},

@@ -18,10 +18,7 @@ type IntegerLiteral struct {
 	Value int64
 }
 
-func (il *IntegerLiteral) Tokens() []token.Token {
-	return []token.Token{il.Token}
-}
-func (il *IntegerLiteral) Location() text.Location {
+func (il *IntegerLiteral) GetLocation() text.Location {
 	return il.Token.Location
 }
 func (il *IntegerLiteral) String(context printContext) {
@@ -44,10 +41,7 @@ type FloatLiteral struct {
 	Value float64
 }
 
-func (fl *FloatLiteral) Tokens() []token.Token {
-	return []token.Token{fl.Token}
-}
-func (fl *FloatLiteral) Location() text.Location {
+func (fl *FloatLiteral) GetLocation() text.Location {
 	return fl.Token.Location
 }
 func (fl *FloatLiteral) String(context printContext) {
@@ -66,15 +60,12 @@ func (fl *FloatLiteral) String(context printContext) {
 
 type BooleanLiteral struct {
 	expression
-	Token token.Token
-	Value bool
+	Location text.Location
+	Value    bool
 }
 
-func (bl *BooleanLiteral) Tokens() []token.Token {
-	return []token.Token{bl.Token}
-}
-func (bl *BooleanLiteral) Location() text.Location {
-	return bl.Token.Location
+func (bl *BooleanLiteral) GetLocation() text.Location {
+	return bl.Location
 }
 func (bl *BooleanLiteral) String(context printContext) {
 	context.write(
@@ -91,10 +82,7 @@ type StringLiteral struct {
 	Value string
 }
 
-func (sl *StringLiteral) Tokens() []token.Token {
-	return []token.Token{sl.Token}
-}
-func (sl *StringLiteral) Location() text.Location {
+func (sl *StringLiteral) GetLocation() text.Location {
 	return sl.Token.Location
 }
 func (sl *StringLiteral) String(context printContext) {
@@ -108,15 +96,12 @@ func (sl *StringLiteral) String(context printContext) {
 
 type Identifier struct {
 	expression
-	Token token.Token
-	Name  string
+	Location text.Location
+	Name     string
 }
 
-func (i *Identifier) Tokens() []token.Token {
-	return []token.Token{i.Token}
-}
-func (i *Identifier) Location() text.Location {
-	return i.Token.Location
+func (i *Identifier) GetLocation() text.Location {
+	return i.Location
 }
 func (i *Identifier) String(context printContext) {
 	context.write(
@@ -134,16 +119,8 @@ type BinaryExpression struct {
 	Right    Expression
 }
 
-func (b *BinaryExpression) Tokens() []token.Token {
-	tokens := []token.Token{}
-	tokens = append(tokens, b.Left.Tokens()...)
-	tokens = append(tokens, b.Operator)
-	tokens = append(tokens, b.Right.Tokens()...)
-	return tokens
-}
-
-func (b *BinaryExpression) Location() text.Location {
-	return b.Left.Location().To(b.Right.Location())
+func (b *BinaryExpression) GetLocation() text.Location {
+	return b.Left.GetLocation().To(b.Right.GetLocation())
 }
 
 func (b *BinaryExpression) String(context printContext) {
@@ -159,20 +136,12 @@ func (b *BinaryExpression) String(context printContext) {
 
 type ParenthesisedExpression struct {
 	expression
-	LeftParen  token.Token
+	Location   text.Location
 	Expression Expression
-	RightParen token.Token
 }
 
-func (p *ParenthesisedExpression) Tokens() []token.Token {
-	tokens := []token.Token{p.LeftParen}
-	tokens = append(tokens, p.Expression.Tokens()...)
-	tokens = append(tokens, p.RightParen)
-	return tokens
-}
-
-func (p *ParenthesisedExpression) Location() text.Location {
-	return p.LeftParen.Location.To(p.RightParen.Location)
+func (p *ParenthesisedExpression) GetLocation() text.Location {
+	return p.Location
 }
 
 func (p *ParenthesisedExpression) String(context printContext) {
@@ -185,16 +154,13 @@ func (p *ParenthesisedExpression) String(context printContext) {
 
 type PrefixExpression struct {
 	expression
-	Operator token.Token
+	Location text.Location
+	Operator token.Kind
 	Operand  Expression
 }
 
-func (p *PrefixExpression) Tokens() []token.Token {
-	return append([]token.Token{p.Operator}, p.Operand.Tokens()...)
-}
-
-func (p *PrefixExpression) Location() text.Location {
-	return p.Operator.Location.To(p.Operand.Location())
+func (p *PrefixExpression) GetLocation() text.Location {
+	return p.Location
 }
 
 func (p *PrefixExpression) String(context printContext) {
@@ -202,23 +168,20 @@ func (p *PrefixExpression) String(context printContext) {
 		"%sPREFIX_EXPR %s%s",
 		context.colour(colour.NodeName),
 		context.colour(colour.Symbol),
-		p.Operator.Value,
+		p.Operator.String(),
 	)
 	context.writeNode(p.Operand)
 }
 
 type PostfixExpression struct {
 	expression
-	Operand  Expression
-	Operator token.Token
+	OperatorLocation text.Location
+	Operand          Expression
+	Operator         token.Kind
 }
 
-func (p *PostfixExpression) Tokens() []token.Token {
-	return append(p.Operand.Tokens(), p.Operator)
-}
-
-func (p *PostfixExpression) Location() text.Location {
-	return p.Operand.Location().To(p.Operator.Location)
+func (p *PostfixExpression) GetLocation() text.Location {
+	return p.Operand.GetLocation()
 }
 
 func (p *PostfixExpression) String(context printContext) {
@@ -226,33 +189,25 @@ func (p *PostfixExpression) String(context printContext) {
 		"%sPOSTFIX_EXPR %s%s",
 		context.colour(colour.NodeName),
 		context.colour(colour.Symbol),
-		p.Operator.Value,
+		p.Operator,
 	)
 	context.writeNode(p.Operand)
 }
 
 type PointerType struct {
 	expression
-	Operator token.Token
-	Mutable  *token.Token
+	Location text.Location
+	Mutable  bool
 	Operand  Expression
 }
 
-func (p *PointerType) Tokens() []token.Token {
-	tokens := []token.Token{p.Operator}
-	if p.Mutable != nil {
-		tokens = append(tokens, *p.Mutable)
-	}
-	return append(tokens, p.Operand.Tokens()...)
-}
-
-func (p *PointerType) Location() text.Location {
-	return p.Operator.Location.To(p.Operand.Location())
+func (p *PointerType) GetLocation() text.Location {
+	return p.Location
 }
 
 func (p *PointerType) String(context printContext) {
 	context.write("%sPTR_TYPE", context.colour(colour.NodeName))
-	if p.Mutable != nil {
+	if p.Mutable {
 		context.write(" %smut", context.colour(colour.Attribute))
 	}
 
@@ -261,17 +216,12 @@ func (p *PointerType) String(context printContext) {
 
 type OptionType struct {
 	expression
-	Operator token.Token
+	Location text.Location
 	Operand  Expression
 }
 
-func (p *OptionType) Tokens() []token.Token {
-	tokens := []token.Token{p.Operator}
-	return append(tokens, p.Operand.Tokens()...)
-}
-
-func (p *OptionType) Location() text.Location {
-	return p.Operator.Location.To(p.Operand.Location())
+func (p *OptionType) GetLocation() text.Location {
+	return p.Location
 }
 
 func (p *OptionType) String(context printContext) {
@@ -281,16 +231,11 @@ func (p *OptionType) String(context printContext) {
 
 type DerefExpression struct {
 	expression
-	Operand  Expression
-	Operator token.Token
+	Operand Expression
 }
 
-func (d *DerefExpression) Tokens() []token.Token {
-	return append(d.Operand.Tokens(), d.Operator)
-}
-
-func (d *DerefExpression) Location() text.Location {
-	return d.Operand.Location().To(d.Operator.Location)
+func (d *DerefExpression) GetLocation() text.Location {
+	return d.Operand.GetLocation()
 }
 
 func (d *DerefExpression) String(context printContext) {
@@ -300,51 +245,32 @@ func (d *DerefExpression) String(context printContext) {
 
 type RefExpression struct {
 	expression
-	Operator token.Token
-	Mutable  *token.Token
+	Location text.Location
+	Mutable  bool
 	Operand  Expression
 }
 
-func (r *RefExpression) Tokens() []token.Token {
-	tokens := []token.Token{r.Operator}
-	if r.Mutable != nil {
-		tokens = append(tokens, *r.Mutable)
-	}
-	return append(tokens, r.Operand.Tokens()...)
-}
-
-func (r *RefExpression) Location() text.Location {
-	return r.Operator.Location.To(r.Operand.Location())
+func (r *RefExpression) GetLocation() text.Location {
+	return r.Location
 }
 
 func (r *RefExpression) String(context printContext) {
 
 	context.write("%sREF_EXPR", context.colour(colour.NodeName))
-	if r.Mutable != nil {
+	if r.Mutable {
 		context.write(" %smut", context.colour(colour.Attribute))
 	}
 	context.writeNode(r.Operand)
 }
 
-// We don't store the tokens of the commas because they probably won't be needed
 type ListLiteral struct {
 	expression
-	LeftSquare  token.Token
-	Values      []Expression
-	RightSquare token.Token
+	Location text.Location
+	Values   []Expression
 }
 
-func (l *ListLiteral) Tokens() []token.Token {
-	tokens := []token.Token{l.LeftSquare}
-	for _, value := range l.Values {
-		tokens = append(tokens, value.Tokens()...)
-	}
-	tokens = append(tokens, l.RightSquare)
-	return tokens
-}
-
-func (l *ListLiteral) Location() text.Location {
-	return l.LeftSquare.Location.To(l.RightSquare.Location)
+func (l *ListLiteral) GetLocation() text.Location {
+	return l.Location
 }
 
 func (l *ListLiteral) String(context printContext) {
@@ -356,16 +282,7 @@ func (l *ListLiteral) String(context printContext) {
 
 type KeyValue struct {
 	Key   Expression
-	Colon token.Token
 	Value Expression
-}
-
-func (kv *KeyValue) Tokens() []token.Token {
-	tokens := kv.Key.Tokens()
-	tokens = append(tokens, kv.Colon)
-	tokens = append(tokens, kv.Value.Tokens()...)
-
-	return tokens
 }
 
 func (kv KeyValue) String(context printContext) {
@@ -376,25 +293,12 @@ func (kv KeyValue) String(context printContext) {
 
 type MapLiteral struct {
 	expression
-	LeftBrace  token.Token
-	KeyValues  []KeyValue
-	RightBrace token.Token
+	Location  text.Location
+	KeyValues []KeyValue
 }
 
-func (m *MapLiteral) Location() text.Location {
-	return m.LeftBrace.Location.To(m.RightBrace.Location)
-}
-
-func (m *MapLiteral) Tokens() []token.Token {
-	tokens := []token.Token{m.LeftBrace}
-
-	for _, kv := range m.KeyValues {
-		tokens = append(tokens, kv.Tokens()...)
-	}
-
-	tokens = append(tokens, m.RightBrace)
-
-	return tokens
+func (m *MapLiteral) GetLocation() text.Location {
+	return m.Location
 }
 
 func (m *MapLiteral) String(context printContext) {
@@ -406,26 +310,12 @@ func (m *MapLiteral) String(context printContext) {
 
 type FunctionCall struct {
 	expression
-	Callee     Expression
-	LeftParen  token.Token
-	Arguments  []Expression
-	RightParen token.Token
+	Callee    Expression
+	Arguments []Expression
 }
 
-func (call *FunctionCall) Tokens() []token.Token {
-	tokens := append(call.Callee.Tokens(), call.LeftParen)
-
-	for _, arg := range call.Arguments {
-		tokens = append(tokens, arg.Tokens()...)
-	}
-
-	tokens = append(tokens, call.RightParen)
-
-	return tokens
-}
-
-func (call *FunctionCall) Location() text.Location {
-	return call.Callee.Location().To(call.RightParen.Location)
+func (call *FunctionCall) GetLocation() text.Location {
+	return call.Callee.GetLocation()
 }
 
 func (call *FunctionCall) String(context printContext) {
@@ -438,24 +328,12 @@ func (call *FunctionCall) String(context printContext) {
 
 type IndexExpression struct {
 	expression
-	Left        Expression
-	LeftSquare  token.Token
-	Index       Expression
-	RightSquare token.Token
+	Left  Expression
+	Index Expression
 }
 
-func (index *IndexExpression) Tokens() []token.Token {
-	tokens := append(index.Left.Tokens(), index.LeftSquare)
-
-	tokens = append(tokens, index.Index.Tokens()...)
-
-	tokens = append(tokens, index.RightSquare)
-
-	return tokens
-}
-
-func (index *IndexExpression) Location() text.Location {
-	return index.Left.Location().To(index.RightSquare.Location)
+func (index *IndexExpression) GetLocation() text.Location {
+	return index.Left.GetLocation()
 }
 
 func (index *IndexExpression) String(context printContext) {
@@ -473,13 +351,8 @@ type AssignmentExpression struct {
 	Value    Expression
 }
 
-func (a *AssignmentExpression) Tokens() []token.Token {
-	tokens := append(a.Assignee.Tokens(), a.Operator)
-	return append(tokens, a.Value.Tokens()...)
-}
-
-func (a *AssignmentExpression) Location() text.Location {
-	return a.Assignee.Location().To(a.Value.Location())
+func (a *AssignmentExpression) GetLocation() text.Location {
+	return a.Assignee.GetLocation().To(a.Value.GetLocation())
 }
 
 func (a *AssignmentExpression) String(context printContext) {
@@ -495,25 +368,12 @@ func (a *AssignmentExpression) String(context printContext) {
 
 type TupleExpression struct {
 	expression
-	LeftParen  token.Token
-	Values     []Expression
-	RightParen token.Token
+	Location text.Location
+	Values   []Expression
 }
 
-func (t *TupleExpression) Tokens() []token.Token {
-	tokens := []token.Token{t.LeftParen}
-
-	for _, value := range t.Values {
-		tokens = append(tokens, value.Tokens()...)
-	}
-
-	tokens = append(tokens, t.RightParen)
-
-	return tokens
-}
-
-func (t *TupleExpression) Location() text.Location {
-	return t.LeftParen.Location.To(t.RightParen.Location)
+func (t *TupleExpression) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TupleExpression) String(context printContext) {
@@ -525,20 +385,14 @@ func (t *TupleExpression) String(context printContext) {
 
 type MemberExpression struct {
 	expression
-	Left   Expression
-	Dot    token.Token
-	Member token.Token
+	Location       text.Location
+	MemberLocation text.Location
+	Left           Expression
+	Member         string
 }
 
-func (m *MemberExpression) Tokens() []token.Token {
-	if m.Left != nil {
-		return append(m.Left.Tokens(), m.Dot, m.Member)
-	}
-	return []token.Token{m.Dot, m.Member}
-}
-
-func (m *MemberExpression) Location() text.Location {
-	return m.Left.Location().To(m.Member.Location)
+func (m *MemberExpression) GetLocation() text.Location {
+	return m.Location
 }
 
 func (m *MemberExpression) String(context printContext) {
@@ -546,35 +400,22 @@ func (m *MemberExpression) String(context printContext) {
 		"%sMEMBER_EXPR %s%s",
 		context.colour(colour.NodeName),
 		context.colour(colour.Name),
-		m.Member.Value,
+		m.Member,
 	)
-	if m.Left != nil {
-		context.writeNode(m.Left)
-	}
+	context.writeNode(m.Left)
 }
 
 type StructMember struct {
-	Name  *token.Token
-	Colon *token.Token
-	Value Expression
-}
-
-func (sm *StructMember) Tokens() []token.Token {
-	tokens := []token.Token{}
-	if sm.Name != nil {
-		tokens = append(tokens, *sm.Name)
-	}
-	if sm.Colon != nil {
-		tokens = append(tokens, *sm.Colon)
-	}
-	return append(tokens, sm.Value.Tokens()...)
+	Location text.Location
+	Name     *string
+	Value    Expression
 }
 
 func (sm StructMember) String(context printContext) {
 	context.write("%sSTRUCT_MEMBER", context.colour(colour.NodeName))
 
 	if sm.Name != nil {
-		context.write(" %s%s", context.colour(colour.Name), sm.Name.Value)
+		context.write(" %s%s", context.colour(colour.Name), *sm.Name)
 	}
 
 	if sm.Value != nil {
@@ -584,15 +425,11 @@ func (sm StructMember) String(context printContext) {
 
 type InferredExpression struct {
 	expression
-	Token token.Token
+	Location text.Location
 }
 
-func (i *InferredExpression) Tokens() []token.Token {
-	return []token.Token{i.Token}
-}
-
-func (i *InferredExpression) Location() text.Location {
-	return i.Token.Location
+func (i *InferredExpression) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *InferredExpression) String(context printContext) {
@@ -601,24 +438,12 @@ func (i *InferredExpression) String(context printContext) {
 
 type StructExpression struct {
 	expression
-	Struct     Expression
-	LeftBrace  token.Token
-	Members    []StructMember
-	RightBrace token.Token
+	Struct  Expression
+	Members []StructMember
 }
 
-func (s *StructExpression) Tokens() []token.Token {
-	tokens := append(s.Struct.Tokens(), s.LeftBrace)
-
-	for _, member := range s.Members {
-		tokens = append(tokens, member.Tokens()...)
-	}
-
-	return append(tokens, s.RightBrace)
-}
-
-func (s *StructExpression) Location() text.Location {
-	return s.Struct.Location().To(s.RightBrace.Location)
+func (s *StructExpression) GetLocation() text.Location {
+	return s.Struct.GetLocation()
 }
 
 func (s *StructExpression) String(context printContext) {
@@ -631,21 +456,13 @@ func (s *StructExpression) String(context printContext) {
 
 type CastExpression struct {
 	expression
-	Left  Expression
-	Arrow token.Token
-	Type  Expression
+	Location text.Location
+	Left     Expression
+	Type     Expression
 }
 
-func (ce *CastExpression) Tokens() []token.Token {
-	tokens := ce.Left.Tokens()
-	tokens = append(tokens, ce.Arrow)
-	tokens = append(tokens, ce.Type.Tokens()...)
-
-	return tokens
-}
-
-func (ce *CastExpression) Location() text.Location {
-	return ce.Left.Location().To(ce.Type.Location())
+func (ce *CastExpression) GetLocation() text.Location {
+	return ce.Location
 }
 
 func (ce *CastExpression) String(context printContext) {
@@ -656,21 +473,13 @@ func (ce *CastExpression) String(context printContext) {
 
 type TypeCheckExpression struct {
 	expression
+	Location text.Location
 	Left     Expression
-	Operator token.Token
 	Type     Expression
 }
 
-func (tc *TypeCheckExpression) Tokens() []token.Token {
-	tokens := tc.Left.Tokens()
-	tokens = append(tokens, tc.Operator)
-	tokens = append(tokens, tc.Type.Tokens()...)
-
-	return tokens
-}
-
-func (ce *TypeCheckExpression) Location() text.Location {
-	return ce.Left.Location().To(ce.Type.Location())
+func (ce *TypeCheckExpression) GetLocation() text.Location {
+	return ce.Location
 }
 
 func (tc *TypeCheckExpression) String(context printContext) {
@@ -681,21 +490,13 @@ func (tc *TypeCheckExpression) String(context printContext) {
 
 type RangeExpression struct {
 	expression
+	Location text.Location
 	Start    Expression
-	Operator token.Token
 	End      Expression
 }
 
-func (r *RangeExpression) Location() text.Location {
-	return r.Start.Location().To(r.End.Location())
-}
-
-func (r *RangeExpression) Tokens() []token.Token {
-	tokens := r.Start.Tokens()
-	tokens = append(tokens, r.Operator)
-	tokens = append(tokens, r.End.Tokens()...)
-
-	return tokens
+func (r *RangeExpression) GetLocation() text.Location {
+	return r.Location
 }
 
 func (r *RangeExpression) String(context printContext) {
@@ -706,33 +507,14 @@ func (r *RangeExpression) String(context printContext) {
 
 type FunctionExpression struct {
 	expression
-	Keyword    token.Token
-	LeftParen  token.Token
+	Location   text.Location
 	Parameters []Parameter
-	RightParen token.Token
-	ReturnType *TypeAnnotation
+	ReturnType Expression
 	Body       *Block
 }
 
-func (f *FunctionExpression) Location() text.Location {
-	return f.Keyword.Location
-}
-
-func (f *FunctionExpression) Tokens() []token.Token {
-	tokens := []token.Token{f.Keyword, f.LeftParen}
-	for _, param := range f.Parameters {
-		tokens = append(tokens, param.Tokens()...)
-	}
-
-	tokens = append(tokens, f.RightParen)
-	if f.ReturnType != nil {
-		tokens = append(tokens, f.ReturnType.Tokens()...)
-	}
-	if f.Body != nil {
-		tokens = append(tokens, f.Body.Tokens()...)
-	}
-
-	return tokens
+func (f *FunctionExpression) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *FunctionExpression) String(context printContext) {
@@ -757,20 +539,8 @@ func (f *FunctionExpression) String(context printContext) {
 
 type Block struct {
 	expression
-	LeftBrace  token.Token
+	Location   text.Location
 	Statements []Statement
-	RightBrace token.Token
-}
-
-func (b *Block) Tokens() []token.Token {
-	tokens := []token.Token{b.LeftBrace}
-
-	for _, stmt := range b.Statements {
-		tokens = append(tokens, stmt.Tokens()...)
-	}
-
-	tokens = append(tokens, b.RightBrace)
-	return tokens
 }
 
 func (b *Block) String(context printContext) {
@@ -780,29 +550,16 @@ func (b *Block) String(context printContext) {
 	}
 }
 
-func (b *Block) Location() text.Location {
-	return b.LeftBrace.Location
+func (b *Block) GetLocation() text.Location {
+	return b.Location
 }
 
 type IfExpression struct {
 	expression
-	Keyword    token.Token
+	Location   text.Location
 	Condition  Expression
 	Body       *Block
-	ElseBranch *ElseBranch
-}
-
-func (i *IfExpression) Tokens() []token.Token {
-	tokens := []token.Token{i.Keyword}
-	tokens = append(tokens, i.Condition.Tokens()...)
-	tokens = append(tokens, i.Body.Tokens()...)
-
-	if i.ElseBranch != nil {
-		tokens = append(tokens, i.ElseBranch.ElseKeyword)
-		tokens = append(tokens, i.ElseBranch.Statement.Tokens()...)
-	}
-
-	return tokens
+	ElseBranch Statement
 }
 
 func (i *IfExpression) String(context printContext) {
@@ -813,31 +570,19 @@ func (i *IfExpression) String(context printContext) {
 	if i.ElseBranch != nil {
 		context = context.withNest()
 		context.write("%sELSE_BRANCH", context.colour(colour.NodeName))
-		context.writeNode(i.ElseBranch.Statement)
+		context.writeNode(i.ElseBranch)
 	}
 }
 
-func (i *IfExpression) Location() text.Location {
-	return i.Keyword.Location
-}
-
-type ElseBranch struct {
-	ElseKeyword token.Token
-	Statement   Statement
+func (i *IfExpression) GetLocation() text.Location {
+	return i.Location
 }
 
 type WhileLoop struct {
 	expression
-	Keyword   token.Token
+	Location  text.Location
 	Condition Expression
 	Body      *Block
-}
-
-func (wl *WhileLoop) Tokens() []token.Token {
-	tokens := []token.Token{wl.Keyword}
-	tokens = append(tokens, wl.Condition.Tokens()...)
-	tokens = append(tokens, wl.Body.Tokens()...)
-	return tokens
 }
 
 func (wl *WhileLoop) String(context printContext) {
@@ -846,24 +591,16 @@ func (wl *WhileLoop) String(context printContext) {
 	context.writeNode(wl.Body)
 }
 
-func (w *WhileLoop) Location() text.Location {
-	return w.Keyword.Location
+func (w *WhileLoop) GetLocation() text.Location {
+	return w.Location
 }
 
 type ForLoop struct {
 	expression
-	ForKeyword token.Token
-	Variable   token.Token
-	InKeyword  token.Token
-	Iterator   Expression
-	Body       *Block
-}
-
-func (fl *ForLoop) Tokens() []token.Token {
-	tokens := []token.Token{fl.ForKeyword, fl.Variable, fl.InKeyword}
-	tokens = append(tokens, fl.Iterator.Tokens()...)
-	tokens = append(tokens, fl.Body.Tokens()...)
-	return tokens
+	LLocation text.Location
+	Variable  string
+	Iterator  Expression
+	Body      *Block
 }
 
 func (fl *ForLoop) String(context printContext) {
@@ -871,12 +608,12 @@ func (fl *ForLoop) String(context printContext) {
 		"%sFOR_LOOP %s%s",
 		context.colour(colour.NodeName),
 		context.colour(colour.Name),
-		fl.Variable.Value,
+		fl.Variable,
 	)
 	context.writeNode(fl.Iterator)
 	context.writeNode(fl.Body)
 }
 
-func (f *ForLoop) Location() text.Location {
-	return f.ForKeyword.Location
+func (f *ForLoop) GetLocation() text.Location {
+	return f.LLocation
 }

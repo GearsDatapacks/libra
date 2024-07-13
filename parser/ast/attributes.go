@@ -1,48 +1,38 @@
 package ast
 
-import "github.com/gearsdatapacks/libra/lexer/token"
+import "github.com/gearsdatapacks/libra/text"
 
 type Attribute interface {
-	GetToken() token.Token
 	GetName() string
 }
 
 type FlagAttribute struct {
-	Token token.Token
-}
-
-func (f *FlagAttribute) GetToken() token.Token {
-	return f.Token
+	Location text.Location
+	Name     string
 }
 
 func (f *FlagAttribute) GetName() string {
-	return f.Token.ExtraValue
+	return f.Name
 }
 
 // TODO: impl blocks
 
 type TextAttribute struct {
-	Token token.Token
-	Text  string
-}
-
-func (t *TextAttribute) GetToken() token.Token {
-	return t.Token
+	Location text.Location
+	Name     string
+	Text     string
 }
 
 func (t *TextAttribute) GetName() string {
-	return t.Token.ExtraValue
+	return t.Name
 }
 
 type ExpressionAttribute struct {
-	Token      token.Token
+	Location   text.Location
+	Name       string
 	Expression Expression
 }
 
-func (e *ExpressionAttribute) GetToken() token.Token {
-	return e.Token
-}
-
 func (e *ExpressionAttribute) GetName() string {
-	return e.Token.ExtraValue
+	return e.Name
 }

@@ -2,8 +2,8 @@ package typechecker
 
 import (
 	"github.com/gearsdatapacks/libra/diagnostics"
-	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
@@ -47,7 +47,7 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 		ReturnType: types.Void,
 	}
 	symbol := &symbols.Variable{
-		Name:       fn.Name.Value,
+		Name:       fn.Name,
 		IsMut:      false,
 		Type:       fnType,
 		ConstValue: nil,
@@ -55,7 +55,7 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 
 	if fn.MethodOf == nil && fn.MemberOf == nil {
 		if !t.symbols.Register(symbol, fn.Exported) {
-			t.diagnostics.Report(diagnostics.VariableDefined(fn.Name.Location, fn.Name.Value))
+			t.diagnostics.Report(diagnostics.VariableDefined(fn.NameLocation, fn.Name))
 		}
 	}
 }
@@ -63,12 +63,12 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	var ty types.Type
 	if typeDec.Explicit {
-		ty = &types.Explicit{Name: typeDec.Name.Value, Type: types.Void}
+		ty = &types.Explicit{Name: typeDec.Name, Type: types.Void}
 	} else {
 		ty = &types.Alias{Type: types.Void}
 	}
 	symbol := &symbols.Type{
-		Name: typeDec.Name.Value,
+		Name: typeDec.Name,
 		Type: ty,
 	}
 	t.symbols.Register(symbol, typeDec.Exported)
@@ -78,10 +78,10 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 	var ty types.Type
 
 	if decl.Body == nil {
-		ty = &types.UnitStruct{Name: decl.Name.Value}
+		ty = &types.UnitStruct{Name: decl.Name}
 	} else {
 		isTuple := true
-		for _, field := range decl.Body.Fields {
+		for _, field := range decl.Body {
 			if field.Name != nil && field.Type != nil {
 				isTuple = false
 				break
@@ -90,12 +90,12 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 
 		if isTuple {
 			ty = &types.TupleStruct{
-				Name:  decl.Name.Value,
+				Name:  decl.Name,
 				Types: []types.Type{},
 			}
 		} else {
 			ty = &types.Struct{
-				Name:     decl.Name.Value,
+				Name:     decl.Name,
 				ModuleId: t.module.Id,
 				Fields:   map[string]types.StructField{},
 			}
@@ -103,7 +103,7 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 	}
 
 	symbol := &symbols.Type{
-		Name: decl.Name.Value,
+		Name: decl.Name,
 		Type: ty,
 	}
 
@@ -112,9 +112,9 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 
 func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
 	symbol := &symbols.Type{
-		Name: decl.Name.Value,
+		Name: decl.Name,
 		Type: &types.Interface{
-			Name:    decl.Name.Value,
+			Name:    decl.Name,
 			Methods: map[string]*types.Function{},
 		},
 	}
@@ -124,9 +124,9 @@ func (t *typeChecker) registerInterfaceDeclaration(decl *ast.InterfaceDeclaratio
 
 func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
 	symbol := &symbols.Type{
-		Name: decl.Name.Value,
+		Name: decl.Name,
 		Type: &types.Union{
-			Name:    decl.Name.Value,
+			Name:    decl.Name,
 			Members: map[string]types.Type{},
 		},
 	}
@@ -136,9 +136,9 @@ func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
 
 func (t *typeChecker) registerTagDeclaration(decl *ast.TagDeclaration) {
 	symbol := &symbols.Type{
-		Name: decl.Name.Value,
+		Name: decl.Name,
 		Type: &types.Tag{
-			Name:  decl.Name.Value,
+			Name:  decl.Name,
 			Types: []types.Type{},
 		},
 	}
@@ -147,7 +147,7 @@ func (t *typeChecker) registerTagDeclaration(decl *ast.TagDeclaration) {
 }
 
 func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
-	symbol := t.symbols.Lookup(typeDec.Name.Value).(*symbols.Type)
+	symbol := t.symbols.Lookup(typeDec.Name).(*symbols.Type)
 	if typeDec.Explicit {
 		symbol.Type.(*types.Explicit).Type = t.typeCheckType(typeDec.Type)
 	} else {
@@ -162,7 +162,7 @@ func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	var fnType *types.Function
 	if fn.MethodOf == nil && fn.MemberOf == nil {
-		fnType = t.symbols.Lookup(fn.Name.Value).GetType().(*types.Function)
+		fnType = t.symbols.Lookup(fn.Name).GetType().(*types.Function)
 	} else {
 		fnType = &types.Function{
 			Parameters: []types.Type{},
@@ -187,19 +187,19 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	}
 
 	if fn.ReturnType != nil {
-		fnType.ReturnType = t.typeCheckType(fn.ReturnType.Type)
+		fnType.ReturnType = t.typeCheckType(fn.ReturnType)
 	}
 
 	if fn.MethodOf != nil {
 		methodOf := t.typeCheckType(fn.MethodOf.Type)
-		t.symbols.RegisterMethod(fn.Name.Value, &symbols.Method{
+		t.symbols.RegisterMethod(fn.Name, &symbols.Method{
 			MethodOf: methodOf,
 			Static:   false,
 			Function: fnType,
 		}, fn.Exported)
 	} else if fn.MemberOf != nil {
-		methodOf := t.lookupType(fn.MemberOf.Name)
-		t.symbols.RegisterMethod(fn.Name.Value, &symbols.Method{
+		methodOf := t.lookupType(fn.MemberOf.Name, fn.MemberOf.Location)
+		t.symbols.RegisterMethod(fn.Name, &symbols.Method{
 			MethodOf: methodOf,
 			Static:   true,
 			Function: fnType,
@@ -208,22 +208,26 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 }
 
 func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
-	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type
+	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type
 
-	t.typeCheckStructBody(decl.Name, decl.Body, ty)
+	t.typeCheckStructBody(decl.NameLocation, decl.Body, ty)
 	if decl.Tag != nil {
 		t.addToTag(decl.Tag, ty)
 	}
 }
 
-func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody, ty types.Type) {
+func (t *typeChecker) typeCheckStructBody(
+	nameLocation text.Location,
+	body []ast.StructField,
+	ty types.Type,
+) {
 	if structTy, ok := ty.(*types.Struct); ok {
 		fields := []types.StructField{}
-		for _, field := range body.Fields {
+		for _, field := range body {
 			if field.Name == nil {
-				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.Location()))
+				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.GetLocation()))
 			}
-			structField := types.StructField{Type: nil, Exported: field.Pub != nil}
+			structField := types.StructField{Type: nil, Exported: field.Pub}
 			if field.Type == nil {
 				fields = append(fields, structField)
 			} else {
@@ -241,23 +245,23 @@ func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody
 		}
 
 		if len(fields) > 0 && fields[len(fields)-1].Type == nil {
-			lastField := body.Fields[len(fields)-1]
-			t.diagnostics.ReportMany(diagnostics.LastStructFieldMustHaveType(lastField.Name.Location, name.Location))
+			lastField := body[len(fields)-1]
+			t.diagnostics.ReportMany(diagnostics.LastStructFieldMustHaveType(lastField.Location, nameLocation))
 		}
 
-		for i, field := range body.Fields {
+		for i, field := range body {
 			if fields[i].Type == nil {
 				fields[i].Type = types.Invalid
 			}
-			structTy.Fields[field.Name.Value] = fields[i]
+			structTy.Fields[*field.Name] = fields[i]
 		}
 	} else if structTy, ok := ty.(*types.TupleStruct); ok {
-		for _, field := range body.Fields {
-			if field.Pub != nil {
-				t.diagnostics.Report(diagnostics.PubUnnamedStructField(field.Pub.Location))
+		for _, field := range body {
+			if field.Pub {
+				t.diagnostics.Report(diagnostics.PubUnnamedStructField(field.Location))
 			}
 			if field.Type == nil {
-				structTy.Types = append(structTy.Types, t.lookupType(*field.Name))
+				structTy.Types = append(structTy.Types, t.lookupType(*field.Name, field.TypeOrIdent.Location))
 			} else {
 				structTy.Types = append(structTy.Types, t.typeCheckType(field.Type))
 			}
@@ -266,7 +270,7 @@ func (t *typeChecker) typeCheckStructBody(name token.Token, body *ast.StructBody
 }
 
 func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
-	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Interface)
+	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Interface)
 
 	for _, member := range decl.Members {
 		params := []types.Type{}
@@ -278,29 +282,29 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 			ReturnType: types.Void,
 		}
 		if member.ReturnType != nil {
-			fnType.ReturnType = t.typeCheckType(member.ReturnType.Type)
+			fnType.ReturnType = t.typeCheckType(member.ReturnType)
 		}
-		ty.Methods[member.Name.Value] = fnType
+		ty.Methods[member.Name] = fnType
 	}
 }
 
 func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
-	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Union)
+	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Union)
 
 	for _, member := range decl.Members {
 		var memberType types.Type
 		if member.Type != nil {
-			memberType = t.typeCheckType(member.Type.Type)
+			memberType = t.typeCheckType(member.Type)
 		} else if member.Compound != nil {
 			structTy := &types.Struct{
-				Name:     member.Name.Value,
+				Name:     member.Name,
 				ModuleId: t.module.Id,
 				Fields:   map[string]types.StructField{},
 			}
-			t.typeCheckStructBody(member.Name, member.Compound, structTy)
+			t.typeCheckStructBody(member.NameLocation, member.Compound, structTy)
 			memberType = structTy
 		} else {
-			memberType = t.lookupType(member.Name)
+			memberType = t.lookupType(member.Name, member.NameLocation)
 		}
 
 		if memberType == nil {
@@ -308,11 +312,11 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
 		}
 
 		if member.Type == nil && member.Compound == nil {
-			ty.Members[member.Name.Value] = memberType
+			ty.Members[member.Name] = memberType
 		} else {
-			ty.Members[member.Name.Value] = &types.UnionVariant{
+			ty.Members[member.Name] = &types.UnionVariant{
 				Union: ty,
-				Name:  member.Name.Value,
+				Name:  member.Name,
 				Type:  memberType,
 			}
 		}
@@ -324,10 +328,10 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
 }
 
 func (t *typeChecker) typeCheckTagDeclaration(decl *ast.TagDeclaration) {
-	ty := t.symbols.Lookup(decl.Name.Value).(*symbols.Type).Type.(*types.Tag)
+	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Tag)
 
 	if decl.Body != nil {
-		for _, member := range decl.Body.Types {
+		for _, member := range decl.Body {
 			ty.Types = append(ty.Types, t.typeCheckType(member))
 		}
 	}
@@ -338,10 +342,10 @@ func (t *typeChecker) addToTag(tag ast.Expression, ty types.Type) {
 	if typeChecked == types.Invalid {
 		return
 	}
-	
+
 	tagType, ok := typeChecked.(*types.Tag)
 	if !ok {
-		t.diagnostics.Report(diagnostics.NotATag(tag.Location(), typeChecked))
+		t.diagnostics.Report(diagnostics.NotATag(tag.GetLocation(), typeChecked))
 		return
 	}
 	tagType.Types = append(tagType.Types, ty)
@@ -355,15 +359,15 @@ func (mod moduleWrapper) LookupExport(name string) interface{ Value() values.Con
 
 func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
 	module := t.subModules[importStmt.Module.Value]
-	if importStmt.All != nil {
+	if importStmt.All {
 		t.symbols.Extend(module.symbols)
 	} else if importStmt.Symbols != nil {
-		for _, symbol := range importStmt.Symbols.Symbols {
-			export := module.symbols.LookupExport(symbol.Value)
+		for _, symbol := range importStmt.Symbols {
+			export := module.symbols.LookupExport(symbol.Name)
 			if export != nil {
 				t.symbols.Register(export)
 			} else {
-				t.diagnostics.Report(diagnostics.NoExport(symbol.Location, module.module.Name, symbol.Value))
+				t.diagnostics.Report(diagnostics.NoExport(symbol.Location, module.module.Name, symbol.Name))
 			}
 		}
 	} else {
@@ -373,7 +377,7 @@ func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
 		}
 		name := module.module.Name
 		if importStmt.Alias != nil {
-			name = importStmt.Alias.Alias.Value
+			name = *importStmt.Alias
 		}
 		symbol := &symbols.Variable{
 			Name:  name,

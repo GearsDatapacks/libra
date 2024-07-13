@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
 	"github.com/gearsdatapacks/libra/parser/ast"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 // Precedence
@@ -103,7 +104,8 @@ func (p *parser) parsePrefixExpression() (ast.Expression, *diagnostics.Diagnosti
 	}
 
 	return &ast.PrefixExpression{
-		Operator: operator,
+		Location: operator.Location,
+		Operator: operator.Kind,
 		Operand:  operand,
 	}, nil
 }
@@ -112,26 +114,25 @@ func (p *parser) parsePostfixExpression(operand ast.Expression) (ast.Expression,
 	operator := p.consume()
 
 	return &ast.PostfixExpression{
-		Operand:  operand,
-		Operator: operator,
+		OperatorLocation: operator.Location,
+		Operand:          operand,
+		Operator:         operator.Kind,
 	}, nil
 }
 
 func (p *parser) parseDerefExpression(operand ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	operator := p.consume()
+	p.consume()
 
 	return &ast.DerefExpression{
-		Operand:  operand,
-		Operator: operator,
+		Operand: operand,
 	}, nil
 }
 
 func (p *parser) parsePtrOrRef() (ast.Expression, *diagnostics.Diagnostic) {
 	operator := p.consume()
-	var mut *token.Token
-	if p.isKeyword("mut") {
-		tok := p.consume()
-		mut = &tok
+	mut := p.isKeyword("mut")
+	if mut {
+		p.consume()
 	}
 	operand, err := p.parseSubExpression(Prefix)
 	if err != nil {
@@ -140,43 +141,41 @@ func (p *parser) parsePtrOrRef() (ast.Expression, *diagnostics.Diagnostic) {
 
 	if operator.Kind == token.STAR {
 		return &ast.PointerType{
-			Operator: operator,
+			Location: operator.Location,
 			Mutable:  mut,
 			Operand:  operand,
 		}, nil
 	}
 
 	return &ast.RefExpression{
-		Operator: operator,
+		Location: operator.Location,
 		Mutable:  mut,
 		Operand:  operand,
 	}, nil
 }
 
 func (p *parser) parseOptionType() (ast.Expression, *diagnostics.Diagnostic) {
-	operator := p.consume()
+	location := p.consume().Location
 	operand, nil := p.parseSubExpression(Prefix)
 
 	return &ast.OptionType{
-		Operator: operator,
+		Location: location,
 		Operand:  operand,
 	}, nil
 }
 
 func (p *parser) parseFunctionCall(callee ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	leftParen := p.consume()
-	arguments, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
+	p.consume()
+	arguments := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 
 	return &ast.FunctionCall{
-		Callee:     callee,
-		LeftParen:  leftParen,
-		Arguments:  arguments,
-		RightParen: rightParen,
+		Callee:    callee,
+		Arguments: arguments,
 	}, nil
 }
 
 func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	leftSquare := p.consume()
+	p.consume()
 	var index ast.Expression
 
 	if p.next().Kind != token.RIGHT_SQUARE {
@@ -187,48 +186,51 @@ func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, *dia
 			p.consumeUntil(token.RIGHT_SQUARE)
 		}
 	}
-	rightSquare := p.expect(token.RIGHT_SQUARE)
+	p.expect(token.RIGHT_SQUARE)
 
 	return &ast.IndexExpression{
-		Left:        left,
-		LeftSquare:  leftSquare,
-		Index:       index,
-		RightSquare: rightSquare,
+		Left:  left,
+		Index: index,
 	}, nil
 }
 
 func (p *parser) parseMember(left ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	dot := p.consume()
+	location := p.consume().Location
 	member := p.expect(token.IDENTIFIER)
 
 	return &ast.MemberExpression{
-		Left:   left,
-		Dot:    dot,
-		Member: member,
+		Location:       location,
+		MemberLocation: member.Location,
+		Left:           left,
+		Member:         member.Value,
 	}, nil
 }
 
 func (p *parser) parseInferredTypeExpression() (ast.Expression, *diagnostics.Diagnostic) {
-	dot := p.consume()
+	location := p.consume().Location
+	left := &ast.InferredExpression{Location: location}
+
 	if p.next().Kind == token.IDENTIFIER {
 		member := p.consume()
 		return &ast.MemberExpression{
-			Left:   nil,
-			Dot:    dot,
-			Member: member,
+			Location:       location,
+			MemberLocation: member.Location,
+			Left:           left,
+			Member:         member.Value,
 		}, nil
 	}
 
 	if p.next().Kind == token.LEFT_BRACE {
-		return p.parseStructExpression(&ast.InferredExpression{Token: dot})
+		return p.parseStructExpression(left)
 	}
 
 	return nil, diagnostics.ExpectedMemberOrStructBody(p.next().Location, p.next())
 }
 
 func (p *parser) parseStructMember() (*ast.StructMember, *diagnostics.Diagnostic) {
-	var name, colon *token.Token
+	var name *string
 	var value ast.Expression
+	var location text.Location
 
 	initial, err := p.parseExpression()
 	if err != nil {
@@ -236,11 +238,11 @@ func (p *parser) parseStructMember() (*ast.StructMember, *diagnostics.Diagnostic
 	}
 
 	if ident, ok := initial.(*ast.Identifier); ok {
-		name = &ident.Token
+		name = &ident.Name
+		location = ident.Location
 
 		if p.next().Kind == token.COLON {
-			tok := p.consume()
-			colon = &tok
+			p.consume()
 			value, err = p.parseExpression()
 			if err != nil {
 				return nil, err
@@ -248,87 +250,84 @@ func (p *parser) parseStructMember() (*ast.StructMember, *diagnostics.Diagnostic
 		}
 	} else {
 		value = initial
+		location = initial.GetLocation()
 	}
 
 	return &ast.StructMember{
-		Name:  name,
-		Colon: colon,
-		Value: value,
+		Location: location,
+		Name:     name,
+		Value:    value,
 	}, nil
 }
 
 func (p *parser) parseStructExpression(instanceOf ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	leftBrace := p.consume()
+	p.consume()
 
-	members, rightBrace := parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructMember)
+	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseStructMember)
 
 	return &ast.StructExpression{
-		Struct:     instanceOf,
-		LeftBrace:  leftBrace,
-		Members:    members,
-		RightBrace: rightBrace,
+		Struct:  instanceOf,
+		Members: members,
 	}, nil
 }
 
 func (p *parser) parseCastExpression(left ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	arrow := p.consume()
+	location := p.consume().Location
 	toType, err := p.parseTypeExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.CastExpression{
-		Left:  left,
-		Arrow: arrow,
-		Type:  toType,
+		Location: location,
+		Left:     left,
+		Type:     toType,
 	}, nil
 }
 
 func (p *parser) parseTypeCheckExpression(left ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	operator := p.consume()
+	location := p.consume().Location
 	ty, err := p.parseTypeExpression()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.TypeCheckExpression{
+		Location: location,
 		Left:     left,
-		Operator: operator,
 		Type:     ty,
 	}, nil
 }
 
 func (p *parser) parseRangeExpression(start ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	operator := p.consume()
+	location := p.consume().Location
 	end, err := p.parseSubExpression(Range)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.RangeExpression{
+		Location: location,
 		Start:    start,
-		Operator: operator,
 		End:      end,
 	}, nil
 }
 
 func (p *parser) parseTuple() (ast.Expression, *diagnostics.Diagnostic) {
-	leftParen := p.consume()
+	location := p.consume().Location
 
-	values, rightParen := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
+	values := parseDelimExprList(p, token.RIGHT_PAREN, p.parseExpression)
 
 	if len(values) == 1 {
 		return &ast.ParenthesisedExpression{
-			LeftParen:  leftParen,
+			Location:   location,
 			Expression: values[0],
-			RightParen: rightParen,
 		}, nil
 	}
 
 	return &ast.TupleExpression{
-		LeftParen:  leftParen,
-		Values:     values,
-		RightParen: rightParen,
+		Location: location,
+		Values:   values,
 	}, nil
 }
 
@@ -338,20 +337,20 @@ func (p *parser) parseIdentifier() (ast.Expression, *diagnostics.Diagnostic) {
 	switch tok.Value {
 	case "true":
 		return &ast.BooleanLiteral{
-			Token: tok,
-			Value: true,
+			Location: tok.Location,
+			Value:    true,
 		}, nil
 
 	case "false":
 		return &ast.BooleanLiteral{
-			Token: tok,
-			Value: false,
+			Location: tok.Location,
+			Value:    false,
 		}, nil
 
 	default:
 		return &ast.Identifier{
-			Token: tok,
-			Name:  tok.Value,
+			Location: tok.Location,
+			Name:     tok.Value,
 		}, nil
 	}
 }
@@ -383,13 +382,12 @@ func (p *parser) parseString() (ast.Expression, *diagnostics.Diagnostic) {
 }
 
 func (p *parser) parseList() (ast.Expression, *diagnostics.Diagnostic) {
-	leftSquare := p.consume()
-	values, rightSquare := parseDelimExprList(p, token.RIGHT_SQUARE, p.parseExpression)
+	location := p.consume().Location
+	values := parseDelimExprList(p, token.RIGHT_SQUARE, p.parseExpression)
 
 	return &ast.ListLiteral{
-		LeftSquare:  leftSquare,
-		Values:      values,
-		RightSquare: rightSquare,
+		Location: location,
+		Values:   values,
 	}, nil
 }
 
@@ -398,7 +396,7 @@ func (p *parser) parseKeyValue() (*ast.KeyValue, *diagnostics.Diagnostic) {
 	if err != nil {
 		return nil, err
 	}
-	colon := p.expect(token.COLON)
+	p.expect(token.COLON)
 	value, err := p.parseExpression()
 	if err != nil {
 		return nil, err
@@ -406,76 +404,70 @@ func (p *parser) parseKeyValue() (*ast.KeyValue, *diagnostics.Diagnostic) {
 
 	return &ast.KeyValue{
 		Key:   key,
-		Colon: colon,
 		Value: value,
 	}, nil
 }
 
 func (p *parser) parseMapOrBlock() (ast.Expression, *diagnostics.Diagnostic) {
-	leftBrace := p.consume()
+	location := p.consume().Location
 	if p.next().Kind == token.RIGHT_BRACE {
-		rightBrace := p.consume()
+		p.consume()
 		return &ast.MapLiteral{
-			LeftBrace:  leftBrace,
-			KeyValues:  []ast.KeyValue{},
-			RightBrace: rightBrace,
+			Location:  location,
+			KeyValues: []ast.KeyValue{},
 		}, nil
 	}
 
 	first, err := p.parseStatement()
 	if err != nil {
 		p.Diagnostics.Report(err)
-		p.consumeUntil(token.LEFT_BRACE)
-		rightBrace := p.expect(token.LEFT_BRACE)
+		p.consumeUntil(token.RIGHT_BRACE)
+		p.expect(token.RIGHT_BRACE)
 
 		return &ast.MapLiteral{
-			LeftBrace:  leftBrace,
-			KeyValues:  []ast.KeyValue{},
-			RightBrace: rightBrace,
+			Location:  location,
+			KeyValues: []ast.KeyValue{},
 		}, nil
 	}
 
 	if key, ok := first.(ast.Expression); ok && p.next().Kind == token.COLON {
-		colon := p.consume()
+		p.consume()
 		value, err := p.parseExpression()
 		if err != nil {
-			p.consumeUntil(token.LEFT_BRACE)
-			rightBrace := p.expect(token.LEFT_BRACE)
+			p.consumeUntil(token.RIGHT_BRACE)
+			p.expect(token.RIGHT_BRACE)
 
 			return &ast.MapLiteral{
-				LeftBrace:  leftBrace,
-				KeyValues:  []ast.KeyValue{},
-				RightBrace: rightBrace,
+				Location:  location,
+				KeyValues: []ast.KeyValue{},
 			}, nil
 		}
 
-		keyValues, rightBrace := extendDelimExprList(
+		keyValues := extendDelimExprList(
 			p,
-			ast.KeyValue{Key: key, Colon: colon, Value: value},
+			ast.KeyValue{Key: key, Value: value},
 			token.RIGHT_BRACE, p.parseKeyValue,
 		)
 
 		return &ast.MapLiteral{
-			LeftBrace:  leftBrace,
-			KeyValues:  keyValues,
-			RightBrace: rightBrace,
+			Location:  location,
+			KeyValues: keyValues,
 		}, nil
 	}
 
-	stmts, rightBrace := extendDelimStmtList(p, first, token.RIGHT_BRACE, p.parseStatement)
+	stmts := extendDelimStmtList(p, first, token.RIGHT_BRACE, p.parseStatement)
 	return &ast.Block{
-		LeftBrace:  leftBrace,
+		Location:   location,
 		Statements: stmts,
-		RightBrace: rightBrace,
 	}, nil
 }
 
 func (p *parser) parseFunctionExpression() (ast.Expression, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 
-	leftParen := p.expect(token.LEFT_PAREN)
+	p.expect(token.LEFT_PAREN)
 	defer p.exitScope(p.enterScope())
-	params, rightParen := parseDerefExprList(p, token.RIGHT_PAREN, p.parseParameter)
+	params := parseDerefExprList(p, token.RIGHT_PAREN, p.parseParameter)
 
 	returnType, err := p.parseOptionalTypeAnnotation()
 	if err != nil {
@@ -492,31 +484,28 @@ func (p *parser) parseFunctionExpression() (ast.Expression, *diagnostics.Diagnos
 	}
 
 	return &ast.FunctionExpression{
-		Keyword:    keyword,
-		LeftParen:  leftParen,
+		Location:   location,
 		Parameters: params,
-		RightParen: rightParen,
 		ReturnType: returnType,
 		Body:       body,
 	}, nil
 }
 
 func (p *parser) parseBlock(noScope ...bool) (*ast.Block, *diagnostics.Diagnostic) {
-	leftBrace := p.expect(token.LEFT_BRACE)
+	location := p.expect(token.LEFT_BRACE).Location
 	if len(noScope) == 0 || !noScope[0] {
 		defer p.exitScope(p.enterScope())
 	}
-	statements, rightBrace := parseDelimStmtList(p, token.RIGHT_BRACE, p.parseStatement)
+	statements := parseDelimStmtList(p, token.RIGHT_BRACE, p.parseStatement)
 
 	return &ast.Block{
-		LeftBrace:  leftBrace,
+		Location:   location,
 		Statements: statements,
-		RightBrace: rightBrace,
 	}, nil
 }
 
 func (p *parser) parseIfExpression() (ast.Expression, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 
 	p.noBraces = true
 	p.bracketLevel++
@@ -533,18 +522,17 @@ func (p *parser) parseIfExpression() (ast.Expression, *diagnostics.Diagnostic) {
 		return nil, err
 	}
 
-	var elseBranch *ast.ElseBranch
+	var elseBranch ast.Statement
 
 	if p.isKeyword("else") {
-		elseBranch = &ast.ElseBranch{}
-		elseBranch.ElseKeyword = p.consume()
+		p.consume()
 		if p.isKeyword("if") {
-			elseBranch.Statement, err = p.parseIfExpression()
+			elseBranch, err = p.parseIfExpression()
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			elseBranch.Statement, err = p.parseBlock()
+			elseBranch, err = p.parseBlock()
 			if err != nil {
 				return nil, err
 			}
@@ -552,7 +540,7 @@ func (p *parser) parseIfExpression() (ast.Expression, *diagnostics.Diagnostic) {
 	}
 
 	return &ast.IfExpression{
-		Keyword:    keyword,
+		Location:   location,
 		Condition:  condition,
 		Body:       body,
 		ElseBranch: elseBranch,
@@ -560,7 +548,7 @@ func (p *parser) parseIfExpression() (ast.Expression, *diagnostics.Diagnostic) {
 }
 
 func (p *parser) parseWhileLoop() (ast.Expression, *diagnostics.Diagnostic) {
-	keyword := p.consume()
+	location := p.consume().Location
 
 	p.noBraces = true
 	p.bracketLevel++
@@ -578,18 +566,18 @@ func (p *parser) parseWhileLoop() (ast.Expression, *diagnostics.Diagnostic) {
 	}
 
 	return &ast.WhileLoop{
-		Keyword:   keyword,
+		Location:  location,
 		Condition: condition,
 		Body:      body,
 	}, nil
 }
 
 func (p *parser) parseForLoop() (ast.Expression, *diagnostics.Diagnostic) {
-	forKeyword := p.consume()
+	location := p.consume().Location
 	defer p.exitScope(p.enterScope())
 
-	variable := p.delcareIdentifier()
-	inKeyword := p.expectKeyword("in")
+	variable := p.delcareIdentifier().Value
+	p.expectKeyword("in")
 
 	p.noBraces = true
 	p.bracketLevel++
@@ -607,10 +595,9 @@ func (p *parser) parseForLoop() (ast.Expression, *diagnostics.Diagnostic) {
 	}
 
 	return &ast.ForLoop{
-		ForKeyword: forKeyword,
-		Variable:   variable,
-		InKeyword:  inKeyword,
-		Iterator:   iterator,
-		Body:       body,
+		LLocation: location,
+		Variable:  variable,
+		Iterator:  iterator,
+		Body:      body,
 	}, nil
 }
