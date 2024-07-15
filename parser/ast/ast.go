@@ -2,19 +2,14 @@ package ast
 
 import (
 	"bytes"
-	"fmt"
-	"io"
 	"os"
-	"strings"
 
-	"github.com/gearsdatapacks/libra/colour"
+	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/text"
 )
 
-const INDENT_STEP = "  "
-
 type Statement interface {
-	printable
+	printer.Printable
 	GetLocation() text.Location
 }
 
@@ -40,71 +35,13 @@ type Program struct {
 func (p *Program) String() string {
 	var text bytes.Buffer
 
-	context := printContext{
-		writer:    &text,
-		indent:    0,
-		useColour: false,
-	}
-	writeNodeList(context, p.Statements)
+	context := printer.New(&text, false)
+	printer.WriteNodeList(context, p.Statements)
 
 	return text.String()
 }
 
 func (p *Program) Print() {
-	context := printContext{
-		writer:    os.Stdout,
-		indent:    0,
-		useColour: true,
-	}
-	writeNodeList(context, p.Statements)
-}
-
-type printable interface {
-	String(printContext)
-}
-
-type printContext struct {
-	writer    io.Writer
-	indent    uint32
-	useColour bool
-}
-
-func (p *printContext) write(format string, values ...any) {
-	fmt.Fprintf(p.writer, format, values...)
-}
-
-func (p *printContext) writeNest() {
-	fmt.Fprintf(p.writer, "\n%s", strings.Repeat(INDENT_STEP, int(p.indent)))
-}
-
-func (p *printContext) withNest() printContext {
-	context := p.nested()
-	context.writeNest()
-	return context
-}
-
-func (p *printContext) nested() printContext {
-	context := *p
-	context.indent++
-	return context
-}
-
-func (p *printContext) writeNode(node printable) {
-	node.String(p.withNest())
-}
-
-func writeNodeList[T printable](p printContext, nodes []T) {
-	for i, node := range nodes {
-		if i != 0 {
-			p.writeNest()
-		}
-		node.String(p)
-	}
-}
-
-func (p *printContext) colour(colour colour.Colour) string {
-	if p.useColour {
-		return string(colour)
-	}
-	return ""
+	context := printer.New(os.Stdout, true)
+	printer.WriteNodeList(context, p.Statements)
 }
