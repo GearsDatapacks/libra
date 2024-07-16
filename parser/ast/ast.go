@@ -35,13 +35,13 @@ type Program struct {
 func (p *Program) String() string {
 	var text bytes.Buffer
 
-	context := printer.New(&text, false)
-	printer.WriteNodeList(context, p.Statements)
+	astPrinter := printer.New(&text, false)
+	printer.QueueNodeList(astPrinter, p.Statements, true)
 
 	return text.String()
 }
 
 func (p *Program) Print() {
-	context := printer.New(os.Stdout, true)
-	printer.WriteNodeList(context, p.Statements)
+	astPrinter := printer.New(os.Stdout, true)
+	printer.QueueNodeList(astPrinter, p.Statements, true)
 }

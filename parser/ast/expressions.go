@@ -22,8 +22,8 @@ type IntegerLiteral struct {
 func (il *IntegerLiteral) GetLocation() text.Location {
 	return il.Token.Location
 }
-func (il *IntegerLiteral) String(context printer.Context) {
-	context.Write(
+func (il *IntegerLiteral) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sINT_LIT %s%d",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -32,7 +32,7 @@ func (il *IntegerLiteral) String(context printer.Context) {
 
 	litValue := fmt.Sprint(il.Value)
 	if litValue != il.Token.Value {
-		context.Write(" %s", il.Token.Value)
+		context.AddInfo(" %s", il.Token.Value)
 	}
 }
 
@@ -45,8 +45,8 @@ type FloatLiteral struct {
 func (fl *FloatLiteral) GetLocation() text.Location {
 	return fl.Token.Location
 }
-func (fl *FloatLiteral) String(context printer.Context) {
-	context.Write(
+func (fl *FloatLiteral) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sFLOAT_LIT %s%v",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -55,7 +55,7 @@ func (fl *FloatLiteral) String(context printer.Context) {
 
 	litValue := fmt.Sprint(fl.Value)
 	if litValue != fl.Token.Value {
-		context.Write(" %s", fl.Token.Value)
+		context.AddInfo(" %s", fl.Token.Value)
 	}
 }
 
@@ -68,8 +68,8 @@ type BooleanLiteral struct {
 func (bl *BooleanLiteral) GetLocation() text.Location {
 	return bl.Location
 }
-func (bl *BooleanLiteral) String(context printer.Context) {
-	context.Write(
+func (bl *BooleanLiteral) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sBOOL_LIT %s%t",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -86,8 +86,8 @@ type StringLiteral struct {
 func (sl *StringLiteral) GetLocation() text.Location {
 	return sl.Token.Location
 }
-func (sl *StringLiteral) String(context printer.Context) {
-	context.Write(
+func (sl *StringLiteral) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sSTRING_LIT %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -104,8 +104,8 @@ type Identifier struct {
 func (i *Identifier) GetLocation() text.Location {
 	return i.Location
 }
-func (i *Identifier) String(context printer.Context) {
-	context.Write(
+func (i *Identifier) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sIDENT %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -124,15 +124,15 @@ func (b *BinaryExpression) GetLocation() text.Location {
 	return b.Left.GetLocation().To(b.Right.GetLocation())
 }
 
-func (b *BinaryExpression) String(context printer.Context) {
-	context.Write(
+func (b *BinaryExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sBIN_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
 		b.Operator.Value,
 	)
-	context.WriteNode(b.Left)
-	context.WriteNode(b.Right)
+	context.QueueNode(b.Left)
+	context.QueueNode(b.Right)
 }
 
 type ParenthesisedExpression struct {
@@ -145,12 +145,12 @@ func (p *ParenthesisedExpression) GetLocation() text.Location {
 	return p.Location
 }
 
-func (p *ParenthesisedExpression) String(context printer.Context) {
-	context.Write(
+func (p *ParenthesisedExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sPAREN_EXPR",
 		context.Colour(colour.NodeName),
 	)
-	context.WriteNode(p.Expression)
+	context.QueueNode(p.Expression)
 }
 
 type PrefixExpression struct {
@@ -164,14 +164,14 @@ func (p *PrefixExpression) GetLocation() text.Location {
 	return p.Location
 }
 
-func (p *PrefixExpression) String(context printer.Context) {
-	context.Write(
+func (p *PrefixExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sPREFIX_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
 		p.Operator.String(),
 	)
-	context.WriteNode(p.Operand)
+	context.QueueNode(p.Operand)
 }
 
 type PostfixExpression struct {
@@ -185,14 +185,14 @@ func (p *PostfixExpression) GetLocation() text.Location {
 	return p.Operand.GetLocation()
 }
 
-func (p *PostfixExpression) String(context printer.Context) {
-	context.Write(
+func (p *PostfixExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sPOSTFIX_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
 		p.Operator,
 	)
-	context.WriteNode(p.Operand)
+	context.QueueNode(p.Operand)
 }
 
 type PointerType struct {
@@ -206,13 +206,13 @@ func (p *PointerType) GetLocation() text.Location {
 	return p.Location
 }
 
-func (p *PointerType) String(context printer.Context) {
-	context.Write("%sPTR_TYPE", context.Colour(colour.NodeName))
+func (p *PointerType) Print(context *printer.Printer) {
+	context.QueueInfo("%sPTR_TYPE", context.Colour(colour.NodeName))
 	if p.Mutable {
-		context.Write(" %smut", context.Colour(colour.Attribute))
+		context.AddInfo(" %smut", context.Colour(colour.Attribute))
 	}
 
-	context.WriteNode(p.Operand)
+	context.QueueNode(p.Operand)
 }
 
 type OptionType struct {
@@ -225,9 +225,9 @@ func (p *OptionType) GetLocation() text.Location {
 	return p.Location
 }
 
-func (p *OptionType) String(context printer.Context) {
-	context.Write("%sOPTION_TYPE", context.Colour(colour.NodeName))
-	context.WriteNode(p.Operand)
+func (p *OptionType) Print(context *printer.Printer) {
+	context.QueueInfo("%sOPTION_TYPE", context.Colour(colour.NodeName))
+	context.QueueNode(p.Operand)
 }
 
 type DerefExpression struct {
@@ -239,9 +239,9 @@ func (d *DerefExpression) GetLocation() text.Location {
 	return d.Operand.GetLocation()
 }
 
-func (d *DerefExpression) String(context printer.Context) {
-	context.Write("%sDEREF_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(d.Operand)
+func (d *DerefExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sDEREF_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(d.Operand)
 }
 
 type RefExpression struct {
@@ -255,13 +255,13 @@ func (r *RefExpression) GetLocation() text.Location {
 	return r.Location
 }
 
-func (r *RefExpression) String(context printer.Context) {
+func (r *RefExpression) Print(context *printer.Printer) {
 
-	context.Write("%sREF_EXPR", context.Colour(colour.NodeName))
+	context.QueueInfo("%sREF_EXPR", context.Colour(colour.NodeName))
 	if r.Mutable {
-		context.Write(" %smut", context.Colour(colour.Attribute))
+		context.AddInfo(" %smut", context.Colour(colour.Attribute))
 	}
-	context.WriteNode(r.Operand)
+	context.QueueNode(r.Operand)
 }
 
 type ListLiteral struct {
@@ -274,11 +274,9 @@ func (l *ListLiteral) GetLocation() text.Location {
 	return l.Location
 }
 
-func (l *ListLiteral) String(context printer.Context) {
-	context.Write("%sLIST_EXPR", context.Colour(colour.NodeName))
-	if len(l.Values) != 0 {
-		printer.WriteNodeList(context.WithNest(), l.Values)
-	}
+func (l *ListLiteral) Print(context *printer.Printer) {
+	context.QueueInfo("%sLIST_EXPR", context.Colour(colour.NodeName))
+			printer.QueueNodeList(context, l.Values)
 }
 
 type KeyValue struct {
@@ -286,10 +284,10 @@ type KeyValue struct {
 	Value Expression
 }
 
-func (kv KeyValue) String(context printer.Context) {
-	context.Write("%sKEY_VALUE", context.Colour(colour.NodeName))
-	context.WriteNode(kv.Key)
-	context.WriteNode(kv.Value)
+func (kv KeyValue) Print(context *printer.Printer) {
+	context.QueueInfo("%sKEY_VALUE", context.Colour(colour.NodeName))
+	context.QueueNode(kv.Key)
+	context.QueueNode(kv.Value)
 }
 
 type MapLiteral struct {
@@ -302,11 +300,9 @@ func (m *MapLiteral) GetLocation() text.Location {
 	return m.Location
 }
 
-func (m *MapLiteral) String(context printer.Context) {
-	context.Write("%sMAP_EXPR", context.Colour(colour.NodeName))
-	if len(m.KeyValues) != 0 {
-		printer.WriteNodeList(context.WithNest(), m.KeyValues)
-	}
+func (m *MapLiteral) Print(context *printer.Printer) {
+	context.QueueInfo("%sMAP_EXPR", context.Colour(colour.NodeName))
+			printer.QueueNodeList(context, m.KeyValues)
 }
 
 type FunctionCall struct {
@@ -319,12 +315,10 @@ func (call *FunctionCall) GetLocation() text.Location {
 	return call.Callee.GetLocation()
 }
 
-func (call *FunctionCall) String(context printer.Context) {
-	context.Write("%sFUNCTION_CALL", context.Colour(colour.NodeName))
-	context.WriteNode(call.Callee)
-	if len(call.Arguments) != 0 {
-		printer.WriteNodeList(context.WithNest(), call.Arguments)
-	}
+func (call *FunctionCall) Print(context *printer.Printer) {
+	context.QueueInfo("%sFUNCTION_CALL", context.Colour(colour.NodeName))
+	context.QueueNode(call.Callee)
+			printer.QueueNodeList(context, call.Arguments)
 }
 
 type IndexExpression struct {
@@ -337,11 +331,11 @@ func (index *IndexExpression) GetLocation() text.Location {
 	return index.Left.GetLocation()
 }
 
-func (index *IndexExpression) String(context printer.Context) {
-	context.Write("%sINDEX_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(index.Left)
+func (index *IndexExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sINDEX_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(index.Left)
 	if index.Index != nil {
-		context.WriteNode(index.Index)
+		context.QueueNode(index.Index)
 	}
 }
 
@@ -356,15 +350,15 @@ func (a *AssignmentExpression) GetLocation() text.Location {
 	return a.Assignee.GetLocation().To(a.Value.GetLocation())
 }
 
-func (a *AssignmentExpression) String(context printer.Context) {
-	context.Write(
+func (a *AssignmentExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sASSIGNMENT_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
 		a.Operator.Value,
 	)
-	context.WriteNode(a.Assignee)
-	context.WriteNode(a.Value)
+	context.QueueNode(a.Assignee)
+	context.QueueNode(a.Value)
 }
 
 type TupleExpression struct {
@@ -377,11 +371,9 @@ func (t *TupleExpression) GetLocation() text.Location {
 	return t.Location
 }
 
-func (t *TupleExpression) String(context printer.Context) {
-	context.Write("%sTUPLE_EXPR", context.Colour(colour.NodeName))
-	if len(t.Values) != 0 {
-		printer.WriteNodeList(context.WithNest(), t.Values)
-	}
+func (t *TupleExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sTUPLE_EXPR", context.Colour(colour.NodeName))
+			printer.QueueNodeList(context, t.Values)
 }
 
 type MemberExpression struct {
@@ -396,14 +388,14 @@ func (m *MemberExpression) GetLocation() text.Location {
 	return m.Location
 }
 
-func (m *MemberExpression) String(context printer.Context) {
-	context.Write(
+func (m *MemberExpression) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sMEMBER_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
 		m.Member,
 	)
-	context.WriteNode(m.Left)
+	context.QueueNode(m.Left)
 }
 
 type StructMember struct {
@@ -412,15 +404,15 @@ type StructMember struct {
 	Value    Expression
 }
 
-func (sm StructMember) String(context printer.Context) {
-	context.Write("%sSTRUCT_MEMBER", context.Colour(colour.NodeName))
+func (sm StructMember) Print(context *printer.Printer) {
+	context.QueueInfo("%sSTRUCT_MEMBER", context.Colour(colour.NodeName))
 
 	if sm.Name != nil {
-		context.Write(" %s%s", context.Colour(colour.Name), *sm.Name)
+		context.AddInfo(" %s%s", context.Colour(colour.Name), *sm.Name)
 	}
 
 	if sm.Value != nil {
-		context.WriteNode(sm.Value)
+		context.QueueNode(sm.Value)
 	}
 }
 
@@ -433,8 +425,8 @@ func (i *InferredExpression) GetLocation() text.Location {
 	return i.Location
 }
 
-func (i *InferredExpression) String(context printer.Context) {
-	context.Write("%sINFERRED_EXPR", context.Colour(colour.NodeName))
+func (i *InferredExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sINFERRED_EXPR", context.Colour(colour.NodeName))
 }
 
 type StructExpression struct {
@@ -447,12 +439,10 @@ func (s *StructExpression) GetLocation() text.Location {
 	return s.Struct.GetLocation()
 }
 
-func (s *StructExpression) String(context printer.Context) {
-	context.Write("%sSTRUCT_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(s.Struct)
-	if len(s.Members) != 0 {
-		printer.WriteNodeList(context.WithNest(), s.Members)
-	}
+func (s *StructExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sSTRUCT_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(s.Struct)
+			printer.QueueNodeList(context, s.Members)
 }
 
 type CastExpression struct {
@@ -466,10 +456,10 @@ func (ce *CastExpression) GetLocation() text.Location {
 	return ce.Location
 }
 
-func (ce *CastExpression) String(context printer.Context) {
-	context.Write("%sCAST_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(ce.Left)
-	context.WriteNode(ce.Type)
+func (ce *CastExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sCAST_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(ce.Left)
+	context.QueueNode(ce.Type)
 }
 
 type TypeCheckExpression struct {
@@ -483,10 +473,10 @@ func (ce *TypeCheckExpression) GetLocation() text.Location {
 	return ce.Location
 }
 
-func (tc *TypeCheckExpression) String(context printer.Context) {
-	context.Write("%sTYPE_CHECK_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(tc.Left)
-	context.WriteNode(tc.Type)
+func (tc *TypeCheckExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sTYPE_CHECK_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(tc.Left)
+	context.QueueNode(tc.Type)
 }
 
 type RangeExpression struct {
@@ -500,10 +490,10 @@ func (r *RangeExpression) GetLocation() text.Location {
 	return r.Location
 }
 
-func (r *RangeExpression) String(context printer.Context) {
-	context.Write("%sRANGE_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(r.Start)
-	context.WriteNode(r.End)
+func (r *RangeExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sRANGE_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(r.Start)
+	context.QueueNode(r.End)
 }
 
 type FunctionExpression struct {
@@ -518,23 +508,21 @@ func (f *FunctionExpression) GetLocation() text.Location {
 	return f.Location
 }
 
-func (f *FunctionExpression) String(context printer.Context) {
+func (f *FunctionExpression) Print(context *printer.Printer) {
 	if f.Body != nil {
-		context.Write("%sFUNC_EXPR", context.Colour(colour.NodeName))
+		context.QueueInfo("%sFUNC_EXPR", context.Colour(colour.NodeName))
 	} else {
-		context.Write("%sFUNC_TYPE", context.Colour(colour.NodeName))
+		context.QueueInfo("%sFUNC_TYPE", context.Colour(colour.NodeName))
 	}
 
-	if len(f.Parameters) != 0 {
-		printer.WriteNodeList(context.WithNest(), f.Parameters)
-	}
+			printer.QueueNodeList(context, f.Parameters)
 
 	if f.ReturnType != nil {
-		context.WriteNode(f.ReturnType)
+		context.QueueNode(f.ReturnType)
 	}
 
 	if f.Body != nil {
-		context.WriteNode(f.Body)
+		context.QueueNode(f.Body)
 	}
 }
 
@@ -544,11 +532,9 @@ type Block struct {
 	Statements []Statement
 }
 
-func (b *Block) String(context printer.Context) {
-	context.Write("%sBLOCK", context.Colour(colour.NodeName))
-	if len(b.Statements) != 0 {
-		printer.WriteNodeList(context.WithNest(), b.Statements)
-	}
+func (b *Block) Print(context *printer.Printer) {
+	context.QueueInfo("%sBLOCK", context.Colour(colour.NodeName))
+			printer.QueueNodeList(context, b.Statements)
 }
 
 func (b *Block) GetLocation() text.Location {
@@ -563,15 +549,16 @@ type IfExpression struct {
 	ElseBranch Statement
 }
 
-func (i *IfExpression) String(context printer.Context) {
-	context.Write("%sIF_EXPR", context.Colour(colour.NodeName))
-	context.WriteNode(i.Condition)
-	context.WriteNode(i.Body)
+func (i *IfExpression) Print(context *printer.Printer) {
+	context.QueueInfo("%sIF_EXPR", context.Colour(colour.NodeName))
+	context.QueueNode(i.Condition)
+	context.QueueNode(i.Body)
 
 	if i.ElseBranch != nil {
-		context = context.WithNest()
-		context.Write("%sELSE_BRANCH", context.Colour(colour.NodeName))
-		context.WriteNode(i.ElseBranch)
+		context.Nest()
+		context.AddInfo("%sELSE_BRANCH", context.Colour(colour.NodeName))
+		context.QueueNode(i.ElseBranch)
+		context.UnNest()
 	}
 }
 
@@ -586,10 +573,10 @@ type WhileLoop struct {
 	Body      *Block
 }
 
-func (wl *WhileLoop) String(context printer.Context) {
-	context.Write("%sWHILE_LOOP", context.Colour(colour.NodeName))
-	context.WriteNode(wl.Condition)
-	context.WriteNode(wl.Body)
+func (wl *WhileLoop) Print(context *printer.Printer) {
+	context.QueueInfo("%sWHILE_LOOP", context.Colour(colour.NodeName))
+	context.QueueNode(wl.Condition)
+	context.QueueNode(wl.Body)
 }
 
 func (w *WhileLoop) GetLocation() text.Location {
@@ -604,15 +591,15 @@ type ForLoop struct {
 	Body      *Block
 }
 
-func (fl *ForLoop) String(context printer.Context) {
-	context.Write(
+func (fl *ForLoop) Print(context *printer.Printer) {
+	context.QueueInfo(
 		"%sFOR_LOOP %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
 		fl.Variable,
 	)
-	context.WriteNode(fl.Iterator)
-	context.WriteNode(fl.Body)
+	context.QueueNode(fl.Iterator)
+	context.QueueNode(fl.Body)
 }
 
 func (f *ForLoop) GetLocation() text.Location {
