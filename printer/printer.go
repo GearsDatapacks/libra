@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gearsdatapacks/libra/colour"
+	"github.com/gearsdatapacks/libra/text"
 )
 
 const INDENT_STEP = "  "
@@ -70,6 +71,16 @@ func (p *Printer) QueueInfo(info string, values ...any) {
 func (p *Printer) AddInfo(info string, values ...any) {
 	lastNode := &p.stack[len(p.stack)-1]
 	lastNode.children[len(lastNode.children)-1].text += fmt.Sprintf(info, values...)
+}
+
+func (p *Printer) AddLocation(node interface{GetLocation()text.Location}) {
+	location := node.GetLocation()
+	p.AddInfo(
+		" %s(%d:%d)",
+		p.Colour(colour.Location),
+		location.Span.Start,
+		location.Span.End,
+	)
 }
 
 func QueueNodeList[T Printable](p *Printer, nodes []T, noIndent ...bool) {

@@ -25,6 +25,7 @@ func (varDec *VariableDeclaration) Print(context *printer.Printer) {
 		context.Colour(colour.Name),
 		varDec.Name,
 	)
+	context.AddLocation(varDec)
 	if varDec.Type != nil {
 		context.QueueNode(varDec.Type)
 	}
@@ -138,6 +139,7 @@ func (fd *FunctionDeclaration) Print(context *printer.Printer) {
 			fd.MemberOf.Name,
 		)
 	}
+	context.AddLocation(fd)
 
 	if fd.MethodOf != nil {
 		context.QueueNode(fd.MethodOf)
@@ -173,6 +175,7 @@ type ReturnStatement struct {
 
 func (r *ReturnStatement) Print(context *printer.Printer) {
 	context.QueueInfo("%sRETURN", context.Colour(colour.NodeName))
+	context.AddLocation(r)
 
 	if r.Value != nil {
 		context.QueueNode(r.Value)
@@ -190,6 +193,7 @@ type YieldStatement struct {
 
 func (y *YieldStatement) Print(context *printer.Printer) {
 	context.QueueInfo("%sYIELD", context.Colour(colour.NodeName))
+	context.AddLocation(y)
 
 	context.QueueNode(y.Value)
 }
@@ -205,6 +209,7 @@ type BreakStatement struct {
 
 func (b *BreakStatement) Print(context *printer.Printer) {
 	context.QueueInfo("%sBREAK", context.Colour(colour.NodeName))
+	context.AddLocation(b)
 
 	if b.Value != nil {
 		context.QueueNode(b.Value)
@@ -217,8 +222,9 @@ func (b *BreakStatement) GetLocation() text.Location {
 
 type ContinueStatement struct{ Location text.Location }
 
-func (*ContinueStatement) Print(context *printer.Printer) {
+func (c *ContinueStatement) Print(context *printer.Printer) {
 	context.QueueInfo("%sCONTINUE", context.Colour(colour.NodeName))
+	context.AddLocation(c)
 }
 
 func (c *ContinueStatement) GetLocation() text.Location {
@@ -249,6 +255,7 @@ func (t *TypeDeclaration) Print(context *printer.Printer) {
 	if t.Explicit {
 		context.AddInfo(" %sexplicit", context.Colour(colour.Attribute))
 	}
+	context.AddLocation(t)
 
 	context.QueueNode(t.Type)
 	context.QueueNode(t.Attributes)
@@ -312,6 +319,7 @@ func (s *StructDeclaration) Print(context *printer.Printer) {
 	if s.Exported {
 		context.AddInfo(" %spub", context.Colour(colour.Attribute))
 	}
+	context.AddLocation(s)
 
 	if s.Body != nil {
 		printer.QueueNodeList(context, s.Body)
@@ -377,6 +385,7 @@ func (i *InterfaceDeclaration) Print(context *printer.Printer) {
 	if i.Exported {
 		context.AddInfo(" %spub", context.Colour(colour.Attribute))
 	}
+	context.AddLocation(i)
 
 	printer.QueueNodeList(context, i.Members)
 	context.QueueNode(i.Attributes)
@@ -418,6 +427,7 @@ func (i *ImportStatement) Print(context *printer.Printer) {
 			context.AddInfo(" %s%s", context.Colour(colour.Name), symbol.Name)
 		}
 	}
+	context.AddLocation(i)
 }
 
 func (i *ImportStatement) GetLocation() text.Location {
@@ -463,6 +473,7 @@ func (e *EnumDeclaration) Print(context *printer.Printer) {
 	if e.Exported {
 		context.AddInfo(" %spub", context.Colour(colour.Attribute))
 	}
+	context.AddLocation(e)
 
 	if e.ValueType != nil {
 		context.QueueNode(e.ValueType)
@@ -538,6 +549,7 @@ func (u *UnionDeclaration) Print(context *printer.Printer) {
 	if u.Untagged {
 		context.AddInfo(" %suntagged", context.Colour(colour.Attribute))
 	}
+	context.AddLocation(u)
 
 	printer.QueueNodeList(context, u.Members)
 
@@ -576,7 +588,13 @@ type TagDeclaration struct {
 }
 
 func (t *TagDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo("%sTAG_DECL %s%s", context.Colour(colour.NodeName), context.Colour(colour.Name), t.Name)
+	context.QueueInfo(
+		"%sTAG_DECL %s%s",
+		context.Colour(colour.NodeName),
+		context.Colour(colour.Name),
+		t.Name,
+	)
+	context.AddLocation(t)
 
 	if t.Body != nil && len(t.Body) != 0 {
 		printer.QueueNodeList(context, t.Body)

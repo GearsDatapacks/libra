@@ -30,6 +30,7 @@ const (
 	Name = Purple
 	Symbol = White
 	Attribute = Yellow
+	Location = Cyan
 )
 
 func SetColour(colour Colour) {
