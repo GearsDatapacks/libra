@@ -58,27 +58,28 @@ func (d *Diagnostic) Print() {
 	}
 
 	fileName := d.Location.File.FileName
-	span := d.Location.Span
+	span := d.Location.Span.ToLineSpan(d.Location.File)
 	lines := d.Location.File.Lines
 
 	colour.SetColour(colour.White)
-	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.Column+1)
+	fmt.Printf("%s:%d:%d:\n", fileName, span.StartLine+1, span.StartColumn+1)
 	colour.ResetColour()
 
 	spanLines := lines[span.StartLine : span.EndLine+1]
 	numLines := len(spanLines)
 
-	fmt.Print(spanLines[0][:span.Column])
+	fmt.Print(spanLines[0].Text[:span.StartColumn])
 
 	colour.SetColour(diagColour)
 	if numLines == 1 {
-		fmt.Print(spanLines[0][span.Column:span.End])
+		fmt.Print(spanLines[0].Text[span.StartColumn:span.EndColumn])
 	} else {
 		for i, line := range spanLines {
+			line := line.Text
 			if i == 0 {
-				fmt.Println(line[span.Column:])
+				fmt.Println(line[span.StartColumn:])
 			} else if i == numLines-1 {
-				fmt.Print(line[:span.End])
+				fmt.Print(line[:span.EndColumn])
 			} else {
 				fmt.Println(line)
 			}
@@ -87,9 +88,9 @@ func (d *Diagnostic) Print() {
 
 	colour.ResetColour()
 
-	fmt.Println(spanLines[numLines-1][span.End:])
+	fmt.Println(spanLines[numLines-1].Text[span.EndColumn:])
 
-	column := span.Column
+	column := span.StartColumn
 	if numLines > 1 {
 		column = 0
 	}

@@ -5,10 +5,15 @@ import (
 	"strings"
 )
 
+type Line struct {
+	Text string
+	Span Span
+}
+
 type SourceFile struct {
 	FileName string
 	Text     string
-	Lines    []string
+	Lines    []Line
 }
 
 func LoadFile(fileName string) *SourceFile {
@@ -21,10 +26,22 @@ func LoadFile(fileName string) *SourceFile {
 }
 
 func NewFile(fileName string, text string) *SourceFile {
+	lines := []Line{}
+
+	position := 0
+	for _, line := range strings.Split(text, "\n") {
+		start := position
+		position += len(line)
+		lines = append(lines, Line{
+			Text: line,
+			Span: NewSpan(start, position),
+		})
+	}
+
 	return &SourceFile{
 		FileName: fileName,
 		Text:     text,
-		Lines:    strings.Split(text, "\n"),
+		Lines:    lines,
 	}
 }
 
@@ -44,18 +61,42 @@ func (l Location) To(other Location) Location {
 }
 
 type Span struct {
-	StartLine, EndLine, Column, End int
+	Start, End int
 }
 
-func NewSpan(startLine, endLine, col, end int) Span {
+func NewSpan(start, end int) Span {
 	return Span{
-		StartLine: startLine,
-		EndLine:   endLine,
-		Column:    col,
-		End:       end,
+		Start: start,
+		End:   end,
 	}
 }
 
 func (s Span) To(other Span) Span {
-	return NewSpan(s.StartLine, other.EndLine, s.Column, other.End)
+	return NewSpan(s.Start, other.End)
+}
+
+func (s Span) ToLineSpan(file *SourceFile) LineSpan {
+	var startLine, endLine, startColumn, endColumn int
+
+	for i, line := range file.Lines {
+		if s.Start > line.Span.Start && s.Start < line.Span.End {
+			startLine = i
+			startColumn = s.Start - line.Span.Start
+		}
+		if s.End > line.Span.Start && s.End < line.Span.End {
+			endLine = i
+			endColumn = s.End - line.Span.Start
+		}
+	}
+
+	return LineSpan{
+		StartLine:   startLine,
+		EndLine:     endLine,
+		StartColumn: startColumn,
+		EndColumn:   endColumn,
+	}
+}
+
+type LineSpan struct {
+	StartLine, EndLine, StartColumn, EndColumn int
 }

@@ -508,7 +508,7 @@ func (p *parser) expect(kind token.Kind) token.Token {
 		return p.consume()
 	}
 	p.Diagnostics.Report(diagnostics.ExpectedToken(p.next().Location, kind, p.next().Kind))
-	span := text.NewSpan(0, 0, 0, 0)
+	span := text.NewSpan(0, 0)
 	location := text.Location{
 		Span: span,
 		File: p.next().Location.File,
@@ -528,7 +528,7 @@ func (p *parser) expectKeyword(keyword string) token.Token {
 	}
 
 	p.Diagnostics.Report(diagnostics.ExpectedKeyword(p.next().Location, keyword, p.next()))
-	span := text.NewSpan(0, 0, 0, 0)
+	span := text.NewSpan(0, 0)
 	location := text.Location{
 		Span: span,
 		File: p.next().Location.File,

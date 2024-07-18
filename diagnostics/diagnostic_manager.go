@@ -114,7 +114,9 @@ func LastParameterMustHaveType(location text.Location, fnLocation text.Location)
 	const msg = "The last parameter of a function must have a type annotation"
 	diagnostics := []*Diagnostic{makeError(msg, location)}
 
-	if location.Span.StartLine != fnLocation.Span.StartLine {
+	fieldLine := location.Span.ToLineSpan(location.File).StartLine
+	fnLine := fnLocation.Span.ToLineSpan(location.File).StartLine
+	if fieldLine != fnLine {
 		const info = "Parameter of this function"
 		diagnostics = append(diagnostics, makeInfo(info, fnLocation))
 	}
@@ -130,7 +132,9 @@ func LastStructFieldMustHaveType(location text.Location, structLoc text.Location
 	const errMsg = "The last field of a struct must have a type annotation"
 	diagnostics := []*Diagnostic{makeError(errMsg, location)}
 
-	if location.Span.StartLine != structLoc.Span.StartLine {
+	fieldLine := location.Span.ToLineSpan(location.File).StartLine
+	structLine := structLoc.Span.ToLineSpan(location.File).StartLine
+	if fieldLine != structLine {
 		const info = "Field in this struct"
 		diagnostics = append(diagnostics, makeInfo(info, structLoc))
 	}

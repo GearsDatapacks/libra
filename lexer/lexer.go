@@ -12,8 +12,6 @@ import (
 type lexer struct {
 	file        *text.SourceFile
 	pos         int
-	line        int
-	col         int
 	Diagnostics diagnostics.Manager
 }
 
@@ -21,8 +19,6 @@ func New(file *text.SourceFile) *lexer {
 	return &lexer{
 		file:        file,
 		pos:         0,
-		line:        0,
-		col:         0,
 		Diagnostics: diagnostics.Manager{},
 	}
 }
@@ -56,7 +52,7 @@ func (l *lexer) Tokenise() []token.Token {
 
 func (l *lexer) nextToken() token.Token {
 	l.skipWhitespace()
-	nextToken := token.New(token.INVALID, "", "", l.getLocation(l.line, l.line, l.col, l.col))
+	nextToken := token.New(token.INVALID, "", "", l.getLocation(l.pos, l.pos))
 
 	next := l.next()
 	pos := l.pos
@@ -90,12 +86,11 @@ func (l *lexer) nextToken() token.Token {
 		}
 		nextToken.ExtraValue = l.file.Text[pos+1 : l.pos]
 	} else {
-		l.Diagnostics.Report(diagnostics.InvalidCharacter(l.getLocation(l.line, l.line, l.col, l.col+1), next))
+		l.Diagnostics.Report(diagnostics.InvalidCharacter(l.getLocation(l.pos, l.pos+1), next))
 		l.consume()
 	}
 
-	nextToken.Location.Span.End = l.col
-	nextToken.Location.Span.EndLine = l.line
+	nextToken.Location.Span.End = l.pos
 	nextToken.Value = l.file.Text[pos:l.pos]
 
 	return nextToken
@@ -116,7 +111,7 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 	if l.next() == '.' && isNumber(l.peek(1)) {
 		if l.peek(-1) == '_' {
 			l.Diagnostics.Report(diagnostics.NumbersCannotEndWithSeparator(
-				l.getLocation(l.line, l.line, l.col-1, l.col)))
+				l.getLocation(l.pos-1, l.pos)))
 		}
 
 		kind = token.FLOAT
@@ -134,15 +129,14 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 
 	if l.peek(-1) == '_' {
 		l.Diagnostics.Report(diagnostics.NumbersCannotEndWithSeparator(
-			l.getLocation(l.line, l.line, l.col-1, l.col)))
+			l.getLocation(l.pos-1, l.pos)))
 	}
 
 	return kind, str.String()
 }
 
 func (l *lexer) parseString() string {
-	startLine := l.line
-	pos := l.col
+	pos := l.pos
 	l.consume()
 	str := bytes.NewBuffer([]byte{})
 
@@ -153,7 +147,7 @@ func (l *lexer) parseString() string {
 				char, ok := l.escape(l.next())
 				if !ok {
 					l.Diagnostics.Report(diagnostics.InvalidEscapeSequence(
-						l.getLocation(l.line, l.line, l.col-1, l.col+1), l.next()))
+						l.getLocation(l.pos-1, l.pos+1), l.next()))
 				}
 				str.WriteByte(char)
 			}
@@ -165,7 +159,7 @@ func (l *lexer) parseString() string {
 	}
 
 	if l.eof() {
-		l.Diagnostics.Report(diagnostics.UnterminatedString(l.getLocation(startLine, l.line, pos, l.col)))
+		l.Diagnostics.Report(diagnostics.UnterminatedString(l.getLocation(pos, l.pos)))
 	}
 
 	l.consume()
@@ -196,7 +190,7 @@ func (l *lexer) escape(c byte) (char byte, ok bool) {
 		char = 0
 	case 'x':
 		if l.pos+3 >= len(l.file.Text) {
-			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.line, l.line, l.col-1, l.col+1)))
+			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.pos-1, l.pos+1)))
 			return 0, true
 		}
 
@@ -204,14 +198,14 @@ func (l *lexer) escape(c byte) (char byte, ok bool) {
 		nextTwoChars := string(l.next()) + string(l.peek(1))
 		c, e := strconv.ParseUint(nextTwoChars, 16, 8)
 		if e != nil {
-			l.Diagnostics.Report(diagnostics.InvalidAsciiSequence(l.getLocation(l.line, l.line, l.col-2, l.col+2), nextTwoChars))
+			l.Diagnostics.Report(diagnostics.InvalidAsciiSequence(l.getLocation(l.pos-2, l.pos+2), nextTwoChars))
 		} else {
 			l.consume()
 		}
 		char = byte(c)
 	case 'u':
 		if l.pos+5 >= len(l.file.Text) {
-			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.line, l.line, l.col-1, l.col+1)))
+			l.Diagnostics.Report(diagnostics.ExpectedEscapeSequence(l.getLocation(l.pos-1, l.pos+1)))
 			return 0, true
 		}
 
@@ -220,7 +214,7 @@ func (l *lexer) escape(c byte) (char byte, ok bool) {
 		// TODO: support more than one byte utf8 sequences
 		c, e := strconv.ParseUint(nextFourChars, 16, 8)
 		if e != nil {
-			l.Diagnostics.Report(diagnostics.InvalidUnicodeSequence(l.getLocation(l.line, l.line, l.col-2, l.col+4), nextFourChars))
+			l.Diagnostics.Report(diagnostics.InvalidUnicodeSequence(l.getLocation(l.pos-2, l.pos+4), nextFourChars))
 		} else {
 			l.consumeMany(3)
 		}
@@ -398,8 +392,7 @@ func (l *lexer) parseLineComment() string {
 }
 
 func (l *lexer) parseBlockComment() string {
-	startLine := l.line
-	startCol := l.col
+	startPos := l.pos
 	l.consume()
 	l.consume()
 	l.skipWhitespace()
@@ -420,7 +413,7 @@ func (l *lexer) parseBlockComment() string {
 	}
 
 	if nestLevel > 0 {
-		l.Diagnostics.Report(diagnostics.UnterminatedComment(l.getLocation(startLine, l.line, startCol, l.col)))
+		l.Diagnostics.Report(diagnostics.UnterminatedComment(l.getLocation(startPos, l.pos)))
 	}
 
 	return result.String()
@@ -435,13 +428,13 @@ func (l *lexer) parseAttributeBody(name string) *token.Token {
 			return nil
 		}
 
-		startLine, startCol := l.line, l.col
+		startPos := l.pos
 		var text bytes.Buffer
 		for !l.eof() && l.next() != '\n' {
 			text.WriteByte(l.consume())
 		}
 
-		tok := token.New(token.ATTRIBUTE_BODY, text.String(), "", l.getLocation(startLine, l.line, startCol, l.col))
+		tok := token.New(token.ATTRIBUTE_BODY, text.String(), "", l.getLocation(startPos, l.pos))
 		return &tok
 	default:
 		return nil
@@ -470,12 +463,7 @@ func (l *lexer) consume() byte {
 		return l.next()
 	}
 	next := l.next()
-	l.col++
 	l.pos++
-	if next == '\n' {
-		l.line++
-		l.col = 0
-	}
 	return next
 }
 
@@ -489,8 +477,8 @@ func (l *lexer) eof() bool {
 	return l.pos >= len(l.file.Text)
 }
 
-func (l *lexer) getLocation(startLine, endLine, col, end int) text.Location {
-	span := text.NewSpan(startLine, endLine, col, end)
+func (l *lexer) getLocation(start, end int) text.Location {
+	span := text.NewSpan(start, end)
 	return text.Location{
 		Span: span,
 		File: l.file,

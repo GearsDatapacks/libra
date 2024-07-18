@@ -276,7 +276,7 @@ func (l *ListLiteral) GetLocation() text.Location {
 
 func (l *ListLiteral) Print(context *printer.Printer) {
 	context.QueueInfo("%sLIST_EXPR", context.Colour(colour.NodeName))
-			printer.QueueNodeList(context, l.Values)
+	printer.QueueNodeList(context, l.Values)
 }
 
 type KeyValue struct {
@@ -302,7 +302,7 @@ func (m *MapLiteral) GetLocation() text.Location {
 
 func (m *MapLiteral) Print(context *printer.Printer) {
 	context.QueueInfo("%sMAP_EXPR", context.Colour(colour.NodeName))
-			printer.QueueNodeList(context, m.KeyValues)
+	printer.QueueNodeList(context, m.KeyValues)
 }
 
 type FunctionCall struct {
@@ -318,7 +318,7 @@ func (call *FunctionCall) GetLocation() text.Location {
 func (call *FunctionCall) Print(context *printer.Printer) {
 	context.QueueInfo("%sFUNCTION_CALL", context.Colour(colour.NodeName))
 	context.QueueNode(call.Callee)
-			printer.QueueNodeList(context, call.Arguments)
+	printer.QueueNodeList(context, call.Arguments)
 }
 
 type IndexExpression struct {
@@ -373,7 +373,7 @@ func (t *TupleExpression) GetLocation() text.Location {
 
 func (t *TupleExpression) Print(context *printer.Printer) {
 	context.QueueInfo("%sTUPLE_EXPR", context.Colour(colour.NodeName))
-			printer.QueueNodeList(context, t.Values)
+	printer.QueueNodeList(context, t.Values)
 }
 
 type MemberExpression struct {
@@ -442,7 +442,7 @@ func (s *StructExpression) GetLocation() text.Location {
 func (s *StructExpression) Print(context *printer.Printer) {
 	context.QueueInfo("%sSTRUCT_EXPR", context.Colour(colour.NodeName))
 	context.QueueNode(s.Struct)
-			printer.QueueNodeList(context, s.Members)
+	printer.QueueNodeList(context, s.Members)
 }
 
 type CastExpression struct {
@@ -515,7 +515,7 @@ func (f *FunctionExpression) Print(context *printer.Printer) {
 		context.QueueInfo("%sFUNC_TYPE", context.Colour(colour.NodeName))
 	}
 
-			printer.QueueNodeList(context, f.Parameters)
+	printer.QueueNodeList(context, f.Parameters)
 
 	if f.ReturnType != nil {
 		context.QueueNode(f.ReturnType)
@@ -534,7 +534,7 @@ type Block struct {
 
 func (b *Block) Print(context *printer.Printer) {
 	context.QueueInfo("%sBLOCK", context.Colour(colour.NodeName))
-			printer.QueueNodeList(context, b.Statements)
+	printer.QueueNodeList(context, b.Statements)
 }
 
 func (b *Block) GetLocation() text.Location {

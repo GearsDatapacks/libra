@@ -21,7 +21,7 @@ func TestIdentifierExpression(t *testing.T) {
 	ident := getStmt[*ast.Identifier](t, program)
 
 	utils.AssertEq(t, ident.Name, input)
-	utils.AssertEq(t, ident.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, ident.Location.Span, text.NewSpan(0, len(input)))
 }
 
 func TestIntegerExpression(t *testing.T) {
@@ -36,7 +36,7 @@ func TestIntegerExpression(t *testing.T) {
 
 	utils.AssertEq(t, integer.Token.Kind, token.INTEGER)
 	utils.AssertEq(t, integer.Token.Value, input)
-	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, integer.Token.Location.Span, text.NewSpan(0, len(input)))
 }
 
 func TestFloatExpression(t *testing.T) {
@@ -51,7 +51,7 @@ func TestFloatExpression(t *testing.T) {
 
 	utils.AssertEq(t, float.Token.Kind, token.FLOAT)
 	utils.AssertEq(t, float.Token.Value, input)
-	utils.AssertEq(t, float.Token.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, float.Token.Location.Span, text.NewSpan(0, len(input)))
 }
 
 func TestBooleanExpression(t *testing.T) {
@@ -62,7 +62,7 @@ func TestBooleanExpression(t *testing.T) {
 	boolean := getStmt[*ast.BooleanLiteral](t, program)
 
 	utils.AssertEq(t, boolean.Value, true)
-	utils.AssertEq(t, boolean.Location.Span, text.NewSpan(0, 0, 0, len(input)))
+	utils.AssertEq(t, boolean.Location.Span, text.NewSpan(0, len(input)))
 }
 
 func TestListExpression(t *testing.T) {
@@ -570,31 +570,25 @@ func TestErrorExpression(t *testing.T) {
 
 	diag := utils.AssertSingle(t, p.Diagnostics)
 	msg := "Expected expression, found `)`"
-	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 0, 0, 1))
+	testDiagnostic(t, diag, diagnostics.Error, msg, text.NewSpan(0, 1))
 	utils.AssertEq(t, len(program.Statements), 0, "Expected no valid statements")
 }
 
 func getSpans(sourceText string) (string, []text.Span) {
 	var resultText bytes.Buffer
 	spans := []text.Span{}
-	line := 0
-	col := 0
+	pos := 0
 	for _, c := range sourceText {
 		if c == '[' {
-			spans = append(spans, text.NewSpan(line, line, col, 0))
+			spans = append(spans, text.NewSpan(pos, pos))
 			continue
 		}
 		if c == ']' {
-			spans[len(spans)-1].End = col
-			spans[len(spans)-1].EndLine = line
+			spans[len(spans)-1].End = pos
 			continue
 		}
 
-		col++
-		if c == '\n' {
-			line++
-			col = 0
-		}
+		pos++
 		resultText.WriteRune(c)
 	}
 

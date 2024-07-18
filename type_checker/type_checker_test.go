@@ -561,15 +561,14 @@ func fakeModule(program *ast.Program) *module.Module {
 func getSpans(sourceText string) (string, []text.Span) {
 	var resultText bytes.Buffer
 	spans := []text.Span{}
-	line := 0
-	col := 0
+	pos := 0
 	escaped := false
 	for i, c := range sourceText {
 		if c == '[' && !escaped {
 			if i+1 < len(sourceText) && sourceText[i+1] == '[' {
 				escaped = true
 			} else {
-				spans = append(spans, text.NewSpan(line, line, col, 0))
+				spans = append(spans, text.NewSpan(pos, pos))
 			}
 			continue
 		}
@@ -577,18 +576,13 @@ func getSpans(sourceText string) (string, []text.Span) {
 			if i+1 < len(sourceText) && sourceText[i+1] == ']' {
 				escaped = true
 			} else {
-				spans[len(spans)-1].End = col
-				spans[len(spans)-1].EndLine = line
+				spans[len(spans)-1].End = pos
 			}
 			continue
 		}
 
 		escaped = false
-		col++
-		if c == '\n' {
-			line++
-			col = 0
-		}
+		pos++
 		resultText.WriteRune(c)
 	}
 

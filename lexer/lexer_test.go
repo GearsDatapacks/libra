@@ -115,12 +115,12 @@ func TestLexerDiagnostics(t *testing.T) {
 		msg  string
 		span text.Span
 	}{
-		{"foo#bar", "Invalid character: '#'", text.NewSpan(0, 0, 3, 4)},
-		{`"Hello`, "Unterminated string", text.NewSpan(0, 0, 0, 6)},
-		{`"He\llo"`, "Invalid escape sequence: '\\l'", text.NewSpan(0, 0, 3, 5)},
-		{"123_456_", "Numbers cannot end with numeric separators", text.NewSpan(0, 0, 7, 8)},
-		{"1_.2", "Numbers cannot end with numeric separators", text.NewSpan(0, 0, 1, 2)},
-		{"3.14_", "Numbers cannot end with numeric separators", text.NewSpan(0, 0, 4, 5)},
+		{"foo#bar", "Invalid character: '#'", text.NewSpan(3, 4)},
+		{`"Hello`, "Unterminated string", text.NewSpan(0, 6)},
+		{`"He\llo"`, "Invalid escape sequence: '\\l'", text.NewSpan(3, 5)},
+		{"123_456_", "Numbers cannot end with numeric separators", text.NewSpan(7, 8)},
+		{"1_.2", "Numbers cannot end with numeric separators", text.NewSpan(1, 2)},
+		{"3.14_", "Numbers cannot end with numeric separators", text.NewSpan(4, 5)},
 	}
 
 	for _, data := range data {
