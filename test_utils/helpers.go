@@ -54,7 +54,16 @@ func fakeModule(program *ast.Program) *module.Module {
 	}
 }
 
-func matchSnap(t *testing.T, values ...any) {
+type namedSnapshot struct {
+	name string
+	*testing.T
+}
+
+func (t *namedSnapshot) Name() string {
+	return t.name
+}
+
+func matchSnap(t *testing.T, src, output string) {
 	t.Helper()
 
 	pc, _, _, _ := runtime.Caller(2)
@@ -63,5 +72,5 @@ func matchSnap(t *testing.T, values ...any) {
 	name = parts[len(parts)-1]
 	snaps := snaps.WithConfig(snaps.Filename(name))
 
-	snaps.MatchSnapshot(t, values...)
+	snaps.MatchSnapshot(&namedSnapshot{name: fmt.Sprintf("%q", src), T: t}, output)
 }

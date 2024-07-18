@@ -40,13 +40,13 @@ func AssertSingle[T any](t *testing.T, list []T) T {
 func MatchAstSnap(t *testing.T, src string) {
 	t.Helper()
 	program := getAst(t, src)
-	matchSnap(t, program.String())
+	matchSnap(t, src, program.String())
 }
 
 func MatchIrSnap(t *testing.T, src string) {
 	t.Helper()
 	program := getIr(t, src)
-	matchSnap(t, program)
+	matchSnap(t, src, program.String())
 }
 
 func MatchErrorSnap(t *testing.T, src string) {
@@ -64,5 +64,5 @@ func MatchErrorSnap(t *testing.T, src string) {
 		diag.WriteTo(&diags, false)
 	}
 
-	matchSnap(t, diags.String())
+	matchSnap(t, src, diags.String())
 }
