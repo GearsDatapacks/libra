@@ -1,0 +1,18 @@
+
+["1 is i32" - 1]
+TYPE_CHECK_EXPR (2:4)
+├─INT_LIT 1 (0:1)
+└─IDENT i32 (5:8)
+---
+
+["\"Hello\" is string" - 1]
+TYPE_CHECK_EXPR (8:10)
+├─STRING_LIT "Hello" (0:7)
+└─IDENT string (11:17)
+---
+
+["thing is bool" - 1]
+TYPE_CHECK_EXPR (6:8)
+├─IDENT thing (0:5)
+└─IDENT bool (9:13)
+---

@@ -1,0 +1,36 @@
+
+["foo {bar: 1, baz: 2}" - 1]
+STRUCT_EXPR (0:3)
+├─IDENT foo (0:3)
+├─STRUCT_MEMBER bar
+│ └─INT_LIT 1 (10:11)
+└─STRUCT_MEMBER baz
+  └─INT_LIT 2 (18:19)
+---
+
+["rect {width: 9, height: 7.8}" - 1]
+STRUCT_EXPR (0:4)
+├─IDENT rect (0:4)
+├─STRUCT_MEMBER width
+│ └─INT_LIT 9 (13:14)
+└─STRUCT_MEMBER height
+  └─FLOAT_LIT 7.8 (24:27)
+---
+
+["message {greeting: \"Hello\", name: name,}" - 1]
+STRUCT_EXPR (0:7)
+├─IDENT message (0:7)
+├─STRUCT_MEMBER greeting
+│ └─STRING_LIT "Hello" (19:26)
+└─STRUCT_MEMBER name
+  └─IDENT name (34:38)
+---
+
+[".{a:1, b:2}" - 1]
+STRUCT_EXPR (0:1)
+├─INFERRED_EXPR (0:1)
+├─STRUCT_MEMBER a
+│ └─INT_LIT 1 (4:5)
+└─STRUCT_MEMBER b
+  └─INT_LIT 2 (9:10)
+---

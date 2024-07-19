@@ -1,0 +1,18 @@
+
+["1->f32" - 1]
+CAST_EXPR (1:3)
+├─INT_LIT 1 (0:1)
+└─IDENT f32 (3:6)
+---
+
+["foo -> bar" - 1]
+CAST_EXPR (4:6)
+├─IDENT foo (0:3)
+└─IDENT bar (7:10)
+---
+
+["\"_\" -> u8" - 1]
+CAST_EXPR (4:6)
+├─STRING_LIT "_" (0:3)
+└─IDENT u8 (7:9)
+---

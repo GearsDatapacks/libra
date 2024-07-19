@@ -1,0 +1,14 @@
+
+["(1 + 2)" - 1]
+PAREN_EXPR (0:1)
+└─BIN_EXPR + (1:6)
+  ├─INT_LIT 1 (1:2)
+  └─INT_LIT 2 (5:6)
+---
+
+["(true && false)" - 1]
+PAREN_EXPR (0:1)
+└─BIN_EXPR && (1:14)
+  ├─BOOL_LIT true (1:5)
+  └─BOOL_LIT false (9:14)
+---

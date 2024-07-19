@@ -1,0 +1,42 @@
+
+["union AOrB { a, b }" - 1]
+UNION_DECL AOrB (0:5)
+├─UNION_MEMBER a
+└─UNION_MEMBER b
+---
+
+["AOrB" - 1]
+IDENT AOrB (0:4)
+---
+
+["union Int { i8, i16, i32, i64 ,}" - 1]
+UNION_DECL Int (0:5)
+├─UNION_MEMBER i8
+├─UNION_MEMBER i16
+├─UNION_MEMBER i32
+└─UNION_MEMBER i64
+---
+
+["union Property { Age: i32, Height: f32, Weight:f32,string}" - 1]
+UNION_DECL Property (0:5)
+├─UNION_MEMBER Age
+│ └─IDENT i32 (22:25)
+├─UNION_MEMBER Height
+│ └─IDENT f32 (35:38)
+├─UNION_MEMBER Weight
+│ └─IDENT f32 (47:50)
+└─UNION_MEMBER string
+---
+
+["union Shape { Square { f32, f32 }, Circle { radius: f32 } }" - 1]
+UNION_DECL Shape (0:5)
+├─UNION_MEMBER Square
+│ ├─STRUCT_FIELD
+│ │ └─TYPE_OR_IDENT f32
+│ └─STRUCT_FIELD
+│   └─TYPE_OR_IDENT f32
+└─UNION_MEMBER Circle
+  └─STRUCT_FIELD
+    └─TYPE_OR_IDENT radius
+      └─IDENT f32 (52:55)
+---

@@ -1,0 +1,19 @@
+
+["()" - 1]
+TUPLE_EXPR (0:1)
+---
+
+["(1, 2, 3)" - 1]
+TUPLE_EXPR (0:1)
+├─INT_LIT 1 (1:2)
+├─INT_LIT 2 (4:5)
+└─INT_LIT 3 (7:8)
+---
+
+["(1, \"hi\", false, thing)" - 1]
+TUPLE_EXPR (0:1)
+├─INT_LIT 1 (1:2)
+├─STRING_LIT "hi" (4:8)
+├─BOOL_LIT false (10:15)
+└─IDENT thing (17:22)
+---

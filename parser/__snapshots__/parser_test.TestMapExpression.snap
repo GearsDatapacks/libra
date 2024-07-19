@@ -1,0 +1,37 @@
+
+["{}" - 1]
+MAP_EXPR (0:1)
+---
+
+["{1: 2, 2: 3, 3:4}" - 1]
+MAP_EXPR (0:1)
+├─KEY_VALUE
+│ ├─INT_LIT 1 (1:2)
+│ └─INT_LIT 2 (4:5)
+├─KEY_VALUE
+│ ├─INT_LIT 2 (7:8)
+│ └─INT_LIT 3 (10:11)
+└─KEY_VALUE
+  ├─INT_LIT 3 (13:14)
+  └─INT_LIT 4 (15:16)
+---
+
+["{\"foo\": \"bar\", \"hello\": \"world\"}" - 1]
+MAP_EXPR (0:1)
+├─KEY_VALUE
+│ ├─STRING_LIT "foo" (1:6)
+│ └─STRING_LIT "bar" (8:13)
+└─KEY_VALUE
+  ├─STRING_LIT "hello" (15:22)
+  └─STRING_LIT "world" (24:31)
+---
+
+["{hi: \"there\", \"x\": computed}" - 1]
+MAP_EXPR (0:1)
+├─KEY_VALUE
+│ ├─IDENT hi (1:3)
+│ └─STRING_LIT "there" (5:12)
+└─KEY_VALUE
+  ├─STRING_LIT "x" (14:17)
+  └─IDENT computed (19:27)
+---

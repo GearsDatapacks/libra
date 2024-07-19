@@ -1,0 +1,25 @@
+
+["[]" - 1]
+LIST_EXPR (0:1)
+---
+
+["[1 ,2, 3,]" - 1]
+LIST_EXPR (0:1)
+├─INT_LIT 1 (1:2)
+├─INT_LIT 2 (4:5)
+└─INT_LIT 3 (7:8)
+---
+
+["[true, false, 5]" - 1]
+LIST_EXPR (0:1)
+├─BOOL_LIT true (1:5)
+├─BOOL_LIT false (7:12)
+└─INT_LIT 5 (14:15)
+---
+
+["[a,b,\"c!\"]" - 1]
+LIST_EXPR (0:1)
+├─IDENT a (1:2)
+├─IDENT b (3:4)
+└─STRING_LIT "c!" (5:9)
+---

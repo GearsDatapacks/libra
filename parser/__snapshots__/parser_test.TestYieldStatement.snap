@@ -1,0 +1,10 @@
+
+["yield 73" - 1]
+YIELD (0:5)
+└─INT_LIT 73 (6:8)
+---
+
+["yield \"foo\"" - 1]
+YIELD (0:5)
+└─STRING_LIT "foo" (6:11)
+---

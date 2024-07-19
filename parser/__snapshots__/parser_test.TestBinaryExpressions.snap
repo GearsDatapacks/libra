@@ -1,0 +1,57 @@
+
+["1 + 2" - 1]
+BIN_EXPR + (0:5)
+├─INT_LIT 1 (0:1)
+└─INT_LIT 2 (4:5)
+---
+
+["\"Hello\" + \"world\"" - 1]
+BIN_EXPR + (0:17)
+├─STRING_LIT "Hello" (0:7)
+└─STRING_LIT "world" (10:17)
+---
+
+["foo - bar" - 1]
+BIN_EXPR - (0:9)
+├─IDENT foo (0:3)
+└─IDENT bar (6:9)
+---
+
+["19 / 27" - 1]
+BIN_EXPR / (0:7)
+├─INT_LIT 19 (0:2)
+└─INT_LIT 27 (5:7)
+---
+
+["1 << 2" - 1]
+BIN_EXPR << (0:6)
+├─INT_LIT 1 (0:1)
+└─INT_LIT 2 (5:6)
+---
+
+["7 &19" - 1]
+BIN_EXPR & (0:5)
+├─INT_LIT 7 (0:1)
+└─INT_LIT 19 (3:5)
+---
+
+["15.04* 1_2_3" - 1]
+BIN_EXPR * (0:12)
+├─FLOAT_LIT 15.04 (0:5)
+└─INT_LIT 123 1_2_3 (7:12)
+---
+
+["true||false" - 1]
+BIN_EXPR || (0:11)
+├─BOOL_LIT true (0:4)
+└─BOOL_LIT false (6:11)
+---
+
+["[1,2,3]<< 4" - 1]
+BIN_EXPR << (0:11)
+├─LIST_EXPR (0:1)
+│ ├─INT_LIT 1 (1:2)
+│ ├─INT_LIT 2 (3:4)
+│ └─INT_LIT 3 (5:6)
+└─INT_LIT 4 (10:11)
+---

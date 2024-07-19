@@ -1,0 +1,13 @@
+
+["add(1, 2)" - 1]
+FUNCTION_CALL (0:3)
+├─IDENT add (0:3)
+├─INT_LIT 1 (4:5)
+└─INT_LIT 2 (7:8)
+---
+
+["print(\"Hello, world!\" ,)" - 1]
+FUNCTION_CALL (0:5)
+├─IDENT print (0:5)
+└─STRING_LIT "Hello, world!" (6:21)
+---

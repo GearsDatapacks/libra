@@ -1,0 +1,80 @@
+
+["fn hello() { \"Hello, world!\" }" - 1]
+FUNC_DECL hello (0:2)
+└─BLOCK (11:12)
+  └─STRING_LIT "Hello, world!" (13:28)
+---
+
+["fn (i32) print() {\nthis\n}" - 1]
+FUNC_DECL print (0:2)
+├─METHOD_OF
+│ └─IDENT i32 (4:7)
+└─BLOCK (17:18)
+  └─IDENT this (19:23)
+---
+
+["fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }" - 1]
+FUNC_DECL add (0:2)
+├─METHOD_OF
+│ └─IDENT i32 (4:7)
+├─PARAM
+│ └─TYPE_OR_IDENT other
+│   └─IDENT i32 (21:24)
+├─IDENT i32 (30:33)
+└─BLOCK (34:35)
+  └─INT_LIT 7 (36:37)
+---
+
+["fn u8.zero(): u8 {0}" - 1]
+FUNC_DECL zero methodof u8 (0:2)
+├─IDENT u8 (14:16)
+└─BLOCK (17:18)
+  └─INT_LIT 0 (18:19)
+---
+
+["fn sum(a,b,c:f64) : usize{ 3.14 }" - 1]
+FUNC_DECL sum (0:2)
+├─PARAM
+│ └─TYPE_OR_IDENT a
+├─PARAM
+│ └─TYPE_OR_IDENT b
+├─PARAM
+│ └─TYPE_OR_IDENT c
+│   └─IDENT f64 (13:16)
+├─IDENT usize (20:25)
+└─BLOCK (25:26)
+  └─FLOAT_LIT 3.14 (27:31)
+---
+
+["fn inc(mut x: u32): u32 { x }" - 1]
+FUNC_DECL inc (0:2)
+├─PARAM mut
+│ └─TYPE_OR_IDENT x
+│   └─IDENT u32 (14:17)
+├─IDENT u32 (20:23)
+└─BLOCK (24:25)
+  └─IDENT x (26:27)
+---
+
+["fn (mut foo) bar(): foo { this }" - 1]
+FUNC_DECL bar (0:2)
+├─METHOD_OF mut
+│ └─IDENT foo (8:11)
+├─IDENT foo (20:23)
+└─BLOCK (24:25)
+  └─IDENT this (26:30)
+---
+
+["fn add(a = 1, mut b: i64 = 2): i64 { c }" - 1]
+FUNC_DECL add (0:2)
+├─PARAM
+│ ├─TYPE_OR_IDENT a
+│ └─INT_LIT 1 (11:12)
+├─PARAM mut
+│ ├─TYPE_OR_IDENT b
+│ │ └─IDENT i64 (21:24)
+│ └─INT_LIT 2 (27:28)
+├─IDENT i64 (31:34)
+└─BLOCK (35:36)
+  └─IDENT c (37:38)
+---

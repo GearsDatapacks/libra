@@ -1,0 +1,19 @@
+
+["for i in [1,2,3] { i }" - 1]
+FOR_LOOP i (0:3)
+├─LIST_EXPR (9:10)
+│ ├─INT_LIT 1 (10:11)
+│ ├─INT_LIT 2 (12:13)
+│ └─INT_LIT 3 (14:15)
+└─BLOCK (17:18)
+  └─IDENT i (19:20)
+---
+
+["for foo in 93\n{[foo,bar,]}" - 1]
+FOR_LOOP foo (0:3)
+├─INT_LIT 93 (11:13)
+└─BLOCK (14:15)
+  └─LIST_EXPR (15:16)
+    ├─IDENT foo (16:19)
+    └─IDENT bar (20:23)
+---

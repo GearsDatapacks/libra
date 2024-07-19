@@ -1,0 +1,174 @@
+
+["1 + 2" - 1]
+BIN_EXPR + (0:5)
+├─INT_LIT 1 (0:1)
+└─INT_LIT 2 (4:5)
+---
+
+["1 + 2 + 3" - 1]
+BIN_EXPR + (0:9)
+├─BIN_EXPR + (0:5)
+│ ├─INT_LIT 1 (0:1)
+│ └─INT_LIT 2 (4:5)
+└─INT_LIT 3 (8:9)
+---
+
+["1 + 2 * 3" - 1]
+BIN_EXPR + (0:9)
+├─INT_LIT 1 (0:1)
+└─BIN_EXPR * (4:9)
+  ├─INT_LIT 2 (4:5)
+  └─INT_LIT 3 (8:9)
+---
+
+["1 * 2 + 3" - 1]
+BIN_EXPR + (0:9)
+├─BIN_EXPR * (0:5)
+│ ├─INT_LIT 1 (0:1)
+│ └─INT_LIT 2 (4:5)
+└─INT_LIT 3 (8:9)
+---
+
+["foo + bar * baz ** qux" - 1]
+BIN_EXPR + (0:22)
+├─IDENT foo (0:3)
+└─BIN_EXPR * (6:22)
+  ├─IDENT bar (6:9)
+  └─BIN_EXPR ** (12:22)
+    ├─IDENT baz (12:15)
+    └─IDENT qux (19:22)
+---
+
+["a **b** c" - 1]
+BIN_EXPR ** (0:9)
+├─IDENT a (0:1)
+└─BIN_EXPR ** (4:9)
+  ├─IDENT b (4:5)
+  └─IDENT c (8:9)
+---
+
+["1 << 2 & 3" - 1]
+BIN_EXPR & (0:10)
+├─BIN_EXPR << (0:6)
+│ ├─INT_LIT 1 (0:1)
+│ └─INT_LIT 2 (5:6)
+└─INT_LIT 3 (9:10)
+---
+
+["true || false == true" - 1]
+BIN_EXPR || (0:21)
+├─BOOL_LIT true (0:4)
+└─BIN_EXPR == (8:21)
+  ├─BOOL_LIT false (8:13)
+  └─BOOL_LIT true (17:21)
+---
+
+["1 + (2 + 3)" - 1]
+BIN_EXPR + (0:5)
+├─INT_LIT 1 (0:1)
+└─PAREN_EXPR (4:5)
+  └─BIN_EXPR + (5:10)
+    ├─INT_LIT 2 (5:6)
+    └─INT_LIT 3 (9:10)
+---
+
+["( 2**2 ) ** 2" - 1]
+BIN_EXPR ** (0:13)
+├─PAREN_EXPR (0:1)
+│ └─BIN_EXPR ** (2:6)
+│   ├─INT_LIT 2 (2:3)
+│   └─INT_LIT 2 (5:6)
+└─INT_LIT 2 (12:13)
+---
+
+["-1 + 2" - 1]
+BIN_EXPR + (0:6)
+├─PREFIX_EXPR `-` (0:1)
+│ └─INT_LIT 1 (1:2)
+└─INT_LIT 2 (5:6)
+---
+
+["foo + -(bar * baz)" - 1]
+BIN_EXPR + (0:7)
+├─IDENT foo (0:3)
+└─PREFIX_EXPR `-` (6:7)
+  └─PAREN_EXPR (7:8)
+    └─BIN_EXPR * (8:17)
+      ├─IDENT bar (8:11)
+      └─IDENT baz (14:17)
+---
+
+["1 - foo++" - 1]
+BIN_EXPR - (0:7)
+├─INT_LIT 1 (0:1)
+└─POSTFIX_EXPR `++` (4:7)
+  └─IDENT foo (4:7)
+---
+
+["hi + (a || b)!" - 1]
+BIN_EXPR + (0:6)
+├─IDENT hi (0:2)
+└─POSTFIX_EXPR `!` (5:6)
+  └─PAREN_EXPR (5:6)
+    └─BIN_EXPR || (6:12)
+      ├─IDENT a (6:7)
+      └─IDENT b (11:12)
+---
+
+["foo++-- + 1" - 1]
+BIN_EXPR + (0:11)
+├─POSTFIX_EXPR `--` (0:3)
+│ └─POSTFIX_EXPR `++` (0:3)
+│   └─IDENT foo (0:3)
+└─INT_LIT 1 (10:11)
+---
+
+["-a! / 4" - 1]
+BIN_EXPR / (0:7)
+├─PREFIX_EXPR `-` (0:1)
+│ └─POSTFIX_EXPR `!` (1:2)
+│   └─IDENT a (1:2)
+└─INT_LIT 4 (6:7)
+---
+
+["!foo() / 79" - 1]
+BIN_EXPR / (0:11)
+├─PREFIX_EXPR `!` (0:1)
+│ └─FUNCTION_CALL (1:4)
+│   └─IDENT foo (1:4)
+└─INT_LIT 79 (9:11)
+---
+
+["-a[b] + 4" - 1]
+BIN_EXPR + (0:9)
+├─PREFIX_EXPR `-` (0:1)
+│ └─INDEX_EXPR (2:3)
+│   ├─IDENT a (1:2)
+│   └─IDENT b (3:4)
+└─INT_LIT 4 (8:9)
+---
+
+["fns[1]() * 3" - 1]
+BIN_EXPR * (3:12)
+├─FUNCTION_CALL (3:4)
+│ └─INDEX_EXPR (3:4)
+│   ├─IDENT fns (0:3)
+│   └─INT_LIT 1 (4:5)
+└─INT_LIT 3 (11:12)
+---
+
+["a = 1 + 2" - 1]
+ASSIGNMENT_EXPR = (0:9)
+├─IDENT a (0:1)
+└─BIN_EXPR + (4:9)
+  ├─INT_LIT 1 (4:5)
+  └─INT_LIT 2 (8:9)
+---
+
+["foo = bar = baz" - 1]
+ASSIGNMENT_EXPR = (0:15)
+├─IDENT foo (0:3)
+└─ASSIGNMENT_EXPR = (6:15)
+  ├─IDENT bar (6:9)
+  └─IDENT baz (12:15)
+---

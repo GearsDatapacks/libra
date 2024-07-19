@@ -1,0 +1,18 @@
+
+["a = b" - 1]
+ASSIGNMENT_EXPR = (0:5)
+├─IDENT a (0:1)
+└─IDENT b (4:5)
+---
+
+["foo -= 1" - 1]
+ASSIGNMENT_EXPR -= (0:8)
+├─IDENT foo (0:3)
+└─INT_LIT 1 (7:8)
+---
+
+["msg += \"Hello\"" - 1]
+ASSIGNMENT_EXPR += (0:14)
+├─IDENT msg (0:3)
+└─STRING_LIT "Hello" (7:14)
+---
