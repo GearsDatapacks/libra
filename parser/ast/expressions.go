@@ -23,7 +23,7 @@ func (il *IntegerLiteral) GetLocation() text.Location {
 	return il.Token.Location
 }
 func (il *IntegerLiteral) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sINT_LIT %s%d",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -48,7 +48,7 @@ func (fl *FloatLiteral) GetLocation() text.Location {
 	return fl.Token.Location
 }
 func (fl *FloatLiteral) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sFLOAT_LIT %s%v",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -73,7 +73,7 @@ func (bl *BooleanLiteral) GetLocation() text.Location {
 	return bl.Location
 }
 func (bl *BooleanLiteral) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sBOOL_LIT %s%t",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -93,7 +93,7 @@ func (sl *StringLiteral) GetLocation() text.Location {
 	return sl.Token.Location
 }
 func (sl *StringLiteral) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sSTRING_LIT %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Literal),
@@ -113,7 +113,7 @@ func (i *Identifier) GetLocation() text.Location {
 	return i.Location
 }
 func (i *Identifier) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sIDENT %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -135,7 +135,7 @@ func (b *BinaryExpression) GetLocation() text.Location {
 }
 
 func (b *BinaryExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sBIN_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
@@ -158,7 +158,7 @@ func (p *ParenthesisedExpression) GetLocation() text.Location {
 }
 
 func (p *ParenthesisedExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sPAREN_EXPR",
 		context.Colour(colour.NodeName),
 	)
@@ -179,7 +179,7 @@ func (p *PrefixExpression) GetLocation() text.Location {
 }
 
 func (p *PrefixExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sPREFIX_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
@@ -202,7 +202,7 @@ func (p *PostfixExpression) GetLocation() text.Location {
 }
 
 func (p *PostfixExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sPOSTFIX_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
@@ -225,7 +225,7 @@ func (p *PointerType) GetLocation() text.Location {
 }
 
 func (p *PointerType) Print(context *printer.Printer) {
-	context.QueueInfo("%sPTR_TYPE", context.Colour(colour.NodeName))
+	context.AddInfo("%sPTR_TYPE", context.Colour(colour.NodeName))
 	if p.Mutable {
 		context.AddInfo(" %smut", context.Colour(colour.Attribute))
 	}
@@ -245,7 +245,7 @@ func (o *OptionType) GetLocation() text.Location {
 }
 
 func (o *OptionType) Print(context *printer.Printer) {
-	context.QueueInfo("%sOPTION_TYPE", context.Colour(colour.NodeName))
+	context.AddInfo("%sOPTION_TYPE", context.Colour(colour.NodeName))
 	context.AddLocation(o)
 
 	context.QueueNode(o.Operand)
@@ -261,7 +261,7 @@ func (d *DerefExpression) GetLocation() text.Location {
 }
 
 func (d *DerefExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sDEREF_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sDEREF_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(d)
 	context.QueueNode(d.Operand)
 }
@@ -279,7 +279,7 @@ func (r *RefExpression) GetLocation() text.Location {
 
 func (r *RefExpression) Print(context *printer.Printer) {
 
-	context.QueueInfo("%sREF_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sREF_EXPR", context.Colour(colour.NodeName))
 	if r.Mutable {
 		context.AddInfo(" %smut", context.Colour(colour.Attribute))
 	}
@@ -298,7 +298,7 @@ func (l *ListLiteral) GetLocation() text.Location {
 }
 
 func (l *ListLiteral) Print(context *printer.Printer) {
-	context.QueueInfo("%sLIST_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sLIST_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(l)
 	printer.QueueNodeList(context, l.Values)
 }
@@ -309,7 +309,7 @@ type KeyValue struct {
 }
 
 func (kv KeyValue) Print(context *printer.Printer) {
-	context.QueueInfo("%sKEY_VALUE", context.Colour(colour.NodeName))
+	context.AddInfo("%sKEY_VALUE", context.Colour(colour.NodeName))
 	context.QueueNode(kv.Key)
 	context.QueueNode(kv.Value)
 }
@@ -325,7 +325,7 @@ func (m *MapLiteral) GetLocation() text.Location {
 }
 
 func (m *MapLiteral) Print(context *printer.Printer) {
-	context.QueueInfo("%sMAP_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sMAP_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(m)
 	printer.QueueNodeList(context, m.KeyValues)
 }
@@ -341,7 +341,7 @@ func (call *FunctionCall) GetLocation() text.Location {
 }
 
 func (call *FunctionCall) Print(context *printer.Printer) {
-	context.QueueInfo("%sFUNCTION_CALL", context.Colour(colour.NodeName))
+	context.AddInfo("%sFUNCTION_CALL", context.Colour(colour.NodeName))
 	context.AddLocation(call)
 	context.QueueNode(call.Callee)
 	printer.QueueNodeList(context, call.Arguments)
@@ -358,7 +358,7 @@ func (index *IndexExpression) GetLocation() text.Location {
 }
 
 func (index *IndexExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sINDEX_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sINDEX_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(index)
 	context.QueueNode(index.Left)
 	if index.Index != nil {
@@ -378,7 +378,7 @@ func (a *AssignmentExpression) GetLocation() text.Location {
 }
 
 func (a *AssignmentExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sASSIGNMENT_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Symbol),
@@ -400,7 +400,7 @@ func (t *TupleExpression) GetLocation() text.Location {
 }
 
 func (t *TupleExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sTUPLE_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sTUPLE_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(t)
 	printer.QueueNodeList(context, t.Values)
 }
@@ -418,7 +418,7 @@ func (m *MemberExpression) GetLocation() text.Location {
 }
 
 func (m *MemberExpression) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sMEMBER_EXPR %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -435,7 +435,7 @@ type StructMember struct {
 }
 
 func (sm StructMember) Print(context *printer.Printer) {
-	context.QueueInfo("%sSTRUCT_MEMBER", context.Colour(colour.NodeName))
+	context.AddInfo("%sSTRUCT_MEMBER", context.Colour(colour.NodeName))
 
 	if sm.Name != nil {
 		context.AddInfo(" %s%s", context.Colour(colour.Name), *sm.Name)
@@ -456,7 +456,7 @@ func (i *InferredExpression) GetLocation() text.Location {
 }
 
 func (i *InferredExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sINFERRED_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sINFERRED_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(i)
 }
 
@@ -471,7 +471,7 @@ func (s *StructExpression) GetLocation() text.Location {
 }
 
 func (s *StructExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sSTRUCT_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sSTRUCT_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(s)
 	context.QueueNode(s.Struct)
 	printer.QueueNodeList(context, s.Members)
@@ -489,7 +489,7 @@ func (ce *CastExpression) GetLocation() text.Location {
 }
 
 func (ce *CastExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sCAST_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sCAST_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(ce)
 	context.QueueNode(ce.Left)
 	context.QueueNode(ce.Type)
@@ -507,7 +507,7 @@ func (ce *TypeCheckExpression) GetLocation() text.Location {
 }
 
 func (tc *TypeCheckExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sTYPE_CHECK_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sTYPE_CHECK_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(tc)
 	context.QueueNode(tc.Left)
 	context.QueueNode(tc.Type)
@@ -525,7 +525,7 @@ func (r *RangeExpression) GetLocation() text.Location {
 }
 
 func (r *RangeExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sRANGE_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sRANGE_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(r)
 	context.QueueNode(r.Start)
 	context.QueueNode(r.End)
@@ -545,9 +545,9 @@ func (f *FunctionExpression) GetLocation() text.Location {
 
 func (f *FunctionExpression) Print(context *printer.Printer) {
 	if f.Body != nil {
-		context.QueueInfo("%sFUNC_EXPR", context.Colour(colour.NodeName))
+		context.AddInfo("%sFUNC_EXPR", context.Colour(colour.NodeName))
 	} else {
-		context.QueueInfo("%sFUNC_TYPE", context.Colour(colour.NodeName))
+		context.AddInfo("%sFUNC_TYPE", context.Colour(colour.NodeName))
 	}
 	context.AddLocation(f)
 
@@ -569,7 +569,7 @@ type Block struct {
 }
 
 func (b *Block) Print(context *printer.Printer) {
-	context.QueueInfo("%sBLOCK", context.Colour(colour.NodeName))
+	context.AddInfo("%sBLOCK", context.Colour(colour.NodeName))
 	context.AddLocation(b)
 	printer.QueueNodeList(context, b.Statements)
 }
@@ -587,16 +587,15 @@ type IfExpression struct {
 }
 
 func (i *IfExpression) Print(context *printer.Printer) {
-	context.QueueInfo("%sIF_EXPR", context.Colour(colour.NodeName))
+	context.AddInfo("%sIF_EXPR", context.Colour(colour.NodeName))
 	context.AddLocation(i)
 	context.QueueNode(i.Condition)
 	context.QueueNode(i.Body)
 
 	if i.ElseBranch != nil {
-		context.Nest()
-		context.AddInfo("%sELSE_BRANCH", context.Colour(colour.NodeName))
-		context.QueueNode(i.ElseBranch)
-		context.UnNest()
+		context.QueueInfo("%sELSE_BRANCH", func(p *printer.Printer) {
+			context.QueueNode(i.ElseBranch)
+		}, context.Colour(colour.NodeName))
 	}
 }
 
@@ -612,7 +611,7 @@ type WhileLoop struct {
 }
 
 func (wl *WhileLoop) Print(context *printer.Printer) {
-	context.QueueInfo("%sWHILE_LOOP", context.Colour(colour.NodeName))
+	context.AddInfo("%sWHILE_LOOP", context.Colour(colour.NodeName))
 	context.AddLocation(wl)
 	context.QueueNode(wl.Condition)
 	context.QueueNode(wl.Body)
@@ -631,7 +630,7 @@ type ForLoop struct {
 }
 
 func (fl *ForLoop) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sFOR_LOOP %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),

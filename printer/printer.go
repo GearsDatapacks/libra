@@ -3,20 +3,16 @@ package printer
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/text"
 )
-
-const INDENT_STEP = "  "
 
 type Printable interface {
 	Print(*Printer)
 }
 
 type node struct {
-	indent   uint32
 	text     string
 	children []node
 	rejected bool
@@ -24,16 +20,16 @@ type node struct {
 
 type Printer struct {
 	writer    io.Writer
-	indent    uint32
 	useColour bool
+	isFirst bool
 	stack     []node
 }
 
 func New(writer io.Writer, useColour bool) *Printer {
 	return &Printer{
 		writer:    writer,
-		indent:    0,
 		useColour: useColour,
+		isFirst: true,
 		stack:     []node{},
 	}
 }
@@ -42,38 +38,30 @@ func (p *Printer) write(format string, values ...any) {
 	fmt.Fprintf(p.writer, format, values...)
 }
 
-func (printer *Printer) QueueNode(printable Printable, noIndent ...bool) {
-	indent := !append(noIndent, false)[0]
-	if indent {
-		printer.Nest()
-	}
-
-	printer.stack = append(printer.stack, node{
-		text:   "",
-		indent: printer.indent,
-	})
-
-	printable.Print(printer)
-	printer.completeNode()
-	if indent {
-		printer.UnNest()
-	}
+func (printer *Printer) QueueNode(printable Printable) {
+	printer.queueNode("", printable.Print)
 }
 
-func (p *Printer) QueueInfo(info string, values ...any) {
-	lastNode := &p.stack[len(p.stack)-1]
-	lastNode.children = append(lastNode.children, node{
-		indent: p.indent,
-		text:   fmt.Sprintf(info, values...),
+func (printer *Printer) queueNode(text string, callback func(*Printer)) {
+	printer.stack = append(printer.stack, node{
+		text: text,
 	})
+
+	if callback != nil {
+		callback(printer)
+	}
+	printer.completeNode()
+}
+
+func (p *Printer) QueueInfo(info string, callback func(*Printer), values ...any) {
+	p.queueNode(fmt.Sprintf(info, values...), callback)
 }
 
 func (p *Printer) AddInfo(info string, values ...any) {
-	lastNode := &p.stack[len(p.stack)-1]
-	lastNode.children[len(lastNode.children)-1].text += fmt.Sprintf(info, values...)
+	p.stack[len(p.stack)-1].text += fmt.Sprintf(info, values...)
 }
 
-func (p *Printer) AddLocation(node interface{GetLocation()text.Location}) {
+func (p *Printer) AddLocation(node interface{ GetLocation() text.Location }) {
 	location := node.GetLocation()
 	p.AddInfo(
 		" %s(%d:%d)",
@@ -83,9 +71,9 @@ func (p *Printer) AddLocation(node interface{GetLocation()text.Location}) {
 	)
 }
 
-func QueueNodeList[T Printable](p *Printer, nodes []T, noIndent ...bool) {
+func QueueNodeList[T Printable](p *Printer, nodes []T) {
 	for _, node := range nodes {
-		p.QueueNode(node, noIndent...)
+		p.QueueNode(node)
 	}
 }
 
@@ -94,14 +82,6 @@ func (p *Printer) Colour(colour colour.Colour) string {
 		return string(colour)
 	}
 	return ""
-}
-
-func (p *Printer) Nest() {
-	p.indent++
-}
-
-func (p *Printer) UnNest() {
-	p.indent--
 }
 
 func (p *Printer) RejectNode() {
@@ -126,11 +106,40 @@ func (p *Printer) completeNode() {
 }
 
 func (p *Printer) printNode(node node) {
-	if len(node.text) != 0 {
-		p.write("\n%s%s", strings.Repeat(INDENT_STEP, int(node.indent)), node.text)
+	p.doPrintNode(node, "", "", "  ")
+}
+
+func (p *Printer) doPrintNode(
+	node node,
+	prefix, tree, prefixAddition string,
+) {
+	if p.isFirst {
+		p.isFirst = false
+	} else {
+		p.write("\n")
 	}
-	
-	for _, node := range node.children {
-		p.printNode(node)
+
+	p.write(
+		"%s%s%s%s",
+		p.Colour(colour.Symbol),
+		prefix,
+		tree,
+		node.text,
+	)
+
+	prefix += prefixAddition
+	numNodes := len(node.children)
+
+	for i, node := range node.children {
+		var nextTree, nextAddition string
+		if i == numNodes-1 {
+			nextTree = "└─"
+			nextAddition = "  "
+		} else {
+			nextTree = "├─"
+			nextAddition = "│ "
+		}
+
+		p.doPrintNode(node, prefix, nextTree, nextAddition)
 	}
 }

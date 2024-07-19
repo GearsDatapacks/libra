@@ -36,12 +36,12 @@ func (p *Program) String() string {
 	var text bytes.Buffer
 
 	astPrinter := printer.New(&text, false)
-	printer.QueueNodeList(astPrinter, p.Statements, true)
+	printer.QueueNodeList(astPrinter, p.Statements)
 
 	return text.String()
 }
 
 func (p *Program) Print() {
 	astPrinter := printer.New(os.Stdout, true)
-	printer.QueueNodeList(astPrinter, p.Statements, true)
+	printer.QueueNodeList(astPrinter, p.Statements)
 }

@@ -17,7 +17,7 @@ type VariableDeclaration struct {
 }
 
 func (varDec *VariableDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sVAR_DECL %s%s %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Attribute),
@@ -48,7 +48,7 @@ type TypeOrIdent struct {
 }
 
 func (t *TypeOrIdent) Print(context *printer.Printer) {
-	context.QueueInfo("%sTYPE_OR_IDENT", context.Colour(colour.NodeName))
+	context.AddInfo("%sTYPE_OR_IDENT", context.Colour(colour.NodeName))
 	if t.Name != nil {
 		context.AddInfo(" %s%s", context.Colour(colour.Name), *t.Name)
 	}
@@ -65,7 +65,7 @@ type Parameter struct {
 }
 
 func (p Parameter) Print(context *printer.Printer) {
-	context.QueueInfo("%sPARAM", context.Colour(colour.NodeName))
+	context.AddInfo("%sPARAM", context.Colour(colour.NodeName))
 
 	if p.Mutable {
 		context.AddInfo(" %smut", context.Colour(colour.Attribute))
@@ -83,7 +83,7 @@ type MethodOf struct {
 }
 
 func (m *MethodOf) Print(context *printer.Printer) {
-	context.QueueInfo("%sMETHOD_OF", context.Colour(colour.NodeName))
+	context.AddInfo("%sMETHOD_OF", context.Colour(colour.NodeName))
 	if m.Mutable {
 		context.AddInfo(" %smut", context.Colour(colour.Name))
 	}
@@ -111,7 +111,7 @@ type FunctionDeclaration struct {
 }
 
 func (fd *FunctionDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sFUNC_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -174,7 +174,7 @@ type ReturnStatement struct {
 }
 
 func (r *ReturnStatement) Print(context *printer.Printer) {
-	context.QueueInfo("%sRETURN", context.Colour(colour.NodeName))
+	context.AddInfo("%sRETURN", context.Colour(colour.NodeName))
 	context.AddLocation(r)
 
 	if r.Value != nil {
@@ -192,7 +192,7 @@ type YieldStatement struct {
 }
 
 func (y *YieldStatement) Print(context *printer.Printer) {
-	context.QueueInfo("%sYIELD", context.Colour(colour.NodeName))
+	context.AddInfo("%sYIELD", context.Colour(colour.NodeName))
 	context.AddLocation(y)
 
 	context.QueueNode(y.Value)
@@ -208,7 +208,7 @@ type BreakStatement struct {
 }
 
 func (b *BreakStatement) Print(context *printer.Printer) {
-	context.QueueInfo("%sBREAK", context.Colour(colour.NodeName))
+	context.AddInfo("%sBREAK", context.Colour(colour.NodeName))
 	context.AddLocation(b)
 
 	if b.Value != nil {
@@ -223,7 +223,7 @@ func (b *BreakStatement) GetLocation() text.Location {
 type ContinueStatement struct{ Location text.Location }
 
 func (c *ContinueStatement) Print(context *printer.Printer) {
-	context.QueueInfo("%sCONTINUE", context.Colour(colour.NodeName))
+	context.AddInfo("%sCONTINUE", context.Colour(colour.NodeName))
 	context.AddLocation(c)
 }
 
@@ -242,7 +242,7 @@ type TypeDeclaration struct {
 }
 
 func (t *TypeDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sTYPE_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -260,10 +260,9 @@ func (t *TypeDeclaration) Print(context *printer.Printer) {
 	context.QueueNode(t.Type)
 	context.QueueNode(t.Attributes)
 	if t.Tag != nil {
-		context.Nest()
-		context.QueueInfo("%stag", context.Colour(colour.Attribute))
-		context.QueueNode(t.Tag)
-		context.UnNest()
+		context.QueueInfo("%stag", func(p *printer.Printer) {
+			p.QueueNode(t.Tag)
+		}, context.Colour(colour.Attribute))
 	}
 }
 
@@ -291,7 +290,7 @@ type StructField struct {
 }
 
 func (s StructField) Print(context *printer.Printer) {
-	context.QueueInfo("%sSTRUCT_FIELD", context.Colour(colour.NodeName))
+	context.AddInfo("%sSTRUCT_FIELD", context.Colour(colour.NodeName))
 	if s.Pub {
 		context.AddInfo(" %spub", context.Colour(colour.Attribute))
 	}
@@ -309,7 +308,7 @@ type StructDeclaration struct {
 }
 
 func (s *StructDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sSTRUCT_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -326,10 +325,9 @@ func (s *StructDeclaration) Print(context *printer.Printer) {
 	}
 	context.QueueNode(s.Attributes)
 	if s.Tag != nil {
-		context.Nest()
-		context.QueueInfo("%stag", context.Colour(colour.Attribute))
-		context.QueueNode(s.Tag)
-		context.UnNest()
+		context.QueueInfo("%stag", func(p *printer.Printer) {
+			context.QueueNode(s.Tag)
+		}, context.Colour(colour.Attribute))
 	}
 }
 
@@ -353,7 +351,7 @@ type InterfaceMember struct {
 }
 
 func (i InterfaceMember) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sINTERFACE_MEMBER %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -375,7 +373,7 @@ type InterfaceDeclaration struct {
 }
 
 func (i *InterfaceDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sINTERFACE_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -413,7 +411,7 @@ type ImportStatement struct {
 }
 
 func (i *ImportStatement) Print(context *printer.Printer) {
-	context.QueueInfo("%sIMPORT ", context.Colour(colour.NodeName))
+	context.AddInfo("%sIMPORT ", context.Colour(colour.NodeName))
 	if i.All {
 		context.AddInfo("%s* ", context.Colour(colour.Symbol))
 	}
@@ -440,7 +438,7 @@ type EnumMember struct {
 }
 
 func (e EnumMember) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sENUM_MEMBER %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -463,7 +461,7 @@ type EnumDeclaration struct {
 }
 
 func (e *EnumDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sENUM_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -482,10 +480,9 @@ func (e *EnumDeclaration) Print(context *printer.Printer) {
 	printer.QueueNodeList(context, e.Members)
 	context.QueueNode(e.Attributes)
 	if e.Tag != nil {
-		context.Nest()
-		context.QueueInfo("%stag", context.Colour(colour.Attribute))
-		context.QueueNode(e.Tag)
-		context.UnNest()
+		context.QueueInfo("%stag", func(p *printer.Printer) {
+			context.QueueNode(e.Tag)
+		}, context.Colour(colour.Attribute))
 	}
 }
 
@@ -510,7 +507,7 @@ type UnionMember struct {
 }
 
 func (u UnionMember) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sUNION_MEMBER %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -536,7 +533,7 @@ type UnionDeclaration struct {
 }
 
 func (u *UnionDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sUNION_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -555,10 +552,9 @@ func (u *UnionDeclaration) Print(context *printer.Printer) {
 
 	context.QueueNode(u.Attributes)
 	if u.Tag != nil {
-		context.Nest()
-		context.QueueInfo("%stag", context.Colour(colour.Attribute))
-		context.QueueNode(u.Tag)
-		context.UnNest()
+		context.QueueInfo("%stag", func(p *printer.Printer) {
+			context.QueueNode(u.Tag)
+		}, context.Colour(colour.Attribute))
 	}
 }
 
@@ -588,7 +584,7 @@ type TagDeclaration struct {
 }
 
 func (t *TagDeclaration) Print(context *printer.Printer) {
-	context.QueueInfo(
+	context.AddInfo(
 		"%sTAG_DECL %s%s",
 		context.Colour(colour.NodeName),
 		context.Colour(colour.Name),
@@ -669,15 +665,13 @@ func (d *DeclarationAttributes) tryAddAttribute(attribute Attribute) bool {
 }
 
 func (d DeclarationAttributes) Print(context *printer.Printer) {
+	context.AddInfo("%sATTRIBUTES", context.Colour(colour.NodeName))
 	hasAttributes := false
 
-	context.QueueInfo("%sATTRIBUTES", context.Colour(colour.NodeName))
-
-	context.Nest()
-	defer context.UnNest()
 	if d.TodoMessage != nil {
 		context.QueueInfo(
 			"%stodo %s= %s%q",
+			nil,
 			context.Colour(colour.Attribute),
 			context.Colour(colour.Symbol),
 			context.Colour(colour.Literal),
@@ -688,6 +682,7 @@ func (d DeclarationAttributes) Print(context *printer.Printer) {
 	if d.Documentation != "" {
 		context.QueueInfo(
 			"%sdoc %s= %s%q",
+			nil,
 			context.Colour(colour.Attribute),
 			context.Colour(colour.Symbol),
 			context.Colour(colour.Literal),
@@ -698,6 +693,7 @@ func (d DeclarationAttributes) Print(context *printer.Printer) {
 	if d.DeprecatedMessage != nil {
 		context.QueueInfo(
 			"%sdeprecated %s= %s%q",
+			nil,
 			context.Colour(colour.Attribute),
 			context.Colour(colour.Symbol),
 			context.Colour(colour.Literal),
