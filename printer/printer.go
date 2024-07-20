@@ -5,112 +5,54 @@ import (
 	"io"
 
 	"github.com/gearsdatapacks/libra/colour"
-	"github.com/gearsdatapacks/libra/text"
 )
 
 type Printable interface {
-	Print(*Printer)
+	Print(*Node)
 }
 
-type node struct {
-	text     string
-	children []node
-	rejected bool
-}
-
-type Printer struct {
+type printer struct {
 	writer    io.Writer
 	useColour bool
-	isFirst bool
-	stack     []node
+	isFirst   bool
+	root      Node
 }
 
-func New(writer io.Writer, useColour bool) *Printer {
-	return &Printer{
+func New(writer io.Writer, useColour bool) *printer {
+	p := &printer{
 		writer:    writer,
 		useColour: useColour,
-		isFirst: true,
-		stack:     []node{},
+		isFirst:   true,
+	}
+
+	p.root = Node{printer: p}
+
+	return p
+}
+
+func (printer *printer) Node(printable Printable) {
+	printer.root.Node(printable)
+}
+
+func (p *printer) Print() {
+	for _, node := range p.root.children {
+		p.doPrintNode(node, "", "", "")
 	}
 }
 
-func (p *Printer) write(format string, values ...any) {
+func (p *printer) write(format string, values ...any) {
 	fmt.Fprintf(p.writer, format, values...)
 }
 
-func (printer *Printer) QueueNode(printable Printable) {
-	printer.queueNode("", printable.Print)
-}
-
-func (printer *Printer) queueNode(text string, callback func(*Printer)) {
-	printer.stack = append(printer.stack, node{
-		text: text,
-	})
-
-	if callback != nil {
-		callback(printer)
-	}
-	printer.completeNode()
-}
-
-func (p *Printer) QueueInfo(info string, callback func(*Printer), values ...any) {
-	p.queueNode(fmt.Sprintf(info, values...), callback)
-}
-
-func (p *Printer) AddInfo(info string, values ...any) {
-	p.stack[len(p.stack)-1].text += fmt.Sprintf(info, values...)
-}
-
-func (p *Printer) AddLocation(node interface{ GetLocation() text.Location }) {
-	location := node.GetLocation()
-	p.AddInfo(
-		" %s(%d:%d)",
-		p.Colour(colour.Location),
-		location.Span.Start,
-		location.Span.End,
-	)
-}
-
-func QueueNodeList[T Printable](p *Printer, nodes []T) {
-	for _, node := range nodes {
-		p.QueueNode(node)
-	}
-}
-
-func (p *Printer) Colour(colour colour.Colour) string {
+func (p *printer) colour(colour colour.Colour) string {
 	if p.useColour {
 		return string(colour)
 	}
 	return ""
 }
 
-func (p *Printer) RejectNode() {
-	p.stack[len(p.stack)-1].rejected = true
-}
-
-func pop[T any](slice *[]T) T {
-	s := *slice
-	var value T
-	value, *slice = s[len(s)-1], s[:len(s)-1]
-	return value
-}
-
-func (p *Printer) completeNode() {
-	node := pop(&p.stack)
-	if len(p.stack) == 0 {
-		p.printNode(node)
-	} else if !node.rejected {
-		lastNode := &p.stack[len(p.stack)-1]
-		lastNode.children = append(lastNode.children, node)
-	}
-}
-
-func (p *Printer) printNode(node node) {
-	p.doPrintNode(node, "", "", "  ")
-}
-
-func (p *Printer) doPrintNode(
-	node node,
+func (p *printer) doPrintNode(
+	node Node,
 	prefix, tree, prefixAddition string,
 ) {
 	if p.isFirst {
@@ -121,7 +63,7 @@ func (p *Printer) doPrintNode(
 
 	p.write(
 		"%s%s%s%s",
-		p.Colour(colour.Symbol),
+		p.colour(colour.Symbol),
 		prefix,
 		tree,
 		node.text,
