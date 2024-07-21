@@ -406,3 +406,13 @@ func NotATag(location text.Location, ty tcType) *Diagnostic {
 	msg := fmt.Sprintf("%q is not a tag", ty.String())
 	return makeError(msg, location)
 }
+
+func ModuleUndefined(location text.Location, module string) *Diagnostic {
+	msg := fmt.Sprintf("The module %s does not exist", module)
+	return makeError(msg, location)
+}
+
+func ExpressionIndexWithoutIndex(location text.Location) *Diagnostic {
+	const msg = "Index expressions which aren't list types must have an index"
+	return makeError(msg, location)
+}

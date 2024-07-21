@@ -42,6 +42,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 
 		return &ir.Block{
 			Statements: []ir.Statement{},
+			ResultType: types.Void,
 		}
 	case ast.Expression:
 		return t.typeCheckExpression(stmt)

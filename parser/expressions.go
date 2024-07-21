@@ -175,7 +175,7 @@ func (p *parser) parseFunctionCall(callee ast.Expression) (ast.Expression, *diag
 }
 
 func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, *diagnostics.Diagnostic) {
-	p.consume()
+	location := p.consume().Location
 	var index ast.Expression
 
 	if p.next().Kind != token.RIGHT_SQUARE {
@@ -189,8 +189,9 @@ func (p *parser) parseIndexExpression(left ast.Expression) (ast.Expression, *dia
 	p.expect(token.RIGHT_SQUARE)
 
 	return &ast.IndexExpression{
-		Left:  left,
-		Index: index,
+		Left:     left,
+		Location: location,
+		Index:    index,
 	}, nil
 }
 

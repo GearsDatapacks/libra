@@ -31,7 +31,8 @@ func NewFile(fileName string, text string) *SourceFile {
 	position := 0
 	for _, line := range strings.Split(text, "\n") {
 		start := position
-		position += len(line)
+		// We add one to account for the newline
+		position += len(line) + 1
 		lines = append(lines, Line{
 			Text: line,
 			Span: NewSpan(start, position),
@@ -79,11 +80,11 @@ func (s Span) ToLineSpan(file *SourceFile) LineSpan {
 	var startLine, endLine, startColumn, endColumn int
 
 	for i, line := range file.Lines {
-		if s.Start > line.Span.Start && s.Start < line.Span.End {
+		if s.Start >= line.Span.Start && s.Start <= line.Span.End {
 			startLine = i
 			startColumn = s.Start - line.Span.Start
 		}
-		if s.End > line.Span.Start && s.End < line.Span.End {
+		if s.End >= line.Span.Start && s.End <= line.Span.End {
 			endLine = i
 			endColumn = s.End - line.Span.Start
 		}

@@ -525,6 +525,11 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 		}}
 	}
 
+	if indexExpr.Index == nil {
+		t.diagnostics.Report(diagnostics.ExpressionIndexWithoutIndex(indexExpr.Location))
+		return left
+	}
+
 	index := t.typeCheckExpression(indexExpr.Index)
 	ty, diag := ir.Index(left, index)
 

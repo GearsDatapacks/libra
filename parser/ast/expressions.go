@@ -355,11 +355,12 @@ func (call *FunctionCall) Print(node *printer.Node) {
 type IndexExpression struct {
 	expression
 	Left  Expression
+	Location text.Location
 	Index Expression
 }
 
 func (index *IndexExpression) GetLocation() text.Location {
-	return index.Left.GetLocation()
+	return index.Location
 }
 
 func (index *IndexExpression) Print(node *printer.Node) {
