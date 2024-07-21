@@ -1,6 +1,8 @@
 package symbols
 
 import (
+	"github.com/gearsdatapacks/libra/colour"
+	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
@@ -33,6 +35,19 @@ func (v *Variable) GetName() string {
 
 func (v *Variable) Mutable() bool {
 	return v.IsMut
+}
+
+func (v *Variable) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sVAR_EXPR %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			v.Name,
+		).
+		TextIf(v.IsMut, " %smut", node.Colour(colour.Attribute)).
+		Node(v.Type).
+		OptionalNode(v.ConstValue)
 }
 
 type Type struct {

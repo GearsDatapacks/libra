@@ -366,7 +366,7 @@ func TestMaps(t *testing.T) {
 		utils.AssertEq(t, len(constVal.Values), len(test.keyValues))
 		for _, kv := range test.keyValues {
 			key := constValue(kv[0])
-			utils.AssertEq(t, constVal.Values[key.Hash()], constValue(kv[1]))
+			utils.AssertEq(t, constVal.Values[key.Hash()].Value, constValue(kv[1]))
 		}
 	}
 }

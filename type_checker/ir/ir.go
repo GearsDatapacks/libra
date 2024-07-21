@@ -2,14 +2,16 @@ package ir
 
 import (
 	"bytes"
+	"os"
 
 	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Statement interface {
-	String() string
+	printer.Printable
 }
 
 type Expression interface {
@@ -25,16 +27,23 @@ type Program struct {
 }
 
 func (p *Program) String() string {
-	var result bytes.Buffer
+	var text bytes.Buffer
 
-	for i, stmt := range p.Statements {
-		if i != 0 {
-			result.WriteByte('\n')
-		}
-		result.WriteString(stmt.String())
+	irPrinter := printer.New(&text, false)
+	for _, statement := range p.Statements {
+		irPrinter.Node(statement)
 	}
+	irPrinter.Print()
 
-	return result.String()
+	return text.String()
+}
+
+func (p *Program) Print() {
+	irPrinter := printer.New(os.Stdout, true)
+	for _, statement := range p.Statements {
+		irPrinter.Node(statement)
+	}
+	irPrinter.Print()
 }
 
 func AssignableExpr(expr Expression) bool {

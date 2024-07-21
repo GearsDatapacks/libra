@@ -227,7 +227,11 @@ func (t *typeChecker) typeCheckStructBody(
 			if field.Name == nil {
 				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.GetLocation()))
 			}
-			structField := types.StructField{Type: nil, Exported: field.Pub}
+			structField := types.StructField{
+				Name:     *field.Name,
+				Type:     nil,
+				Exported: field.Pub,
+			}
 			if field.Type == nil {
 				fields = append(fields, structField)
 			} else {
@@ -358,7 +362,13 @@ func (mod moduleWrapper) LookupExport(name string) interface{ Value() values.Con
 }
 
 func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
-	module := t.subModules[importStmt.Module.Value]
+	module, ok := t.subModules[importStmt.Module.ExtraValue]
+
+	if !ok {
+		t.diagnostics.Report(diagnostics.ModuleUndefined(importStmt.Module.Location, importStmt.Module.Value))
+		return
+	}
+
 	if importStmt.All {
 		t.symbols.Extend(module.symbols)
 	} else if importStmt.Symbols != nil {

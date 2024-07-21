@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/diagnostics"
+	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Type interface {
+	printer.Printable
 	String() string
 	valid(Type) bool
 }
@@ -127,6 +130,15 @@ func (pt PrimaryType) String() string {
 	return typeNames[pt]
 }
 
+func (pt PrimaryType) Print(node *printer.Node) {
+	node.Text(
+		"%sPRIMARY_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		pt.String(),
+	)
+}
+
 func (pt PrimaryType) valid(other Type) bool {
 	primary, isPrimary := other.(PrimaryType)
 	return isPrimary && primary == pt
@@ -200,6 +212,21 @@ func (v VariableType) String() string {
 	}
 }
 
+func (v VariableType) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sVARIABLE_TYPE %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			v.String(),
+		).
+		TextIf(
+			v.Downcastable,
+			"%sdowncastable",
+			node.Colour(colour.Attribute),
+		)
+}
+
 func (v VariableType) valid(other Type) bool {
 	variable, ok := other.(VariableType)
 	if !ok {
@@ -226,6 +253,12 @@ type ListType struct {
 
 func (l *ListType) String() string {
 	return l.ElemType.String() + "[]"
+}
+
+func (l *ListType) Print(node *printer.Node) {
+	node.
+		Text("%sLIST_TYPE", node.Colour(colour.NodeName)).
+		Node(l.ElemType)
 }
 
 func (l *ListType) valid(other Type) bool {
@@ -260,6 +293,22 @@ func (a *ArrayType) String() string {
 		return a.ElemType.String() + "[_]"
 	}
 	return fmt.Sprintf("%s[%d]", a.ElemType.String(), a.Length)
+}
+
+func (a *ArrayType) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sARRAY_TYPE %s%d",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Literal),
+			a.Length,
+		).
+		TextIf(
+			a.CanInfer,
+			" %scan_infer",
+			node.Colour(colour.Attribute),
+		).
+		Node(a.ElemType)
 }
 
 func (a *ArrayType) valid(other Type) bool {
@@ -304,6 +353,13 @@ func (m *MapType) String() string {
 	return fmt.Sprintf("{%s: %s}", m.KeyType.String(), m.ValueType.String())
 }
 
+func (m *MapType) Print(node *printer.Node) {
+	node.
+		Text("%sMAP_TYPE", node.Colour(colour.NodeName)).
+		Node(m.KeyType).
+		Node(m.ValueType)
+}
+
 func (m *MapType) valid(other Type) bool {
 	mapType, ok := other.(*MapType)
 	if !ok {
@@ -343,6 +399,12 @@ func (t *TupleType) String() string {
 	result.WriteByte(')')
 
 	return result.String()
+}
+
+func (t *TupleType) Print(node *printer.Node) {
+	node.Text("%sTUPLE_TYPE", node.Colour(colour.NodeName))
+
+	printer.Nodes(node, t.Types)
 }
 
 func (t *TupleType) valid(other Type) bool {
@@ -402,6 +464,14 @@ func (fn *Function) String() string {
 	return result.String()
 }
 
+func (fn *Function) Print(node *printer.Node) {
+	node.
+		Text("%s", node.Colour(colour.NodeName)).
+		Node(fn.ReturnType)
+
+	printer.Nodes(node, fn.Parameters)
+}
+
 func (fn *Function) valid(other Type) bool {
 	function, ok := other.(*Function)
 	if !ok {
@@ -434,8 +504,25 @@ func (a *Alias) unwrap() Type {
 }
 
 type StructField struct {
+	Name     string
 	Type     Type
 	Exported bool
+}
+
+func (s StructField) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sSTRUCT_FIELD %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			s.Name,
+		).
+		TextIf(
+			s.Exported,
+			" %spub",
+			node.Colour(colour.Attribute),
+		).
+		Node(s.Type)
 }
 
 type Struct struct {
@@ -446,6 +533,19 @@ type Struct struct {
 
 func (s *Struct) String() string {
 	return s.Name
+}
+
+func (s *Struct) Print(node *printer.Node) {
+	node.Text(
+		"%sSTRUCT_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		s.Name,
+	)
+
+	for _, field := range s.Fields {
+		node.Node(field)
+	}
 }
 
 func (s *Struct) valid(other Type) bool {
@@ -495,6 +595,17 @@ func (t *TupleStruct) String() string {
 	return t.Name
 }
 
+func (t *TupleStruct) Print(node *printer.Node) {
+	node.Text(
+		"%sTUPLE_STRUCT_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		t.Name,
+	)
+
+	printer.Nodes(node, t.Types)
+}
+
 func (t *TupleStruct) valid(other Type) bool {
 	tuple, ok := other.(*TupleStruct)
 	if !ok {
@@ -540,6 +651,25 @@ func (i *Interface) String() string {
 	return i.Name
 }
 
+func (i *Interface) Print(node *printer.Node) {
+	node.Text(
+		"%sINTERFACE_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		i.Name,
+	)
+
+	for name, ty := range i.Methods {
+		node.FakeNode(
+			"%sINTERFACE_MEMBER %s%s",
+			func(n *printer.Node) { n.Node(ty) },
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			name,
+		)
+	}
+}
+
 func (i *Interface) valid(other Type) bool {
 	for name, ty := range i.Methods {
 		member, diag := Member(other, name)
@@ -568,6 +698,25 @@ type Union struct {
 
 func (u *Union) String() string {
 	return u.Name
+}
+
+func (u *Union) Print(node *printer.Node) {
+	node.Text(
+		"%sUNION_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		u.Name,
+	)
+
+	for name, ty := range u.Members {
+		node.FakeNode(
+			"%sUNION_MEMBER %s%s",
+			func(n *printer.Node) { n.Node(ty) },
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			name,
+		)
+	}
 }
 
 func (u *Union) valid(other Type) bool {
@@ -621,6 +770,17 @@ func (v *UnionVariant) String() string {
 	return fmt.Sprintf("%s.%s", v.Union.Name, v.Name)
 }
 
+func (v *UnionVariant) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sUNION_VARIANT %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			v.Name,
+		).
+		Node(v.Type)
+}
+
 func (v *UnionVariant) valid(other Type) bool {
 	if expl, ok := other.(*UnionVariant); ok {
 		return expl.Name == v.Name && Assignable(expl.Type, v.Type)
@@ -636,11 +796,11 @@ func (v *UnionVariant) unwrap() Type {
 	return Unwrap(v.Type)
 }
 
-type SimpleUnion struct {
+type InlineUnion struct {
 	Types []Type
 }
 
-func (u *SimpleUnion) String() string {
+func (u *InlineUnion) String() string {
 	var result bytes.Buffer
 
 	for i, ty := range u.Types {
@@ -653,8 +813,14 @@ func (u *SimpleUnion) String() string {
 	return result.String()
 }
 
-func (u *SimpleUnion) valid(other Type) bool {
-	if union, ok := other.(*SimpleUnion); ok {
+func (u *InlineUnion) Print(node *printer.Node) {
+	node.Text("%sINLINE_UNION_TYPE", node.Colour(colour.NodeName))
+
+	printer.Nodes(node, u.Types)
+}
+
+func (u *InlineUnion) valid(other Type) bool {
+	if union, ok := other.(*InlineUnion); ok {
 		for _, ty := range union.Types {
 			if !Assignable(u, ty) {
 				return false
@@ -674,19 +840,19 @@ func (u *SimpleUnion) valid(other Type) bool {
 
 func MakeUnion(a, b Type) Type {
 	types := []Type{}
-	if union, ok := a.(*SimpleUnion); ok {
+	if union, ok := a.(*InlineUnion); ok {
 		types = append(types, union.Types...)
 	} else {
 		types = append(types, a)
 	}
 
-	if union, ok := b.(*SimpleUnion); ok {
+	if union, ok := b.(*InlineUnion); ok {
 		types = append(types, union.Types...)
 	} else {
 		types = append(types, b)
 	}
 
-	return &SimpleUnion{
+	return &InlineUnion{
 		Types: types,
 	}
 }
@@ -700,6 +866,15 @@ type Module struct {
 
 func (m *Module) String() string {
 	return m.Name
+}
+
+func (m *Module) Print(node *printer.Node) {
+	node.Text(
+		"%sMODULE_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		m.Name,
+	)
 }
 
 func (*Module) valid(Type) bool {
@@ -723,6 +898,17 @@ func (p *Pointer) String() string {
 		return fmt.Sprintf("*mut %s", p.Underlying.String())
 	}
 	return fmt.Sprintf("*%s", p.Underlying.String())
+}
+
+func (p *Pointer) Print(node *printer.Node) {
+	node.
+		Text("%sPOINTER_TYPE", node.Colour(colour.NodeName)).
+		TextIf(
+			p.Mutable,
+			" %smut",
+			node.Colour(colour.Attribute),
+		).
+		Node(p.Underlying)
 }
 
 func (p *Pointer) valid(other Type) bool {
@@ -751,6 +937,12 @@ func (e *Explicit) String() string {
 	return e.Name
 }
 
+func (e *Explicit) Print(node *printer.Node) {
+	node.
+		Text("%sEXPLICIT_TYPE", node.Colour(colour.NodeName)).
+		Node(e.Type)
+}
+
 func (e *Explicit) valid(other Type) bool {
 	if expl, ok := other.(*Explicit); ok {
 		return expl.Name == e.Name && Assignable(expl.Type, e.Type)
@@ -770,6 +962,16 @@ func (u *UnitStruct) String() string {
 	return u.Name
 }
 
+func (u *UnitStruct) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sUNIT_STRUCT %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			u.Name,
+		)
+}
+
 func (u *UnitStruct) valid(other Type) bool {
 	// FIXME: compare more than just the name
 	if unit, ok := other.(*UnitStruct); ok {
@@ -785,6 +987,17 @@ type Tag struct {
 
 func (t *Tag) String() string {
 	return t.Name
+}
+
+func (t *Tag) Print(node *printer.Node) {
+	node.Text(
+		"%sTAG_TYPE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		t.Name,
+	)
+
+	printer.Nodes(node, t.Types)
 }
 
 func (t *Tag) valid(other Type) bool {

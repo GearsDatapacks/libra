@@ -1,10 +1,10 @@
 package ir
 
 import (
-	"bytes"
-	"fmt"
 	"math"
 
+	"github.com/gearsdatapacks/libra/colour"
+	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
@@ -19,8 +19,13 @@ type IntegerLiteral struct {
 	Value int64
 }
 
-func (i *IntegerLiteral) String() string {
-	return fmt.Sprint(i.Value)
+func (i *IntegerLiteral) Print(node *printer.Node) {
+	node.Text(
+		"%sINT_LIT %s%v",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		i.Value,
+	)
 }
 
 func (IntegerLiteral) Type() types.Type {
@@ -42,8 +47,13 @@ type FloatLiteral struct {
 	Value float64
 }
 
-func (f *FloatLiteral) String() string {
-	return fmt.Sprint(f.Value)
+func (f *FloatLiteral) Print(node *printer.Node) {
+	node.Text(
+		"%sFLOAT_LIT %s%v",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		f.Value,
+	)
 }
 
 func (f *FloatLiteral) Type() types.Type {
@@ -69,11 +79,13 @@ type BooleanLiteral struct {
 	Value bool
 }
 
-func (b *BooleanLiteral) String() string {
-	if b.Value {
-		return "true"
-	}
-	return "false"
+func (b *BooleanLiteral) Print(node *printer.Node) {
+	node.Text(
+		"%sBOOL_LIT %s%t",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		b.Value,
+	)
 }
 
 func (BooleanLiteral) Type() types.Type {
@@ -95,8 +107,13 @@ type StringLiteral struct {
 	Value string
 }
 
-func (b *StringLiteral) String() string {
-	return "\"" + b.Value + "\""
+func (s *StringLiteral) Print(node *printer.Node) {
+	node.Text(
+		"%sSTRING_LIT %s%q",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		s.Value,
+	)
 }
 
 func (StringLiteral) Type() types.Type {
@@ -118,8 +135,8 @@ type VariableExpression struct {
 	Symbol symbols.Variable
 }
 
-func (v *VariableExpression) String() string {
-	return v.Symbol.Name
+func (v *VariableExpression) Print(node *printer.Node) {
+	v.Symbol.Print(node)
 }
 
 func (v *VariableExpression) Type() types.Type {
@@ -171,72 +188,55 @@ func (b BinaryOperator) String() string {
 
 	switch b {
 	case LogicalAnd:
-		return "&&"
+		return "LogicalAnd"
 	case LogicalOr:
-		return "||"
-
+		return "LogicalOr"
 	case Less:
-		return "<"
-
+		return "Less"
 	case LessEq:
-		return "<="
-
+		return "LessEq"
 	case Greater:
-		return "<"
-
+		return "Greater"
 	case GreaterEq:
-		return ">="
-
+		return "GreaterEq"
 	case Equal:
-		return "=="
-
+		return "Equal"
 	case NotEqual:
-		return "!="
-
+		return "NotEqual"
 	case LeftShift:
-		return "<<"
-
+		return "LeftShift"
 	case RightShift:
-		return ">>"
-
+		return "RightShift"
 	case Union:
-		fallthrough
+		return "Union"
 	case BitwiseOr:
-		return "|"
-
+		return "BitwiseOr"
 	case BitwiseAnd:
-		return "&"
-
+		return "BitwiseAnd"
 	case AddInt:
-		fallthrough
+		return "AddInt"
 	case AddFloat:
-		fallthrough
+		return "AddFloat"
 	case Concat:
-		return "+"
-
+		return "Concat"
 	case SubtractInt:
-		fallthrough
+		return "SubtractInt"
 	case SubtractFloat:
-		return "-"
-
+		return "SubtractFloat"
 	case MultiplyInt:
-		fallthrough
+		return "MultiplyInt"
 	case MultiplyFloat:
-		return "*"
-
+		return "MultiplyFloat"
 	case Divide:
-		return "/"
-
+		return "Divide"
 	case ModuloInt:
-		fallthrough
+		return "ModuloInt"
 	case ModuloFloat:
-		return "%"
-
+		return "ModuloFloat"
 	case PowerInt:
-		fallthrough
+		return "PowerInt"
 	case PowerFloat:
-		return "**"
-
+		return "PowerFloat"
 	default:
 		return "<?>"
 	}
@@ -341,16 +341,18 @@ type BinaryExpression struct {
 	Right    Expression
 }
 
-func (b *BinaryExpression) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(b.Left.String())
-	result.WriteByte(' ')
-	result.WriteString(b.Operator.String())
-	result.WriteByte(' ')
-	result.WriteString(b.Right.String())
-
-	return result.String()
+func (b *BinaryExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sBINARY_EXPR %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Attribute),
+			b.Operator.String(),
+		).
+		Node(b.Left).
+		Node(b.Right).
+		Node(b.Type()).
+		OptionalNode(b.ConstValue())
 }
 
 func (b *BinaryExpression) Type() types.Type {
@@ -565,27 +567,27 @@ func (u UnaryOperator) String() string {
 
 	switch u {
 	case NegateInt:
-		fallthrough
+		return "NegateInt"
 	case NegateFloat:
-		return "-"
+		return "NegateFloat"
 	case Identity:
-		return "+"
+		return "Identity"
 	case LogicalNot:
-		return "!"
+		return "LogicalNot"
 	case BitwiseNot:
-		return "~"
+		return "BitwiseNot"
 	case IncrecementInt:
-		fallthrough
+		return "IncrecementInt"
 	case IncrementFloat:
-		return "++"
+		return "IncrementFloat"
 	case DecrecementInt:
-		fallthrough
+		return "DecrecementInt"
 	case DecrementFloat:
-		return "--"
+		return "DecrementFloat"
 	case PropagateError:
-		return "?"
+		return "PropagateError"
 	case CrashError:
-		return "!"
+		return "CrashError"
 	default:
 		return "<?>"
 	}
@@ -637,19 +639,17 @@ type UnaryExpression struct {
 	Operand  Expression
 }
 
-func (u *UnaryExpression) String() string {
-	var result bytes.Buffer
-	isPost := (u.Operator & postfix) != 0
-
-	if isPost {
-		result.WriteString(u.Operand.String())
-		result.WriteString(u.Operator.String())
-	} else {
-		result.WriteString(u.Operator.String())
-		result.WriteString(u.Operand.String())
-	}
-
-	return result.String()
+func (u *UnaryExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sUNARY_EXPR %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Attribute),
+			u.Operator.String(),
+		).
+		Node(u.Operand).
+		Node(u.Type()).
+		OptionalNode(u.ConstValue())
 }
 
 func (u *UnaryExpression) Type() types.Type {
@@ -711,14 +711,14 @@ type Conversion struct {
 	To         types.Type
 }
 
-func (c *Conversion) String() string {
-	var result bytes.Buffer
-
-	result.WriteString(c.Expression.String())
-	result.WriteString(" -> ")
-	result.WriteString(c.To.String())
-
-	return result.String()
+func (c *Conversion) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sCONVERSION",
+			node.Colour(colour.NodeName),
+		).
+		Node(c.Expression).
+		Node(c.To)
 }
 
 func (c *Conversion) Type() types.Type {
@@ -747,7 +747,7 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		}
 	}
 
-	if _, ok := c.To.(*types.SimpleUnion); ok {
+	if _, ok := c.To.(*types.InlineUnion); ok {
 		return c.Expression.ConstValue()
 	}
 
@@ -758,7 +758,6 @@ func (c *Conversion) ConstValue() values.ConstValue {
 	if _, ok := c.To.(*types.Union); ok {
 		return c.Expression.ConstValue()
 	}
-
 
 	panic("unreachable")
 }
@@ -781,19 +780,16 @@ type ArrayExpression struct {
 	Elements []Expression
 }
 
-func (a *ArrayExpression) String() string {
-	var result bytes.Buffer
+func (a *ArrayExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sARRAY_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(a.DataType).
+		OptionalNode(a.ConstValue())
 
-	result.WriteByte('[')
-	for i, elem := range a.Elements {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(elem.String())
-	}
-
-	result.WriteByte(']')
-	return result.String()
+	printer.Nodes(node, a.Elements)
 }
 
 func (a *ArrayExpression) Type() types.Type {
@@ -830,8 +826,15 @@ type IndexExpression struct {
 	DataType types.Type
 }
 
-func (i *IndexExpression) String() string {
-	return fmt.Sprintf("%s[%s]", i.Left.String(), i.Index.String())
+func (i *IndexExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sINDEX_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(i.Left).
+		Node(i.Index).
+		Node(i.DataType)
 }
 
 func (i *IndexExpression) Type() types.Type {
@@ -855,27 +858,29 @@ type KeyValue struct {
 	Value Expression
 }
 
+func (kv KeyValue) Print(node *printer.Node) {
+	node.
+		Text("%sKEY_VALUE", node.Colour(colour.NodeName)).
+		Node(kv.Key).
+		Node(kv.Value)
+}
+
 type MapExpression struct {
 	expression
 	KeyValues []KeyValue
 	DataType  *types.MapType
 }
 
-func (m *MapExpression) String() string {
-	var result bytes.Buffer
+func (m *MapExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sMAP_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(m.DataType).
+		OptionalNode(m.ConstValue())
 
-	result.WriteByte('{')
-	for i, kv := range m.KeyValues {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(kv.Key.String())
-		result.WriteString(": ")
-		result.WriteString(kv.Value.String())
-	}
-	result.WriteByte('}')
-
-	return result.String()
+	printer.Nodes(node, m.KeyValues)
 }
 
 func (m *MapExpression) Type() types.Type {
@@ -896,11 +901,14 @@ func (m *MapExpression) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	value := map[uint64]values.ConstValue{}
+	value := map[uint64]values.KeyValue{}
 	for _, kv := range m.KeyValues {
 		keyValue := kv.Key.ConstValue()
 		valueValue := kv.Value.ConstValue()
-		value[keyValue.Hash()] = valueValue
+		value[keyValue.Hash()] = values.KeyValue{
+			Key:   keyValue,
+			Value: valueValue,
+		}
 	}
 
 	return values.MapValue{
@@ -914,8 +922,14 @@ type Assignment struct {
 	Value    Expression
 }
 
-func (a *Assignment) String() string {
-	return fmt.Sprintf("%s = %s", a.Assignee, a.Value)
+func (a *Assignment) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sASSIGNMENT",
+			node.Colour(colour.NodeName),
+		).
+		Node(a.Assignee).
+		Node(a.Value)
 }
 
 func (a *Assignment) Type() types.Type {
@@ -936,19 +950,16 @@ type TupleExpression struct {
 	DataType *types.TupleType
 }
 
-func (t *TupleExpression) String() string {
-	var result bytes.Buffer
+func (t *TupleExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sTUPLE_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(t.Type()).
+		OptionalNode(t.ConstValue())
 
-	result.WriteByte('(')
-	for i, val := range t.Values {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(val.String())
-	}
-
-	result.WriteByte(')')
-	return result.String()
+	printer.Nodes(node, t.Values)
 }
 
 func (t *TupleExpression) Type() types.Type {
@@ -985,8 +996,14 @@ type TypeCheck struct {
 	DataType types.Type
 }
 
-func (t *TypeCheck) String() string {
-	return fmt.Sprintf("%s is %s", t.Value.String(), t.DataType.String())
+func (t *TypeCheck) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sTYPE_CHECK_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(t.Value).
+		Node(t.DataType)
 }
 
 func (t *TypeCheck) Type() types.Type {
@@ -1015,20 +1032,16 @@ type FunctionCall struct {
 	ReturnType types.Type
 }
 
-func (f *FunctionCall) String() string {
-	var result bytes.Buffer
+func (f *FunctionCall) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sFUNCTION_CALL",
+			node.Colour(colour.NodeName),
+		).
+		Node(f.Function).
+		Node(f.ReturnType)
 
-	result.WriteString(f.Function.String())
-	result.WriteByte('(')
-	for i, arg := range f.Arguments {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(arg.String())
-	}
-	result.WriteByte(')')
-
-	return result.String()
+	printer.Nodes(node, f.Arguments)
 }
 
 func (f *FunctionCall) Type() types.Type {
@@ -1049,31 +1062,24 @@ type StructExpression struct {
 	Fields map[string]Expression
 }
 
-func (s *StructExpression) String() string {
-	var result bytes.Buffer
+func (s *StructExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sSTRUCT_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(s.Struct).
+		OptionalNode(s.ConstValue())
 
-	result.WriteString(s.Struct.String())
-	result.WriteString(" {")
-	if len(s.Fields) > 0 {
-		result.WriteByte(' ')
-	}
-	isFirst := true
 	for name, value := range s.Fields {
-		if !isFirst {
-			result.WriteString(", ")
-		} else {
-			isFirst = false
-		}
-		result.WriteString(name)
-		result.WriteString(": ")
-		result.WriteString(value.String())
+		node.FakeNode(
+			"%sSTRUCT_FIELD %s%s",
+			func(n *printer.Node) { n.Node(value) },
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			name,
+		)
 	}
-	if len(s.Fields) > 0 {
-		result.WriteByte(' ')
-	}
-	result.WriteByte('}')
-
-	return result.String()
 }
 
 func (s *StructExpression) Type() types.Type {
@@ -1111,27 +1117,15 @@ type TupleStructExpression struct {
 	Fields []Expression
 }
 
-func (t *TupleStructExpression) String() string {
-	var result bytes.Buffer
+func (t *TupleStructExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sTUPLE_STRUCT_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(t.Struct)
 
-	result.WriteString(t.Struct.String())
-	result.WriteString(" {")
-	if len(t.Fields) > 0 {
-		result.WriteByte(' ')
-	}
-
-	for i, value := range t.Fields {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(value.String())
-	}
-	if len(t.Fields) > 0 {
-		result.WriteByte(' ')
-	}
-	result.WriteByte('}')
-
-	return result.String()
+	printer.Nodes(node, t.Fields)
 }
 
 func (t *TupleStructExpression) Type() types.Type {
@@ -1170,8 +1164,16 @@ type MemberExpression struct {
 	DataType types.Type
 }
 
-func (m *MemberExpression) String() string {
-	return fmt.Sprintf("%s.%s", m.Left.String(), m.Member)
+func (m *MemberExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sMEMBER_EXPR %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			m.Member,
+		).
+		Node(m.Left).
+		Node(m.DataType)
 }
 
 func (m *MemberExpression) Type() types.Type {
@@ -1195,20 +1197,15 @@ type Block struct {
 	ResultType types.Type
 }
 
-func (b *Block) String() string {
-	var result bytes.Buffer
+func (b *Block) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sBLOCK",
+			node.Colour(colour.NodeName),
+		).
+		Node(b.ResultType)
 
-	result.WriteByte('{')
-	if len(b.Statements) > 0 {
-		result.WriteByte('\n')
-	}
-	for _, stmt := range b.Statements {
-		result.WriteString(stmt.String())
-		result.WriteByte('\n')
-	}
-	result.WriteByte('}')
-
-	return result.String()
+	printer.Nodes(node, b.Statements)
 }
 
 func (b *Block) Type() types.Type {
@@ -1230,19 +1227,22 @@ type IfExpression struct {
 	ElseBranch Statement
 }
 
-func (i *IfExpression) String() string {
-	var result bytes.Buffer
-	result.WriteString("if ")
-	result.WriteString(i.Condition.String())
-	result.WriteByte(' ')
-	result.WriteString(i.Body.String())
+func (i *IfExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sIF_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(i.Condition).
+		Node(i.Body)
 
 	if i.ElseBranch != nil {
-		result.WriteString("\nelse ")
-		result.WriteString(i.ElseBranch.String())
+		node.FakeNode(
+			"%sELSE_BRANCH",
+			func(n *printer.Node) { n.Node(i.ElseBranch) },
+			node.Colour(colour.NodeName),
+		)
 	}
-
-	return result.String()
 }
 
 func (i *IfExpression) Type() types.Type {
@@ -1263,14 +1263,14 @@ type WhileLoop struct {
 	Body      *Block
 }
 
-func (w *WhileLoop) String() string {
-	var result bytes.Buffer
-	result.WriteString("while ")
-	result.WriteString(w.Condition.String())
-	result.WriteByte(' ')
-	result.WriteString(w.Body.String())
-
-	return result.String()
+func (w *WhileLoop) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sWHILE_LOOP",
+			node.Colour(colour.NodeName),
+		).
+		Node(w.Condition).
+		Node(w.Body)
 }
 
 func (w *WhileLoop) Type() types.Type {
@@ -1292,17 +1292,15 @@ type ForLoop struct {
 	Body     *Block
 }
 
-func (f *ForLoop) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("for ")
-	result.WriteString(f.Variable.Name)
-	result.WriteString(" in ")
-	result.WriteString(f.Iterator.String())
-	result.WriteByte(' ')
-	result.WriteString(f.Body.String())
-
-	return result.String()
+func (f *ForLoop) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sFOR_LOOP",
+			node.Colour(colour.NodeName),
+		).
+		Node(&f.Variable).
+		Node(f.Iterator).
+		Node(f.Body)
 }
 
 func (f *ForLoop) Type() types.Type {
@@ -1322,8 +1320,13 @@ type TypeExpression struct {
 	DataType types.Type
 }
 
-func (t *TypeExpression) String() string {
-	return t.DataType.String()
+func (t *TypeExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sTYPE_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(t.DataType)
 }
 
 func (t *TypeExpression) Type() types.Type {
@@ -1345,22 +1348,24 @@ type FunctionExpression struct {
 	DataType   *types.Function
 }
 
-func (f *FunctionExpression) String() string {
-	var result bytes.Buffer
+func (f *FunctionExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sFUNC_EXPR",
+			node.Colour(colour.NodeName),
+		)
 
-	result.WriteString("fn(")
-
-	for i, param := range f.Parameters {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(param)
+	for _, param := range f.Parameters {
+		node.Text(
+			" %s%s",
+			node.Colour(colour.Name),
+			param,
+		)
 	}
 
-	result.WriteString(") ")
-	result.WriteString(f.Body.String())
-
-	return result.String()
+	node.
+		Node(f.Body).
+		Node(f.DataType)
 }
 
 func (f *FunctionExpression) Type() types.Type {
@@ -1381,11 +1386,18 @@ type RefExpression struct {
 	Mutable bool
 }
 
-func (r *RefExpression) String() string {
-	if r.Mutable {
-		return fmt.Sprintf("&mut %s", r.Value.String())
-	}
-	return fmt.Sprintf("&%s", r.Value.String())
+func (r *RefExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sREF_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		TextIf(
+			r.Mutable,
+			" %smut",
+			node.Colour(colour.Attribute),
+		).
+		Node(r.Value)
 }
 
 func (r *RefExpression) Type() types.Type {
@@ -1408,8 +1420,13 @@ type DerefExpression struct {
 	Value Expression
 }
 
-func (d *DerefExpression) String() string {
-	return fmt.Sprintf("%s.*", d.Value.String())
+func (d *DerefExpression) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sDEREF_EXPR",
+			node.Colour(colour.NodeName),
+		).
+		Node(d.Value)
 }
 
 func (d *DerefExpression) Type() types.Type {

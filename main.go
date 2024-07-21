@@ -37,5 +37,6 @@ func main() {
 		diag.Print()
 	}
 
-	fmt.Println(program.String())
+	program.Print()
+	fmt.Println()
 }

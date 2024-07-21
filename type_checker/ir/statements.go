@@ -1,8 +1,8 @@
 package ir
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/gearsdatapacks/libra/colour"
+	"github.com/gearsdatapacks/libra/printer"
 )
 
 type VariableDeclaration struct {
@@ -10,15 +10,15 @@ type VariableDeclaration struct {
 	Value Expression
 }
 
-func (v *VariableDeclaration) String() string {
-	var result bytes.Buffer
-
-	result.WriteString("let ")
-	result.WriteString(v.Name)
-	result.WriteString(" = ")
-	result.WriteString(v.Value.String())
-
-	return result.String()
+func (v *VariableDeclaration) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sVAR_DECL %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			v.Name,
+		).
+		Node(v.Value)
 }
 
 type FunctionDeclaration struct {
@@ -27,60 +27,69 @@ type FunctionDeclaration struct {
 	Body       *Block
 }
 
-func (f *FunctionDeclaration) String() string {
-	var result bytes.Buffer
+func (f *FunctionDeclaration) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sFUNC_DECL %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			f.Name,
+		)
 
-	result.WriteString("fn ")
-	result.WriteString(f.Name)
-	result.WriteByte('(')
-
-	for i, param := range f.Parameters {
-		if i != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(param)
+	for _, param := range f.Parameters {
+		node.Text(" %s%s", node.Colour(colour.Name), param)
 	}
 
-	result.WriteString(") ")
-	result.WriteString(f.Body.String())
-
-	return result.String()
+	node.Node(f.Body)
 }
 
 type ReturnStatement struct {
 	Value Expression
 }
 
-func (r *ReturnStatement) String() string {
-	if r.Value != nil {
-		return fmt.Sprintf("return %s", r.Value.String())
-	}
-	return "return"
+func (r *ReturnStatement) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sRETURN",
+			node.Colour(colour.NodeName),
+		).
+		OptionalNode(r.Value)
 }
 
 type BreakStatement struct {
 	Value Expression
 }
 
-func (b *BreakStatement) String() string {
-	if b.Value == nil {
-		return "break"
-	}
-	return fmt.Sprintf("break %s", b.Value.String())
+func (b *BreakStatement) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sBREAK",
+			node.Colour(colour.NodeName),
+		).
+		OptionalNode(b.Value)
 }
 
 type YieldStatement struct {
 	Value Expression
 }
 
-func (y *YieldStatement) String() string {
-	return fmt.Sprintf("yield %s", y.Value.String())
+func (y *YieldStatement) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sYIELD",
+			node.Colour(colour.NodeName),
+		).
+		Node(y.Value)
 }
 
 type ContinueStatement struct{}
 
-func (*ContinueStatement) String() string {
-	return "continue"
+func (*ContinueStatement) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sCONTINUE",
+			node.Colour(colour.NodeName),
+		)
 }
 
 type ImportStatement struct {
@@ -90,33 +99,31 @@ type ImportStatement struct {
 	ImportAll bool
 }
 
-func (i *ImportStatement) String() string {
-	var result bytes.Buffer
+func (i *ImportStatement) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sIMPORT",
+			node.Colour(colour.NodeName),
+		).
+		TextIf(
+			i.ImportAll,
+			" %s*",
+			node.Colour(colour.Symbol),
+		).
+		Text(
+			" %s%q",
+			node.Colour(colour.Literal),
+			i.Module,
+		).
+		Text(
+			" %s%s",
+			node.Colour(colour.Name),
+			i.Name,
+		)
 
-	result.WriteString("import ")
-	if i.ImportAll {
-		result.WriteString("* from ")
-	} else if i.Symbols != nil {
-		result.WriteByte('{')
-		for i, symbol := range i.Symbols {
-			if i != 0 {
-				result.WriteString(", ")
-			}
-			result.WriteString(symbol)
-		}
-		result.WriteString("} ")
+	for _, symbol := range i.Symbols {
+		node.Text(" %s", symbol)
 	}
-
-	result.WriteByte('"')
-	result.WriteString(i.Module)
-	result.WriteByte('"')
-
-	if !i.ImportAll && i.Symbols == nil {
-		result.WriteString(" as ")
-		result.WriteString(i.Name)
-	}
-
-	return result.String()
 }
 
 // TODO:
