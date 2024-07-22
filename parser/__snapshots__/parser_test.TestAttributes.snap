@@ -1,0 +1,63 @@
+
+[`@tag Error struct MyError { string }` - 1]
+STRUCT_DECL MyError (11:17)
+├─STRUCT_FIELD
+│ └─TYPE_OR_IDENT string
+└─tag
+  └─IDENT Error (5:10)
+---
+
+[`@impl LeInterface fn (string) to_string(): string { this }` - 1]
+FUNC_DECL to_string impl LeInterface (18:20)
+├─METHOD_OF
+│ └─IDENT string (22:28)
+├─IDENT string (43:49)
+└─BLOCK (50:51)
+  └─IDENT this (52:56)
+---
+
+[`@untagged union IntOrPtr { int: i32, ptr: *i32 }` - 1]
+UNION_DECL IntOrPtr untagged (10:15)
+├─UNION_MEMBER int
+│ └─IDENT i32 (32:35)
+└─UNION_MEMBER ptr
+  └─PTR_TYPE (42:43)
+    └─IDENT i32 (43:46)
+---
+
+[`@todo Implement it fn unimplemented(param: i32) {}` - 1]
+FUNC_DECL unimplemented (19:21)
+├─PARAM
+│ └─TYPE_OR_IDENT param
+│   └─IDENT i32 (43:46)
+├─BLOCK (48:49)
+└─ATTRIBUTES
+  └─todo = "Implement it"
+---
+
+[`@doc Does cool stuff fn do_cool_stuff() {}` - 1]
+FUNC_DECL do_cool_stuff (21:23)
+├─BLOCK (40:41)
+└─ATTRIBUTES
+  └─doc = "Does cool stuff"
+---
+
+[`@deprecated Use `do_other_thing` instead fn do_thing() {}` - 1]
+FUNC_DECL do_thing (41:43)
+├─BLOCK (55:56)
+└─ATTRIBUTES
+  └─deprecated = "Use `do_other_thing` instead"
+---
+
+[`@doc Has three fields @todo Add a third field @tag Incomplete struct ThreeFields {i32, f32}` - 1]
+STRUCT_DECL ThreeFields (62:68)
+├─STRUCT_FIELD
+│ └─TYPE_OR_IDENT i32
+├─STRUCT_FIELD
+│ └─TYPE_OR_IDENT f32
+├─ATTRIBUTES
+│ ├─todo = "Add a third field"
+│ └─doc = "Has three fields"
+└─tag
+  └─IDENT Incomplete (51:61)
+---

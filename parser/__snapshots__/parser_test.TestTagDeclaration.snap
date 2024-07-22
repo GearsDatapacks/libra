@@ -6,3 +6,9 @@ TAG_DECL MyTag (0:3)
 [`tag Test124` - 1]
 TAG_DECL Test124 (0:3)
 ---
+
+[`tag Number { i32, f32 }` - 1]
+TAG_DECL Number (0:3)
+├─IDENT i32 (13:16)
+└─IDENT f32 (18:21)
+---

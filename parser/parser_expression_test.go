@@ -199,18 +199,6 @@ func TestDerefExpressions(t *testing.T) {
 	}
 }
 
-func TestPointerTypes(t *testing.T) {
-	tests := []string{
-		"*string",
-		"*mut i32",
-		"*91",
-	}
-
-	for _, test := range tests {
-		utils.MatchAstSnap(t, test)
-	}
-}
-
 func TestRefExpressions(t *testing.T) {
 	tests := []string{
 		"&13",
@@ -239,6 +227,92 @@ func TestTupleExpressions(t *testing.T) {
 		"()",
 		"(1, 2, 3)",
 		`(1, "hi", false, thing)`,
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, test)
+	}
+}
+
+func TestIfExpression(t *testing.T) {
+	tests := []string{
+		"if a { 10 }",
+		"if false { 10 } else { 20 }",
+		`if 69
+		{"Nice"}
+		else if 42 { "UATLTUAE" }else{
+			"Boring"
+		}`,
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, test)
+	}
+}
+
+func TestWhileLoop(t *testing.T) {
+	tests := []string{
+		"while true { nop }",
+		`while thing { "Hi" }`,
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, test)
+	}
+}
+
+func TestForLoop(t *testing.T) {
+	tests := []string{
+		"for i in [1,2,3] { i }",
+		"for foo in 93\n{[foo,bar,]}",
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, test)
+	}
+}
+
+func TestFunctionExpressions(t *testing.T) {
+	tests := []string{
+		"fn() {}",
+		"fn(a, b: i32) { a + b }",
+		`fn(): string {"Hello, world!"}`,
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, "let func = "+test)
+	}
+}
+
+func TestTypeExpressions(t *testing.T) {
+	tests := []string{
+		"void", "f32", "Type",
+		"i64[10]", "bool[2]",
+		"string[]", "Foo[]",
+		"{string: i32}", "{bool: bool}",
+		"(string, string, bool)", "(f64[], i8[])",
+		"fn(SomeType, OtherType): bool", "fn(): string",
+		"i8 | i16 | i32 | i64", "string | bool",
+		"*string", "*mut i32",
+		"?f32", "?(string[])",
+		"!u8", "!{u32: string}",
+
+		"?({string: Value}[10])",
+		"!Foo[]",
+		"(i32 | f32)[] | i32 | f32",
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, "type MyType = "+test)
+	}
+}
+
+func TestBlockMapInference(t *testing.T) {
+	tests := []string{
+		"{}",
+		"{a: b}",
+		"{let value = 10}",
+		"{1 + 2}",
 	}
 
 	for _, test := range tests {
@@ -287,11 +361,17 @@ func TestParserDiagnostics(t *testing.T) {
 		"let in = 1\nfor i in 20 {}",
 		"fn add(a: i32, b, c): f32 {}",
 		"fn foo(\nbar\n): baz {}",
+		"fn func_type(mut i32[]) {}",
 		"fn (string) bool.maybe() {}",
 		`import * from "io" as in_out`,
 		`import {read, write} from * from "io"`,
 		`if true { fn a() {} }`,
 		`type T = ;`,
+		`let value = .`,
+		"pub return 10",
+		"explicit fn func() {}",
+		"@nonexistent\nfn attributed() {}",
+		"@tag FunctionTag\nfn tagged() {}",
 	}
 
 	for _, test := range tests {

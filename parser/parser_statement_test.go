@@ -18,44 +18,6 @@ func TestVariableDeclaration(t *testing.T) {
 	}
 }
 
-func TestIfStatement(t *testing.T) {
-	tests := []string{
-		"if a { 10 }",
-		"if false { 10 } else { 20 }",
-		`if 69
-		{"Nice"}
-		else if 42 { "UATLTUAE" }else{
-			"Boring"
-		}`,
-	}
-
-	for _, test := range tests {
-		utils.MatchAstSnap(t, test)
-	}
-}
-
-func TestWhileLoop(t *testing.T) {
-	tests := []string{
-		"while true { nop }",
-		`while thing { "Hi" }`,
-	}
-
-	for _, test := range tests {
-		utils.MatchAstSnap(t, test)
-	}
-}
-
-func TestForLoop(t *testing.T) {
-	tests := []string{
-		"for i in [1,2,3] { i }",
-		"for foo in 93\n{[foo,bar,]}",
-	}
-
-	for _, test := range tests {
-		utils.MatchAstSnap(t, test)
-	}
-}
-
 func TestFunctionDeclaration(t *testing.T) {
 	tests := []string{
 		`fn hello() { "Hello, world!" }`,
@@ -113,6 +75,7 @@ func TestTypeDeclaration(t *testing.T) {
 		"type foo = bar",
 		"type int=i32",
 		"type boolean\n =\n bool",
+		"explicit type ID = u64",
 	}
 
 	for _, test := range tests {
@@ -193,6 +156,23 @@ func TestTagDeclaration(t *testing.T) {
 	tests := []string{
 		"tag MyTag",
 		"tag Test124",
+		"tag Number { i32, f32 }",
+	}
+
+	for _, test := range tests {
+		utils.MatchAstSnap(t, test)
+	}
+}
+
+func TestAttributes(t *testing.T) {
+	tests := []string{
+		"@tag Error\nstruct MyError { string }",
+		"@impl LeInterface\nfn (string) to_string(): string { this }",
+		"@untagged\nunion IntOrPtr { int: i32, ptr: *i32 }",
+		"@todo Implement it\nfn unimplemented(param: i32) {}",
+		"@doc Does cool stuff\nfn do_cool_stuff() {}",
+		"@deprecated Use `do_other_thing` instead\nfn do_thing() {}",
+		"@doc Has three fields\n@todo Add a third field\n@tag Incomplete\nstruct ThreeFields {i32, f32}",
 	}
 
 	for _, test := range tests {

@@ -13,3 +13,8 @@ TYPE_DECL int (0:4)
 TYPE_DECL boolean (0:4)
 └─IDENT bool (17:21)
 ---
+
+[`explicit type ID = u64` - 1]
+TYPE_DECL ID explicit (9:13)
+└─IDENT u64 (19:22)
+---

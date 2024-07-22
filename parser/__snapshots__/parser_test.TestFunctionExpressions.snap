@@ -1,0 +1,28 @@
+
+[`let func = fn() {}` - 1]
+VAR_DECL let func (0:3)
+└─FUNC_EXPR (11:13)
+  └─BLOCK (16:17)
+---
+
+[`let func = fn(a, b: i32) { a + b }` - 1]
+VAR_DECL let func (0:3)
+└─FUNC_EXPR (11:13)
+  ├─PARAM
+  │ └─TYPE_OR_IDENT a
+  ├─PARAM
+  │ └─TYPE_OR_IDENT b
+  │   └─IDENT i32 (20:23)
+  └─BLOCK (25:26)
+    └─BIN_EXPR + (27:32)
+      ├─IDENT a (27:28)
+      └─IDENT b (31:32)
+---
+
+[`let func = fn(): string {"Hello, world!"}` - 1]
+VAR_DECL let func (0:3)
+└─FUNC_EXPR (11:13)
+  ├─IDENT string (17:23)
+  └─BLOCK (24:25)
+    └─STRING_LIT "Hello, world!" (25:40)
+---

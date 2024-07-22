@@ -1,0 +1,181 @@
+
+[`type MyType = void` - 1]
+TYPE_DECL MyType (0:4)
+└─IDENT void (14:18)
+---
+
+[`type MyType = f32` - 1]
+TYPE_DECL MyType (0:4)
+└─IDENT f32 (14:17)
+---
+
+[`type MyType = Type` - 1]
+TYPE_DECL MyType (0:4)
+└─IDENT Type (14:18)
+---
+
+[`type MyType = i64[10]` - 1]
+TYPE_DECL MyType (0:4)
+└─INDEX_EXPR (17:18)
+  ├─IDENT i64 (14:17)
+  └─INT_LIT 10 (18:20)
+---
+
+[`type MyType = bool[2]` - 1]
+TYPE_DECL MyType (0:4)
+└─INDEX_EXPR (18:19)
+  ├─IDENT bool (14:18)
+  └─INT_LIT 2 (19:20)
+---
+
+[`type MyType = string[]` - 1]
+TYPE_DECL MyType (0:4)
+└─INDEX_EXPR (20:21)
+  └─IDENT string (14:20)
+---
+
+[`type MyType = Foo[]` - 1]
+TYPE_DECL MyType (0:4)
+└─INDEX_EXPR (17:18)
+  └─IDENT Foo (14:17)
+---
+
+[`type MyType = {string: i32}` - 1]
+TYPE_DECL MyType (0:4)
+└─MAP_EXPR (14:15)
+  └─KEY_VALUE
+    ├─IDENT string (15:21)
+    └─IDENT i32 (23:26)
+---
+
+[`type MyType = {bool: bool}` - 1]
+TYPE_DECL MyType (0:4)
+└─MAP_EXPR (14:15)
+  └─KEY_VALUE
+    ├─IDENT bool (15:19)
+    └─IDENT bool (21:25)
+---
+
+[`type MyType = (string, string, bool)` - 1]
+TYPE_DECL MyType (0:4)
+└─TUPLE_EXPR (14:15)
+  ├─IDENT string (15:21)
+  ├─IDENT string (23:29)
+  └─IDENT bool (31:35)
+---
+
+[`type MyType = (f64[], i8[])` - 1]
+TYPE_DECL MyType (0:4)
+└─TUPLE_EXPR (14:15)
+  ├─INDEX_EXPR (18:19)
+  │ └─IDENT f64 (15:18)
+  └─INDEX_EXPR (24:25)
+    └─IDENT i8 (22:24)
+---
+
+[`type MyType = fn(SomeType, OtherType): bool` - 1]
+TYPE_DECL MyType (0:4)
+└─FUNC_TYPE (14:16)
+  ├─PARAM
+  │ └─TYPE_OR_IDENT SomeType
+  ├─PARAM
+  │ └─TYPE_OR_IDENT OtherType
+  └─IDENT bool (39:43)
+---
+
+[`type MyType = fn(): string` - 1]
+TYPE_DECL MyType (0:4)
+└─FUNC_TYPE (14:16)
+  └─IDENT string (20:26)
+---
+
+[`type MyType = i8 | i16 | i32 | i64` - 1]
+TYPE_DECL MyType (0:4)
+└─BIN_EXPR | (14:34)
+  ├─BIN_EXPR | (14:28)
+  │ ├─BIN_EXPR | (14:22)
+  │ │ ├─IDENT i8 (14:16)
+  │ │ └─IDENT i16 (19:22)
+  │ └─IDENT i32 (25:28)
+  └─IDENT i64 (31:34)
+---
+
+[`type MyType = string | bool` - 1]
+TYPE_DECL MyType (0:4)
+└─BIN_EXPR | (14:27)
+  ├─IDENT string (14:20)
+  └─IDENT bool (23:27)
+---
+
+[`type MyType = *string` - 1]
+TYPE_DECL MyType (0:4)
+└─PTR_TYPE (14:15)
+  └─IDENT string (15:21)
+---
+
+[`type MyType = *mut i32` - 1]
+TYPE_DECL MyType (0:4)
+└─PTR_TYPE mut (14:15)
+  └─IDENT i32 (19:22)
+---
+
+[`type MyType = ?f32` - 1]
+TYPE_DECL MyType (0:4)
+└─OPTION_TYPE (14:15)
+  └─IDENT f32 (15:18)
+---
+
+[`type MyType = ?(string[])` - 1]
+TYPE_DECL MyType (0:4)
+└─OPTION_TYPE (14:15)
+  └─PAREN_EXPR (15:16)
+    └─INDEX_EXPR (22:23)
+      └─IDENT string (16:22)
+---
+
+[`type MyType = !u8` - 1]
+TYPE_DECL MyType (0:4)
+└─PREFIX_EXPR `!` (14:15)
+  └─IDENT u8 (15:17)
+---
+
+[`type MyType = !{u32: string}` - 1]
+TYPE_DECL MyType (0:4)
+└─PREFIX_EXPR `!` (14:15)
+  └─MAP_EXPR (15:16)
+    └─KEY_VALUE
+      ├─IDENT u32 (16:19)
+      └─IDENT string (21:27)
+---
+
+[`type MyType = ?({string: Value}[10])` - 1]
+TYPE_DECL MyType (0:4)
+└─OPTION_TYPE (14:15)
+  └─PAREN_EXPR (15:16)
+    └─INDEX_EXPR (31:32)
+      ├─MAP_EXPR (16:17)
+      │ └─KEY_VALUE
+      │   ├─IDENT string (17:23)
+      │   └─IDENT Value (25:30)
+      └─INT_LIT 10 (32:34)
+---
+
+[`type MyType = !Foo[]` - 1]
+TYPE_DECL MyType (0:4)
+└─PREFIX_EXPR `!` (14:15)
+  └─INDEX_EXPR (18:19)
+    └─IDENT Foo (15:18)
+---
+
+[`type MyType = (i32 | f32)[] | i32 | f32` - 1]
+TYPE_DECL MyType (0:4)
+└─BIN_EXPR | (25:39)
+  ├─BIN_EXPR | (25:33)
+  │ ├─INDEX_EXPR (25:26)
+  │ │ └─PAREN_EXPR (14:15)
+  │ │   └─BIN_EXPR | (15:24)
+  │ │     ├─IDENT i32 (15:18)
+  │ │     └─IDENT f32 (21:24)
+  │ └─IDENT i32 (30:33)
+  └─IDENT f32 (36:39)
+---

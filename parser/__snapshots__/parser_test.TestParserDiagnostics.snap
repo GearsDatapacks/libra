@@ -79,6 +79,14 @@ fn foo(
 
 ---
 
+[`fn func_type(mut i32[]) {}` - 1]
+test.lb:1:14:
+fn func_type(mut i32[]) {}
+             ^ "mut" must be followed by a parameter name
+
+
+---
+
 [`fn (string) bool.maybe() {}` - 1]
 test.lb:1:13:
 fn (string) bool.maybe() {}
@@ -115,6 +123,46 @@ if true { fn a() {} }
 test.lb:1:10:
 type T = ;
          ^ Expected type, found `;`
+
+
+---
+
+[`let value = .` - 1]
+test.lb:1:14:
+let value = .
+             ^ Invalid right-hand side of expression. Expected identifier or struct body, found <Eof>
+
+
+---
+
+[`pub return 10` - 1]
+test.lb:1:1:
+pub return 10
+^ Only top-level declarations can be exported
+
+
+---
+
+[`explicit fn func() {}` - 1]
+test.lb:1:1:
+explicit fn func() {}
+^ Statement cannot be marked explicit
+
+
+---
+
+[`@nonexistent fn attributed() {}` - 1]
+test.lb:1:1:
+@nonexistent
+^ The attribute "nonexistent" does not exist
+
+
+---
+
+[`@tag FunctionTag fn tagged() {}` - 1]
+test.lb:2:1:
+fn tagged() {}
+^ Statement cannot be marked with attribute "tag"
 
 
 ---
