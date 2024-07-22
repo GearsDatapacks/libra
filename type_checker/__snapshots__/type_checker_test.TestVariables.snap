@@ -1,0 +1,31 @@
+
+[`let x = 1` - 1]
+VAR_DECL x
+└─CONVERSION
+  ├─INT_LIT 1
+  └─VARIABLE_TYPE i32
+---
+
+[`mut foo: f32 = 1.4` - 1]
+VAR_DECL foo
+└─CONVERSION
+  ├─FLOAT_LIT 1.4
+  └─VARIABLE_TYPE f32
+---
+
+[`const greeting: string = "Hi!"` - 1]
+VAR_DECL greeting
+└─STRING_LIT "Hi!"
+---
+
+[`mut is_awesome = true` - 1]
+VAR_DECL is_awesome
+└─BOOL_LIT true
+---
+
+[`const my_float: f32 = 15` - 1]
+VAR_DECL my_float
+└─CONVERSION
+  ├─INT_LIT 15
+  └─VARIABLE_TYPE f32
+---

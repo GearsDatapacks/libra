@@ -1,0 +1,24 @@
+
+[`while true {false}` - 1]
+WHILE_LOOP
+├─BOOL_LIT true
+└─BLOCK
+  ├─PRIMARY_TYPE void
+  └─BOOL_LIT false
+---
+
+[`while 9 > 12 {9 * 12}` - 1]
+WHILE_LOOP
+├─BINARY_EXPR Greater
+│ ├─INT_LIT 9
+│ ├─INT_LIT 12
+│ ├─PRIMARY_TYPE bool
+│ └─BOOL_VALUE false
+└─BLOCK
+  ├─PRIMARY_TYPE void
+  └─BINARY_EXPR MultiplyInt
+    ├─INT_LIT 9
+    ├─INT_LIT 12
+    ├─VARIABLE_TYPE untyped int
+    └─INT_VALUE 108
+---

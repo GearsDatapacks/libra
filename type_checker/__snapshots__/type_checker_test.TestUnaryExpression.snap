@@ -1,0 +1,28 @@
+
+[`-1` - 1]
+UNARY_EXPR NegateInt
+├─INT_LIT 1
+├─VARIABLE_TYPE untyped int
+└─INT_VALUE -1
+---
+
+[`-2.72` - 1]
+UNARY_EXPR NegateFloat
+├─FLOAT_LIT 2.72
+├─VARIABLE_TYPE untyped float
+└─FLOAT_VALUE -2.720000
+---
+
+[`!true` - 1]
+UNARY_EXPR LogicalNot
+├─BOOL_LIT true
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE false
+---
+
+[`~104` - 1]
+UNARY_EXPR BitwiseNot
+├─INT_LIT 104
+├─VARIABLE_TYPE untyped int
+└─INT_VALUE -105
+---

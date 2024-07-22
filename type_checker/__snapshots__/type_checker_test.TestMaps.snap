@@ -1,0 +1,102 @@
+
+[`{1: 2, 3: 4}` - 1]
+MAP_EXPR
+├─MAP_TYPE
+│ ├─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE i32
+├─MAP_VALUE
+│ ├─KEY_VALUE
+│ │ ├─INT_VALUE 1
+│ │ └─INT_VALUE 2
+│ └─KEY_VALUE
+│   ├─INT_VALUE 3
+│   └─INT_VALUE 4
+├─KEY_VALUE
+│ ├─INT_LIT 1
+│ └─INT_LIT 2
+└─KEY_VALUE
+  ├─INT_LIT 3
+  └─INT_LIT 4
+---
+
+[`{"one": 1, "two": 2, "three": 3}` - 1]
+MAP_EXPR
+├─MAP_TYPE
+│ ├─PRIMARY_TYPE string
+│ └─VARIABLE_TYPE i32
+├─MAP_VALUE
+│ ├─KEY_VALUE
+│ │ ├─STRING_VALUE "one"
+│ │ └─INT_VALUE 1
+│ ├─KEY_VALUE
+│ │ ├─STRING_VALUE "two"
+│ │ └─INT_VALUE 2
+│ └─KEY_VALUE
+│   ├─STRING_VALUE "three"
+│   └─INT_VALUE 3
+├─KEY_VALUE
+│ ├─STRING_LIT "one"
+│ └─INT_LIT 1
+├─KEY_VALUE
+│ ├─STRING_LIT "two"
+│ └─INT_LIT 2
+└─KEY_VALUE
+  ├─STRING_LIT "three"
+  └─INT_LIT 3
+---
+
+[`{true: "true", false: "false"}` - 1]
+MAP_EXPR
+├─MAP_TYPE
+│ ├─PRIMARY_TYPE bool
+│ └─PRIMARY_TYPE string
+├─MAP_VALUE
+│ ├─KEY_VALUE
+│ │ ├─BOOL_VALUE false
+│ │ └─STRING_VALUE "false"
+│ └─KEY_VALUE
+│   ├─BOOL_VALUE true
+│   └─STRING_VALUE "true"
+├─KEY_VALUE
+│ ├─BOOL_LIT true
+│ └─STRING_LIT "true"
+└─KEY_VALUE
+  ├─BOOL_LIT false
+  └─STRING_LIT "false"
+---
+
+[`{"1" + "2": 1 + 2, "7" + "4": 7 + 4}` - 1]
+MAP_EXPR
+├─MAP_TYPE
+│ ├─PRIMARY_TYPE string
+│ └─VARIABLE_TYPE i32
+├─MAP_VALUE
+│ ├─KEY_VALUE
+│ │ ├─STRING_VALUE "74"
+│ │ └─INT_VALUE 11
+│ └─KEY_VALUE
+│   ├─STRING_VALUE "12"
+│   └─INT_VALUE 3
+├─KEY_VALUE
+│ ├─BINARY_EXPR Concat
+│ │ ├─STRING_LIT "1"
+│ │ ├─STRING_LIT "2"
+│ │ ├─PRIMARY_TYPE string
+│ │ └─STRING_VALUE "12"
+│ └─BINARY_EXPR AddInt
+│   ├─INT_LIT 1
+│   ├─INT_LIT 2
+│   ├─VARIABLE_TYPE untyped int
+│   └─INT_VALUE 3
+└─KEY_VALUE
+  ├─BINARY_EXPR Concat
+  │ ├─STRING_LIT "7"
+  │ ├─STRING_LIT "4"
+  │ ├─PRIMARY_TYPE string
+  │ └─STRING_VALUE "74"
+  └─BINARY_EXPR AddInt
+    ├─INT_LIT 7
+    ├─INT_LIT 4
+    ├─VARIABLE_TYPE untyped int
+    └─INT_VALUE 11
+---

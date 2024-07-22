@@ -1,0 +1,156 @@
+
+[`let x: foo = 1` - 1]
+test.lb:1:8:
+let x: foo = 1
+       ^ Variable "foo" is not defined
+
+
+---
+
+[`const text: string = false` - 1]
+test.lb:1:22:
+const text: string = false
+                     ^ Value of type "bool" is not assignable to type "string"
+
+
+---
+
+[`let foo = 1; let foo = 2` - 1]
+test.lb:1:18:
+let foo = 1; let foo = 2
+                 ^ Variable "foo" is already defined
+
+
+---
+
+[`let a = b` - 1]
+test.lb:1:9:
+let a = b
+        ^ Variable "b" is not defined
+
+
+---
+
+[`mut result = 1 + "hi"` - 1]
+test.lb:1:16:
+mut result = 1 + "hi"
+               ^ Operator "+" is not defined for types "untyped int" and "string"
+
+
+---
+
+[`const neg_bool = -true` - 1]
+test.lb:1:18:
+const neg_bool = -true
+                 ^ Operator `-` is not defined for operand of type "bool"
+
+
+---
+
+[`let truthy: bool = 1 -> bool` - 1]
+test.lb:1:20:
+let truthy: bool = 1 -> bool
+                   ^ Cannot cast value of type "untyped int" to type "bool"
+
+
+---
+
+[`let i = 0; i = 1` - 1]
+test.lb:1:12:
+let i = 0; i = 1
+           ^ Cannot modify value, it is immutable
+
+
+---
+
+[`1 + 2--` - 1]
+test.lb:1:5:
+1 + 2--
+    ^ Cannot decrement a non-variable value
+
+
+---
+
+[`[1, 2, true]` - 1]
+test.lb:1:8:
+[1, 2, true]
+       ^ Value of type "bool" is not assignable to type "i32"
+
+
+---
+
+[`mut a = 0; const b = a + 1` - 1]
+test.lb:1:22:
+mut a = 0; const b = a + 1
+                     ^ Value must be known at compile time
+
+
+---
+
+[`mut i = 1; (1, true, 7.3)[i]` - 1]
+test.lb:1:27:
+mut i = 1; (1, true, 7.3)[i]
+                          ^ Value must be known at compile time
+
+
+---
+
+[`let arr: string[1.5] = ["one", "half"]` - 1]
+test.lb:1:17:
+let arr: string[1.5] = ["one", "half"]
+                ^ Array length must be an integer
+
+
+---
+
+[`[1, 2, 3][3.14]` - 1]
+test.lb:1:11:
+[1, 2, 3][3.14]
+          ^ Cannot index value of type "i32[3]" with value of type "untyped float"
+
+
+---
+
+[`1 = 2` - 1]
+test.lb:1:1:
+1 = 2
+^ Cannot assign to a non-variable value
+
+
+---
+
+[`[1, 2, 3][8]` - 1]
+test.lb:1:11:
+[1, 2, 3][8]
+          ^ Index 8 is out of bounds of array of length 3
+
+
+---
+
+[`if 21 {12}` - 1]
+test.lb:1:4:
+if 21 {12}
+   ^ Condition must be a boolean
+
+
+---
+
+[`struct Rect { w: i32, h }` - 1]
+test.lb:1:23:
+struct Rect { w: i32, h }
+                      ^ The last field of a struct must have a type annotation
+
+
+---
+
+[`struct Wrapper { foo: i32, value }` - 1]
+test.lb:2:11:
+foo: i32, value
+          ^ The last field of a struct must have a type annotation
+
+test.lb:1:8:
+struct Wrapper {
+       ^ Field in this struct
+
+
+---

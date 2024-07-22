@@ -1,20 +1,20 @@
 
-["foo.bar" - 1]
+[`foo.bar` - 1]
 MEMBER_EXPR bar (3:4)
 └─IDENT foo (0:3)
 ---
 
-["1.to_string" - 1]
+[`1.to_string` - 1]
 MEMBER_EXPR to_string (1:2)
 └─INT_LIT 1 (0:1)
 ---
 
-["a\n.b" - 1]
+[`a .b` - 1]
 MEMBER_EXPR b (2:3)
 └─IDENT a (0:1)
 ---
 
-[".None" - 1]
+[`.None` - 1]
 MEMBER_EXPR None (0:1)
 └─INFERRED_EXPR (0:1)
 ---

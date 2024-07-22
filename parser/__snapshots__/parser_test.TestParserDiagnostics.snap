@@ -1,5 +1,5 @@
 
-[")" - 1]
+[`)` - 1]
 test.lb:1:1:
 )
 ^ Expected expression, found `)`
@@ -7,7 +7,7 @@ test.lb:1:1:
 
 ---
 
-["let a = ;" - 1]
+[`let a = ;` - 1]
 test.lb:1:9:
 let a = ;
         ^ Expected expression, found `;`
@@ -15,7 +15,7 @@ let a = ;
 
 ---
 
-["1 2" - 1]
+[`1 2` - 1]
 test.lb:1:3:
 1 2
   ^ Expected newline after statement, found integer
@@ -23,7 +23,7 @@ test.lb:1:3:
 
 ---
 
-["(1 + 2" - 1]
+[`(1 + 2` - 1]
 test.lb:1:7:
 (1 + 2
       ^ Expected `)`, found <Eof>
@@ -31,7 +31,7 @@ test.lb:1:7:
 
 ---
 
-["else\n {}" - 1]
+[`else  {}` - 1]
 test.lb:1:1:
 else
 ^ Else statement not allowed without preceding if
@@ -39,7 +39,7 @@ else
 
 ---
 
-["for i 42 {}" - 1]
+[`for i 42 {}` - 1]
 test.lb:1:7:
 for i 42 {}
       ^ Expected "in" keyword, found integer
@@ -47,7 +47,7 @@ for i 42 {}
 
 ---
 
-["let in = 1\nfor i in 20 {}" - 1]
+[`let in = 1 for i in 20 {}` - 1]
 test.lb:2:7:
 for i in 20 {}
       ^ Expected "in" keyword, but it has been overwritten by a variable
@@ -59,7 +59,7 @@ let in = 1
 
 ---
 
-["fn add(a: i32, b, c): f32 {}" - 1]
+[`fn add(a: i32, b, c): f32 {}` - 1]
 test.lb:1:19:
 fn add(a: i32, b, c): f32 {}
                   ^ The last parameter of a function must have a type annotation
@@ -67,7 +67,7 @@ fn add(a: i32, b, c): f32 {}
 
 ---
 
-["fn foo(\nbar\n): baz {}" - 1]
+[`fn foo( bar ): baz {}` - 1]
 test.lb:2:1:
 bar
 ^ The last parameter of a function must have a type annotation
@@ -79,7 +79,7 @@ fn foo(
 
 ---
 
-["fn (string) bool.maybe() {}" - 1]
+[`fn (string) bool.maybe() {}` - 1]
 test.lb:1:13:
 fn (string) bool.maybe() {}
             ^ Functions cannot be both methods and static members
@@ -87,7 +87,7 @@ fn (string) bool.maybe() {}
 
 ---
 
-["import * from \"io\" as in_out" - 1]
+[`import * from "io" as in_out` - 1]
 test.lb:1:20:
 import * from "io" as in_out
                    ^ Only one import modifier is allowed
@@ -95,7 +95,7 @@ import * from "io" as in_out
 
 ---
 
-["import {read, write} from * from \"io\"" - 1]
+[`import {read, write} from * from "io"` - 1]
 test.lb:1:27:
 import {read, write} from * from "io"
                           ^ Only one import modifier is allowed
@@ -103,7 +103,7 @@ import {read, write} from * from "io"
 
 ---
 
-["if true { fn a() {} }" - 1]
+[`if true { fn a() {} }` - 1]
 test.lb:1:11:
 if true { fn a() {} }
           ^ Function declaration not allowed here
@@ -111,7 +111,7 @@ if true { fn a() {} }
 
 ---
 
-["type T = ;" - 1]
+[`type T = ;` - 1]
 test.lb:1:10:
 type T = ;
          ^ Expected type, found `;`

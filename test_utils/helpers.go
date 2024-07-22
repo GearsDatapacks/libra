@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/module"
 	"github.com/gearsdatapacks/libra/parser"
@@ -16,7 +17,7 @@ import (
 	"github.com/gkampitakis/go-snaps/snaps"
 )
 
-func getAst(t *testing.T, input string) *ast.Program {
+func getAst(t *testing.T, input string) (*ast.Program, []diagnostics.Diagnostic) {
 	t.Helper()
 
 	l := lexer.New(text.NewFile("test.lb", input))
@@ -24,13 +25,11 @@ func getAst(t *testing.T, input string) *ast.Program {
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
-	AssertEq(t, len(p.Diagnostics), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(p.Diagnostics)))
 
-	return program
+	return program, p.Diagnostics
 }
 
-func getIr(t *testing.T, input string) *ir.Program {
+func getIr(t *testing.T, input string) (*ir.Program, []diagnostics.Diagnostic) {
 	t.Helper()
 
 	l := lexer.New(text.NewFile("test.lb", input))
@@ -38,11 +37,7 @@ func getIr(t *testing.T, input string) *ir.Program {
 
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
-	irProgram, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
-	AssertEq(t, len(diags), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
-
-	return irProgram
+	return typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
 }
 
 func fakeModule(program *ast.Program) *module.Module {
@@ -72,5 +67,5 @@ func matchSnap(t *testing.T, src, output string) {
 	name = parts[len(parts)-1]
 	snaps := snaps.WithConfig(snaps.Filename(name))
 
-	snaps.MatchSnapshot(&namedSnapshot{name: fmt.Sprintf("%q", src), T: t}, output)
+	snaps.MatchSnapshot(&namedSnapshot{name: fmt.Sprintf("`%s`", strings.ReplaceAll(src, "\n", " ")), T: t}, output)
 }

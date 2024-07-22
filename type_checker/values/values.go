@@ -1,8 +1,10 @@
 package values
 
 import (
+	"cmp"
 	"hash/fnv"
 	"math"
+	"slices"
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
@@ -171,9 +173,15 @@ func (m MapValue) Print(node *printer.Node) {
 		node.Colour(colour.NodeName),
 	)
 
+	// We do this to ensure consistent order for our tests
+	keyValues := make([]KeyValue, 0, len(m.Values))
 	for _, kv := range m.Values {
-		node.Node(kv)
+		keyValues = append(keyValues, kv)
 	}
+	slices.SortFunc(keyValues, func(a, b KeyValue) int {
+		return cmp.Compare(a.Key.Hash(), b.Key.Hash())
+	})
+	printer.Nodes(node, keyValues)
 }
 
 type hasMembers interface {

@@ -1,12 +1,12 @@
 
-["while true { nop }" - 1]
+[`while true { nop }` - 1]
 WHILE_LOOP (0:5)
 ├─BOOL_LIT true (6:10)
 └─BLOCK (11:12)
   └─IDENT nop (13:16)
 ---
 
-["while thing { \"Hi\" }" - 1]
+[`while thing { "Hi" }` - 1]
 WHILE_LOOP (0:5)
 ├─IDENT thing (6:11)
 └─BLOCK (12:13)

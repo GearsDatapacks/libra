@@ -1,22 +1,22 @@
 
-["let x = 1" - 1]
+[`let x = 1` - 1]
 VAR_DECL let x (0:3)
 └─INT_LIT 1 (8:9)
 ---
 
-["mut y: f32 = 7" - 1]
+[`mut y: f32 = 7` - 1]
 VAR_DECL mut y (0:3)
 ├─IDENT f32 (7:10)
 └─INT_LIT 7 (13:14)
 ---
 
-["const message: string = \"Hi\"" - 1]
+[`const message: string = "Hi"` - 1]
 VAR_DECL const message (0:5)
 ├─IDENT string (15:21)
 └─STRING_LIT "Hi" (24:28)
 ---
 
-["mut isCool = true" - 1]
+[`mut isCool = true` - 1]
 VAR_DECL mut isCool (0:3)
 └─BOOL_LIT true (13:17)
 ---

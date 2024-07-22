@@ -1,20 +1,20 @@
 
-["-2" - 1]
+[`-2` - 1]
 PREFIX_EXPR `-` (0:1)
 └─INT_LIT 2 (1:2)
 ---
 
-["!true" - 1]
+[`!true` - 1]
 PREFIX_EXPR `!` (0:1)
 └─BOOL_LIT true (1:5)
 ---
 
-["+foo" - 1]
+[`+foo` - 1]
 PREFIX_EXPR `+` (0:1)
 └─IDENT foo (1:4)
 ---
 
-["~123" - 1]
+[`~123` - 1]
 PREFIX_EXPR `~` (0:1)
 └─INT_LIT 123 (1:4)
 ---

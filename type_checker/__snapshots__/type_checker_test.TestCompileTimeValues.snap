@@ -1,0 +1,114 @@
+
+[`1` - 1]
+INT_LIT 1
+---
+
+[`17.5` - 1]
+FLOAT_LIT 17.5
+---
+
+[`1.0` - 1]
+FLOAT_LIT 1
+---
+
+[`1.0 -> i32` - 1]
+CONVERSION
+├─FLOAT_LIT 1
+└─VARIABLE_TYPE i32
+---
+
+[`5 -> f32` - 1]
+CONVERSION
+├─INT_LIT 5
+└─VARIABLE_TYPE f32
+---
+
+[`false` - 1]
+BOOL_LIT false
+---
+
+[`true` - 1]
+BOOL_LIT true
+---
+
+[`-1` - 1]
+UNARY_EXPR NegateInt
+├─INT_LIT 1
+├─VARIABLE_TYPE untyped int
+└─INT_VALUE -1
+---
+
+[`!false` - 1]
+UNARY_EXPR LogicalNot
+├─BOOL_LIT false
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE true
+---
+
+[`1 + 2 * 3` - 1]
+BINARY_EXPR AddInt
+├─INT_LIT 1
+├─BINARY_EXPR MultiplyInt
+│ ├─INT_LIT 2
+│ ├─INT_LIT 3
+│ ├─VARIABLE_TYPE untyped int
+│ └─INT_VALUE 6
+├─VARIABLE_TYPE untyped int
+└─INT_VALUE 7
+---
+
+[`1 + 2 / 4` - 1]
+BINARY_EXPR AddFloat
+├─CONVERSION
+│ ├─INT_LIT 1
+│ └─VARIABLE_TYPE f32
+├─CONVERSION
+│ ├─BINARY_EXPR Divide
+│ │ ├─INT_LIT 2
+│ │ ├─INT_LIT 4
+│ │ ├─VARIABLE_TYPE untyped float
+│ │ └─FLOAT_VALUE 0.500000
+│ └─VARIABLE_TYPE f32
+├─VARIABLE_TYPE untyped float
+└─FLOAT_VALUE 1.500000
+---
+
+[`"test" + "123"` - 1]
+BINARY_EXPR Concat
+├─STRING_LIT "test"
+├─STRING_LIT "123"
+├─PRIMARY_TYPE string
+└─STRING_VALUE "test123"
+---
+
+[`7 == 10` - 1]
+BINARY_EXPR Equal
+├─INT_LIT 7
+├─INT_LIT 10
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE false
+---
+
+[`1.5 != 2.3` - 1]
+BINARY_EXPR NotEqual
+├─FLOAT_LIT 1.5
+├─FLOAT_LIT 2.3
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE true
+---
+
+[`true || false` - 1]
+BINARY_EXPR LogicalOr
+├─BOOL_LIT true
+├─BOOL_LIT false
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE true
+---
+
+[`true && false` - 1]
+BINARY_EXPR LogicalAnd
+├─BOOL_LIT true
+├─BOOL_LIT false
+├─PRIMARY_TYPE bool
+└─BOOL_VALUE false
+---

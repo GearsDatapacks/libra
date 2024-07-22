@@ -1,9 +1,9 @@
 
-["{}" - 1]
+[`{}` - 1]
 MAP_EXPR (0:1)
 ---
 
-["{1: 2, 2: 3, 3:4}" - 1]
+[`{1: 2, 2: 3, 3:4}` - 1]
 MAP_EXPR (0:1)
 ├─KEY_VALUE
 │ ├─INT_LIT 1 (1:2)
@@ -16,7 +16,7 @@ MAP_EXPR (0:1)
   └─INT_LIT 4 (15:16)
 ---
 
-["{\"foo\": \"bar\", \"hello\": \"world\"}" - 1]
+[`{"foo": "bar", "hello": "world"}` - 1]
 MAP_EXPR (0:1)
 ├─KEY_VALUE
 │ ├─STRING_LIT "foo" (1:6)
@@ -26,7 +26,7 @@ MAP_EXPR (0:1)
   └─STRING_LIT "world" (24:31)
 ---
 
-["{hi: \"there\", \"x\": computed}" - 1]
+[`{hi: "there", "x": computed}` - 1]
 MAP_EXPR (0:1)
 ├─KEY_VALUE
 │ ├─IDENT hi (1:3)

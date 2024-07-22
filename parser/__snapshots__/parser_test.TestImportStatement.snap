@@ -1,20 +1,20 @@
 
-["import \"fs\"" - 1]
+[`import "fs"` - 1]
 IMPORT "\"fs\"" (0:6)
 ---
 
-["import \".././foo/bar\"" - 1]
+[`import ".././foo/bar"` - 1]
 IMPORT "\".././foo/bar\"" (0:6)
 ---
 
-["import * from \"helpers\"" - 1]
+[`import * from "helpers"` - 1]
 IMPORT * "\"helpers\"" (0:6)
 ---
 
-["import { read, write } from \"io\"" - 1]
+[`import { read, write } from "io"` - 1]
 IMPORT "\"io\"" read write (0:6)
 ---
 
-["import \"42\" as life_universe_everything" - 1]
+[`import "42" as life_universe_everything` - 1]
 IMPORT "\"42\"" life_universe_everything (0:6)
 ---

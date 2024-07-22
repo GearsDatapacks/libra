@@ -1,12 +1,12 @@
 
-["(arr[7])" - 1]
+[`(arr[7])` - 1]
 PAREN_EXPR (0:1)
 └─INDEX_EXPR (4:5)
   ├─IDENT arr (1:4)
   └─INT_LIT 7 (5:6)
 ---
 
-["({\"a\": 1}[\"b\"])" - 1]
+[`({"a": 1}["b"])` - 1]
 PAREN_EXPR (0:1)
 └─INDEX_EXPR (9:10)
   ├─MAP_EXPR (1:2)

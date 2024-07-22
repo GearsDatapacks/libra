@@ -1,19 +1,19 @@
 
-["struct Unit" - 1]
+[`struct Unit` - 1]
 STRUCT_DECL Unit (0:6)
 ---
 
-["struct Mything123" - 1]
+[`struct Mything123` - 1]
 STRUCT_DECL Mything123 (0:6)
 ---
 
-["struct Wrapper { value }" - 1]
+[`struct Wrapper { value }` - 1]
 STRUCT_DECL Wrapper (0:6)
 └─STRUCT_FIELD
   └─TYPE_OR_IDENT value
 ---
 
-["struct Three{a,b,c,}" - 1]
+[`struct Three{a,b,c,}` - 1]
 STRUCT_DECL Three (0:6)
 ├─STRUCT_FIELD
 │ └─TYPE_OR_IDENT a
@@ -23,11 +23,11 @@ STRUCT_DECL Three (0:6)
   └─TYPE_OR_IDENT c
 ---
 
-["struct Empty {}" - 1]
+[`struct Empty {}` - 1]
 STRUCT_DECL Empty (0:6)
 ---
 
-["struct Rect { w, h: i32 }" - 1]
+[`struct Rect { w, h: i32 }` - 1]
 STRUCT_DECL Rect (0:6)
 ├─STRUCT_FIELD
 │ └─TYPE_OR_IDENT w
@@ -36,7 +36,7 @@ STRUCT_DECL Rect (0:6)
     └─IDENT i32 (20:23)
 ---
 
-["struct Vec2{x:f32,y:f32,}" - 1]
+[`struct Vec2{x:f32,y:f32,}` - 1]
 STRUCT_DECL Vec2 (0:6)
 ├─STRUCT_FIELD
 │ └─TYPE_OR_IDENT x

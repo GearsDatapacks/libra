@@ -295,6 +295,6 @@ func TestParserDiagnostics(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		utils.MatchErrorSnap(t, test)
+		utils.MatchParserErrorSnap(t, test)
 	}
 }

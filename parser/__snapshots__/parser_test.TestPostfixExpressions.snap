@@ -1,15 +1,15 @@
 
-["a?" - 1]
+[`a?` - 1]
 POSTFIX_EXPR `?` (0:1)
 └─IDENT a (0:1)
 ---
 
-["foo++" - 1]
+[`foo++` - 1]
 POSTFIX_EXPR `++` (0:3)
 └─IDENT foo (0:3)
 ---
 
-["5!" - 1]
+[`5!` - 1]
 POSTFIX_EXPR `!` (0:1)
 └─INT_LIT 5 (0:1)
 ---

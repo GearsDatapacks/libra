@@ -1,16 +1,16 @@
 
-["interface Any {}" - 1]
+[`interface Any {}` - 1]
 INTERFACE_DECL Any (0:9)
 ---
 
-["interface Fooer { foo(bar): baz }" - 1]
+[`interface Fooer { foo(bar): baz }` - 1]
 INTERFACE_DECL Fooer (0:9)
 └─INTERFACE_MEMBER foo
   ├─IDENT bar (22:25)
   └─IDENT baz (28:31)
 ---
 
-["interface Order {\n\t\t\tless ( i32 , f64 ) : bool , \n\t\t\tgreater(u32,i32,):f16\n\t\t}" - 1]
+[`interface Order { 			less ( i32 , f64 ) : bool ,  			greater(u32,i32,):f16 		}` - 1]
 INTERFACE_DECL Order (0:9)
 ├─INTERFACE_MEMBER less
 │ ├─IDENT i32 (28:31)

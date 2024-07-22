@@ -1,0 +1,28 @@
+
+[`1 -> i32` - 1]
+CONVERSION
+├─INT_LIT 1
+└─VARIABLE_TYPE i32
+---
+
+[`1 -> f32` - 1]
+CONVERSION
+├─INT_LIT 1
+└─VARIABLE_TYPE f32
+---
+
+[`1.6 -> f32` - 1]
+CONVERSION
+├─FLOAT_LIT 1.6
+└─VARIABLE_TYPE f32
+---
+
+[`true -> bool` - 1]
+BOOL_LIT true
+---
+
+[`false -> i32` - 1]
+CONVERSION
+├─BOOL_LIT false
+└─VARIABLE_TYPE i32
+---

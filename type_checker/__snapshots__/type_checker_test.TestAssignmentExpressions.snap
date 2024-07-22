@@ -1,0 +1,54 @@
+
+[`mut a = 1; a = 2` - 1]
+VAR_DECL a
+└─CONVERSION
+  ├─INT_LIT 1
+  └─VARIABLE_TYPE i32
+ASSIGNMENT
+├─VAR_EXPR a mut
+│ └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 2
+  └─VARIABLE_TYPE i32
+---
+
+[`mut pi = 3.15; pi = 3.14` - 1]
+VAR_DECL pi
+└─CONVERSION
+  ├─FLOAT_LIT 3.15
+  └─VARIABLE_TYPE f32
+ASSIGNMENT
+├─VAR_EXPR pi mut
+│ └─VARIABLE_TYPE f32
+└─CONVERSION
+  ├─FLOAT_LIT 3.14
+  └─VARIABLE_TYPE f32
+---
+
+[`mut greeting = "Hell"; greeting += "o"` - 1]
+VAR_DECL greeting
+└─STRING_LIT "Hell"
+ASSIGNMENT
+├─VAR_EXPR greeting mut
+│ └─PRIMARY_TYPE string
+└─BINARY_EXPR Concat
+  ├─VAR_EXPR greeting mut
+  │ └─PRIMARY_TYPE string
+  ├─STRING_LIT "o"
+  └─PRIMARY_TYPE string
+---
+
+[`mut count = 10; count -= 2` - 1]
+VAR_DECL count
+└─CONVERSION
+  ├─INT_LIT 10
+  └─VARIABLE_TYPE i32
+ASSIGNMENT
+├─VAR_EXPR count mut
+│ └─VARIABLE_TYPE i32
+└─BINARY_EXPR SubtractInt
+  ├─VAR_EXPR count mut
+  │ └─VARIABLE_TYPE i32
+  ├─INT_LIT 2
+  └─VARIABLE_TYPE i32
+---

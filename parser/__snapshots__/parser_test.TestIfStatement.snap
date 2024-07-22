@@ -1,12 +1,12 @@
 
-["if a { 10 }" - 1]
+[`if a { 10 }` - 1]
 IF_EXPR (0:2)
 ├─IDENT a (3:4)
 └─BLOCK (5:6)
   └─INT_LIT 10 (7:9)
 ---
 
-["if false { 10 } else { 20 }" - 1]
+[`if false { 10 } else { 20 }` - 1]
 IF_EXPR (0:2)
 ├─BOOL_LIT false (3:8)
 ├─BLOCK (9:10)
@@ -16,7 +16,7 @@ IF_EXPR (0:2)
     └─INT_LIT 20 (23:25)
 ---
 
-["if 69\n\t\t{\"Nice\"}\n\t\telse if 42 { \"UATLTUAE\" }else{\n\t\t\t\"Boring\"\n\t\t}" - 1]
+[`if 69 		{"Nice"} 		else if 42 { "UATLTUAE" }else{ 			"Boring" 		}` - 1]
 IF_EXPR (0:2)
 ├─INT_LIT 69 (3:5)
 ├─BLOCK (8:9)

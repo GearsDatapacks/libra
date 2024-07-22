@@ -1,0 +1,58 @@
+
+[`if 1 + 2 == 3 {1 + 2}` - 1]
+IF_EXPR
+├─BINARY_EXPR Equal
+│ ├─BINARY_EXPR AddInt
+│ │ ├─INT_LIT 1
+│ │ ├─INT_LIT 2
+│ │ ├─VARIABLE_TYPE untyped int
+│ │ └─INT_VALUE 3
+│ ├─INT_LIT 3
+│ ├─PRIMARY_TYPE bool
+│ └─BOOL_VALUE true
+└─BLOCK
+  ├─VARIABLE_TYPE untyped int
+  └─BINARY_EXPR AddInt
+    ├─INT_LIT 1
+    ├─INT_LIT 2
+    ├─VARIABLE_TYPE untyped int
+    └─INT_VALUE 3
+---
+
+[`if true {1} else {0}` - 1]
+IF_EXPR
+├─BOOL_LIT true
+├─BLOCK
+│ ├─VARIABLE_TYPE untyped int
+│ └─INT_LIT 1
+└─ELSE_BRANCH
+  └─BLOCK
+    ├─VARIABLE_TYPE untyped int
+    └─INT_LIT 0
+---
+
+[`if 1 == 2 {3} else if 2 != 3 {7} else {13}` - 1]
+IF_EXPR
+├─BINARY_EXPR Equal
+│ ├─INT_LIT 1
+│ ├─INT_LIT 2
+│ ├─PRIMARY_TYPE bool
+│ └─BOOL_VALUE false
+├─BLOCK
+│ ├─VARIABLE_TYPE untyped int
+│ └─INT_LIT 3
+└─ELSE_BRANCH
+  └─IF_EXPR
+    ├─BINARY_EXPR NotEqual
+    │ ├─INT_LIT 2
+    │ ├─INT_LIT 3
+    │ ├─PRIMARY_TYPE bool
+    │ └─BOOL_VALUE true
+    ├─BLOCK
+    │ ├─VARIABLE_TYPE untyped int
+    │ └─INT_LIT 7
+    └─ELSE_BRANCH
+      └─BLOCK
+        ├─VARIABLE_TYPE untyped int
+        └─INT_LIT 13
+---

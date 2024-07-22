@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
-
-	"github.com/gearsdatapacks/libra/lexer"
-	"github.com/gearsdatapacks/libra/parser"
-	"github.com/gearsdatapacks/libra/text"
 )
 
 func Assert(t *testing.T, condition bool, msg ...string) {
@@ -39,28 +35,37 @@ func AssertSingle[T any](t *testing.T, list []T) T {
 
 func MatchAstSnap(t *testing.T, src string) {
 	t.Helper()
-	program := getAst(t, src)
+	program, diags := getAst(t, src)
+	AssertEq(t, len(diags), 0,
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
+
 	matchSnap(t, src, program.String())
 }
 
 func MatchIrSnap(t *testing.T, src string) {
 	t.Helper()
-	program := getIr(t, src)
+	program, diags := getIr(t, src)
+	AssertEq(t, len(diags), 0,
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
 	matchSnap(t, src, program.String())
 }
 
-func MatchErrorSnap(t *testing.T, src string) {
+func MatchParserErrorSnap(t *testing.T, src string) {
 	t.Helper()
-
-	lexer := lexer.New(text.NewFile("test.lb", src))
-	tokens := lexer.Tokenise()
-
-	AssertEq(t, len(lexer.Diagnostics), 0, "Expected no lexer diagnostics")
-
-	p := parser.New(tokens, lexer.Diagnostics)
-	p.Parse()
+	_, diagnostics := getAst(t, src)
 	var diags bytes.Buffer
-	for _, diag := range p.Diagnostics {
+	for _, diag := range diagnostics {
+		diag.WriteTo(&diags, false)
+	}
+
+	matchSnap(t, src, diags.String())
+}
+
+func MatchTCErrorSnap(t *testing.T, src string) {
+	t.Helper()
+	_, diagnostics := getIr(t, src)
+	var diags bytes.Buffer
+	for _, diag := range diagnostics {
 		diag.WriteTo(&diags, false)
 	}
 

@@ -1,15 +1,15 @@
 
-["*string" - 1]
+[`*string` - 1]
 PTR_TYPE (0:1)
 └─IDENT string (1:7)
 ---
 
-["*mut i32" - 1]
+[`*mut i32` - 1]
 PTR_TYPE mut (0:1)
 └─IDENT i32 (5:8)
 ---
 
-["*91" - 1]
+[`*91` - 1]
 PTR_TYPE (0:1)
 └─INT_LIT 91 (1:3)
 ---

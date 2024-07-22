@@ -1,9 +1,9 @@
 
-["enum Empty {}" - 1]
+[`enum Empty {}` - 1]
 ENUM_DECL Empty (0:4)
 ---
 
-["enum Colour: u64 { Invalid, red = 100, green = 783, blue = 1.5 }" - 1]
+[`enum Colour: u64 { Invalid, red = 100, green = 783, blue = 1.5 }` - 1]
 ENUM_DECL Colour (0:4)
 ├─IDENT u64 (13:16)
 ├─ENUM_MEMBER Invalid

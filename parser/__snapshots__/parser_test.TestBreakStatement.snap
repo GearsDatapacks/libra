@@ -1,14 +1,14 @@
 
-["break" - 1]
+[`break` - 1]
 BREAK (0:5)
 ---
 
-["break true" - 1]
+[`break true` - 1]
 BREAK (0:5)
 └─BOOL_LIT true (6:10)
 ---
 
-["break [1,2,3]" - 1]
+[`break [1,2,3]` - 1]
 BREAK (0:5)
 └─LIST_EXPR (6:7)
   ├─INT_LIT 1 (7:8)

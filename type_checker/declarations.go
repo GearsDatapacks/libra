@@ -238,11 +238,14 @@ func (t *typeChecker) typeCheckStructBody(
 	if structTy, ok := ty.(*types.Struct); ok {
 		fields := []types.StructField{}
 		for _, field := range body {
+			var name string
 			if field.Name == nil {
 				t.diagnostics.Report(diagnostics.MixedNamedUnnamedStructFields(field.Type.GetLocation()))
+			} else {
+				name = *field.Name
 			}
 			structField := types.StructField{
-				Name:     *field.Name,
+				Name:    name,
 				Type:     nil,
 				Exported: field.Pub,
 			}
@@ -271,7 +274,9 @@ func (t *typeChecker) typeCheckStructBody(
 			if fields[i].Type == nil {
 				fields[i].Type = types.Invalid
 			}
-			structTy.Fields[*field.Name] = fields[i]
+			if field.Name != nil {
+				structTy.Fields[*field.Name] = fields[i]
+			}
 		}
 	} else if structTy, ok := ty.(*types.TupleStruct); ok {
 		for _, field := range body {

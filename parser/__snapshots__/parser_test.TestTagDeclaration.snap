@@ -1,8 +1,8 @@
 
-["tag MyTag" - 1]
+[`tag MyTag` - 1]
 TAG_DECL MyTag (0:3)
 ---
 
-["tag Test124" - 1]
+[`tag Test124` - 1]
 TAG_DECL Test124 (0:3)
 ---

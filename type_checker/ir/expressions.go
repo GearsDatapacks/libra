@@ -905,7 +905,8 @@ func (m *MapExpression) ConstValue() values.ConstValue {
 	for _, kv := range m.KeyValues {
 		keyValue := kv.Key.ConstValue()
 		valueValue := kv.Value.ConstValue()
-		value[keyValue.Hash()] = values.KeyValue{
+		hash := keyValue.Hash()
+		value[hash] = values.KeyValue{
 			Key:   keyValue,
 			Value: valueValue,
 		}
