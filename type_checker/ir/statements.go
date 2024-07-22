@@ -3,6 +3,7 @@ package ir
 import (
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type VariableDeclaration struct {
@@ -25,6 +26,8 @@ type FunctionDeclaration struct {
 	Name       string
 	Parameters []string
 	Body       *Block
+	Type       *types.Function
+	Exported   bool
 }
 
 func (f *FunctionDeclaration) Print(node *printer.Node) {
@@ -34,7 +37,13 @@ func (f *FunctionDeclaration) Print(node *printer.Node) {
 			node.Colour(colour.NodeName),
 			node.Colour(colour.Name),
 			f.Name,
-		)
+		).
+		TextIf(
+			f.Exported,
+			" %spub",
+			node.Colour(colour.Attribute),
+		).
+		Node(f.Type)
 
 	for _, param := range f.Parameters {
 		node.Text(" %s%s", node.Colour(colour.Name), param)
@@ -85,11 +94,10 @@ func (y *YieldStatement) Print(node *printer.Node) {
 type ContinueStatement struct{}
 
 func (*ContinueStatement) Print(node *printer.Node) {
-	node.
-		Text(
-			"%sCONTINUE",
-			node.Colour(colour.NodeName),
-		)
+	node.Text(
+		"%sCONTINUE",
+		node.Colour(colour.NodeName),
+	)
 }
 
 type ImportStatement struct {
@@ -124,6 +132,28 @@ func (i *ImportStatement) Print(node *printer.Node) {
 	for _, symbol := range i.Symbols {
 		node.Text(" %s", symbol)
 	}
+}
+
+type TypeDeclaration struct {
+	Name     string
+	Exported bool
+	Type     types.Type
+}
+
+func (t *TypeDeclaration) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sTYPE_DECL %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			t.Name,
+		).
+		TextIf(
+			t.Exported,
+			" %spub",
+			node.Colour(colour.Attribute),
+		).
+		Node(t.Type)
 }
 
 // TODO:

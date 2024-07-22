@@ -39,11 +39,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		*ast.ImportStatement,
 		*ast.UnionDeclaration,
 		*ast.TagDeclaration:
-
-		return &ir.Block{
-			Statements: []ir.Statement{},
-			ResultType: types.Void,
-		}
+		return nil
 	case ast.Expression:
 		return t.typeCheckExpression(stmt)
 	default:
@@ -144,6 +140,8 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		Name:       funcDec.Name,
 		Parameters: params,
 		Body:       body,
+		Type:       fnType,
+		Exported:   funcDec.Exported,
 	}
 }
 

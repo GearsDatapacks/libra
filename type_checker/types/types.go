@@ -466,7 +466,7 @@ func (fn *Function) String() string {
 
 func (fn *Function) Print(node *printer.Node) {
 	node.
-		Text("%s", node.Colour(colour.NodeName)).
+		Text("%sFUNCTION_TYPE", node.Colour(colour.NodeName)).
 		Node(fn.ReturnType)
 
 	printer.Nodes(node, fn.Parameters)
@@ -708,14 +708,8 @@ func (u *Union) Print(node *printer.Node) {
 		u.Name,
 	)
 
-	for name, ty := range u.Members {
-		node.FakeNode(
-			"%sUNION_MEMBER %s%s",
-			func(n *printer.Node) { n.Node(ty) },
-			node.Colour(colour.NodeName),
-			node.Colour(colour.Name),
-			name,
-		)
+	for _, ty := range u.Members {
+		node.Node(ty)
 	}
 }
 

@@ -63,15 +63,17 @@ func (t *typeContext) Id() uint {
 func TypeCheck(mod *module.Module, manager diagnostics.Manager) (*ir.Program, diagnostics.Manager) {
 	t := new(mod, &manager)
 
+	statements := []ir.Statement{}
+
 	t.registerDeclarations()
-	t.typeCheckImports()
-	t.typeCheckDeclarations()
+	t.typeCheckImports(&statements)
+	t.typeCheckDeclarations(&statements)
 	t.typeCheckFunctions()
 
-	stmts := t.typeCheckStatements()
+	t.typeCheckStatements(&statements)
 
 	return &ir.Program{
-		Statements: stmts,
+		Statements: statements,
 	}, *t.diagnostics
 }
 
@@ -100,40 +102,47 @@ func (t *typeChecker) registerDeclarations() {
 	}
 }
 
-func (t *typeChecker) typeCheckImports() {
+func (t *typeChecker) typeCheckImports(statements *[]ir.Statement) {
 	if t.stage >= tcImports {
 		return
 	}
 	t.stage = tcImports
 
 	for _, subMod := range t.subModules {
-		subMod.typeCheckImports()
+		subMod.typeCheckImports(&[]ir.Statement{})
 	}
 
 	t.updateContext()
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
 			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
-				t.typeCheckImport(importStmt)
+				stmt := t.typeCheckImport(importStmt)
+				if stmt != nil {
+					*statements = append(*statements, stmt)
+				}
 			}
 		}
 	}
 }
 
-func (t *typeChecker) typeCheckDeclarations() {
+func (t *typeChecker) typeCheckDeclarations(statements *[]ir.Statement) {
 	if t.stage >= tcDecls {
 		return
 	}
 	t.stage = tcDecls
 
 	for _, subMod := range t.subModules {
-		subMod.typeCheckDeclarations()
+		subMod.typeCheckDeclarations(&[]ir.Statement{})
 	}
 
 	t.updateContext()
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
-			t.typeCheckDeclaration(stmt)
+			decl := t.typeCheckDeclaration(stmt)
+
+			if decl != nil {
+				*statements = append(*statements, decl)
+			}
 		}
 	}
 }
@@ -158,26 +167,26 @@ func (t *typeChecker) typeCheckFunctions() {
 	}
 }
 
-// TODO: return ir for other modules too
-func (t *typeChecker) typeCheckStatements() []ir.Statement {
+func (t *typeChecker) typeCheckStatements(statements *[]ir.Statement) {
 	if t.stage >= tcStmts {
-		return []ir.Statement{}
+		return
 	}
 	t.stage = tcStmts
 
 	for _, subMod := range t.subModules {
-		subMod.typeCheckStatements()
+		// TODO: return ir for other modules too
+		subMod.typeCheckStatements(&[]ir.Statement{})
 	}
 
 	t.updateContext()
-	stmts := []ir.Statement{}
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
-			stmts = append(stmts, t.typeCheckStatement(stmt))
+			nextStatement := t.typeCheckStatement(stmt)
+			if nextStatement != nil {
+				*statements = append(*statements, nextStatement)
+			}
 		}
 	}
-
-	return stmts
 }
 
 func (t *typeChecker) enterScope(context ...any) {

@@ -4,6 +4,7 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/parser/ast"
 	"github.com/gearsdatapacks/libra/text"
+	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
@@ -26,19 +27,20 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 	}
 }
 
-func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) {
+func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) ir.Statement {
 	switch stmt := statement.(type) {
 	case *ast.TypeDeclaration:
-		t.typeCheckTypeDeclaration(stmt)
+		return t.typeCheckTypeDeclaration(stmt)
 	case *ast.StructDeclaration:
-		t.typeCheckStructDeclaration(stmt)
+		return t.typeCheckStructDeclaration(stmt)
 	case *ast.InterfaceDeclaration:
-		t.typeCheckInterfaceDeclaration(stmt)
+		return t.typeCheckInterfaceDeclaration(stmt)
 	case *ast.UnionDeclaration:
-		t.typeCheckUnionDeclaration(stmt)
+		return t.typeCheckUnionDeclaration(stmt)
 	case *ast.TagDeclaration:
-		t.typeCheckTagDeclaration(stmt)
+		return t.typeCheckTagDeclaration(stmt)
 	}
+	return nil
 }
 
 func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
@@ -146,7 +148,7 @@ func (t *typeChecker) registerTagDeclaration(decl *ast.TagDeclaration) {
 	t.symbols.Register(symbol, decl.Exported)
 }
 
-func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
+func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) ir.Statement {
 	symbol := t.symbols.Lookup(typeDec.Name).(*symbols.Type)
 	if typeDec.Explicit {
 		symbol.Type.(*types.Explicit).Type = t.typeCheckType(typeDec.Type)
@@ -156,6 +158,12 @@ func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) {
 
 	if typeDec.Tag != nil {
 		t.addToTag(typeDec.Tag, symbol.Type)
+	}
+
+	return &ir.TypeDeclaration{
+		Name:     typeDec.Name,
+		Exported: typeDec.Exported,
+		Type:     symbol.Type,
 	}
 }
 
@@ -207,12 +215,18 @@ func (t *typeChecker) typeCheckFunctionType(fn *ast.FunctionDeclaration) {
 	}
 }
 
-func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) {
+func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) ir.Statement {
 	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type
 
 	t.typeCheckStructBody(decl.NameLocation, decl.Body, ty)
 	if decl.Tag != nil {
 		t.addToTag(decl.Tag, ty)
+	}
+
+	return &ir.TypeDeclaration{
+		Name:     decl.Name,
+		Exported: decl.Exported,
+		Type:     ty,
 	}
 }
 
@@ -273,7 +287,7 @@ func (t *typeChecker) typeCheckStructBody(
 	}
 }
 
-func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclaration) {
+func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclaration) ir.Statement {
 	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Interface)
 
 	for _, member := range decl.Members {
@@ -290,9 +304,15 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 		}
 		ty.Methods[member.Name] = fnType
 	}
+
+	return &ir.TypeDeclaration{
+		Name:     decl.Name,
+		Exported: decl.Exported,
+		Type:     ty,
+	}
 }
 
-func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
+func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) ir.Statement {
 	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Union)
 
 	for _, member := range decl.Members {
@@ -329,15 +349,27 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) {
 	if decl.Tag != nil {
 		t.addToTag(decl.Tag, ty)
 	}
+
+	return &ir.TypeDeclaration{
+		Name:     decl.Name,
+		Exported: decl.Exported,
+		Type:     ty,
+	}
 }
 
-func (t *typeChecker) typeCheckTagDeclaration(decl *ast.TagDeclaration) {
+func (t *typeChecker) typeCheckTagDeclaration(decl *ast.TagDeclaration) ir.Statement {
 	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Tag)
 
 	if decl.Body != nil {
 		for _, member := range decl.Body {
 			ty.Types = append(ty.Types, t.typeCheckType(member))
 		}
+	}
+
+	return &ir.TypeDeclaration{
+		Name:     decl.Name,
+		Exported: decl.Exported,
+		Type:     ty,
 	}
 }
 
@@ -361,19 +393,26 @@ func (mod moduleWrapper) LookupExport(name string) interface{ Value() values.Con
 	return mod.t.LookupExport(name)
 }
 
-func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
+func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) ir.Statement {
 	module, ok := t.subModules[importStmt.Module.ExtraValue]
 
 	if !ok {
 		t.diagnostics.Report(diagnostics.ModuleUndefined(importStmt.Module.Location, importStmt.Module.Value))
-		return
+		return nil
 	}
+
+	name := module.module.Name
+	if importStmt.Alias != nil {
+		name = *importStmt.Alias
+	}
+	importedSymbols := []string{}
 
 	if importStmt.All {
 		t.symbols.Extend(module.symbols)
 	} else if importStmt.Symbols != nil {
 		for _, symbol := range importStmt.Symbols {
 			export := module.symbols.LookupExport(symbol.Name)
+			importedSymbols = append(importedSymbols, symbol.Name)
 			if export != nil {
 				t.symbols.Register(export)
 			} else {
@@ -385,10 +424,7 @@ func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
 			Name:   module.module.Name,
 			Module: module.symbols,
 		}
-		name := module.module.Name
-		if importStmt.Alias != nil {
-			name = *importStmt.Alias
-		}
+
 		symbol := &symbols.Variable{
 			Name:  name,
 			IsMut: false,
@@ -398,5 +434,12 @@ func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) {
 			},
 		}
 		t.symbols.Register(symbol)
+	}
+
+	return &ir.ImportStatement{
+		Module:    importStmt.Module.ExtraValue,
+		Name:      name,
+		Symbols:   importedSymbols,
+		ImportAll: importStmt.All,
 	}
 }
