@@ -1,0 +1,126 @@
+
+[`i32` - 1]
+VAR_SYMBOL i32
+├─PRIMARY_TYPE Type
+└─TYPE_VALUE
+  └─VARIABLE_TYPE i32
+---
+
+[`bool` - 1]
+VAR_SYMBOL bool
+├─PRIMARY_TYPE Type
+└─TYPE_VALUE
+  └─PRIMARY_TYPE bool
+---
+
+[`Type` - 1]
+VAR_SYMBOL Type
+├─PRIMARY_TYPE Type
+└─TYPE_VALUE
+  └─PRIMARY_TYPE Type
+---
+
+[`i32[]` - 1]
+TYPE_EXPR
+└─LIST_TYPE
+  └─VARIABLE_TYPE i32
+---
+
+[`bool[][]` - 1]
+TYPE_EXPR
+└─LIST_TYPE
+  └─LIST_TYPE
+    └─PRIMARY_TYPE bool
+---
+
+[`string[10]` - 1]
+TYPE_EXPR
+└─ARRAY_TYPE 10
+  └─PRIMARY_TYPE string
+---
+
+[`f32[2][]` - 1]
+TYPE_EXPR
+└─LIST_TYPE
+  └─ARRAY_TYPE 2
+    └─VARIABLE_TYPE f32
+---
+
+[`{string: string[]}` - 1]
+TYPE_EXPR
+└─MAP_TYPE
+  ├─PRIMARY_TYPE string
+  └─LIST_TYPE
+    └─PRIMARY_TYPE string
+---
+
+[`(string, i32[], i32)` - 1]
+TYPE_EXPR
+└─TUPLE_TYPE
+  ├─PRIMARY_TYPE string
+  ├─LIST_TYPE
+  │ └─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
+---
+
+[`type Name = string` - 1]
+TYPE_DECL Name
+└─PRIMARY_TYPE string
+---
+
+[`explicit type CustomStr = string` - 1]
+TYPE_DECL CustomStr
+└─EXPLICIT_TYPE CustomStr
+  └─PRIMARY_TYPE string
+---
+
+[`string | f32` - 1]
+BINARY_EXPR Union
+├─VAR_SYMBOL string
+│ ├─PRIMARY_TYPE Type
+│ └─TYPE_VALUE
+│   └─PRIMARY_TYPE string
+├─VAR_SYMBOL f32
+│ ├─PRIMARY_TYPE Type
+│ └─TYPE_VALUE
+│   └─VARIABLE_TYPE f32
+├─PRIMARY_TYPE Type
+└─TYPE_VALUE
+  └─INLINE_UNION_TYPE
+    ├─PRIMARY_TYPE string
+    └─VARIABLE_TYPE f32
+---
+
+[`*i32[]` - 1]
+TYPE_EXPR
+└─POINTER_TYPE
+  └─LIST_TYPE
+    └─VARIABLE_TYPE i32
+---
+
+[`(*i32)[]` - 1]
+TYPE_EXPR
+└─LIST_TYPE
+  └─POINTER_TYPE
+    └─VARIABLE_TYPE i32
+---
+
+[`*mut {string: string}` - 1]
+TYPE_EXPR
+└─POINTER_TYPE mut
+  └─MAP_TYPE
+    ├─PRIMARY_TYPE string
+    └─PRIMARY_TYPE string
+---
+
+[`struct Unit` - 1]
+TYPE_DECL Unit
+└─UNIT_STRUCT Unit
+---
+
+[`type StrToInt = fn(string): i32` - 1]
+TYPE_DECL StrToInt
+└─FUNCTION_TYPE
+  ├─VARIABLE_TYPE i32
+  └─PRIMARY_TYPE string
+---

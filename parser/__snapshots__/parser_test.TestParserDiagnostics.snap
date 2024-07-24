@@ -31,7 +31,7 @@ test.lb:1:7:
 
 ---
 
-[`else  {}` - 1]
+[`else; {}` - 1]
 test.lb:1:1:
 else
 ^ Else statement not allowed without preceding if
@@ -47,7 +47,7 @@ for i 42 {}
 
 ---
 
-[`let in = 1 for i in 20 {}` - 1]
+[`let in = 1;for i in 20 {}` - 1]
 test.lb:2:7:
 for i in 20 {}
       ^ Expected "in" keyword, but it has been overwritten by a variable
@@ -67,7 +67,7 @@ fn add(a: i32, b, c): f32 {}
 
 ---
 
-[`fn foo( bar ): baz {}` - 1]
+[`fn foo(;bar;): baz {}` - 1]
 test.lb:2:1:
 bar
 ^ The last parameter of a function must have a type annotation
@@ -151,7 +151,7 @@ explicit fn func() {}
 
 ---
 
-[`@nonexistent fn attributed() {}` - 1]
+[`@nonexistent;fn attributed() {}` - 1]
 test.lb:1:1:
 @nonexistent
 ^ The attribute "nonexistent" does not exist
@@ -159,7 +159,7 @@ test.lb:1:1:
 
 ---
 
-[`@tag FunctionTag fn tagged() {}` - 1]
+[`@tag FunctionTag;fn tagged() {}` - 1]
 test.lb:2:1:
 fn tagged() {}
 ^ Statement cannot be marked with attribute "tag"

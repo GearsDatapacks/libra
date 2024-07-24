@@ -1,0 +1,59 @@
+
+[`fn add(a, b: i32): i32 {;	let c = a + b;	return c;};add(1, 2)` - 1]
+FUNC_DECL add a b
+├─FUNCTION_TYPE
+│ ├─VARIABLE_TYPE i32
+│ ├─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─PRIMARY_TYPE void
+  ├─VAR_DECL
+  │ ├─VAR_SYMBOL c
+  │ │ └─VARIABLE_TYPE i32
+  │ └─BINARY_EXPR AddInt
+  │   ├─VAR_SYMBOL a
+  │   │ └─VARIABLE_TYPE i32
+  │   ├─VAR_SYMBOL b
+  │   │ └─VARIABLE_TYPE i32
+  │   └─VARIABLE_TYPE i32
+  └─RETURN
+    └─VAR_SYMBOL c
+      └─VARIABLE_TYPE i32
+FUNCTION_CALL
+├─VAR_SYMBOL add
+│ └─FUNCTION_TYPE
+│   ├─VARIABLE_TYPE i32
+│   ├─VARIABLE_TYPE i32
+│   └─VARIABLE_TYPE i32
+├─VARIABLE_TYPE i32
+├─CONVERSION
+│ ├─INT_LIT 1
+│ ├─VARIABLE_TYPE i32
+│ └─INT_VALUE 1
+└─CONVERSION
+  ├─INT_LIT 2
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 2
+---
+
+[`fn one(): i32 { 1 }` - 1]
+FUNC_DECL one
+├─FUNCTION_TYPE
+│ └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─VARIABLE_TYPE untyped int
+  └─INT_LIT 1
+---
+
+[`fn nop() {}; nop()` - 1]
+FUNC_DECL nop
+├─FUNCTION_TYPE
+│ └─PRIMARY_TYPE void
+└─BLOCK
+  └─PRIMARY_TYPE void
+FUNCTION_CALL
+├─VAR_SYMBOL nop
+│ └─FUNCTION_TYPE
+│   └─PRIMARY_TYPE void
+└─PRIMARY_TYPE void
+---

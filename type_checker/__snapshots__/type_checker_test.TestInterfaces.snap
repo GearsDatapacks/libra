@@ -1,0 +1,114 @@
+
+[`interface Printable { print() };struct Message { string };fn (Message) print() {;	// I would put print(this[0]) if print was implemented;};let my_printable: Printable = Message { "Hello" };my_printable.print()` - 1]
+TYPE_DECL Printable
+└─INTERFACE_TYPE Printable
+  └─INTERFACE_MEMBER print
+    └─FUNCTION_TYPE
+      └─PRIMARY_TYPE void
+TYPE_DECL Message
+└─TUPLE_STRUCT_TYPE Message
+  └─PRIMARY_TYPE string
+FUNC_DECL print
+├─FUNCTION_TYPE
+│ └─PRIMARY_TYPE void
+└─BLOCK
+  └─PRIMARY_TYPE void
+VAR_DECL
+├─VAR_SYMBOL my_printable
+│ ├─INTERFACE_TYPE Printable
+│ │ └─INTERFACE_MEMBER print
+│ │   └─FUNCTION_TYPE
+│ │     └─PRIMARY_TYPE void
+│ └─TUPLE_VALUE
+│   └─STRING_VALUE "Hello"
+└─TUPLE_STRUCT_EXPR
+  ├─TUPLE_STRUCT_TYPE Message
+  │ └─PRIMARY_TYPE string
+  ├─TUPLE_VALUE
+  │ └─STRING_VALUE "Hello"
+  └─STRING_LIT "Hello"
+FUNCTION_CALL
+├─MEMBER_EXPR print
+│ ├─VAR_SYMBOL my_printable
+│ │ ├─INTERFACE_TYPE Printable
+│ │ │ └─INTERFACE_MEMBER print
+│ │ │   └─FUNCTION_TYPE
+│ │ │     └─PRIMARY_TYPE void
+│ │ └─TUPLE_VALUE
+│ │   └─STRING_VALUE "Hello"
+│ └─FUNCTION_TYPE
+│   └─PRIMARY_TYPE void
+└─PRIMARY_TYPE void
+---
+
+[`interface Add { add(i32): i32 };fn (i32) add(other: i32): i32 { this + other };fn add(a: Add, b: i32): i32 { a.add(b) };let result: i32 = add(1, 2)` - 1]
+TYPE_DECL Add
+└─INTERFACE_TYPE Add
+  └─INTERFACE_MEMBER add
+    └─FUNCTION_TYPE
+      ├─VARIABLE_TYPE i32
+      └─VARIABLE_TYPE i32
+FUNC_DECL add other
+├─FUNCTION_TYPE
+│ ├─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─VARIABLE_TYPE i32
+  └─BINARY_EXPR AddInt
+    ├─VAR_SYMBOL this
+    │ └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL other
+    │ └─VARIABLE_TYPE i32
+    └─VARIABLE_TYPE i32
+FUNC_DECL add a b
+├─FUNCTION_TYPE
+│ ├─VARIABLE_TYPE i32
+│ ├─INTERFACE_TYPE Add
+│ │ └─INTERFACE_MEMBER add
+│ │   └─FUNCTION_TYPE
+│ │     ├─VARIABLE_TYPE i32
+│ │     └─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─VARIABLE_TYPE i32
+  └─FUNCTION_CALL
+    ├─MEMBER_EXPR add
+    │ ├─VAR_SYMBOL a
+    │ │ └─INTERFACE_TYPE Add
+    │ │   └─INTERFACE_MEMBER add
+    │ │     └─FUNCTION_TYPE
+    │ │       ├─VARIABLE_TYPE i32
+    │ │       └─VARIABLE_TYPE i32
+    │ └─FUNCTION_TYPE
+    │   ├─VARIABLE_TYPE i32
+    │   └─VARIABLE_TYPE i32
+    ├─VARIABLE_TYPE i32
+    └─VAR_SYMBOL b
+      └─VARIABLE_TYPE i32
+VAR_DECL
+├─VAR_SYMBOL result
+│ └─VARIABLE_TYPE i32
+└─FUNCTION_CALL
+  ├─VAR_SYMBOL add
+  │ └─FUNCTION_TYPE
+  │   ├─VARIABLE_TYPE i32
+  │   ├─INTERFACE_TYPE Add
+  │   │ └─INTERFACE_MEMBER add
+  │   │   └─FUNCTION_TYPE
+  │   │     ├─VARIABLE_TYPE i32
+  │   │     └─VARIABLE_TYPE i32
+  │   └─VARIABLE_TYPE i32
+  ├─VARIABLE_TYPE i32
+  ├─CONVERSION
+  │ ├─INT_LIT 1
+  │ ├─INTERFACE_TYPE Add
+  │ │ └─INTERFACE_MEMBER add
+  │ │   └─FUNCTION_TYPE
+  │ │     ├─VARIABLE_TYPE i32
+  │ │     └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 1
+  └─CONVERSION
+    ├─INT_LIT 2
+    ├─VARIABLE_TYPE i32
+    └─INT_VALUE 2
+---

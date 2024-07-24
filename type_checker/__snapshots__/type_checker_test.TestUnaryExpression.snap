@@ -10,7 +10,7 @@ UNARY_EXPR NegateInt
 UNARY_EXPR NegateFloat
 ├─FLOAT_LIT 2.72
 ├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE -2.720000
+└─FLOAT_VALUE -2.72
 ---
 
 [`!true` - 1]
@@ -25,4 +25,60 @@ UNARY_EXPR BitwiseNot
 ├─INT_LIT 104
 ├─VARIABLE_TYPE untyped int
 └─INT_VALUE -105
+---
+
+[`mut a = 0; a++` - 1]
+VAR_DECL
+├─VAR_SYMBOL a mut
+│ └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 0
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 0
+UNARY_EXPR IncrecementInt
+├─VAR_SYMBOL a mut
+│ └─VARIABLE_TYPE i32
+└─VARIABLE_TYPE i32
+---
+
+[`mut f = 1.5; f++` - 1]
+VAR_DECL
+├─VAR_SYMBOL f mut
+│ └─VARIABLE_TYPE f32
+└─CONVERSION
+  ├─FLOAT_LIT 1.5
+  ├─VARIABLE_TYPE f32
+  └─FLOAT_VALUE 1.5
+UNARY_EXPR IncrementFloat
+├─VAR_SYMBOL f mut
+│ └─VARIABLE_TYPE f32
+└─VARIABLE_TYPE f32
+---
+
+[`mut value = 24; value--` - 1]
+VAR_DECL
+├─VAR_SYMBOL value mut
+│ └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 24
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 24
+UNARY_EXPR DecrecementInt
+├─VAR_SYMBOL value mut
+│ └─VARIABLE_TYPE i32
+└─VARIABLE_TYPE i32
+---
+
+[`mut countdown = 12.3; countdown--` - 1]
+VAR_DECL
+├─VAR_SYMBOL countdown mut
+│ └─VARIABLE_TYPE f32
+└─CONVERSION
+  ├─FLOAT_LIT 12.3
+  ├─VARIABLE_TYPE f32
+  └─FLOAT_VALUE 12.3
+UNARY_EXPR DecrementFloat
+├─VAR_SYMBOL countdown mut
+│ └─VARIABLE_TYPE f32
+└─VARIABLE_TYPE f32
 ---

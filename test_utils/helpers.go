@@ -61,11 +61,21 @@ func (t *namedSnapshot) Name() string {
 func matchSnap(t *testing.T, src, output string) {
 	t.Helper()
 
-	pc, _, _, _ := runtime.Caller(2)
-	name := runtime.FuncForPC(pc).Name()
-	parts := strings.Split(name, "/")
-	name = parts[len(parts)-1]
+	var name string
+	for i := 0; ; i++ {
+		pc, _, _, _ := runtime.Caller(i)
+		nextName := runtime.FuncForPC(pc).Name()
+		if nextName == "testing.tRunner" {
+			break
+		}
+		parts := strings.Split(nextName, "/")
+		name = parts[len(parts)-1]
+	}
+
 	snaps := snaps.WithConfig(snaps.Filename(name))
 
-	snaps.MatchSnapshot(&namedSnapshot{name: fmt.Sprintf("`%s`", strings.ReplaceAll(src, "\n", " ")), T: t}, output)
+	snaps.MatchSnapshot(&namedSnapshot{
+		name: fmt.Sprintf("`%s`", strings.ReplaceAll(src, "\n", ";")),
+		T:    t,
+	}, output)
 }

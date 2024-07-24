@@ -1,0 +1,68 @@
+
+[`tag Tag;@tag Tag;struct Foo;@tag Tag;struct Bar;let foo: Tag = Foo;mut bar: Tag = Bar;bar = Foo` - 1]
+TYPE_DECL Tag
+└─TAG_TYPE Tag
+  ├─UNIT_STRUCT Foo
+  └─UNIT_STRUCT Bar
+TYPE_DECL Foo
+└─UNIT_STRUCT Foo
+TYPE_DECL Bar
+└─UNIT_STRUCT Bar
+VAR_DECL
+├─VAR_SYMBOL foo
+│ ├─TAG_TYPE Tag
+│ │ ├─UNIT_STRUCT Foo
+│ │ └─UNIT_STRUCT Bar
+│ └─UNIT_VALUE Foo
+└─VAR_SYMBOL Foo
+  ├─UNIT_STRUCT Foo
+  └─UNIT_VALUE Foo
+VAR_DECL
+├─VAR_SYMBOL bar mut
+│ └─TAG_TYPE Tag
+│   ├─UNIT_STRUCT Foo
+│   └─UNIT_STRUCT Bar
+└─VAR_SYMBOL Bar
+  ├─UNIT_STRUCT Bar
+  └─UNIT_VALUE Bar
+ASSIGNMENT
+├─VAR_SYMBOL bar mut
+│ └─TAG_TYPE Tag
+│   ├─UNIT_STRUCT Foo
+│   └─UNIT_STRUCT Bar
+└─VAR_SYMBOL Foo
+  ├─UNIT_STRUCT Foo
+  └─UNIT_VALUE Foo
+---
+
+[`tag Number {i32, f32};@tag Number;explicit type Int = i32;mut num: Number = 1.31;num = 10 -> Int` - 1]
+TYPE_DECL Number
+└─TAG_TYPE Number
+  ├─VARIABLE_TYPE i32
+  ├─VARIABLE_TYPE f32
+  └─EXPLICIT_TYPE Int
+    └─VARIABLE_TYPE i32
+TYPE_DECL Int
+└─EXPLICIT_TYPE Int
+  └─VARIABLE_TYPE i32
+VAR_DECL
+├─VAR_SYMBOL num mut
+│ └─TAG_TYPE Number
+│   ├─VARIABLE_TYPE i32
+│   ├─VARIABLE_TYPE f32
+│   └─EXPLICIT_TYPE Int
+│     └─VARIABLE_TYPE i32
+└─FLOAT_LIT 1.31
+ASSIGNMENT
+├─VAR_SYMBOL num mut
+│ └─TAG_TYPE Number
+│   ├─VARIABLE_TYPE i32
+│   ├─VARIABLE_TYPE f32
+│   └─EXPLICIT_TYPE Int
+│     └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─EXPLICIT_TYPE Int
+  │ └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+---

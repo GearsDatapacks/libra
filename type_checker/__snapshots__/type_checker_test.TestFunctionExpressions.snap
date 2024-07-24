@@ -1,0 +1,54 @@
+
+[`type Callback = fn(i32): i32;fn twice(callback: Callback, value: i32): i32 {;	callback(callback(value));};twice(fn(value: i32): i32 { value + 1 }, 10)` - 1]
+TYPE_DECL Callback
+└─FUNCTION_TYPE
+  ├─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
+FUNC_DECL twice callback value
+├─FUNCTION_TYPE
+│ ├─VARIABLE_TYPE i32
+│ ├─FUNCTION_TYPE
+│ │ ├─VARIABLE_TYPE i32
+│ │ └─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─VARIABLE_TYPE i32
+  └─FUNCTION_CALL
+    ├─VAR_SYMBOL callback
+    │ └─FUNCTION_TYPE
+    │   ├─VARIABLE_TYPE i32
+    │   └─VARIABLE_TYPE i32
+    ├─VARIABLE_TYPE i32
+    └─FUNCTION_CALL
+      ├─VAR_SYMBOL callback
+      │ └─FUNCTION_TYPE
+      │   ├─VARIABLE_TYPE i32
+      │   └─VARIABLE_TYPE i32
+      ├─VARIABLE_TYPE i32
+      └─VAR_SYMBOL value
+        └─VARIABLE_TYPE i32
+FUNCTION_CALL
+├─VAR_SYMBOL twice
+│ └─FUNCTION_TYPE
+│   ├─VARIABLE_TYPE i32
+│   ├─FUNCTION_TYPE
+│   │ ├─VARIABLE_TYPE i32
+│   │ └─VARIABLE_TYPE i32
+│   └─VARIABLE_TYPE i32
+├─VARIABLE_TYPE i32
+├─FUNC_EXPR value
+│ ├─BLOCK
+│ │ ├─VARIABLE_TYPE i32
+│ │ └─BINARY_EXPR AddInt
+│ │   ├─VAR_SYMBOL value
+│ │   │ └─VARIABLE_TYPE i32
+│ │   ├─INT_LIT 1
+│ │   └─VARIABLE_TYPE i32
+│ └─FUNCTION_TYPE
+│   ├─VARIABLE_TYPE i32
+│   └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+---

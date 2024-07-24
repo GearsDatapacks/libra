@@ -9,7 +9,7 @@ FOR_LOOP i (0:3)
   └─IDENT i (19:20)
 ---
 
-[`for foo in 93 {[foo,bar,]}` - 1]
+[`for foo in 93;{[foo,bar,]}` - 1]
 FOR_LOOP foo (0:3)
 ├─INT_LIT 93 (11:13)
 └─BLOCK (14:15)

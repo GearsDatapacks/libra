@@ -47,6 +47,14 @@ const neg_bool = -true
 
 ---
 
+[`fn nop() { return 25 }` - 1]
+test.lb:1:19:
+fn nop() { return 25 }
+                  ^ Value of type "untyped int" is not assignable to type "void"
+
+
+---
+
 [`let truthy: bool = 1 -> bool` - 1]
 test.lb:1:20:
 let truthy: bool = 1 -> bool
@@ -59,6 +67,14 @@ let truthy: bool = 1 -> bool
 test.lb:1:12:
 let i = 0; i = 1
            ^ Cannot modify value, it is immutable
+
+
+---
+
+[`mut ptr = &10; ptr.* = 9` - 1]
+test.lb:1:16:
+mut ptr = &10; ptr.* = 9
+               ^ Cannot modify value, it is immutable
 
 
 ---
@@ -111,6 +127,14 @@ test.lb:1:11:
 
 ---
 
+[`{[1, 2]: 3}` - 1]
+test.lb:1:2:
+{[1, 2]: 3}
+ ^ Value of type "i32[2]" cannot be used as a key in a map
+
+
+---
+
 [`1 = 2` - 1]
 test.lb:1:1:
 1 = 2
@@ -135,6 +159,166 @@ if 21 {12}
 
 ---
 
+[`for i in true {}` - 1]
+test.lb:1:10:
+for i in true {}
+         ^ Value is not iterable
+
+
+---
+
+[`return 23` - 1]
+test.lb:1:1:
+return 23
+^ Cannot use return outside of a function
+
+
+---
+
+[`let func = fn(): bool { return; }` - 1]
+test.lb:1:25:
+let func = fn(): bool { return
+                        ^ Expected a return value
+
+
+---
+
+[`"print"("Hi")` - 1]
+test.lb:1:1:
+"print"("Hi")
+^ Value of type "string" cannot be called
+
+
+---
+
+[`fn add(a, b: i32): i32 {}; add(10)` - 1]
+test.lb:1:28:
+fn add(a, b: i32): i32 {}; add(10)
+                           ^ Incorrect number of arguments (expected 2, found 1)
+
+
+---
+
+[`fn print(text: string) {}; print("Hello", "world!")` - 1]
+test.lb:1:28:
+fn print(text: string) {}; print("Hello", "world!")
+                           ^ Incorrect number of arguments (expected 1, found 2)
+
+
+---
+
+[`struct Empty {}; Empty{}.hello` - 1]
+test.lb:1:26:
+struct Empty {}; Empty{}.hello
+                         ^ Value of type "Empty" does not have member "hello"
+
+
+---
+
+[`let value = 10.plus_one` - 1]
+test.lb:1:16:
+let value = 10.plus_one
+               ^ Value of type "untyped int" does not have member "plus_one"
+
+
+---
+
+[`i32 { 1 }` - 1]
+test.lb:1:1:
+i32 { 1 }
+^ Cannot construct value of type "i32"
+
+
+---
+
+[`struct MyStruct {foo: string}; MyStruct {bar: 13}` - 1]
+test.lb:1:42:
+struct MyStruct {foo: string}; MyStruct {bar: 13}
+                                         ^ Struct "MyStruct" does not have member "bar"
+
+
+---
+
+[`break 10` - 1]
+test.lb:1:1:
+break 10
+^ Cannot use break outside of a loop
+
+
+---
+
+[`continue` - 1]
+test.lb:1:1:
+continue
+^ Cannot use continue outside of a loop
+
+
+---
+
+[`while true { let my_func = fn() { break; }; my_func() }` - 1]
+test.lb:1:35:
+while true { let my_func = fn() { break
+                                  ^ Cannot use break outside of a loop
+
+
+---
+
+[`yield 10` - 1]
+test.lb:1:1:
+yield 10
+^ Cannot use yield outside of a block
+
+
+---
+
+[`{ for i in [1, 2, 3] { yield i } }` - 1]
+test.lb:1:24:
+{ for i in [1, 2, 3] { yield i } }
+                       ^ Cannot use yield outside of a block
+
+
+---
+
+[`const my_value: 10 = 10` - 1]
+test.lb:1:17:
+const my_value: 10 = 10
+                ^ Expected a type, found value of type "untyped int"
+
+
+---
+
+[`type Function = fn(i32, second: string)` - 1]
+test.lb:1:25:
+type Function = fn(i32, second: string)
+                        ^ Parameters in function types must be unnamed
+
+
+---
+
+[`let func = fn(a: i32, i32[]) {}` - 1]
+test.lb:1:26:
+let func = fn(a: i32, i32[]) {}
+                         ^ Unnamed parameters are only allowed in function types
+
+
+---
+
+[`let deref = 10.*` - 1]
+test.lb:1:13:
+let deref = 10.*
+            ^ Cannot dereference non-pointer value of type "untyped int"
+
+
+---
+
+[`const value = 10; let ptr = &mut value` - 1]
+test.lb:1:29:
+const value = 10; let ptr = &mut value
+                            ^ Cannot take a mutable reference to an immutable value
+
+
+---
+
 [`struct Rect { w: i32, h }` - 1]
 test.lb:1:23:
 struct Rect { w: i32, h }
@@ -143,7 +327,7 @@ struct Rect { w: i32, h }
 
 ---
 
-[`struct Wrapper { foo: i32, value }` - 1]
+[`struct Wrapper {;foo: i32, value;}` - 1]
 test.lb:2:11:
 foo: i32, value
           ^ The last field of a struct must have a type annotation
@@ -151,6 +335,94 @@ foo: i32, value
 test.lb:1:8:
 struct Wrapper {
        ^ Field in this struct
+
+
+---
+
+[`struct Values { i32, i32 }; let values = Values { 1, 2, 3 }` - 1]
+test.lb:1:42:
+struct Values { i32, i32 }; let values = Values { 1, 2, 3 }
+                                         ^ Incorrect number of values supplied to struct (expected 2, found 3)
+
+
+---
+
+[`struct Values { i32, i32 }; let values = Values {}` - 1]
+test.lb:1:42:
+struct Values { i32, i32 }; let values = Values {}
+                                         ^ Incorrect number of values supplied to struct (expected 2, found 0)
+
+
+---
+
+[`struct Number { i32, f32 }; Number {first: 10, second: 2.5}` - 1]
+test.lb:1:37:
+struct Number { i32, f32 }; Number {first: 10, second: 2.5}
+                                    ^ Field names not allowed when constructing tuple structs
+
+test.lb:1:48:
+struct Number { i32, f32 }; Number {first: 10, second: 2.5}
+                                               ^ Field names not allowed when constructing tuple structs
+
+
+---
+
+[`struct Vector {x, y: i32}; Vector {1, 2}` - 1]
+test.lb:1:36:
+struct Vector {x, y: i32}; Vector {1, 2}
+                                   ^ Struct members must all be named
+
+test.lb:1:39:
+struct Vector {x, y: i32}; Vector {1, 2}
+                                      ^ Struct members must all be named
+
+
+---
+
+[`struct CustomString {pub string}` - 1]
+test.lb:1:22:
+struct CustomString {pub string}
+                     ^ `pub` keyword not allowed for unnamed fields
+
+
+---
+
+[`union Number { int: i32, float: f32 }; type Uint = Number.uint` - 1]
+test.lb:1:59:
+union Number { int: i32, float: f32 }; type Uint = Number.uint
+                                                          ^ Union "Number" has no variant "uint"
+
+
+---
+
+[`union IntArray { one: i32[1], two: i32[2] }; let i: IntArray = [1]; let three = i.three` - 1]
+test.lb:1:83:
+union IntArray { one: i32[1], two: i32[2] }; let i: IntArray = [1]; let three = i.three
+                                                                                  ^ Union "IntArray" has no variant "three"
+
+
+---
+
+[`type NotATag = i32;@tag NotATag;struct Tagged` - 1]
+test.lb:2:6:
+@tag NotATag
+     ^ "i32" is not a tag
+
+
+---
+
+[`import "undefined"` - 1]
+test.lb:1:8:
+import "undefined"
+       ^ The module "undefined" does not exist
+
+
+---
+
+[`let value_not_type = [1,2,3][]` - 1]
+test.lb:1:29:
+let value_not_type = [1,2,3][]
+                            ^ Index expressions which aren't list types must have an index
 
 
 ---

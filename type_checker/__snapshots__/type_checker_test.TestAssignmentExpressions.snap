@@ -1,53 +1,66 @@
 
 [`mut a = 1; a = 2` - 1]
-VAR_DECL a
+VAR_DECL
+├─VAR_SYMBOL a mut
+│ └─VARIABLE_TYPE i32
 └─CONVERSION
   ├─INT_LIT 1
-  └─VARIABLE_TYPE i32
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 1
 ASSIGNMENT
-├─VAR_EXPR a mut
+├─VAR_SYMBOL a mut
 │ └─VARIABLE_TYPE i32
 └─CONVERSION
   ├─INT_LIT 2
-  └─VARIABLE_TYPE i32
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 2
 ---
 
 [`mut pi = 3.15; pi = 3.14` - 1]
-VAR_DECL pi
+VAR_DECL
+├─VAR_SYMBOL pi mut
+│ └─VARIABLE_TYPE f32
 └─CONVERSION
   ├─FLOAT_LIT 3.15
-  └─VARIABLE_TYPE f32
+  ├─VARIABLE_TYPE f32
+  └─FLOAT_VALUE 3.15
 ASSIGNMENT
-├─VAR_EXPR pi mut
+├─VAR_SYMBOL pi mut
 │ └─VARIABLE_TYPE f32
 └─CONVERSION
   ├─FLOAT_LIT 3.14
-  └─VARIABLE_TYPE f32
+  ├─VARIABLE_TYPE f32
+  └─FLOAT_VALUE 3.14
 ---
 
 [`mut greeting = "Hell"; greeting += "o"` - 1]
-VAR_DECL greeting
+VAR_DECL
+├─VAR_SYMBOL greeting mut
+│ └─PRIMARY_TYPE string
 └─STRING_LIT "Hell"
 ASSIGNMENT
-├─VAR_EXPR greeting mut
+├─VAR_SYMBOL greeting mut
 │ └─PRIMARY_TYPE string
 └─BINARY_EXPR Concat
-  ├─VAR_EXPR greeting mut
+  ├─VAR_SYMBOL greeting mut
   │ └─PRIMARY_TYPE string
   ├─STRING_LIT "o"
   └─PRIMARY_TYPE string
 ---
 
 [`mut count = 10; count -= 2` - 1]
-VAR_DECL count
+VAR_DECL
+├─VAR_SYMBOL count mut
+│ └─VARIABLE_TYPE i32
 └─CONVERSION
   ├─INT_LIT 10
-  └─VARIABLE_TYPE i32
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 10
 ASSIGNMENT
-├─VAR_EXPR count mut
+├─VAR_SYMBOL count mut
 │ └─VARIABLE_TYPE i32
 └─BINARY_EXPR SubtractInt
-  ├─VAR_EXPR count mut
+  ├─VAR_SYMBOL count mut
   │ └─VARIABLE_TYPE i32
   ├─INT_LIT 2
   └─VARIABLE_TYPE i32

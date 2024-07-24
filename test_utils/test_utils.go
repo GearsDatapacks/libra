@@ -33,41 +33,59 @@ func AssertSingle[T any](t *testing.T, list []T) T {
 	return list[0]
 }
 
-func MatchAstSnap(t *testing.T, src string) {
+func MatchAstSnaps(t *testing.T, tests ...string) {
 	t.Helper()
-	program, diags := getAst(t, src)
-	AssertEq(t, len(diags), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
 
-	matchSnap(t, src, program.String())
-}
+	for _, src := range tests {
+		program, diags := getAst(t, src)
+		for _, diag := range diags {
+			diag.Print()
+		}
+		AssertEq(t, len(diags), 0,
+			fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
 
-func MatchIrSnap(t *testing.T, src string) {
-	t.Helper()
-	program, diags := getIr(t, src)
-	AssertEq(t, len(diags), 0,
-		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
-	matchSnap(t, src, program.String())
-}
-
-func MatchParserErrorSnap(t *testing.T, src string) {
-	t.Helper()
-	_, diagnostics := getAst(t, src)
-	var diags bytes.Buffer
-	for _, diag := range diagnostics {
-		diag.WriteTo(&diags, false)
+		matchSnap(t, src, program.String())
 	}
-
-	matchSnap(t, src, diags.String())
 }
 
-func MatchTCErrorSnap(t *testing.T, src string) {
+func MatchIrSnaps(t *testing.T, tests ...string) {
 	t.Helper()
-	_, diagnostics := getIr(t, src)
-	var diags bytes.Buffer
-	for _, diag := range diagnostics {
-		diag.WriteTo(&diags, false)
-	}
 
-	matchSnap(t, src, diags.String())
+	for _, src := range tests {
+		program, diags := getIr(t, src)
+		for _, diag := range diags {
+			diag.Print()
+		}
+		AssertEq(t, len(diags), 0,
+			fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
+		matchSnap(t, src, program.String())
+	}
+}
+
+func MatchParserErrorSnaps(t *testing.T, tests ...string) {
+	t.Helper()
+
+	for _, src := range tests {
+		_, diagnostics := getAst(t, src)
+		var diags bytes.Buffer
+		for _, diag := range diagnostics {
+			diag.WriteTo(&diags, false)
+		}
+
+		matchSnap(t, src, diags.String())
+	}
+}
+
+func MatchTCErrorSnaps(t *testing.T, tests ...string) {
+	t.Helper()
+
+	for _, src := range tests {
+		_, diagnostics := getIr(t, src)
+		var diags bytes.Buffer
+		for _, diag := range diagnostics {
+			diag.WriteTo(&diags, false)
+		}
+
+		matchSnap(t, src, diags.String())
+	}
 }

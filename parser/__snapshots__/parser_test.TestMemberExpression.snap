@@ -9,7 +9,7 @@ MEMBER_EXPR to_string (1:2)
 └─INT_LIT 1 (0:1)
 ---
 
-[`a .b` - 1]
+[`a;.b` - 1]
 MEMBER_EXPR b (2:3)
 └─IDENT a (0:1)
 ---

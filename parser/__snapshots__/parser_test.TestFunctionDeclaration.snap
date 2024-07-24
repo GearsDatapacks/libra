@@ -5,7 +5,7 @@ FUNC_DECL hello (0:2)
   └─STRING_LIT "Hello, world!" (13:28)
 ---
 
-[`fn (i32) print() { this }` - 1]
+[`fn (i32) print() {;this;}` - 1]
 FUNC_DECL print (0:2)
 ├─METHOD_OF
 │ └─IDENT i32 (4:7)
@@ -13,7 +13,7 @@ FUNC_DECL print (0:2)
   └─IDENT this (19:23)
 ---
 
-[`fn (i32) add( other: i32 , ) :i32 { 7 }` - 1]
+[`fn (i32) add(;other: i32;,;);:i32;{ 7 }` - 1]
 FUNC_DECL add (0:2)
 ├─METHOD_OF
 │ └─IDENT i32 (4:7)

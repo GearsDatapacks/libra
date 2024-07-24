@@ -16,7 +16,7 @@ IF_EXPR (0:2)
     └─INT_LIT 20 (23:25)
 ---
 
-[`if 69 		{"Nice"} 		else if 42 { "UATLTUAE" }else{ 			"Boring" 		}` - 1]
+[`if 69;		{"Nice"};		else if 42 { "UATLTUAE" }else{;			"Boring";		}` - 1]
 IF_EXPR (0:2)
 ├─INT_LIT 69 (3:5)
 ├─BLOCK (8:9)

@@ -9,7 +9,7 @@ TYPE_DECL int (0:4)
 └─IDENT i32 (9:12)
 ---
 
-[`type boolean  =  bool` - 1]
+[`type boolean; =; bool` - 1]
 TYPE_DECL boolean (0:4)
 └─IDENT bool (17:21)
 ---

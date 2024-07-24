@@ -2,14 +2,16 @@
 [`1 is i32` - 1]
 TYPE_CHECK_EXPR
 ├─INT_LIT 1
-└─VARIABLE_TYPE i32
+├─VARIABLE_TYPE i32
+└─BOOL_VALUE true
 ---
 
 [`true is bool[1]` - 1]
 TYPE_CHECK_EXPR
 ├─BOOL_LIT true
-└─ARRAY_TYPE 1
-  └─PRIMARY_TYPE bool
+├─ARRAY_TYPE 1
+│ └─PRIMARY_TYPE bool
+└─BOOL_VALUE false
 ---
 
 [`({1: 1.0, 3: 3.14}) is {i32: f32}` - 1]
@@ -21,19 +23,20 @@ TYPE_CHECK_EXPR
 │ ├─MAP_VALUE
 │ │ ├─KEY_VALUE
 │ │ │ ├─INT_VALUE 1
-│ │ │ └─FLOAT_VALUE 1.000000
+│ │ │ └─FLOAT_VALUE 1
 │ │ └─KEY_VALUE
 │ │   ├─INT_VALUE 3
-│ │   └─FLOAT_VALUE 3.140000
+│ │   └─FLOAT_VALUE 3.14
 │ ├─KEY_VALUE
 │ │ ├─INT_LIT 1
 │ │ └─FLOAT_LIT 1
 │ └─KEY_VALUE
 │   ├─INT_LIT 3
 │   └─FLOAT_LIT 3.14
-└─MAP_TYPE
-  ├─VARIABLE_TYPE i32
-  └─VARIABLE_TYPE f32
+├─MAP_TYPE
+│ ├─VARIABLE_TYPE i32
+│ └─VARIABLE_TYPE f32
+└─BOOL_VALUE true
 ---
 
 [`(1, 3.1, "hi") is (i32, f32, string)` - 1]
@@ -45,17 +48,20 @@ TYPE_CHECK_EXPR
 │ │ └─PRIMARY_TYPE string
 │ ├─TUPLE_VALUE
 │ │ ├─INT_VALUE 1
-│ │ ├─FLOAT_VALUE 3.100000
+│ │ ├─FLOAT_VALUE 3.1
 │ │ └─STRING_VALUE "hi"
 │ ├─CONVERSION
 │ │ ├─INT_LIT 1
-│ │ └─VARIABLE_TYPE i32
+│ │ ├─VARIABLE_TYPE i32
+│ │ └─INT_VALUE 1
 │ ├─CONVERSION
 │ │ ├─FLOAT_LIT 3.1
-│ │ └─VARIABLE_TYPE f32
+│ │ ├─VARIABLE_TYPE f32
+│ │ └─FLOAT_VALUE 3.1
 │ └─STRING_LIT "hi"
-└─TUPLE_TYPE
-  ├─VARIABLE_TYPE i32
-  ├─VARIABLE_TYPE f32
-  └─PRIMARY_TYPE string
+├─TUPLE_TYPE
+│ ├─VARIABLE_TYPE i32
+│ ├─VARIABLE_TYPE f32
+│ └─PRIMARY_TYPE string
+└─BOOL_VALUE true
 ---

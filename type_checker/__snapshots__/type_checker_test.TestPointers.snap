@@ -1,0 +1,80 @@
+
+[`let value1: i32 = 10;let value_ptr: *i32 = &value1;let value2: i32 = value_ptr.*` - 1]
+VAR_DECL
+├─VAR_SYMBOL value1
+│ ├─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+VAR_DECL
+├─VAR_SYMBOL value_ptr
+│ └─POINTER_TYPE
+│   └─VARIABLE_TYPE i32
+└─REF_EXPR
+  └─VAR_SYMBOL value1
+    ├─VARIABLE_TYPE i32
+    └─INT_VALUE 10
+VAR_DECL
+├─VAR_SYMBOL value2
+│ └─VARIABLE_TYPE i32
+└─DEREF_EXPR
+  └─VAR_SYMBOL value_ptr
+    └─POINTER_TYPE
+      └─VARIABLE_TYPE i32
+---
+
+[`mut value = 1;let ptr: *mut i32 = &mut value;while value < 10 {;	ptr.* += 1;}` - 1]
+VAR_DECL
+├─VAR_SYMBOL value mut
+│ └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 1
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 1
+VAR_DECL
+├─VAR_SYMBOL ptr
+│ └─POINTER_TYPE mut
+│   └─VARIABLE_TYPE i32
+└─REF_EXPR mut
+  └─VAR_SYMBOL value mut
+    └─VARIABLE_TYPE i32
+WHILE_LOOP
+├─BINARY_EXPR Less
+│ ├─VAR_SYMBOL value mut
+│ │ └─VARIABLE_TYPE i32
+│ ├─INT_LIT 10
+│ └─PRIMARY_TYPE bool
+└─BLOCK
+  ├─PRIMARY_TYPE void
+  └─ASSIGNMENT
+    ├─DEREF_EXPR
+    │ └─VAR_SYMBOL ptr
+    │   └─POINTER_TYPE mut
+    │     └─VARIABLE_TYPE i32
+    └─BINARY_EXPR AddInt
+      ├─DEREF_EXPR
+      │ └─VAR_SYMBOL ptr
+      │   └─POINTER_TYPE mut
+      │     └─VARIABLE_TYPE i32
+      ├─INT_LIT 1
+      └─VARIABLE_TYPE i32
+---
+
+[`mut mutable = 1;let downcasted_ptr: *i32 = &mut mutable` - 1]
+VAR_DECL
+├─VAR_SYMBOL mutable mut
+│ └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 1
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 1
+VAR_DECL
+├─VAR_SYMBOL downcasted_ptr
+│ └─POINTER_TYPE
+│   └─VARIABLE_TYPE i32
+└─REF_EXPR mut
+  └─VAR_SYMBOL mutable mut
+    └─VARIABLE_TYPE i32
+---

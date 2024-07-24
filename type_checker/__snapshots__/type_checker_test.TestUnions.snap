@@ -1,0 +1,349 @@
+
+[`union IntOrString { i32, string };mut value: IntOrString = "32";value = 32;let int_value: i32 = value.i32;let string_value: string = value.string` - 1]
+TYPE_DECL IntOrString
+└─UNION_TYPE IntOrString
+  ├─VARIABLE_TYPE i32
+  └─PRIMARY_TYPE string
+VAR_DECL
+├─VAR_SYMBOL value mut
+│ └─UNION_TYPE IntOrString
+│   ├─VARIABLE_TYPE i32
+│   └─PRIMARY_TYPE string
+└─CONVERSION
+  ├─STRING_LIT "32"
+  ├─UNION_TYPE IntOrString
+  │ ├─VARIABLE_TYPE i32
+  │ └─PRIMARY_TYPE string
+  └─STRING_VALUE "32"
+ASSIGNMENT
+├─VAR_SYMBOL value mut
+│ └─UNION_TYPE IntOrString
+│   ├─VARIABLE_TYPE i32
+│   └─PRIMARY_TYPE string
+└─CONVERSION
+  ├─INT_LIT 32
+  ├─UNION_TYPE IntOrString
+  │ ├─VARIABLE_TYPE i32
+  │ └─PRIMARY_TYPE string
+  └─INT_VALUE 32
+VAR_DECL
+├─VAR_SYMBOL int_value
+│ └─VARIABLE_TYPE i32
+└─MEMBER_EXPR i32
+  ├─VAR_SYMBOL value mut
+  │ └─UNION_TYPE IntOrString
+  │   ├─VARIABLE_TYPE i32
+  │   └─PRIMARY_TYPE string
+  └─VARIABLE_TYPE i32
+VAR_DECL
+├─VAR_SYMBOL string_value
+│ └─PRIMARY_TYPE string
+└─MEMBER_EXPR string
+  ├─VAR_SYMBOL value mut
+  │ └─UNION_TYPE IntOrString
+  │   ├─VARIABLE_TYPE i32
+  │   └─PRIMARY_TYPE string
+  └─PRIMARY_TYPE string
+---
+
+[`union Int { int: i32, other: i32 };let int1 = 10 -> Int.int;let int2 = 92 -> Int.other` - 1]
+TYPE_DECL Int
+└─UNION_TYPE Int
+  ├─UNION_VARIANT int
+  │ └─VARIABLE_TYPE i32
+  └─UNION_VARIANT other
+    └─VARIABLE_TYPE i32
+VAR_DECL
+├─VAR_SYMBOL int1
+│ ├─UNION_TYPE Int
+│ │ ├─UNION_VARIANT int
+│ │ │ └─VARIABLE_TYPE i32
+│ │ └─UNION_VARIANT other
+│ │   └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─CONVERSION
+  ├─CONVERSION
+  │ ├─INT_LIT 10
+  │ ├─UNION_VARIANT int
+  │ │ └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 10
+  ├─UNION_TYPE Int
+  │ ├─UNION_VARIANT int
+  │ │ └─VARIABLE_TYPE i32
+  │ └─UNION_VARIANT other
+  │   └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+VAR_DECL
+├─VAR_SYMBOL int2
+│ ├─UNION_TYPE Int
+│ │ ├─UNION_VARIANT int
+│ │ │ └─VARIABLE_TYPE i32
+│ │ └─UNION_VARIANT other
+│ │   └─VARIABLE_TYPE i32
+│ └─INT_VALUE 92
+└─CONVERSION
+  ├─CONVERSION
+  │ ├─INT_LIT 92
+  │ ├─UNION_VARIANT other
+  │ │ └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 92
+  ├─UNION_TYPE Int
+  │ ├─UNION_VARIANT int
+  │ │ └─VARIABLE_TYPE i32
+  │ └─UNION_VARIANT other
+  │   └─VARIABLE_TYPE i32
+  └─INT_VALUE 92
+---
+
+[`union Shape {;	Circle { cx, cy, r: i32 },;	Rectangle { x, y, w, h: i32 };};mut circle = Shape.Circle { cx: 10, cy: 31, r: 5 };mut rectangle = Shape.Rectangle { x: 0, y: 0, w: 10, h: 5 };circle = rectangle` - 1]
+TYPE_DECL Shape
+└─UNION_TYPE Shape
+  ├─UNION_VARIANT Circle
+  │ └─STRUCT_TYPE Circle
+  │   ├─STRUCT_FIELD cx
+  │   │ └─VARIABLE_TYPE i32
+  │   ├─STRUCT_FIELD cy
+  │   │ └─VARIABLE_TYPE i32
+  │   └─STRUCT_FIELD r
+  │     └─VARIABLE_TYPE i32
+  └─UNION_VARIANT Rectangle
+    └─STRUCT_TYPE Rectangle
+      ├─STRUCT_FIELD h
+      │ └─VARIABLE_TYPE i32
+      ├─STRUCT_FIELD w
+      │ └─VARIABLE_TYPE i32
+      ├─STRUCT_FIELD x
+      │ └─VARIABLE_TYPE i32
+      └─STRUCT_FIELD y
+        └─VARIABLE_TYPE i32
+VAR_DECL
+├─VAR_SYMBOL circle mut
+│ └─UNION_TYPE Shape
+│   ├─UNION_VARIANT Circle
+│   │ └─STRUCT_TYPE Circle
+│   │   ├─STRUCT_FIELD cx
+│   │   │ └─VARIABLE_TYPE i32
+│   │   ├─STRUCT_FIELD cy
+│   │   │ └─VARIABLE_TYPE i32
+│   │   └─STRUCT_FIELD r
+│   │     └─VARIABLE_TYPE i32
+│   └─UNION_VARIANT Rectangle
+│     └─STRUCT_TYPE Rectangle
+│       ├─STRUCT_FIELD h
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD w
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD x
+│       │ └─VARIABLE_TYPE i32
+│       └─STRUCT_FIELD y
+│         └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─STRUCT_EXPR
+  │ ├─UNION_VARIANT Circle
+  │ │ └─STRUCT_TYPE Circle
+  │ │   ├─STRUCT_FIELD cx
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   ├─STRUCT_FIELD cy
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   └─STRUCT_FIELD r
+  │ │     └─VARIABLE_TYPE i32
+  │ ├─STRUCT_VALUE
+  │ │ ├─STRUCT_MEMBER cx
+  │ │ │ └─INT_VALUE 10
+  │ │ ├─STRUCT_MEMBER cy
+  │ │ │ └─INT_VALUE 31
+  │ │ └─STRUCT_MEMBER r
+  │ │   └─INT_VALUE 5
+  │ ├─STRUCT_FIELD cx
+  │ │ └─CONVERSION
+  │ │   ├─INT_LIT 10
+  │ │   ├─VARIABLE_TYPE i32
+  │ │   └─INT_VALUE 10
+  │ ├─STRUCT_FIELD cy
+  │ │ └─CONVERSION
+  │ │   ├─INT_LIT 31
+  │ │   ├─VARIABLE_TYPE i32
+  │ │   └─INT_VALUE 31
+  │ └─STRUCT_FIELD r
+  │   └─CONVERSION
+  │     ├─INT_LIT 5
+  │     ├─VARIABLE_TYPE i32
+  │     └─INT_VALUE 5
+  ├─UNION_TYPE Shape
+  │ ├─UNION_VARIANT Circle
+  │ │ └─STRUCT_TYPE Circle
+  │ │   ├─STRUCT_FIELD cx
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   ├─STRUCT_FIELD cy
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   └─STRUCT_FIELD r
+  │ │     └─VARIABLE_TYPE i32
+  │ └─UNION_VARIANT Rectangle
+  │   └─STRUCT_TYPE Rectangle
+  │     ├─STRUCT_FIELD h
+  │     │ └─VARIABLE_TYPE i32
+  │     ├─STRUCT_FIELD w
+  │     │ └─VARIABLE_TYPE i32
+  │     ├─STRUCT_FIELD x
+  │     │ └─VARIABLE_TYPE i32
+  │     └─STRUCT_FIELD y
+  │       └─VARIABLE_TYPE i32
+  └─STRUCT_VALUE
+    ├─STRUCT_MEMBER cx
+    │ └─INT_VALUE 10
+    ├─STRUCT_MEMBER cy
+    │ └─INT_VALUE 31
+    └─STRUCT_MEMBER r
+      └─INT_VALUE 5
+VAR_DECL
+├─VAR_SYMBOL rectangle mut
+│ └─UNION_TYPE Shape
+│   ├─UNION_VARIANT Circle
+│   │ └─STRUCT_TYPE Circle
+│   │   ├─STRUCT_FIELD cx
+│   │   │ └─VARIABLE_TYPE i32
+│   │   ├─STRUCT_FIELD cy
+│   │   │ └─VARIABLE_TYPE i32
+│   │   └─STRUCT_FIELD r
+│   │     └─VARIABLE_TYPE i32
+│   └─UNION_VARIANT Rectangle
+│     └─STRUCT_TYPE Rectangle
+│       ├─STRUCT_FIELD h
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD w
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD x
+│       │ └─VARIABLE_TYPE i32
+│       └─STRUCT_FIELD y
+│         └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─STRUCT_EXPR
+  │ ├─UNION_VARIANT Rectangle
+  │ │ └─STRUCT_TYPE Rectangle
+  │ │   ├─STRUCT_FIELD h
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   ├─STRUCT_FIELD w
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   ├─STRUCT_FIELD x
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   └─STRUCT_FIELD y
+  │ │     └─VARIABLE_TYPE i32
+  │ ├─STRUCT_VALUE
+  │ │ ├─STRUCT_MEMBER h
+  │ │ │ └─INT_VALUE 5
+  │ │ ├─STRUCT_MEMBER w
+  │ │ │ └─INT_VALUE 10
+  │ │ ├─STRUCT_MEMBER x
+  │ │ │ └─INT_VALUE 0
+  │ │ └─STRUCT_MEMBER y
+  │ │   └─INT_VALUE 0
+  │ ├─STRUCT_FIELD h
+  │ │ └─CONVERSION
+  │ │   ├─INT_LIT 5
+  │ │   ├─VARIABLE_TYPE i32
+  │ │   └─INT_VALUE 5
+  │ ├─STRUCT_FIELD w
+  │ │ └─CONVERSION
+  │ │   ├─INT_LIT 10
+  │ │   ├─VARIABLE_TYPE i32
+  │ │   └─INT_VALUE 10
+  │ ├─STRUCT_FIELD x
+  │ │ └─CONVERSION
+  │ │   ├─INT_LIT 0
+  │ │   ├─VARIABLE_TYPE i32
+  │ │   └─INT_VALUE 0
+  │ └─STRUCT_FIELD y
+  │   └─CONVERSION
+  │     ├─INT_LIT 0
+  │     ├─VARIABLE_TYPE i32
+  │     └─INT_VALUE 0
+  ├─UNION_TYPE Shape
+  │ ├─UNION_VARIANT Circle
+  │ │ └─STRUCT_TYPE Circle
+  │ │   ├─STRUCT_FIELD cx
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   ├─STRUCT_FIELD cy
+  │ │   │ └─VARIABLE_TYPE i32
+  │ │   └─STRUCT_FIELD r
+  │ │     └─VARIABLE_TYPE i32
+  │ └─UNION_VARIANT Rectangle
+  │   └─STRUCT_TYPE Rectangle
+  │     ├─STRUCT_FIELD h
+  │     │ └─VARIABLE_TYPE i32
+  │     ├─STRUCT_FIELD w
+  │     │ └─VARIABLE_TYPE i32
+  │     ├─STRUCT_FIELD x
+  │     │ └─VARIABLE_TYPE i32
+  │     └─STRUCT_FIELD y
+  │       └─VARIABLE_TYPE i32
+  └─STRUCT_VALUE
+    ├─STRUCT_MEMBER h
+    │ └─INT_VALUE 5
+    ├─STRUCT_MEMBER w
+    │ └─INT_VALUE 10
+    ├─STRUCT_MEMBER x
+    │ └─INT_VALUE 0
+    └─STRUCT_MEMBER y
+      └─INT_VALUE 0
+ASSIGNMENT
+├─VAR_SYMBOL circle mut
+│ └─UNION_TYPE Shape
+│   ├─UNION_VARIANT Circle
+│   │ └─STRUCT_TYPE Circle
+│   │   ├─STRUCT_FIELD cx
+│   │   │ └─VARIABLE_TYPE i32
+│   │   ├─STRUCT_FIELD cy
+│   │   │ └─VARIABLE_TYPE i32
+│   │   └─STRUCT_FIELD r
+│   │     └─VARIABLE_TYPE i32
+│   └─UNION_VARIANT Rectangle
+│     └─STRUCT_TYPE Rectangle
+│       ├─STRUCT_FIELD h
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD w
+│       │ └─VARIABLE_TYPE i32
+│       ├─STRUCT_FIELD x
+│       │ └─VARIABLE_TYPE i32
+│       └─STRUCT_FIELD y
+│         └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─VAR_SYMBOL rectangle mut
+  │ └─UNION_TYPE Shape
+  │   ├─UNION_VARIANT Circle
+  │   │ └─STRUCT_TYPE Circle
+  │   │   ├─STRUCT_FIELD cx
+  │   │   │ └─VARIABLE_TYPE i32
+  │   │   ├─STRUCT_FIELD cy
+  │   │   │ └─VARIABLE_TYPE i32
+  │   │   └─STRUCT_FIELD r
+  │   │     └─VARIABLE_TYPE i32
+  │   └─UNION_VARIANT Rectangle
+  │     └─STRUCT_TYPE Rectangle
+  │       ├─STRUCT_FIELD h
+  │       │ └─VARIABLE_TYPE i32
+  │       ├─STRUCT_FIELD w
+  │       │ └─VARIABLE_TYPE i32
+  │       ├─STRUCT_FIELD x
+  │       │ └─VARIABLE_TYPE i32
+  │       └─STRUCT_FIELD y
+  │         └─VARIABLE_TYPE i32
+  └─UNION_TYPE Shape
+    ├─UNION_VARIANT Circle
+    │ └─STRUCT_TYPE Circle
+    │   ├─STRUCT_FIELD cx
+    │   │ └─VARIABLE_TYPE i32
+    │   ├─STRUCT_FIELD cy
+    │   │ └─VARIABLE_TYPE i32
+    │   └─STRUCT_FIELD r
+    │     └─VARIABLE_TYPE i32
+    └─UNION_VARIANT Rectangle
+      └─STRUCT_TYPE Rectangle
+        ├─STRUCT_FIELD h
+        │ └─VARIABLE_TYPE i32
+        ├─STRUCT_FIELD w
+        │ └─VARIABLE_TYPE i32
+        ├─STRUCT_FIELD x
+        │ └─VARIABLE_TYPE i32
+        └─STRUCT_FIELD y
+          └─VARIABLE_TYPE i32
+---
