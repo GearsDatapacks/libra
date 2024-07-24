@@ -689,7 +689,7 @@ func (t *typeChecker) typeCheckTypeCheck(tc *ast.TypeCheckExpression) ir.Express
 
 func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expression {
 	fn := t.typeCheckExpression(call.Callee)
-	funcType, ok := fn.Type().(*types.Function)
+	funcType, ok := types.Unwrap(fn.Type()).(*types.Function)
 	if !ok {
 		t.diagnostics.Report(diagnostics.NotCallable(call.Callee.GetLocation(), fn.Type()))
 		return &ir.InvalidExpression{

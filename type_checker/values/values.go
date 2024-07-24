@@ -1,10 +1,8 @@
 package values
 
 import (
-	"cmp"
 	"hash/fnv"
 	"math"
-	"slices"
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
@@ -53,7 +51,7 @@ func (f FloatValue) Hash() uint64 {
 
 func (f FloatValue) Print(node *printer.Node) {
 	node.Text(
-		"%sFLOAT_VALUE %s%f",
+		"%sFLOAT_VALUE %s%v",
 		node.Colour(colour.NodeName),
 		node.Colour(colour.Literal),
 		f.Value,
@@ -113,7 +111,11 @@ type ArrayValue struct {
 }
 
 func (a ArrayValue) Index(index ConstValue) ConstValue {
-	return a.Elements[index.(IntValue).Value]
+	intValue, ok := index.(IntValue)
+	if !ok {
+		return nil
+	}
+	return a.Elements[intValue.Value]
 }
 
 func (a ArrayValue) Print(node *printer.Node) {
@@ -173,15 +175,10 @@ func (m MapValue) Print(node *printer.Node) {
 		node.Colour(colour.NodeName),
 	)
 
-	// We do this to ensure consistent order for our tests
-	keyValues := make([]KeyValue, 0, len(m.Values))
-	for _, kv := range m.Values {
-		keyValues = append(keyValues, kv)
-	}
-	slices.SortFunc(keyValues, func(a, b KeyValue) int {
-		return cmp.Compare(a.Key.Hash(), b.Key.Hash())
-	})
-	printer.Nodes(node, keyValues)
+	printer.Map(
+		node,
+		m.Values,
+	)
 }
 
 type hasMembers interface {
@@ -224,13 +221,13 @@ func (s StructValue) Print(node *printer.Node) {
 		node.Colour(colour.NodeName),
 	)
 
-	for name, value := range s.Members {
+	for _, keyValue := range printer.SortMap(s.Members) {
 		node.FakeNode(
 			"%sSTRUCT_MEMBER %s%s",
-			func(n *printer.Node) { n.Node(value) },
+			func(n *printer.Node) { n.Node(keyValue.Value) },
 			node.Colour(colour.NodeName),
 			node.Colour(colour.Name),
-			name,
+			keyValue.Key,
 		)
 	}
 }

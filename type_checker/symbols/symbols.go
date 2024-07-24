@@ -40,7 +40,7 @@ func (v *Variable) Mutable() bool {
 func (v *Variable) Print(node *printer.Node) {
 	node.
 		Text(
-			"%sVAR_EXPR %s%s",
+			"%sVAR_SYMBOL %s%s",
 			node.Colour(colour.NodeName),
 			node.Colour(colour.Name),
 			v.Name,

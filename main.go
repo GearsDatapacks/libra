@@ -37,6 +37,8 @@ func main() {
 		diag.Print()
 	}
 
-	program.Print()
-	fmt.Println()
+	if len(diags) == 0 {
+		program.Print()
+		fmt.Println()
+	}
 }

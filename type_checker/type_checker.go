@@ -214,9 +214,19 @@ const (
 func canConvert(from, to types.Type) conversionKind {
 	kind := none
 
-	if expl, ok := to.(*types.Explicit); ok && types.Assignable(expl.Type, from) {
-		return implicit
+	if expl, ok := to.(*types.Explicit); ok {
+		if expl2, ok := from.(*types.Explicit); ok && types.Assignable(expl, expl2) {
+			return implicit
+		}
+		if types.Assignable(expl.Type, from) {
+			return implicit
+		}
 	}
+
+	if _, ok := to.(*types.Tag); ok && types.Assignable(to, from) {
+		return identity
+	}
+
 	if expl, ok := from.(*types.Explicit); ok {
 		if canConvert(expl.Type, to) != none {
 			return explicit

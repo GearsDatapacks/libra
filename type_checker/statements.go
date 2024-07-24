@@ -90,7 +90,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 		t.diagnostics.Report(diagnostics.VariableDefined(varDec.NameLocation, variable.Name))
 	}
 	return &ir.VariableDeclaration{
-		Name:  variable.Name,
+		Symbol: variable,
 		Value: value,
 	}
 }
@@ -187,6 +187,10 @@ func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 	for symbolTable != nil {
 		if ctx, ok := symbolTable.Context.(*symbols.LoopContext); ok {
 			context = ctx
+			break
+		}
+		
+		if _, ok := symbolTable.Context.(symbols.FunctionContext); ok {
 			break
 		}
 		symbolTable = symbolTable.Parent

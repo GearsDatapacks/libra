@@ -718,7 +718,8 @@ func (c *Conversion) Print(node *printer.Node) {
 			node.Colour(colour.NodeName),
 		).
 		Node(c.Expression).
-		Node(c.To)
+		Node(c.To).
+		OptionalNode(c.ConstValue())
 }
 
 func (c *Conversion) Type() types.Type {
@@ -747,19 +748,7 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		}
 	}
 
-	if _, ok := c.To.(*types.InlineUnion); ok {
-		return c.Expression.ConstValue()
-	}
-
-	if _, ok := c.To.(*types.Explicit); ok {
-		return c.Expression.ConstValue()
-	}
-
-	if _, ok := c.To.(*types.Union); ok {
-		return c.Expression.ConstValue()
-	}
-
-	panic("unreachable")
+	return c.Expression.ConstValue()
 }
 
 type InvalidExpression struct {
@@ -834,7 +823,8 @@ func (i *IndexExpression) Print(node *printer.Node) {
 		).
 		Node(i.Left).
 		Node(i.Index).
-		Node(i.DataType)
+		Node(i.DataType).
+		OptionalNode(i.ConstValue())
 }
 
 func (i *IndexExpression) Type() types.Type {
@@ -1004,7 +994,8 @@ func (t *TypeCheck) Print(node *printer.Node) {
 			node.Colour(colour.NodeName),
 		).
 		Node(t.Value).
-		Node(t.DataType)
+		Node(t.DataType).
+		OptionalNode(t.ConstValue())
 }
 
 func (t *TypeCheck) Type() types.Type {
@@ -1072,13 +1063,13 @@ func (s *StructExpression) Print(node *printer.Node) {
 		Node(s.Struct).
 		OptionalNode(s.ConstValue())
 
-	for name, value := range s.Fields {
+	for _, keyValue := range printer.SortMap(s.Fields) {
 		node.FakeNode(
 			"%sSTRUCT_FIELD %s%s",
-			func(n *printer.Node) { n.Node(value) },
+			func(n *printer.Node) { n.Node(keyValue.Value) },
 			node.Colour(colour.NodeName),
 			node.Colour(colour.Name),
-			name,
+			keyValue.Key,
 		)
 	}
 }
@@ -1124,7 +1115,8 @@ func (t *TupleStructExpression) Print(node *printer.Node) {
 			"%sTUPLE_STRUCT_EXPR",
 			node.Colour(colour.NodeName),
 		).
-		Node(t.Struct)
+		Node(t.Struct).
+		OptionalNode(t.ConstValue())
 
 	printer.Nodes(node, t.Fields)
 }
@@ -1174,7 +1166,8 @@ func (m *MemberExpression) Print(node *printer.Node) {
 			m.Member,
 		).
 		Node(m.Left).
-		Node(m.DataType)
+		Node(m.DataType).
+		OptionalNode(m.ConstValue())
 }
 
 func (m *MemberExpression) Type() types.Type {

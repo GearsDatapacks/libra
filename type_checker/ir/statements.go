@@ -3,22 +3,22 @@ package ir
 import (
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type VariableDeclaration struct {
-	Name  string
+	Symbol *symbols.Variable
 	Value Expression
 }
 
 func (v *VariableDeclaration) Print(node *printer.Node) {
 	node.
 		Text(
-			"%sVAR_DECL %s%s",
+			"%sVAR_DECL",
 			node.Colour(colour.NodeName),
-			node.Colour(colour.Name),
-			v.Name,
 		).
+		Node(v.Symbol).
 		Node(v.Value)
 }
 

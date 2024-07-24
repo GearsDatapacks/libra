@@ -543,9 +543,7 @@ func (s *Struct) Print(node *printer.Node) {
 		s.Name,
 	)
 
-	for _, field := range s.Fields {
-		node.Node(field)
-	}
+	printer.Map(node, s.Fields)
 }
 
 func (s *Struct) valid(other Type) bool {
@@ -708,9 +706,7 @@ func (u *Union) Print(node *printer.Node) {
 		u.Name,
 	)
 
-	for _, ty := range u.Members {
-		node.Node(ty)
-	}
+	printer.Map(node, u.Members)
 }
 
 func (u *Union) valid(other Type) bool {
@@ -933,13 +929,18 @@ func (e *Explicit) String() string {
 
 func (e *Explicit) Print(node *printer.Node) {
 	node.
-		Text("%sEXPLICIT_TYPE", node.Colour(colour.NodeName)).
+		Text(
+			"%sEXPLICIT_TYPE %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			e.Name,
+		).
 		Node(e.Type)
 }
 
 func (e *Explicit) valid(other Type) bool {
 	if expl, ok := other.(*Explicit); ok {
-		return expl.Name == e.Name && Assignable(expl.Type, e.Type)
+		return expl.Name == e.Name
 	}
 	return Assignable(e.Type, other)
 }

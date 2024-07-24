@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"cmp"
 	"fmt"
 	"reflect"
 
@@ -53,6 +54,13 @@ func (n *Node) node(text string, callback func(*Node)) {
 func Nodes[T Printable](n *Node, nodes []T) {
 	for _, node := range nodes {
 		n.Node(node)
+	}
+}
+
+func Map[K cmp.Ordered, V Printable](n *Node, m map[K]V) {
+	nodes := SortMap(m)
+	for _, node := range nodes {
+		n.Node(node.Value)
 	}
 }
 
