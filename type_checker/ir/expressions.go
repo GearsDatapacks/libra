@@ -541,10 +541,15 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 	}
 }
 
-type UnaryOperator int
+type UnOpId int
+
+type UnaryOperator struct {
+	Id       UnOpId
+	DataType types.Type
+}
 
 const (
-	_ UnaryOperator = iota
+	_ UnOpId = iota
 	NegateInt
 	NegateFloat
 	Identity
@@ -553,7 +558,7 @@ const (
 )
 
 const (
-	postfix UnaryOperator = iota | (1 << 16)
+	postfix UnOpId = iota | (1 << 16)
 	IncrecementInt
 	IncrementFloat
 	DecrecementInt
@@ -563,9 +568,9 @@ const (
 )
 
 func (u UnaryOperator) String() string {
-	u = u & ^UntypedBit
+	id := u.Id & ^UntypedBit
 
-	switch u {
+	switch id {
 	case NegateInt:
 		return "NegateInt"
 	case NegateFloat:
@@ -593,12 +598,12 @@ func (u UnaryOperator) String() string {
 	}
 }
 
-func (b UnaryOperator) Type() types.Type {
-	untyped := b&UntypedBit != 0
-	b = b & ^UntypedBit
+func (u UnaryOperator) Type() types.Type {
+	untyped := u.Id&UntypedBit != 0
+	id := u.Id & ^UntypedBit
 	var ty types.Type = types.Invalid
 
-	switch b {
+	switch id {
 	case NegateInt:
 		ty = types.Int
 	case NegateFloat:
@@ -620,7 +625,7 @@ func (b UnaryOperator) Type() types.Type {
 	case PropagateError:
 		panic("TODO: Type for PropagateError unary operator")
 	case CrashError:
-		panic("TODO: Type for CrashError unary operator")
+		return u.DataType
 	}
 
 	if untyped {
@@ -665,7 +670,7 @@ func (u *UnaryExpression) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	switch u.Operator & ^UntypedBit {
+	switch u.Operator.Id & ^UntypedBit {
 	case NegateInt:
 		value := u.Operand.ConstValue().(values.IntValue)
 		return values.IntValue{

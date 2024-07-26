@@ -139,4 +139,5 @@ func (t *Table) registerGlobals() {
 	t.Register(&Type{"bool", types.Bool})
 	t.Register(&Type{"string", types.String})
 	t.Register(&Type{"Type", types.RuntimeType})
+	t.Register(&Type{"Error", &types.ErrorTag})
 }

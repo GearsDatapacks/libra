@@ -316,18 +316,26 @@ func (t *typeChecker) typeCheckPrefixExpression(unExpr *ast.PrefixExpression) ir
 	if operand.Type() == types.Invalid {
 		return &ir.UnaryExpression{
 			Operand:  operand,
-			Operator: 0,
+			Operator: ir.UnaryOperator{},
+		}
+	}
+
+	if unExpr.Operator == token.BANG && operand.Type() == types.RuntimeType {
+		return &ir.TypeExpression{
+			DataType: &types.Result{
+				OkType: t.typeFromExpr(operand, unExpr.Operand.GetLocation()),
+			},
 		}
 	}
 
 	operator := getPrefixOperator(unExpr.Operator, operand)
 
-	if operator == 0 {
+	if operator.Id == 0 {
 		t.diagnostics.Report(diagnostics.UnaryOperatorUndefined(unExpr.Location, unExpr.Operator.String(), operand.Type()))
 	}
 
 	// We can safely ignore the identity operator
-	if operator & ^ir.UntypedBit == ir.Identity {
+	if operator.Id & ^ir.UntypedBit == ir.Identity {
 		return operand
 	}
 
@@ -344,7 +352,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 	if operand.Type() == types.Invalid {
 		return &ir.UnaryExpression{
 			Operand:  operand,
-			Operator: 0,
+			Operator: ir.UnaryOperator{},
 		}
 	}
 
@@ -352,7 +360,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 
 	if diag != nil {
 		t.diagnostics.Report(diag.Location(unExpr.Operand.GetLocation()))
-	} else if operator == 0 {
+	} else if operator.Id == 0 {
 		t.diagnostics.Report(diagnostics.UnaryOperatorUndefined(unExpr.OperatorLocation, unExpr.Operator.String(), operand.Type()))
 	}
 
@@ -363,7 +371,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 }
 
 func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperator {
-	var unOp ir.UnaryOperator
+	var id ir.UnOpId
 	opType := operand.Type()
 
 	numeric := types.Assignable(types.Int, opType) || types.Assignable(types.Float, opType)
@@ -377,34 +385,35 @@ func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperat
 	case token.MINUS:
 		if numeric {
 			if isFloat {
-				unOp = ir.NegateFloat
+				id = ir.NegateFloat
 			} else {
-				unOp = ir.NegateInt
+				id = ir.NegateInt
 			}
 		}
 	case token.PLUS:
 		if numeric {
-			unOp = ir.Identity
+			id = ir.Identity
 		}
 	case token.BANG:
 		if types.Assignable(types.Bool, opType) {
-			unOp = ir.LogicalNot
+			id = ir.LogicalNot
 		}
 	case token.TILDE:
 		if types.Assignable(types.Int, opType) {
-			unOp = ir.BitwiseNot
+			id = ir.BitwiseNot
 		}
 	}
 
-	if untyped && unOp != 0 {
-		unOp = unOp | ir.UntypedBit
+	if untyped && id != 0 {
+		id = id | ir.UntypedBit
 	}
 
-	return unOp
+	return ir.UnaryOperator{Id: id}
 }
 
 func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expression) (ir.UnaryOperator, *diagnostics.Partial) {
-	var unOp ir.UnaryOperator
+	var id ir.UnOpId
+	var ty types.Type
 	opType := operand.Type()
 
 	numeric := types.Assignable(types.Int, opType) || types.Assignable(types.Float, opType)
@@ -418,40 +427,43 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 	case token.DOUBLE_PLUS:
 		if numeric {
 			if !ir.AssignableExpr(operand) {
-				return 0, diagnostics.CannotIncDec("increment")
+				return ir.UnaryOperator{}, diagnostics.CannotIncDec("increment")
 			} else if !ir.MutableExpr(operand) {
-				return 0, diagnostics.ValueImmutablePartial
+				return ir.UnaryOperator{}, diagnostics.ValueImmutablePartial
 			}
 			if isFloat {
-				unOp = ir.IncrementFloat
+				id = ir.IncrementFloat
 			} else {
-				unOp = ir.IncrecementInt
+				id = ir.IncrecementInt
 			}
 		}
 	case token.DOUBLE_MINUS:
 		if numeric {
 			if !ir.AssignableExpr(operand) {
-				return 0, diagnostics.CannotIncDec("decrement")
+				return ir.UnaryOperator{}, diagnostics.CannotIncDec("decrement")
 			} else if !ir.MutableExpr(operand) {
-				return 0, diagnostics.ValueImmutablePartial
+				return ir.UnaryOperator{}, diagnostics.ValueImmutablePartial
 			}
 			if isFloat {
-				unOp = ir.DecrementFloat
+				id = ir.DecrementFloat
 			} else {
-				unOp = ir.DecrecementInt
+				id = ir.DecrecementInt
 			}
 		}
 	case token.QUESTION:
 		panic("TODO: '?' unary operator")
 
 	case token.BANG:
-		panic("TODO: '!' postfix operator")
+		if result, ok := operand.Type().(*types.Result); ok {
+			id = ir.CrashError
+			ty = result.OkType
+		}
 	}
 
-	if untyped && unOp != 0 {
-		unOp = unOp | ir.UntypedBit
+	if untyped && id != 0 {
+		id = id | ir.UntypedBit
 	}
-	return unOp, nil
+	return ir.UnaryOperator{Id: id, DataType: ty}, nil
 }
 
 func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {

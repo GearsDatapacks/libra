@@ -1,0 +1,46 @@
+
+[`let result: !i32 = 10` - 1]
+VAR_DECL
+├─VAR_SYMBOL result
+│ ├─RESULT_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─RESULT_TYPE
+  │ └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+---
+
+[`@tag Error;struct MyError { string };mut result: !i32 = MyError { "Error: uninitialised" };result = 10;let must_be_int: i32 = result!` - 1]
+TYPE_DECL MyError
+└─TUPLE_STRUCT_TYPE MyError
+  └─PRIMARY_TYPE string
+VAR_DECL
+├─VAR_SYMBOL result mut
+│ └─RESULT_TYPE
+│   └─VARIABLE_TYPE i32
+└─TUPLE_STRUCT_EXPR
+  ├─TUPLE_STRUCT_TYPE MyError
+  │ └─PRIMARY_TYPE string
+  ├─TUPLE_VALUE
+  │ └─STRING_VALUE "Error: uninitialised"
+  └─STRING_LIT "Error: uninitialised"
+ASSIGNMENT
+├─VAR_SYMBOL result mut
+│ └─RESULT_TYPE
+│   └─VARIABLE_TYPE i32
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─RESULT_TYPE
+  │ └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+VAR_DECL
+├─VAR_SYMBOL must_be_int
+│ └─VARIABLE_TYPE i32
+└─UNARY_EXPR CrashError
+  ├─VAR_SYMBOL result mut
+  │ └─RESULT_TYPE
+  │   └─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
+---

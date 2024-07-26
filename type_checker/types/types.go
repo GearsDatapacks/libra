@@ -1008,6 +1008,38 @@ func (t *Tag) valid(other Type) bool {
 	return false
 }
 
+var ErrorTag = Tag{
+	Name:  "Error",
+	Types: []Type{},
+}
+
+type Result struct {
+	OkType Type
+}
+
+func (r *Result) String() string {
+	return "!" + r.OkType.String()
+}
+
+func (r *Result) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sRESULT_TYPE",
+			node.Colour(colour.NodeName),
+		).
+		Node(r.OkType)
+}
+
+func (r *Result) valid(other Type) bool {
+	if result, ok := other.(*Result); ok && Assignable(r.OkType, result.OkType) {
+		return true
+	}
+	if Assignable(&ErrorTag, other) {
+		return true
+	}
+	return Assignable(r.OkType, other)
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -1033,5 +1065,4 @@ type Iterator interface {
 }
 
 // TODO:
-// ErrorType
 // OptionType

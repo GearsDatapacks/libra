@@ -377,6 +377,17 @@ num = 10 -> Int`,
 	)
 }
 
+func TestResults(t *testing.T) {
+	utils.MatchIrSnaps(t,
+		"let result: !i32 = 10",
+		`@tag Error
+struct MyError { string }
+mut result: !i32 = MyError { "Error: uninitialised" }
+result = 10
+let must_be_int: i32 = result!`,
+	)
+}
+
 // TODO: Add a way to create fake modules, for the following errors:
 // FieldPrivate
 // NoExport
@@ -385,6 +396,7 @@ func TestTCDiagnostics(t *testing.T) {
 	utils.MatchTCErrorSnaps(t,
 		"let x: foo = 1",
 		"const text: string = false",
+		"let result: !i32 = 10; let int: i32 = result",
 		"let foo = 1; let foo = 2",
 		"let a = b",
 		`mut result = 1 + "hi"`,
