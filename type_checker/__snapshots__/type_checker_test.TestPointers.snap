@@ -47,7 +47,7 @@ WHILE_LOOP
 │ ├─INT_LIT 10
 │ └─PRIMARY_TYPE bool
 └─BLOCK
-  ├─PRIMARY_TYPE void
+  ├─UNIT_STRUCT void
   └─ASSIGNMENT
     ├─DEREF_EXPR
     │ └─VAR_SYMBOL ptr

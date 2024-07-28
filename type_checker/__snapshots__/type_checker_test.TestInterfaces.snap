@@ -4,21 +4,21 @@ TYPE_DECL Printable
 └─INTERFACE_TYPE Printable
   └─INTERFACE_MEMBER print
     └─FUNCTION_TYPE
-      └─PRIMARY_TYPE void
+      └─UNIT_STRUCT void
 TYPE_DECL Message
 └─TUPLE_STRUCT_TYPE Message
   └─PRIMARY_TYPE string
 FUNC_DECL print
 ├─FUNCTION_TYPE
-│ └─PRIMARY_TYPE void
+│ └─UNIT_STRUCT void
 └─BLOCK
-  └─PRIMARY_TYPE void
+  └─UNIT_STRUCT void
 VAR_DECL
 ├─VAR_SYMBOL my_printable
 │ ├─INTERFACE_TYPE Printable
 │ │ └─INTERFACE_MEMBER print
 │ │   └─FUNCTION_TYPE
-│ │     └─PRIMARY_TYPE void
+│ │     └─UNIT_STRUCT void
 │ └─TUPLE_VALUE
 │   └─STRING_VALUE "Hello"
 └─TUPLE_STRUCT_EXPR
@@ -33,12 +33,12 @@ FUNCTION_CALL
 │ │ ├─INTERFACE_TYPE Printable
 │ │ │ └─INTERFACE_MEMBER print
 │ │ │   └─FUNCTION_TYPE
-│ │ │     └─PRIMARY_TYPE void
+│ │ │     └─UNIT_STRUCT void
 │ │ └─TUPLE_VALUE
 │ │   └─STRING_VALUE "Hello"
 │ └─FUNCTION_TYPE
-│   └─PRIMARY_TYPE void
-└─PRIMARY_TYPE void
+│   └─UNIT_STRUCT void
+└─UNIT_STRUCT void
 ---
 
 [`interface Add { add(i32): i32 };fn (i32) add(other: i32): i32 { this + other };fn add(a: Add, b: i32): i32 { a.add(b) };let result: i32 = add(1, 2)` - 1]

@@ -34,7 +34,7 @@ FOR_LOOP
     │ ├─INT_LIT 0
     │ └─PRIMARY_TYPE bool
     └─BLOCK
-      ├─PRIMARY_TYPE void
+      ├─UNIT_STRUCT void
       └─BREAK
         └─VAR_SYMBOL i
           └─VARIABLE_TYPE i32
@@ -57,7 +57,7 @@ FOR_LOOP
 │ ├─STRING_LIT "Hello"
 │ └─STRING_LIT "world"
 └─BLOCK
-  ├─PRIMARY_TYPE void
+  ├─UNIT_STRUCT void
   └─ASSIGNMENT
     ├─VAR_SYMBOL result mut
     │ └─PRIMARY_TYPE string
@@ -105,7 +105,7 @@ FOR_LOOP
     │ │ └─PRIMARY_TYPE bool
     │ └─PRIMARY_TYPE bool
     └─BLOCK
-      ├─PRIMARY_TYPE void
+      ├─UNIT_STRUCT void
       └─BREAK
         └─INDEX_EXPR
           ├─VAR_SYMBOL kv

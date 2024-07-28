@@ -88,6 +88,8 @@ func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expres
 		return t.typeCheckDerefExpression(expr)
 	case *ast.PointerType:
 		return t.typeCheckPointerType(expr)
+	case *ast.OptionType:
+		return t.typeCheckOptionType(expr)
 
 	case *ast.Block:
 		return t.typeCheckBlock(expr, true)
@@ -457,6 +459,9 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 		if result, ok := operand.Type().(*types.Result); ok {
 			id = ir.CrashError
 			ty = result.OkType
+		} else if option, ok := operand.Type().(*types.Option); ok {
+			id = ir.CrashError
+			ty = option.SomeType
 		}
 	}
 
@@ -1049,6 +1054,16 @@ func (t *typeChecker) typeCheckPointerType(ptr *ast.PointerType) ir.Expression {
 		DataType: &types.Pointer{
 			Underlying: ty,
 			Mutable:    ptr.Mutable,
+		},
+	}
+}
+
+func (t *typeChecker) typeCheckOptionType(opt *ast.OptionType) ir.Expression {
+	ty := t.typeCheckType(opt.Operand)
+
+	return &ir.TypeExpression{
+		DataType: &types.Option{
+			SomeType: ty,
 		},
 	}
 }

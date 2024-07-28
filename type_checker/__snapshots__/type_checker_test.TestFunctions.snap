@@ -6,7 +6,7 @@ FUNC_DECL add a b
 │ ├─VARIABLE_TYPE i32
 │ └─VARIABLE_TYPE i32
 └─BLOCK
-  ├─PRIMARY_TYPE void
+  ├─UNIT_STRUCT void
   ├─VAR_DECL
   │ ├─VAR_SYMBOL c
   │ │ └─VARIABLE_TYPE i32
@@ -48,12 +48,12 @@ FUNC_DECL one
 [`fn nop() {}; nop()` - 1]
 FUNC_DECL nop
 ├─FUNCTION_TYPE
-│ └─PRIMARY_TYPE void
+│ └─UNIT_STRUCT void
 └─BLOCK
-  └─PRIMARY_TYPE void
+  └─UNIT_STRUCT void
 FUNCTION_CALL
 ├─VAR_SYMBOL nop
 │ └─FUNCTION_TYPE
-│   └─PRIMARY_TYPE void
-└─PRIMARY_TYPE void
+│   └─UNIT_STRUCT void
+└─UNIT_STRUCT void
 ---

@@ -112,7 +112,6 @@ type PrimaryType int
 
 const (
 	Invalid PrimaryType = iota
-	Void
 	Bool
 	String
 	RuntimeType
@@ -120,11 +119,12 @@ const (
 
 var typeNames = map[PrimaryType]string{
 	Invalid:     "<?>",
-	Void:        "void",
 	Bool:        "bool",
 	String:      "string",
 	RuntimeType: "Type",
 }
+
+var Void = &UnitStruct{"void"}
 
 func (pt PrimaryType) String() string {
 	return typeNames[pt]
@@ -1040,6 +1040,33 @@ func (r *Result) valid(other Type) bool {
 	return Assignable(r.OkType, other)
 }
 
+type Option struct {
+	SomeType Type
+}
+
+func (r *Option) String() string {
+	return "?" + r.SomeType.String()
+}
+
+func (r *Option) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sOPTION_TYPE",
+			node.Colour(colour.NodeName),
+		).
+		Node(r.SomeType)
+}
+
+func (r *Option) valid(other Type) bool {
+	if option, ok := other.(*Option); ok && Assignable(r.SomeType, option.SomeType) {
+		return true
+	}
+	if other == Void {
+		return true
+	}
+	return Assignable(r.SomeType, other)
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -1063,6 +1090,3 @@ type container interface {
 type Iterator interface {
 	Item() Type
 }
-
-// TODO:
-// OptionType

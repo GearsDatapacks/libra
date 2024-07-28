@@ -138,6 +138,7 @@ func (t *Table) registerGlobals() {
 	t.Register(&Type{"f32", types.Float})
 	t.Register(&Type{"bool", types.Bool})
 	t.Register(&Type{"string", types.String})
+	t.Register(&Type{"void", types.Void})
 	t.Register(&Type{"Type", types.RuntimeType})
 	t.Register(&Type{"Error", &types.ErrorTag})
 }

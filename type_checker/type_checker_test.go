@@ -118,9 +118,10 @@ func TestUnaryExpression(t *testing.T) {
 		"mut f = 1.5; f++",
 		"mut value = 24; value--",
 		"mut countdown = 12.3; countdown--",
+		"let option: ?i32 = 10; option!",
+		"let result: !i32 = 10; result!",
 		// TODO:
 		// PropagateError
-		// CrashError
 	)
 }
 
@@ -313,9 +314,9 @@ func TestTypeExpressions(t *testing.T) {
 		"string | f32",
 		"*i32[]", "(*i32)[]", "*mut {string: string}",
 		"struct Unit",
-		// "?string[]",
-		// "!i32",
-		"type StrToInt = fn(string): i32",
+		"?string[]",
+		"!i32",
+		"type StrToInt = fn(string): ?i32",
 	)
 }
 
@@ -385,6 +386,16 @@ struct MyError { string }
 mut result: !i32 = MyError { "Error: uninitialised" }
 result = 10
 let must_be_int: i32 = result!`,
+	)
+}
+
+func TestOptions(t *testing.T) {
+	utils.MatchIrSnaps(t,
+		"let opt: ?i32 = 23",
+		"let opt: ?i32 = void",
+		`mut value: ?i32 = 10
+value = void
+let this_will_crash: i32 = value!`,
 	)
 }
 

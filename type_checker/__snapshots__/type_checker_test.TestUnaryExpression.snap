@@ -82,3 +82,41 @@ UNARY_EXPR DecrementFloat
 │ └─VARIABLE_TYPE f32
 └─VARIABLE_TYPE f32
 ---
+
+[`let option: ?i32 = 10; option!` - 1]
+VAR_DECL
+├─VAR_SYMBOL option
+│ ├─OPTION_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─OPTION_TYPE
+  │ └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+UNARY_EXPR CrashError
+├─VAR_SYMBOL option
+│ ├─OPTION_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─VARIABLE_TYPE i32
+---
+
+[`let result: !i32 = 10; result!` - 1]
+VAR_DECL
+├─VAR_SYMBOL result
+│ ├─RESULT_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─CONVERSION
+  ├─INT_LIT 10
+  ├─RESULT_TYPE
+  │ └─VARIABLE_TYPE i32
+  └─INT_VALUE 10
+UNARY_EXPR CrashError
+├─VAR_SYMBOL result
+│ ├─RESULT_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─INT_VALUE 10
+└─VARIABLE_TYPE i32
+---

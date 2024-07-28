@@ -118,9 +118,23 @@ TYPE_DECL Unit
 └─UNIT_STRUCT Unit
 ---
 
-[`type StrToInt = fn(string): i32` - 1]
+[`?string[]` - 1]
+TYPE_EXPR
+└─OPTION_TYPE
+  └─LIST_TYPE
+    └─PRIMARY_TYPE string
+---
+
+[`!i32` - 1]
+TYPE_EXPR
+└─RESULT_TYPE
+  └─VARIABLE_TYPE i32
+---
+
+[`type StrToInt = fn(string): ?i32` - 1]
 TYPE_DECL StrToInt
 └─FUNCTION_TYPE
-  ├─VARIABLE_TYPE i32
+  ├─OPTION_TYPE
+  │ └─VARIABLE_TYPE i32
   └─PRIMARY_TYPE string
 ---
