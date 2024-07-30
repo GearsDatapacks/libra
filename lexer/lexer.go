@@ -3,6 +3,7 @@ package lexer
 import (
 	"bytes"
 	"strconv"
+	"strings"
 
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer/token"
@@ -108,7 +109,7 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 	}
 
 	if !isNumber(l.next(), radix) {
-		l.Diagnostics.Report(diagnostics.RadixMustBeFollowedByNumber(l.getLocation(l.pos - 2, l.pos)))
+		l.Diagnostics.Report(diagnostics.RadixMustBeFollowedByNumber(l.getLocation(l.pos-2, l.pos)))
 	}
 
 	for isNumber(l.next(), radix) || l.next() == '_' {
@@ -221,7 +222,7 @@ func (l *lexer) escape(c byte) (char byte, ok bool) {
 		}
 
 		l.consume()
-		nextFourChars := string(l.next()) + string(l.peek(1)) + string(l.peek(2)) + string(l.peek(3))
+		nextFourChars := l.file.Text[l.pos : l.pos+4]
 		// TODO: support more than one byte utf8 sequences
 		c, e := strconv.ParseUint(nextFourChars, 16, 8)
 		if e != nil {
@@ -432,21 +433,51 @@ func (l *lexer) parseBlockComment() string {
 
 func (l *lexer) parseAttributeBody(name string) *token.Token {
 	switch name {
-	// TODO: multiline doc attributes
-	case "todo", "deprecated", "doc":
+	case "todo", "deprecated":
 		l.skipWhitespace()
 		if l.next() == '\n' {
 			return nil
 		}
 
 		startPos := l.pos
-		var text bytes.Buffer
 		for !l.eof() && l.next() != '\n' {
-			text.WriteByte(l.consume())
+			l.consume()
 		}
 
-		tok := token.New(token.ATTRIBUTE_BODY, text.String(), "", l.getLocation(startPos, l.pos))
+		tok := token.New(
+			token.ATTRIBUTE_BODY,
+			l.file.Text[startPos:l.pos],
+			"",
+			l.getLocation(startPos, l.pos),
+		)
 		return &tok
+	case "doc":
+		l.skipWhitespace()
+
+		end := "\n"
+		if l.next() == '\n' {
+			end = "\n@end"
+			l.consume()
+		}
+
+		startPos := l.pos
+
+		for !l.eof() && !strings.HasPrefix(l.file.Text[l.pos:], end) {
+			l.consume()
+		}
+
+		text := l.file.Text[startPos:l.pos]
+
+		l.consumeMany(len(end))
+
+		tok := token.New(
+			token.ATTRIBUTE_BODY,
+			text,
+			"",
+			l.getLocation(startPos, l.pos),
+		)
+		return &tok
+
 	default:
 		return nil
 	}

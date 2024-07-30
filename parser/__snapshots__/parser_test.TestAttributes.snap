@@ -61,3 +61,17 @@ STRUCT_DECL ThreeFields (62:68)
 └─tag
   └─IDENT Incomplete (51:61)
 ---
+
+[`@deprecated;fn deprecated() {}` - 1]
+FUNC_DECL deprecated (12:14)
+├─BLOCK (28:29)
+└─ATTRIBUTES
+  └─deprecated = ""
+---
+
+[`@doc;Does some stuff.;Lorem ipsum.;I can put @end here, but if I put it on its own line,;it will close this block.;@end;fn do_things() {};` - 1]
+FUNC_DECL do_things (120:122)
+├─BLOCK (135:136)
+└─ATTRIBUTES
+  └─doc = "Does some stuff.\nLorem ipsum.\nI can put @end here, but if I put it on its own line,\nit will close this block."
+---

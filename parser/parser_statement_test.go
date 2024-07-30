@@ -126,5 +126,15 @@ func TestAttributes(t *testing.T) {
 		"@doc Does cool stuff\nfn do_cool_stuff() {}",
 		"@deprecated Use `do_other_thing` instead\nfn do_thing() {}",
 		"@doc Has three fields\n@todo Add a third field\n@tag Incomplete\nstruct ThreeFields {i32, f32}",
+		`@deprecated
+fn deprecated() {}`,
+		`@doc
+Does some stuff.
+Lorem ipsum.
+I can put @end here, but if I put it on its own line,
+it will close this block.
+@end
+fn do_things() {}
+`,
 	)
 }
