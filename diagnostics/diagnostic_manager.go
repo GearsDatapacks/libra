@@ -421,3 +421,18 @@ func ExpressionIndexWithoutIndex(location text.Location) *Diagnostic {
 	const msg = "Index expressions which aren't list types must have an index"
 	return makeError(msg, location)
 }
+
+func NoPropagateOutsideFunction() *Partial {
+	const msg = "Cannot propagate errors outside of a function"
+	return partial(Error, msg)
+}
+
+func PropagateFnMustReturnResult() *Partial {
+	const msg = "Can only propagate errors in functions which return result types"
+	return partial(Error, msg)
+}
+
+func PropagateFnMustReturnOption() *Partial {
+	const msg = "Can only propagate void options in functions which return option types"
+	return partial(Error, msg)
+}

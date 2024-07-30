@@ -434,3 +434,35 @@ let value_not_type = [1,2,3][]
 
 
 ---
+
+[`let my_option: ?i32 = 5; my_option?` - 1]
+test.lb:1:26:
+let my_option: ?i32 = 5; my_option?
+                         ^ Cannot propagate errors outside of a function
+
+
+---
+
+[`fn option_unwrap(opt: ?i32): i32 { opt? }` - 1]
+test.lb:1:36:
+fn option_unwrap(opt: ?i32): i32 { opt? }
+                                   ^ Can only propagate void options in functions which return option types
+
+
+---
+
+[`fn result_unwrap(res: !i32): i32 { res? }` - 1]
+test.lb:1:36:
+fn result_unwrap(res: !i32): i32 { res? }
+                                   ^ Can only propagate errors in functions which return result types
+
+
+---
+
+[`fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }` - 1]
+test.lb:1:45:
+fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }
+                                            ^ Can only propagate errors in functions which return result types
+
+
+---

@@ -125,8 +125,13 @@ func TestUnaryExpression(t *testing.T) {
 		"mut countdown = 12.3; countdown--",
 		"let option: ?i32 = 10; option!",
 		"let result: !i32 = 10; result!",
-		// TODO:
-		// PropagateError
+		`fn to_string(value: ?i32): ?string {
+	let int: i32 = value?
+	return ""
+}`,
+		`fn map_result(result: !i32, map_fn: fn(i32): i32): !i32 {
+	map_fn(result?)
+}`,
 	)
 }
 
@@ -463,5 +468,9 @@ func TestTCDiagnostics(t *testing.T) {
 struct Tagged`,
 		`import "undefined"`,
 		"let value_not_type = [1,2,3][]",
+		"let my_option: ?i32 = 5; my_option?",
+		"fn option_unwrap(opt: ?i32): i32 { opt? }",
+		"fn result_unwrap(res: !i32): i32 { res? }",
+		"fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }",
 	)
 }

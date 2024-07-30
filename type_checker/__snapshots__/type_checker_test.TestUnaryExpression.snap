@@ -120,3 +120,49 @@ UNARY_EXPR CrashError
 │ └─INT_VALUE 10
 └─VARIABLE_TYPE i32
 ---
+
+[`fn to_string(value: ?i32): ?string {;	let int: i32 = value?;	return "";}` - 1]
+FUNC_DECL to_string value
+├─FUNCTION_TYPE
+│ ├─OPTION_TYPE
+│ │ └─PRIMARY_TYPE string
+│ └─OPTION_TYPE
+│   └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─UNIT_STRUCT void
+  ├─VAR_DECL
+  │ ├─VAR_SYMBOL int
+  │ │ └─VARIABLE_TYPE i32
+  │ └─UNARY_EXPR PropagateError
+  │   ├─VAR_SYMBOL value
+  │   │ └─OPTION_TYPE
+  │   │   └─VARIABLE_TYPE i32
+  │   └─VARIABLE_TYPE i32
+  └─RETURN
+    └─STRING_LIT ""
+---
+
+[`fn map_result(result: !i32, map_fn: fn(i32): i32): !i32 {;	map_fn(result?);}` - 1]
+FUNC_DECL map_result result map_fn
+├─FUNCTION_TYPE
+│ ├─RESULT_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ ├─RESULT_TYPE
+│ │ └─VARIABLE_TYPE i32
+│ └─FUNCTION_TYPE
+│   ├─VARIABLE_TYPE i32
+│   └─VARIABLE_TYPE i32
+└─BLOCK
+  ├─VARIABLE_TYPE i32
+  └─FUNCTION_CALL
+    ├─VAR_SYMBOL map_fn
+    │ └─FUNCTION_TYPE
+    │   ├─VARIABLE_TYPE i32
+    │   └─VARIABLE_TYPE i32
+    ├─VARIABLE_TYPE i32
+    └─UNARY_EXPR PropagateError
+      ├─VAR_SYMBOL result
+      │ └─RESULT_TYPE
+      │   └─VARIABLE_TYPE i32
+      └─VARIABLE_TYPE i32
+---

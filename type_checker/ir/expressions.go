@@ -623,7 +623,7 @@ func (u UnaryOperator) Type() types.Type {
 	case DecrementFloat:
 		ty = types.Float
 	case PropagateError:
-		panic("TODO: Type for PropagateError unary operator")
+		return u.DataType
 	case CrashError:
 		return u.DataType
 	}

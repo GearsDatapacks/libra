@@ -453,7 +453,35 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 			}
 		}
 	case token.QUESTION:
-		panic("TODO: '?' unary operator")
+		var expectedType types.Type = nil
+		symbolTable := t.symbols
+		for symbolTable != nil {
+			if fnContext, ok := symbolTable.Context.(symbols.FunctionContext); ok {
+				expectedType = fnContext.ReturnType
+				break
+			}
+			symbolTable = symbolTable.Parent
+		}
+
+		if expectedType == nil {
+			return ir.UnaryOperator{}, diagnostics.NoPropagateOutsideFunction()
+		}
+
+		if result, ok := operand.Type().(*types.Result); ok {
+			if _, ok := expectedType.(*types.Result); !ok {
+				return ir.UnaryOperator{}, diagnostics.PropagateFnMustReturnResult()
+			}
+
+			id = ir.PropagateError
+			ty = result.OkType
+		} else if option, ok := operand.Type().(*types.Option); ok {
+			if _, ok := expectedType.(*types.Option); !ok {
+				return ir.UnaryOperator{}, diagnostics.PropagateFnMustReturnOption()
+			}
+
+			id = ir.PropagateError
+			ty = option.SomeType
+		}
 
 	case token.BANG:
 		if result, ok := operand.Type().(*types.Result); ok {
