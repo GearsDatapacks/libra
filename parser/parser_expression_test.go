@@ -11,7 +11,12 @@ func TestIdentifierExpression(t *testing.T) {
 }
 
 func TestIntegerExpression(t *testing.T) {
-	utils.MatchAstSnaps(t, "156_098")
+	utils.MatchAstSnaps(t,
+		"156_098",
+		"0b011",
+		"0o23",
+		"0xdead",
+	)
 }
 
 func TestFloatExpression(t *testing.T) {

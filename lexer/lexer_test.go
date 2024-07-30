@@ -84,6 +84,9 @@ func TestVariableTokens(t *testing.T) {
 	tokens := []tokenData{
 		tok("17", token.INTEGER),
 		tok("42", token.INTEGER),
+		tok("0b1011", token.INTEGER),
+		tok("0o7302", token.INTEGER),
+		tok("0xc0ffee", token.INTEGER),
 		tok("123_456_789", token.INTEGER, "123_456_789"),
 		tok("19.3", token.FLOAT),
 		tok("3.141_592_65", token.FLOAT, "3.141_592_65"),
@@ -121,6 +124,7 @@ func TestLexerDiagnostics(t *testing.T) {
 		{"123_456_", "Numbers cannot end with numeric separators", text.NewSpan(7, 8)},
 		{"1_.2", "Numbers cannot end with numeric separators", text.NewSpan(1, 2)},
 		{"3.14_", "Numbers cannot end with numeric separators", text.NewSpan(4, 5)},
+		{"0b21", "Radix specifiers must be followed by valid digits", text.NewSpan(0, 2)},
 	}
 
 	for _, data := range data {

@@ -69,6 +69,11 @@ func NumbersCannotEndWithSeparator(location text.Location) *Diagnostic {
 	return makeError(msg, location)
 }
 
+func RadixMustBeFollowedByNumber(location text.Location) *Diagnostic {
+	const msg = "Radix specifiers must be followed by valid digits"
+	return makeError(msg, location)
+}
+
 // Parser Diagnostics
 
 func ExpectedExpression(location text.Location, kind token.Kind) *Diagnostic {

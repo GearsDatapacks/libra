@@ -7,7 +7,12 @@ import (
 )
 
 func TestIntegerLiteral(t *testing.T) {
-	utils.MatchIrSnaps(t, "+1_23_456")
+	utils.MatchIrSnaps(t,
+		"+1_23_456",
+		"0b011",
+		"0o23",
+		"0xdead",
+	)
 }
 
 func TestFloatLiteral(t *testing.T) {

@@ -68,7 +68,7 @@ func (l *lexer) nextToken() token.Token {
 		nextToken.ExtraValue = l.parseBlockComment()
 	} else if kind, ok := l.parsePunctuation(); ok {
 		nextToken.Kind = kind
-	} else if isNumber(next) {
+	} else if isNumber(next, 10) {
 		nextToken.Kind, nextToken.ExtraValue = l.parseNumber()
 	} else if isIdentifierStart(next) {
 		nextToken.Kind = token.IDENTIFIER
@@ -99,8 +99,19 @@ func (l *lexer) nextToken() token.Token {
 func (l *lexer) parseNumber() (token.Kind, string) {
 	kind := token.INTEGER
 	str := bytes.NewBuffer([]byte{})
-	// TODO: 0x, 0b, etc.
-	for isNumber(l.next()) || l.next() == '_' {
+	radix := 10
+	if l.next() == '0' {
+		if r := charToRadix(l.peek(1)); r != 0 {
+			radix = r
+			l.consumeMany(2)
+		}
+	}
+
+	if !isNumber(l.next(), radix) {
+		l.Diagnostics.Report(diagnostics.RadixMustBeFollowedByNumber(l.getLocation(l.pos - 2, l.pos)))
+	}
+
+	for isNumber(l.next(), radix) || l.next() == '_' {
 		if l.next() != '_' {
 			str.WriteByte(l.next())
 		}
@@ -108,7 +119,7 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 		l.consume()
 	}
 
-	if l.next() == '.' && isNumber(l.peek(1)) {
+	if radix == 10 && l.next() == '.' && isNumber(l.peek(1), 10) {
 		if l.peek(-1) == '_' {
 			l.Diagnostics.Report(diagnostics.NumbersCannotEndWithSeparator(
 				l.getLocation(l.pos-1, l.pos)))
@@ -118,7 +129,7 @@ func (l *lexer) parseNumber() (token.Kind, string) {
 		str.WriteByte(l.next())
 		l.consume()
 
-		for isNumber(l.next()) || l.next() == '_' {
+		for isNumber(l.next(), 10) || l.next() == '_' {
 			if l.next() != '_' {
 				str.WriteByte(l.next())
 			}

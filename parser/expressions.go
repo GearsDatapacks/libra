@@ -358,7 +358,17 @@ func (p *parser) parseIdentifier() (ast.Expression, *diagnostics.Diagnostic) {
 
 func (p *parser) parseInteger() (ast.Expression, *diagnostics.Diagnostic) {
 	tok := p.consume()
-	value, _ := strconv.ParseInt(tok.ExtraValue, 10, 64)
+	radix := 10
+
+	if len(tok.Value) >= 2 {
+		switch tok.Value[:2] {
+		case "0b": radix = 2
+		case "0o": radix = 8
+		case "0x": radix = 16
+		}
+	}
+
+	value, _ := strconv.ParseInt(tok.ExtraValue, radix, 64)
 	return &ast.IntegerLiteral{
 		Token: tok,
 		Value: value,
