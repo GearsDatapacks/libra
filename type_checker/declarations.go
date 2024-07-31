@@ -69,7 +69,7 @@ func (t *typeChecker) registerFunction(fn *ast.FunctionDeclaration) {
 func (t *typeChecker) registerTypeDeclaration(typeDec *ast.TypeDeclaration) {
 	var ty types.Type
 	if typeDec.Explicit {
-		ty = &types.Explicit{Name: typeDec.Name, Type: types.Void}
+		ty = types.NewExplicit(typeDec.Name, types.Void)
 	} else {
 		ty = &types.Alias{Type: types.Void}
 	}
@@ -84,7 +84,7 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 	var ty types.Type
 
 	if decl.Body == nil {
-		ty = &types.UnitStruct{Name: decl.Name}
+		ty = types.NewUnit(decl.Name)
 	} else {
 		isTuple := true
 		for _, field := range decl.Body {
@@ -143,11 +143,7 @@ func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
 func (t *typeChecker) registerEnumDeclaration(decl *ast.EnumDeclaration) {
 	symbol := &symbols.Type{
 		Name: decl.Name,
-		Type: &types.Enum{
-			Name:       decl.Name,
-			Underlying: types.Invalid,
-			Members:    map[string]values.ConstValue{},
-		},
+		Type: types.NewEnum(decl.Name, types.Invalid),
 	}
 
 	t.symbols.Register(symbol, decl.Exported)
@@ -156,10 +152,7 @@ func (t *typeChecker) registerEnumDeclaration(decl *ast.EnumDeclaration) {
 func (t *typeChecker) registerTagDeclaration(decl *ast.TagDeclaration) {
 	symbol := &symbols.Type{
 		Name: decl.Name,
-		Type: &types.Tag{
-			Name:  decl.Name,
-			Types: []types.Type{},
-		},
+		Type: types.NewTag(decl.Name),
 	}
 
 	t.symbols.Register(symbol, decl.Exported)
@@ -360,11 +353,7 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) ir.S
 		if member.Type == nil && member.Compound == nil {
 			ty.Members[member.Name] = memberType
 		} else {
-			ty.Members[member.Name] = &types.UnionVariant{
-				Union: ty,
-				Name:  member.Name,
-				Type:  memberType,
-			}
+			ty.Members[member.Name] = types.NewVariant(ty, member.Name, memberType)
 		}
 	}
 

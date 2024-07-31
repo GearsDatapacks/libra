@@ -124,7 +124,7 @@ var typeNames = map[PrimaryType]string{
 	RuntimeType: "Type",
 }
 
-var Void = &UnitStruct{"void"}
+var Void = NewUnit("void")
 
 func (pt PrimaryType) String() string {
 	return typeNames[pt]
@@ -717,7 +717,20 @@ func (i *Interface) member(member string) (Type, *diagnostics.Partial) {
 
 type Union struct {
 	Name    string
+	Id      int
 	Members map[string]Type
+}
+
+var unionId = 0
+
+func NewUnion(name string) *Union {
+	id := unionId
+	unionId++
+	return &Union{
+		Name:    name,
+		Id:      id,
+		Members: map[string]Type{},
+	}
 }
 
 func (u *Union) String() string {
@@ -737,8 +750,7 @@ func (u *Union) Print(node *printer.Node) {
 
 func (u *Union) valid(other Type) bool {
 	if union, ok := other.(*Union); ok {
-		// FIXME: compare more than just the name
-		return u.Name == union.Name
+		return u.Id == union.Id
 	} else {
 		canAssign := false
 		for _, ty := range u.Members {
@@ -779,7 +791,21 @@ func (u *Union) StaticMemberValue(member string) values.ConstValue {
 type UnionVariant struct {
 	Union *Union
 	Name  string
+	Id    int
 	Type
+}
+
+var variantId = 0
+
+func NewVariant(union *Union, name string, ty Type) *UnionVariant {
+	id := variantId
+	variantId++
+	return &UnionVariant{
+		Union: union,
+		Name:  name,
+		Id:    id,
+		Type:  ty,
+	}
 }
 
 func (v *UnionVariant) String() string {
@@ -799,7 +825,7 @@ func (v *UnionVariant) Print(node *printer.Node) {
 
 func (v *UnionVariant) valid(other Type) bool {
 	if expl, ok := other.(*UnionVariant); ok {
-		return expl.Name == v.Name && Assignable(expl.Type, v.Type)
+		return expl.Id == v.Id
 	}
 	return Assignable(v.Type, other)
 }
@@ -946,7 +972,20 @@ func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
 
 type Explicit struct {
 	Name string
+	Id   int
 	Type
+}
+
+var explicitId = 0
+
+func NewExplicit(name string, ty Type) *Explicit {
+	id := explicitId
+	explicitId++
+	return &Explicit{
+		Name: name,
+		Id:   id,
+		Type: ty,
+	}
 }
 
 func (e *Explicit) String() string {
@@ -966,7 +1005,7 @@ func (e *Explicit) Print(node *printer.Node) {
 
 func (e *Explicit) valid(other Type) bool {
 	if expl, ok := other.(*Explicit); ok {
-		return expl.Name == e.Name
+		return expl.Id == e.Id
 	}
 	return Assignable(e.Type, other)
 }
@@ -977,6 +1016,15 @@ func (e *Explicit) unwrap() Type {
 
 type UnitStruct struct {
 	Name string
+	Id   int
+}
+
+var unitId = 0
+
+func NewUnit(name string) *UnitStruct {
+	id := unitId
+	unitId++
+	return &UnitStruct{name, id}
 }
 
 func (u *UnitStruct) String() string {
@@ -994,16 +1042,28 @@ func (u *UnitStruct) Print(node *printer.Node) {
 }
 
 func (u *UnitStruct) valid(other Type) bool {
-	// FIXME: compare more than just the name
 	if unit, ok := other.(*UnitStruct); ok {
-		return unit.Name == u.Name
+		return unit.Id == u.Id
 	}
 	return false
 }
 
 type Tag struct {
 	Name  string
+	Id    int
 	Types []Type
+}
+
+var tagId = 0
+
+func NewTag(name string) *Tag {
+	id := tagId
+	tagId++
+	return &Tag{
+		Name:  name,
+		Id:    id,
+		Types: []Type{},
+	}
 }
 
 func (t *Tag) String() string {
@@ -1022,9 +1082,8 @@ func (t *Tag) Print(node *printer.Node) {
 }
 
 func (t *Tag) valid(other Type) bool {
-	// FIXME: compare more than just the name
 	if tag, ok := other.(*Tag); ok {
-		return tag.Name == t.Name
+		return tag.Id == t.Id
 	}
 	for _, ty := range t.Types {
 		if Assignable(ty, other) {
@@ -1095,8 +1154,22 @@ func (r *Option) valid(other Type) bool {
 
 type Enum struct {
 	Name       string
+	Id         int
 	Underlying Type
 	Members    map[string]values.ConstValue
+}
+
+var enumId = 0
+
+func NewEnum(name string, underlying Type) *Enum {
+	id := enumId
+	enumId++
+	return &Enum{
+		Name:       name,
+		Id:         id,
+		Underlying: underlying,
+		Members:    map[string]values.ConstValue{},
+	}
 }
 
 func (e *Enum) String() string {
@@ -1113,19 +1186,19 @@ func (e *Enum) Print(node *printer.Node) {
 		).
 		Node(e.Underlying)
 
-		for _, kv := range printer.SortMap(e.Members) {
-			node.FakeNode(
-				"%sENUM_MEMBER %s%s",
-				func(n *printer.Node) {n.Node(kv.Value)},
-				node.Colour(colour.NodeName),
-				node.Colour(colour.Name),
-				kv.Key,
-			)
-		}
+	for _, kv := range printer.SortMap(e.Members) {
+		node.FakeNode(
+			"%sENUM_MEMBER %s%s",
+			func(n *printer.Node) { n.Node(kv.Value) },
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			kv.Key,
+		)
+	}
 }
 
 func (e *Enum) valid(other Type) bool {
-	if enum, ok := other.(*Enum); ok && enum.Name == e.Name {
+	if enum, ok := other.(*Enum); ok && enum.Id == e.Id {
 		return true
 	}
 	return false

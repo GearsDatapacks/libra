@@ -74,7 +74,7 @@ func TestStructExpression(t *testing.T) {
 		"rect {width: 9, height: 7.8}",
 		`message {greeting: "Hello", name: name,}`,
 		".{a:1, b:2}",
-		// FIXME: Make this parse the expression somehow
+		// TODO: Make this parse the expression somehow
 		// `struct {field: "value"}`,
 	)
 }
