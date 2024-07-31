@@ -94,7 +94,7 @@ func Hashable(ty Type) bool {
 	switch ty.(type) {
 	case PrimaryType:
 		return true
-	case VariableType:
+	case Numeric:
 		return true
 	default:
 		return false
@@ -147,7 +147,7 @@ func (pt PrimaryType) valid(other Type) bool {
 func (pt PrimaryType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
 	switch pt {
 	case String:
-		if Assignable(Int, index) {
+		if Assignable(I32, index) {
 			return String, nil
 		}
 	case Invalid:
@@ -168,101 +168,139 @@ func (pt PrimaryType) GetEnumValue(
 	return values.StringValue{Value: name}, nil
 }
 
-type VTKind int
+type NumKind int
 
 const (
-	_ VTKind = iota
-	VT_Int
-	VT_Float
+	_ NumKind = iota
+	NumInt
+	NumUint
+	NumFloat
 )
 
 var (
-	Int = VariableType{
-		Kind:    VT_Int,
-		Untyped: false,
-	}
-	Float = VariableType{
-		Kind:    VT_Float,
-		Untyped: false,
-	}
-	UntypedInt = VariableType{
-		Kind:    VT_Int,
-		Untyped: true,
-	}
-	UntypedFloat = VariableType{
-		Kind:    VT_Float,
-		Untyped: true,
-	}
+	I32 = Int(32)
+	F32 = Float(32)
 )
 
-type VariableType struct {
-	Kind         VTKind
-	Untyped      bool
-	Downcastable bool
+func Int(width int) Numeric {
+	return Numeric{
+		Kind:     NumInt,
+		BitWidth: width,
+	}
 }
 
-func (v VariableType) String() string {
-	if v.Untyped {
-		switch v.Kind {
-		case VT_Int:
+func Uint(width int) Numeric {
+	return Numeric{
+		Kind:     NumUint,
+		BitWidth: width,
+	}
+}
+
+func Float(width int) Numeric {
+	return Numeric{
+		Kind:     NumFloat,
+		BitWidth: width,
+	}
+}
+
+type Numeric struct {
+	Kind         NumKind
+	BitWidth     int
+	Downcastable *Downcastable
+}
+
+type Downcastable struct {
+	MinIntWidth,
+	MinUintWidth,
+	MinFloatWidth int
+}
+
+func (n Numeric) String() string {
+	if n.Untyped() {
+		switch n.Kind {
+		case NumInt:
 			return "untyped int"
-		case VT_Float:
+		case NumUint:
+			return "untyped uint"
+		case NumFloat:
 			return "untyped float"
 		default:
 			panic("unreachable")
 		}
 	}
 
-	switch v.Kind {
-	case VT_Int:
-		return "i32"
-	case VT_Float:
-		return "f32"
+	switch n.Kind {
+	case NumInt:
+		return fmt.Sprintf("i%d", n.BitWidth)
+	case NumUint:
+		return fmt.Sprintf("u%d", n.BitWidth)
+	case NumFloat:
+		return fmt.Sprintf("f%d", n.BitWidth)
 	default:
 		panic("unreachable")
 	}
 }
 
-func (v VariableType) Print(node *printer.Node) {
+func (n Numeric) Untyped() bool {
+	return n.Downcastable != nil
+}
+
+func (v Numeric) Print(node *printer.Node) {
 	node.
 		Text(
 			"%sVARIABLE_TYPE %s%s",
 			node.Colour(colour.NodeName),
 			node.Colour(colour.Name),
 			v.String(),
-		).
-		TextIf(
-			v.Downcastable,
-			"%sdowncastable",
-			node.Colour(colour.Attribute),
 		)
 }
 
-func (v VariableType) valid(other Type) bool {
-	variable, ok := other.(VariableType)
+func (v Numeric) valid(other Type) bool {
+	variable, ok := other.(Numeric)
 	if !ok {
 		return false
 	}
 
-	if variable.Untyped {
-		return variable.Downcastable || variable.Kind <= v.Kind
+	if v.Kind == variable.Kind && v.BitWidth == variable.BitWidth {
+		return true
 	}
 
-	return v.Kind == variable.Kind
+	if variable.Downcastable != nil {
+		switch v.Kind {
+		case NumInt:
+			if variable.Downcastable.MinIntWidth != 0 &&
+				variable.Downcastable.MinIntWidth <= v.BitWidth {
+				return true
+			}
+		case NumUint:
+			if variable.Downcastable.MinUintWidth != 0 &&
+				variable.Downcastable.MinUintWidth <= v.BitWidth {
+				return true
+			}
+		case NumFloat:
+			if variable.Downcastable.MinFloatWidth != 0 &&
+				variable.Downcastable.MinFloatWidth <= v.BitWidth {
+				return true
+			}
+		}
+	}
+
+	// TODO: Add a proper error message for this
+	return false
 }
 
-func (v VariableType) toReal() Type {
-	if v.Untyped {
-		v.Untyped = false
+func (v Numeric) toReal() Type {
+	if v.Downcastable != nil {
+		v.Downcastable = nil
 	}
 	return v
 }
 
-func (v VariableType) GetEnumValue(
+func (v Numeric) GetEnumValue(
 	prevValues []values.ConstValue,
 	_name string,
 ) (values.ConstValue, *diagnostics.Partial) {
-	if v.Kind != VT_Int {
+	if v.Kind == NumFloat {
 		return nil, diagnostics.CannotEnumPartial(v)
 	}
 
@@ -298,7 +336,7 @@ func (l *ListType) valid(other Type) bool {
 }
 
 func (l *ListType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics.Partial) {
-	if Assignable(Int, index) {
+	if Assignable(I32, index) {
 		return l.ElemType, nil
 	}
 	return Invalid, diagnostics.CannotIndex(l, index)
@@ -348,7 +386,7 @@ func (a *ArrayType) valid(other Type) bool {
 }
 
 func (a *ArrayType) indexBy(index Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
-	if !Assignable(Int, index) {
+	if !Assignable(I32, index) {
 		return Invalid, diagnostics.CannotIndex(a, index)
 	}
 	if len(constVals) > 0 && a.Length != -1 {
@@ -453,7 +491,7 @@ func (t *TupleType) valid(other Type) bool {
 }
 
 func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
-	if !Assignable(Int, t) {
+	if !Assignable(I32, t) {
 		return Invalid, diagnostics.CannotIndex(a, t)
 	}
 
@@ -654,7 +692,7 @@ func (t *TupleStruct) valid(other Type) bool {
 }
 
 func (a *TupleStruct) indexBy(t Type, constVals []values.ConstValue) (Type, *diagnostics.Partial) {
-	if !Assignable(Int, t) {
+	if !Assignable(I32, t) {
 		return Invalid, diagnostics.CannotIndex(a, t)
 	}
 

@@ -482,3 +482,19 @@ enum Float: f32 { A = 1.2, B }
 
 
 ---
+
+[`let big_byte: u8 = 2500` - 1]
+test.lb:1:20:
+let big_byte: u8 = 2500
+                   ^ Value of type "untyped int" is not assignable to type "u8"
+
+
+---
+
+[`let int: i32 = 1.5` - 1]
+test.lb:1:16:
+let int: i32 = 1.5
+               ^ Value of type "untyped float" is not assignable to type "i32"
+
+
+---

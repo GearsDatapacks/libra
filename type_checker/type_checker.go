@@ -233,13 +233,16 @@ func canConvert(from, to types.Type) conversionKind {
 		}
 	}
 
+	fn, _ := from.(types.Numeric)
+	tn, _ := to.(types.Numeric)
+
 	if types.Assignable(to, from) {
 		kind = identity
-	} else if from == types.Int && to == types.Float {
+	} else if fn.Kind == types.NumInt && tn.Kind == types.NumFloat {
 		kind = operator
-	} else if from == types.Float && to == types.Int {
+	} else if fn.Kind == types.NumFloat && tn.Kind == types.NumInt {
 		kind = explicit
-	} else if from == types.Bool && to == types.Int {
+	} else if from == types.Bool && tn.Kind == types.NumInt {
 		kind = explicit
 	} else if enum, ok := to.(*types.Enum); ok && canConvert(from, enum.Underlying) != none {
 		return explicit
@@ -247,8 +250,8 @@ func canConvert(from, to types.Type) conversionKind {
 		return explicit
 	}
 
-	if v, ok := from.(types.VariableType); ok &&
-		v.Untyped && kind == identity {
+	if n, ok := from.(types.Numeric); ok &&
+		n.Untyped() && kind == identity {
 		return implicit
 	}
 

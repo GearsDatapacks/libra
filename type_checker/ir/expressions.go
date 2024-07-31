@@ -14,6 +14,32 @@ type expression struct{}
 
 func (expression) irExpr() {}
 
+func minIntWidth(i int64) int {
+	if i <= math.MaxInt8 && i >= math.MinInt8 {
+		return 8
+	}
+	if i <= math.MaxInt16 && i >= math.MinInt16 {
+		return 16
+	}
+	if i <= math.MaxInt32 && i >= math.MinInt32 {
+		return 32
+	}
+	return 64
+}
+
+func minUintWidth(u uint64) int {
+	if u <= math.MaxUint8 {
+		return 8
+	}
+	if u <= math.MaxUint16 {
+		return 16
+	}
+	if u <= math.MaxUint32 {
+		return 32
+	}
+	return 64
+}
+
 type IntegerLiteral struct {
 	expression
 	Value int64
@@ -28,8 +54,24 @@ func (i *IntegerLiteral) Print(node *printer.Node) {
 	)
 }
 
-func (IntegerLiteral) Type() types.Type {
-	return types.UntypedInt
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func (i IntegerLiteral) Type() types.Type {
+	ui := types.Numeric{
+		Kind:         types.NumInt,
+		BitWidth:     maxInt(minIntWidth(i.Value), 32),
+		Downcastable: &types.Downcastable{},
+	}
+	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
+	ui.Downcastable.MinIntWidth = minIntWidth(i.Value)
+	ui.Downcastable.MinUintWidth = minUintWidth(uint64(i.Value))
+
+	return ui
 }
 
 func (IntegerLiteral) IsConst() bool {
@@ -56,10 +98,28 @@ func (f *FloatLiteral) Print(node *printer.Node) {
 	)
 }
 
+var maxFloat16 = 6.5504e+4
+
+func minFloatWidth(f float64) int {
+	if f <= maxFloat16 && f >= -maxFloat16 {
+		return 16
+	}
+	if f <= math.MaxFloat32 && f >= -math.MaxFloat32 {
+		return 32
+	}
+	return 64
+}
+
 func (f *FloatLiteral) Type() types.Type {
-	uf := types.UntypedFloat
+	uf := types.Numeric{
+		Kind:         types.NumFloat,
+		BitWidth:     64,
+		Downcastable: &types.Downcastable{},
+	}
+	uf.Downcastable.MinFloatWidth = minFloatWidth(f.Value)
 	if float64(int64(f.Value)) == f.Value {
-		uf.Downcastable = true
+		uf.Downcastable.MinIntWidth = minIntWidth(int64(f.Value))
+		uf.Downcastable.MinUintWidth = minUintWidth(uint64(f.Value))
 	}
 	return uf
 }
@@ -273,60 +333,61 @@ func (b BinaryOperator) Type() types.Type {
 		ty = types.Bool
 
 	case LeftShift:
-		ty = types.Int
+		ty = types.I32
 
 	case RightShift:
-		ty = types.Int
+		ty = types.I32
 
 	case BitwiseOr:
-		ty = types.Int
+		ty = types.I32
 
 	case Union:
 		ty = types.RuntimeType
 
 	case BitwiseAnd:
-		ty = types.Int
+		ty = types.I32
 
 	case AddInt:
-		ty = types.Int
+		ty = types.I32
 
 	case AddFloat:
-		ty = types.Float
+		ty = types.F32
 
 	case Concat:
 		ty = types.String
 
 	case SubtractInt:
-		ty = types.Int
+		ty = types.I32
 
 	case SubtractFloat:
-		ty = types.Float
+		ty = types.F32
 
 	case MultiplyInt:
-		ty = types.Int
+		ty = types.I32
 
 	case MultiplyFloat:
-		ty = types.Float
+		ty = types.F32
 
 	case Divide:
-		ty = types.Float
+		ty = types.F32
 
 	case ModuloInt:
-		ty = types.Int
+		ty = types.I32
 
 	case ModuloFloat:
-		ty = types.Float
+		ty = types.F32
 
 	case PowerInt:
-		ty = types.Int
+		ty = types.I32
 
 	case PowerFloat:
-		ty = types.Float
+		ty = types.F32
 	}
 
 	if untyped {
-		if variable, ok := ty.(types.VariableType); ok {
-			variable.Untyped = true
+		if variable, ok := ty.(types.Numeric); ok {
+			variable.Downcastable = &types.Downcastable{}
+
 			return variable
 		}
 	}
@@ -605,23 +666,23 @@ func (u UnaryOperator) Type() types.Type {
 
 	switch id {
 	case NegateInt:
-		ty = types.Int
+		ty = types.I32
 	case NegateFloat:
-		ty = types.Float
+		ty = types.F32
 	case Identity:
-		ty = types.Int
+		ty = types.I32
 	case LogicalNot:
 		ty = types.Bool
 	case BitwiseNot:
-		ty = types.Int
+		ty = types.I32
 	case IncrecementInt:
-		ty = types.Int
+		ty = types.I32
 	case IncrementFloat:
-		ty = types.Float
+		ty = types.F32
 	case DecrecementInt:
-		ty = types.Int
+		ty = types.I32
 	case DecrementFloat:
-		ty = types.Float
+		ty = types.F32
 	case PropagateError:
 		return u.DataType
 	case CrashError:
@@ -629,8 +690,8 @@ func (u UnaryOperator) Type() types.Type {
 	}
 
 	if untyped {
-		if variable, ok := ty.(types.VariableType); ok {
-			variable.Untyped = true
+		if variable, ok := ty.(types.Numeric); ok {
+			variable.Downcastable = &types.Downcastable{}
 			return variable
 		}
 	}
@@ -740,16 +801,20 @@ func (c *Conversion) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	if types.Match(c.To, types.Float) {
-		return values.FloatValue{
-			Value: values.NumericValue(c.Expression.ConstValue()),
-		}
-	}
-
-	if types.Match(c.To, types.Int) {
+	if n, ok := c.To.(types.Numeric); ok {
 		num := values.NumericValue(c.Expression.ConstValue())
-		return values.IntValue{
-			Value: int64(num),
+		if n.Kind == types.NumFloat {
+			return values.FloatValue{
+				Value: num,
+			}
+		} else if n.Kind == types.NumInt {
+			return values.IntValue{
+				Value: int64(num),
+			}
+		} else if n.Kind == types.NumUint {
+			return values.UintValue{
+				Value: uint64(num),
+			}
 		}
 	}
 

@@ -373,7 +373,7 @@ func (t *typeChecker) typeCheckEnumDeclaration(decl *ast.EnumDeclaration) ir.Sta
 	if decl.ValueType != nil {
 		ty.Underlying = t.typeCheckType(decl.ValueType)
 	} else {
-		ty.Underlying = types.Int
+		ty.Underlying = types.I32
 	}
 	toEnum, canGenValues := ty.Underlying.(types.HasEnumValue)
 

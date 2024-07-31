@@ -40,6 +40,24 @@ func (i IntValue) Print(node *printer.Node) {
 	)
 }
 
+type UintValue struct {
+	constValue
+	Value uint64
+}
+
+func (u UintValue) Hash() uint64 {
+	return u.Value
+}
+
+func (u UintValue) Print(node *printer.Node) {
+	node.Text(
+		"%sUINT_VALUE %s%d",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		u.Value,
+	)
+}
+
 type FloatValue struct {
 	constValue
 	Value float64

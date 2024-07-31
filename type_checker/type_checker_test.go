@@ -213,8 +213,8 @@ func TestTypeChecks(t *testing.T) {
 	utils.MatchIrSnaps(t,
 		"1 is i32",
 		"true is bool[1]",
-		"({1: 1.0, 3: 3.14}) is {i32: f32}",
-		`(1, 3.1, "hi") is (i32, f32, string)`,
+		"({1: 1.0, 3: 3.14}) is {i32: f64}",
+		`(1, 3.1, "hi") is (i32, f64, string)`,
 	)
 }
 
@@ -452,6 +452,17 @@ let next_day = (index + 1) -> WeekDay`,
 	)
 }
 
+func TestNumConversions(t *testing.T) {
+	utils.MatchIrSnaps(t,
+		"let byte: u8 = 10.0",
+		"let short: u16 = 902",
+		"let int_from_float: i32 = 1.0",
+		"let float: f32 = 14",
+		"let half: f16 = 1",
+		"let downcasted: i32 = 1.5 -> i32",
+	)
+}
+
 // TODO: Add a way to create fake modules, for the following errors:
 // FieldPrivate
 // NoExport
@@ -461,6 +472,8 @@ func TestTCDiagnostics(t *testing.T) {
 		"let x: foo = 1",
 		"const text: string = false",
 		"let result: !i32 = 10; let int: i32 = result",
+		"let big_byte: u8 = 2500",
+		"let int: i32 = 1.5",
 		"let foo = 1; let foo = 2",
 		"let a = b",
 		`mut result = 1 + "hi"`,

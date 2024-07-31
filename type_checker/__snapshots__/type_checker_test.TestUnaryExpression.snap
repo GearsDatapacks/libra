@@ -44,14 +44,14 @@ UNARY_EXPR IncrecementInt
 [`mut f = 1.5; f++` - 1]
 VAR_DECL
 ├─VAR_SYMBOL f mut
-│ └─VARIABLE_TYPE f32
+│ └─VARIABLE_TYPE f64
 └─CONVERSION
   ├─FLOAT_LIT 1.5
-  ├─VARIABLE_TYPE f32
+  ├─VARIABLE_TYPE f64
   └─FLOAT_VALUE 1.5
 UNARY_EXPR IncrementFloat
 ├─VAR_SYMBOL f mut
-│ └─VARIABLE_TYPE f32
+│ └─VARIABLE_TYPE f64
 └─VARIABLE_TYPE f32
 ---
 
@@ -72,14 +72,14 @@ UNARY_EXPR DecrecementInt
 [`mut countdown = 12.3; countdown--` - 1]
 VAR_DECL
 ├─VAR_SYMBOL countdown mut
-│ └─VARIABLE_TYPE f32
+│ └─VARIABLE_TYPE f64
 └─CONVERSION
   ├─FLOAT_LIT 12.3
-  ├─VARIABLE_TYPE f32
+  ├─VARIABLE_TYPE f64
   └─FLOAT_VALUE 12.3
 UNARY_EXPR DecrementFloat
 ├─VAR_SYMBOL countdown mut
-│ └─VARIABLE_TYPE f32
+│ └─VARIABLE_TYPE f64
 └─VARIABLE_TYPE f32
 ---
 

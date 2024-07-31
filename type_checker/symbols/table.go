@@ -1,6 +1,8 @@
 package symbols
 
 import (
+	"fmt"
+
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
@@ -134,8 +136,14 @@ func (t *Table) Extend(other *Table) {
 }
 
 func (t *Table) registerGlobals() {
-	t.Register(&Type{"i32", types.Int})
-	t.Register(&Type{"f32", types.Float})
+	for _, n := range []int{8, 16, 32, 64} {
+		t.Register(&Type{fmt.Sprintf("i%d", n), types.Int(n)})
+		t.Register(&Type{fmt.Sprintf("u%d", n), types.Uint(n)})
+		if n != 8 {
+			t.Register(&Type{fmt.Sprintf("f%d", n), types.Float(n)})
+		}
+	}
+
 	t.Register(&Type{"bool", types.Bool})
 	t.Register(&Type{"string", types.String})
 	t.Register(&Type{"void", types.Void})
