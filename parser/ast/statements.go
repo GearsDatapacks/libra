@@ -414,8 +414,9 @@ func (i *ImportStatement) GetLocation() text.Location {
 }
 
 type EnumMember struct {
-	Name  string
-	Value Expression
+	Name     string
+	Location text.Location
+	Value    Expression
 }
 
 func (e EnumMember) Print(node *printer.Node) {

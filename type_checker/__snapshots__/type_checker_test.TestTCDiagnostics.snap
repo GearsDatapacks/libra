@@ -466,3 +466,19 @@ fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }
 
 
 ---
+
+[`enum Empty {}; Empty.Member` - 1]
+test.lb:1:22:
+enum Empty {}; Empty.Member
+                     ^ Enum "Empty" has no member "Member"
+
+
+---
+
+[`enum Float: f32 { A = 1.2, B }` - 1]
+test.lb:1:28:
+enum Float: f32 { A = 1.2, B }
+                           ^ Type "f32" cannot generate enum values automatically
+
+
+---

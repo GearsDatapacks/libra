@@ -1,0 +1,201 @@
+
+[`enum Colour {;	Red,;	Green,;	Blue,;};mut favourite_colour = Colour.Red;favourite_colour = Colour.Blue` - 1]
+TYPE_DECL Colour
+└─ENUM_TYPE Colour
+  ├─VARIABLE_TYPE i32
+  ├─ENUM_MEMBER Blue
+  │ └─INT_VALUE 2
+  ├─ENUM_MEMBER Green
+  │ └─INT_VALUE 1
+  └─ENUM_MEMBER Red
+    └─INT_VALUE 0
+VAR_DECL
+├─VAR_SYMBOL favourite_colour mut
+│ └─ENUM_TYPE Colour
+│   ├─VARIABLE_TYPE i32
+│   ├─ENUM_MEMBER Blue
+│   │ └─INT_VALUE 2
+│   ├─ENUM_MEMBER Green
+│   │ └─INT_VALUE 1
+│   └─ENUM_MEMBER Red
+│     └─INT_VALUE 0
+└─MEMBER_EXPR Red
+  ├─VAR_SYMBOL Colour
+  │ ├─PRIMARY_TYPE Type
+  │ └─TYPE_VALUE
+  │   └─ENUM_TYPE Colour
+  │     ├─VARIABLE_TYPE i32
+  │     ├─ENUM_MEMBER Blue
+  │     │ └─INT_VALUE 2
+  │     ├─ENUM_MEMBER Green
+  │     │ └─INT_VALUE 1
+  │     └─ENUM_MEMBER Red
+  │       └─INT_VALUE 0
+  ├─ENUM_TYPE Colour
+  │ ├─VARIABLE_TYPE i32
+  │ ├─ENUM_MEMBER Blue
+  │ │ └─INT_VALUE 2
+  │ ├─ENUM_MEMBER Green
+  │ │ └─INT_VALUE 1
+  │ └─ENUM_MEMBER Red
+  │   └─INT_VALUE 0
+  └─INT_VALUE 0
+ASSIGNMENT
+├─VAR_SYMBOL favourite_colour mut
+│ └─ENUM_TYPE Colour
+│   ├─VARIABLE_TYPE i32
+│   ├─ENUM_MEMBER Blue
+│   │ └─INT_VALUE 2
+│   ├─ENUM_MEMBER Green
+│   │ └─INT_VALUE 1
+│   └─ENUM_MEMBER Red
+│     └─INT_VALUE 0
+└─MEMBER_EXPR Blue
+  ├─VAR_SYMBOL Colour
+  │ ├─PRIMARY_TYPE Type
+  │ └─TYPE_VALUE
+  │   └─ENUM_TYPE Colour
+  │     ├─VARIABLE_TYPE i32
+  │     ├─ENUM_MEMBER Blue
+  │     │ └─INT_VALUE 2
+  │     ├─ENUM_MEMBER Green
+  │     │ └─INT_VALUE 1
+  │     └─ENUM_MEMBER Red
+  │       └─INT_VALUE 0
+  ├─ENUM_TYPE Colour
+  │ ├─VARIABLE_TYPE i32
+  │ ├─ENUM_MEMBER Blue
+  │ │ └─INT_VALUE 2
+  │ ├─ENUM_MEMBER Green
+  │ │ └─INT_VALUE 1
+  │ └─ENUM_MEMBER Red
+  │   └─INT_VALUE 0
+  └─INT_VALUE 2
+---
+
+[`enum Number {;	Zero,;	One,;	// Two is unlucky;	Three = 3,;	Four;}` - 1]
+TYPE_DECL Number
+└─ENUM_TYPE Number
+  ├─VARIABLE_TYPE i32
+  ├─ENUM_MEMBER Four
+  │ └─INT_VALUE 4
+  ├─ENUM_MEMBER One
+  │ └─INT_VALUE 1
+  ├─ENUM_MEMBER Three
+  │ └─INT_VALUE 3
+  └─ENUM_MEMBER Zero
+    └─INT_VALUE 0
+---
+
+[`enum Name: string {;	Bob,;	Carol,;	David = "Dave",;}` - 1]
+TYPE_DECL Name
+└─ENUM_TYPE Name
+  ├─PRIMARY_TYPE string
+  ├─ENUM_MEMBER Bob
+  │ └─STRING_VALUE "Bob"
+  ├─ENUM_MEMBER Carol
+  │ └─STRING_VALUE "Carol"
+  └─ENUM_MEMBER David
+    └─STRING_VALUE "Dave"
+---
+
+[`enum Float: f32 {;	OneAndAHalf = 1.5,;	Pi = 3.14,;	E = 2.71;}` - 1]
+TYPE_DECL Float
+└─ENUM_TYPE Float
+  ├─VARIABLE_TYPE f32
+  ├─ENUM_MEMBER E
+  │ └─FLOAT_VALUE 2.71
+  ├─ENUM_MEMBER OneAndAHalf
+  │ └─FLOAT_VALUE 1.5
+  └─ENUM_MEMBER Pi
+    └─FLOAT_VALUE 3.14
+---
+
+[`enum WeekDay {;	Monday = 1,;	Tuesday,;	Wednesday,;	// ...;};;let my_weekday = WeekDay.Monday;let index = my_weekday -> i32;let next_day = (index + 1) -> WeekDay` - 1]
+TYPE_DECL WeekDay
+└─ENUM_TYPE WeekDay
+  ├─VARIABLE_TYPE i32
+  ├─ENUM_MEMBER Monday
+  │ └─INT_VALUE 1
+  ├─ENUM_MEMBER Tuesday
+  │ └─INT_VALUE 2
+  └─ENUM_MEMBER Wednesday
+    └─INT_VALUE 3
+VAR_DECL
+├─VAR_SYMBOL my_weekday
+│ ├─ENUM_TYPE WeekDay
+│ │ ├─VARIABLE_TYPE i32
+│ │ ├─ENUM_MEMBER Monday
+│ │ │ └─INT_VALUE 1
+│ │ ├─ENUM_MEMBER Tuesday
+│ │ │ └─INT_VALUE 2
+│ │ └─ENUM_MEMBER Wednesday
+│ │   └─INT_VALUE 3
+│ └─INT_VALUE 1
+└─MEMBER_EXPR Monday
+  ├─VAR_SYMBOL WeekDay
+  │ ├─PRIMARY_TYPE Type
+  │ └─TYPE_VALUE
+  │   └─ENUM_TYPE WeekDay
+  │     ├─VARIABLE_TYPE i32
+  │     ├─ENUM_MEMBER Monday
+  │     │ └─INT_VALUE 1
+  │     ├─ENUM_MEMBER Tuesday
+  │     │ └─INT_VALUE 2
+  │     └─ENUM_MEMBER Wednesday
+  │       └─INT_VALUE 3
+  ├─ENUM_TYPE WeekDay
+  │ ├─VARIABLE_TYPE i32
+  │ ├─ENUM_MEMBER Monday
+  │ │ └─INT_VALUE 1
+  │ ├─ENUM_MEMBER Tuesday
+  │ │ └─INT_VALUE 2
+  │ └─ENUM_MEMBER Wednesday
+  │   └─INT_VALUE 3
+  └─INT_VALUE 1
+VAR_DECL
+├─VAR_SYMBOL index
+│ ├─VARIABLE_TYPE i32
+│ └─INT_VALUE 1
+└─CONVERSION
+  ├─VAR_SYMBOL my_weekday
+  │ ├─ENUM_TYPE WeekDay
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ ├─ENUM_MEMBER Monday
+  │ │ │ └─INT_VALUE 1
+  │ │ ├─ENUM_MEMBER Tuesday
+  │ │ │ └─INT_VALUE 2
+  │ │ └─ENUM_MEMBER Wednesday
+  │ │   └─INT_VALUE 3
+  │ └─INT_VALUE 1
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 1
+VAR_DECL
+├─VAR_SYMBOL next_day
+│ ├─ENUM_TYPE WeekDay
+│ │ ├─VARIABLE_TYPE i32
+│ │ ├─ENUM_MEMBER Monday
+│ │ │ └─INT_VALUE 1
+│ │ ├─ENUM_MEMBER Tuesday
+│ │ │ └─INT_VALUE 2
+│ │ └─ENUM_MEMBER Wednesday
+│ │   └─INT_VALUE 3
+│ └─INT_VALUE 2
+└─CONVERSION
+  ├─BINARY_EXPR AddInt
+  │ ├─VAR_SYMBOL index
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 1
+  │ ├─INT_LIT 1
+  │ ├─VARIABLE_TYPE i32
+  │ └─INT_VALUE 2
+  ├─ENUM_TYPE WeekDay
+  │ ├─VARIABLE_TYPE i32
+  │ ├─ENUM_MEMBER Monday
+  │ │ └─INT_VALUE 1
+  │ ├─ENUM_MEMBER Tuesday
+  │ │ └─INT_VALUE 2
+  │ └─ENUM_MEMBER Wednesday
+  │   └─INT_VALUE 3
+  └─INT_VALUE 2
+---

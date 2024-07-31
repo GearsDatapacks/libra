@@ -409,6 +409,49 @@ let this_will_crash: i32 = value!`,
 	)
 }
 
+func TestEnums(t *testing.T) {
+	utils.MatchIrSnaps(t,
+		`enum Colour {
+	Red,
+	Green,
+	Blue,
+}
+mut favourite_colour = Colour.Red
+favourite_colour = Colour.Blue`,
+
+		`enum Number {
+	Zero,
+	One,
+	// Two is unlucky
+	Three = 3,
+	Four
+}`,
+
+		`enum Name: string {
+	Bob,
+	Carol,
+	David = "Dave",
+}`,
+
+		`enum Float: f32 {
+	OneAndAHalf = 1.5,
+	Pi = 3.14,
+	E = 2.71
+}`,
+
+		`enum WeekDay {
+	Monday = 1,
+	Tuesday,
+	Wednesday,
+	// ...
+}
+
+let my_weekday = WeekDay.Monday
+let index = my_weekday -> i32
+let next_day = (index + 1) -> WeekDay`,
+	)
+}
+
 // TODO: Add a way to create fake modules, for the following errors:
 // FieldPrivate
 // NoExport
@@ -472,5 +515,7 @@ struct Tagged`,
 		"fn option_unwrap(opt: ?i32): i32 { opt? }",
 		"fn result_unwrap(res: !i32): i32 { res? }",
 		"fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }",
+		`enum Empty {}; Empty.Member`,
+		`enum Float: f32 { A = 1.2, B }`,
 	)
 }

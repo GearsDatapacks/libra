@@ -22,6 +22,8 @@ func (t *typeChecker) registerDeclaration(statement ast.Statement) {
 		t.registerInterfaceDeclaration(stmt)
 	case *ast.UnionDeclaration:
 		t.registerUnionDeclaration(stmt)
+	case *ast.EnumDeclaration:
+		t.registerEnumDeclaration(stmt)
 	case *ast.TagDeclaration:
 		t.registerTagDeclaration(stmt)
 	}
@@ -37,6 +39,8 @@ func (t *typeChecker) typeCheckDeclaration(statement ast.Statement) ir.Statement
 		return t.typeCheckInterfaceDeclaration(stmt)
 	case *ast.UnionDeclaration:
 		return t.typeCheckUnionDeclaration(stmt)
+	case *ast.EnumDeclaration:
+		return t.typeCheckEnumDeclaration(stmt)
 	case *ast.TagDeclaration:
 		return t.typeCheckTagDeclaration(stmt)
 	}
@@ -130,6 +134,19 @@ func (t *typeChecker) registerUnionDeclaration(decl *ast.UnionDeclaration) {
 		Type: &types.Union{
 			Name:    decl.Name,
 			Members: map[string]types.Type{},
+		},
+	}
+
+	t.symbols.Register(symbol, decl.Exported)
+}
+
+func (t *typeChecker) registerEnumDeclaration(decl *ast.EnumDeclaration) {
+	symbol := &symbols.Type{
+		Name: decl.Name,
+		Type: &types.Enum{
+			Name:       decl.Name,
+			Underlying: types.Invalid,
+			Members:    map[string]values.ConstValue{},
 		},
 	}
 
@@ -245,7 +262,7 @@ func (t *typeChecker) typeCheckStructBody(
 				name = *field.Name
 			}
 			structField := types.StructField{
-				Name:    name,
+				Name:     name,
 				Type:     nil,
 				Exported: field.Pub,
 			}
@@ -353,6 +370,61 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) ir.S
 
 	if decl.Tag != nil {
 		t.addToTag(decl.Tag, ty)
+	}
+
+	return &ir.TypeDeclaration{
+		Name:     decl.Name,
+		Exported: decl.Exported,
+		Type:     ty,
+	}
+}
+
+func (t *typeChecker) typeCheckEnumDeclaration(decl *ast.EnumDeclaration) ir.Statement {
+	ty := t.symbols.Lookup(decl.Name).(*symbols.Type).Type.(*types.Enum)
+	if decl.ValueType != nil {
+		ty.Underlying = t.typeCheckType(decl.ValueType)
+	} else {
+		ty.Underlying = types.Int
+	}
+	toEnum, canGenValues := ty.Underlying.(types.HasEnumValue)
+
+	enumValues := []values.ConstValue{}
+	for _, member := range decl.Members {
+		var value values.ConstValue
+
+		if member.Value != nil {
+			expression := t.typeCheckExpression(member.Value)
+			conversion := convert(expression, ty.Underlying, implicit)
+			if conversion == nil {
+				t.diagnostics.Report(diagnostics.NotAssignable(
+					member.Value.GetLocation(),
+					ty.Underlying,
+					expression.Type(),
+				))
+			} else if conversion.IsConst() {
+				value = expression.ConstValue()
+			} else {
+				t.diagnostics.Report(diagnostics.NotConst(member.Value.GetLocation()))
+			}
+		}
+
+		if value == nil {
+			if canGenValues {
+				enumValue, err := toEnum.GetEnumValue(enumValues, member.Name)
+				if err != nil {
+					t.diagnostics.Report(err.Location(member.Location))
+				} else {
+					value = enumValue
+				}
+			} else {
+				t.diagnostics.Report(diagnostics.CannotEnum(member.Location, ty.Underlying))
+			}
+		}
+
+		if value != nil {
+			enumValues = append(enumValues, value)
+			ty.Members[member.Name] = value
+		}
 	}
 
 	return &ir.TypeDeclaration{

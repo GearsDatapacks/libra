@@ -433,14 +433,15 @@ func (p *parser) parseImportStatement() (ast.Statement, *diagnostics.Diagnostic)
 }
 
 func (p *parser) parseEnumMember() (*ast.EnumMember, *diagnostics.Diagnostic) {
-	name := p.expect(token.IDENTIFIER).Value
+	name := p.expect(token.IDENTIFIER)
 	value, err := p.parserOptionalDefaultValue()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ast.EnumMember{
-		Name:  name,
+		Name:  name.Value,
+		Location: name.Location,
 		Value: value,
 	}, nil
 }

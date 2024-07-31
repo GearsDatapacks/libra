@@ -38,6 +38,7 @@ func (t *typeChecker) typeCheckStatement(statement ast.Statement) ir.Statement {
 		*ast.InterfaceDeclaration,
 		*ast.ImportStatement,
 		*ast.UnionDeclaration,
+		*ast.EnumDeclaration,
 		*ast.TagDeclaration:
 		return nil
 	case ast.Expression:
@@ -91,7 +92,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 	return &ir.VariableDeclaration{
 		Symbol: variable,
-		Value: value,
+		Value:  value,
 	}
 }
 
@@ -189,7 +190,7 @@ func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 			context = ctx
 			break
 		}
-		
+
 		if _, ok := symbolTable.Context.(symbols.FunctionContext); ok {
 			break
 		}

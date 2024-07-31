@@ -157,6 +157,17 @@ func (pt PrimaryType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnos
 	return Invalid, diagnostics.CannotIndex(pt, index)
 }
 
+func (pt PrimaryType) GetEnumValue(
+	_ []values.ConstValue,
+	name string,
+) (values.ConstValue, *diagnostics.Partial) {
+	if pt != String {
+		return nil, diagnostics.CannotEnumPartial(pt)
+	}
+
+	return values.StringValue{Value: name}, nil
+}
+
 type VTKind int
 
 const (
@@ -245,6 +256,21 @@ func (v VariableType) toReal() Type {
 		v.Untyped = false
 	}
 	return v
+}
+
+func (v VariableType) GetEnumValue(
+	prevValues []values.ConstValue,
+	_name string,
+) (values.ConstValue, *diagnostics.Partial) {
+	if v.Kind != VT_Int {
+		return nil, diagnostics.CannotEnumPartial(v)
+	}
+
+	if len(prevValues) == 0 {
+		return values.IntValue{Value: 0}, nil
+	}
+	last := prevValues[len(prevValues)-1].(values.IntValue)
+	return values.IntValue{Value: last.Value + 1}, nil
 }
 
 type ListType struct {
@@ -1067,6 +1093,55 @@ func (r *Option) valid(other Type) bool {
 	return Assignable(r.SomeType, other)
 }
 
+type Enum struct {
+	Name       string
+	Underlying Type
+	Members    map[string]values.ConstValue
+}
+
+func (e *Enum) String() string {
+	return e.Name
+}
+
+func (e *Enum) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sENUM_TYPE %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			e.Name,
+		).
+		Node(e.Underlying)
+
+		for _, kv := range printer.SortMap(e.Members) {
+			node.FakeNode(
+				"%sENUM_MEMBER %s%s",
+				func(n *printer.Node) {n.Node(kv.Value)},
+				node.Colour(colour.NodeName),
+				node.Colour(colour.Name),
+				kv.Key,
+			)
+		}
+}
+
+func (e *Enum) valid(other Type) bool {
+	if enum, ok := other.(*Enum); ok && enum.Name == e.Name {
+		return true
+	}
+	return false
+}
+
+func (e *Enum) staticMember(member string) (Type, *diagnostics.Partial) {
+	if _, ok := e.Members[member]; ok {
+		return e, nil
+	}
+	return nil, diagnostics.NoEnumMember(e.Name, member)
+}
+
+func (e *Enum) StaticMemberValue(member string) values.ConstValue {
+	return e.Members[member]
+}
+
 type pseudo interface {
 	toReal() Type
 }
@@ -1089,4 +1164,8 @@ type container interface {
 
 type Iterator interface {
 	Item() Type
+}
+
+type HasEnumValue interface {
+	GetEnumValue([]values.ConstValue, string) (values.ConstValue, *diagnostics.Partial)
 }

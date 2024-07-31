@@ -436,3 +436,17 @@ func PropagateFnMustReturnOption() *Partial {
 	const msg = "Can only propagate void options in functions which return option types"
 	return partial(Error, msg)
 }
+
+func CannotEnum(location text.Location, ty tcType) *Diagnostic {
+	return CannotEnumPartial(ty).Location(location)
+}
+
+func CannotEnumPartial(ty tcType) *Partial {
+	msg := fmt.Sprintf("Type %q cannot generate enum values automatically", ty)
+	return partial(Error, msg)
+}
+
+func NoEnumMember(name string, member string) *Partial {
+	msg := fmt.Sprintf("Enum %q has no member %q", name, member)
+	return partial(Error, msg)
+}

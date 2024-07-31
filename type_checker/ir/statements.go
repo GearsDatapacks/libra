@@ -155,6 +155,3 @@ func (t *TypeDeclaration) Print(node *printer.Node) {
 		).
 		Node(t.Type)
 }
-
-// TODO:
-// EnumDeclaration

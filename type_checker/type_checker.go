@@ -241,6 +241,10 @@ func canConvert(from, to types.Type) conversionKind {
 		kind = explicit
 	} else if from == types.Bool && to == types.Int {
 		kind = explicit
+	} else if enum, ok := to.(*types.Enum); ok && canConvert(from, enum.Underlying) != none {
+		return explicit
+	} else if enum, ok := from.(*types.Enum); ok && canConvert(enum.Underlying, to) != none {
+		return explicit
 	}
 
 	if v, ok := from.(types.VariableType); ok &&
