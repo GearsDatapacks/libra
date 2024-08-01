@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gearsdatapacks/libra/lowerer"
 	"github.com/gearsdatapacks/libra/module"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 )
@@ -15,10 +16,10 @@ func main() {
 		debugAst = true
 	}
 
-	for _, diag := range diags {
-		diag.Print()
-	}
 	if len(diags) != 0 {
+		for _, diag := range diags {
+			diag.Print()
+		}
 		return
 	}
 
@@ -31,14 +32,24 @@ func main() {
 		return
 	}
 
-	program, diags := typechecker.TypeCheck(mod, diags)
+	pkg, diags := typechecker.TypeCheck(mod, diags)
 
-	for _, diag := range diags {
-		diag.Print()
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			diag.Print()
+		}
+		return
 	}
 
-	if len(diags) == 0 {
-		program.Print()
-		fmt.Println()
+	pkg, diags = lowerer.Lower(pkg, diags)
+
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			diag.Print()
+		}
+		return
 	}
+
+	pkg.Print()
+	fmt.Println()
 }
