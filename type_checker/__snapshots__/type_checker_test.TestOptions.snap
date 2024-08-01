@@ -1,51 +1,54 @@
 
 [`let opt: ?i32 = 23` - 1]
-VAR_DECL
-├─VAR_SYMBOL opt
-│ ├─OPTION_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─INT_VALUE 23
-└─CONVERSION
-  ├─INT_LIT 23
-  ├─OPTION_TYPE
-  │ └─VARIABLE_TYPE i32
-  └─INT_VALUE 23
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL opt
+  │ ├─OPTION_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 23
+  └─CONVERSION
+    ├─INT_LIT 23
+    ├─OPTION_TYPE
+    │ └─VARIABLE_TYPE i32
+    └─INT_VALUE 23
 ---
 
 [`let opt: ?i32 = void` - 1]
-VAR_DECL
-├─VAR_SYMBOL opt
-│ ├─OPTION_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─UNIT_VALUE void
-└─VAR_SYMBOL void
-  ├─UNIT_STRUCT void
-  └─UNIT_VALUE void
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL opt
+  │ ├─OPTION_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ └─UNIT_VALUE void
+  └─VAR_SYMBOL void
+    ├─UNIT_STRUCT void
+    └─UNIT_VALUE void
 ---
 
 [`mut value: ?i32 = 10;value = void;let this_will_crash: i32 = value!` - 1]
-VAR_DECL
-├─VAR_SYMBOL value mut
-│ └─OPTION_TYPE
-│   └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 10
-  ├─OPTION_TYPE
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL value mut
+│ │ └─OPTION_TYPE
+│ │   └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 10
+│   ├─OPTION_TYPE
+│   │ └─VARIABLE_TYPE i32
+│   └─INT_VALUE 10
+├─ASSIGNMENT
+│ ├─VAR_SYMBOL value mut
+│ │ └─OPTION_TYPE
+│ │   └─VARIABLE_TYPE i32
+│ └─VAR_SYMBOL void
+│   ├─UNIT_STRUCT void
+│   └─UNIT_VALUE void
+└─VAR_DECL
+  ├─VAR_SYMBOL this_will_crash
   │ └─VARIABLE_TYPE i32
-  └─INT_VALUE 10
-ASSIGNMENT
-├─VAR_SYMBOL value mut
-│ └─OPTION_TYPE
-│   └─VARIABLE_TYPE i32
-└─VAR_SYMBOL void
-  ├─UNIT_STRUCT void
-  └─UNIT_VALUE void
-VAR_DECL
-├─VAR_SYMBOL this_will_crash
-│ └─VARIABLE_TYPE i32
-└─UNARY_EXPR CrashError
-  ├─VAR_SYMBOL value mut
-  │ └─OPTION_TYPE
-  │   └─VARIABLE_TYPE i32
-  └─VARIABLE_TYPE i32
+  └─UNARY_EXPR CrashError
+    ├─VAR_SYMBOL value mut
+    │ └─OPTION_TYPE
+    │   └─VARIABLE_TYPE i32
+    └─VARIABLE_TYPE i32
 ---

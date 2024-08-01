@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 
+	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/types"
@@ -22,28 +23,44 @@ type Expression interface {
 	irExpr()
 }
 
-type Program struct {
-	Statements []Statement
+type Package struct {
+	Modules map[string]*Module
 }
 
-func (p *Program) String() string {
+func (p *Package) String() string {
 	var text bytes.Buffer
 
 	irPrinter := printer.New(&text, false)
-	for _, statement := range p.Statements {
-		irPrinter.Node(statement)
+	for _, kv := range printer.SortMap(p.Modules) {
+		irPrinter.Node(kv.Value)
 	}
 	irPrinter.Print()
 
 	return text.String()
 }
 
-func (p *Program) Print() {
+func (p *Package) Print() {
 	irPrinter := printer.New(os.Stdout, true)
-	for _, statement := range p.Statements {
-		irPrinter.Node(statement)
+	for _, kv := range printer.SortMap(p.Modules) {
+		irPrinter.Node(kv.Value)
 	}
 	irPrinter.Print()
+}
+
+type Module struct {
+	Name       string
+	Statements []Statement
+}
+
+func (m *Module) Print(node *printer.Node) {
+	node.Text(
+		"%sMODULE %s%s",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Name),
+		m.Name,
+	)
+
+	printer.Nodes(node, m.Statements)
 }
 
 func AssignableExpr(expr Expression) bool {

@@ -1,61 +1,63 @@
 
 [`while true { break 25 }` - 1]
-WHILE_LOOP
-├─BOOL_LIT true
-└─BLOCK
-  ├─VARIABLE_TYPE untyped int
-  └─BREAK
-    └─INT_LIT 25
+MODULE test
+└─WHILE_LOOP
+  ├─BOOL_LIT true
+  └─BLOCK
+    ├─VARIABLE_TYPE untyped int
+    └─BREAK
+      └─INT_LIT 25
 ---
 
 [`;mut i = 0;mut sum = 0;let result = while i < 10 {;	i++;	sum += i;	if i == 10 {;		break i;	};};` - 1]
-VAR_DECL
-├─VAR_SYMBOL i mut
-│ └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 0
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 0
-VAR_DECL
-├─VAR_SYMBOL sum mut
-│ └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 0
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 0
-VAR_DECL
-├─VAR_SYMBOL result
-│ └─VARIABLE_TYPE i32
-└─WHILE_LOOP
-  ├─BINARY_EXPR Less
-  │ ├─VAR_SYMBOL i mut
-  │ │ └─VARIABLE_TYPE i32
-  │ ├─INT_LIT 10
-  │ └─PRIMARY_TYPE bool
-  └─BLOCK
-    ├─VARIABLE_TYPE i32
-    ├─UNARY_EXPR IncrecementInt
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL i mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 0
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 0
+├─VAR_DECL
+│ ├─VAR_SYMBOL sum mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 0
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 0
+└─VAR_DECL
+  ├─VAR_SYMBOL result
+  │ └─VARIABLE_TYPE i32
+  └─WHILE_LOOP
+    ├─BINARY_EXPR Less
     │ ├─VAR_SYMBOL i mut
     │ │ └─VARIABLE_TYPE i32
-    │ └─VARIABLE_TYPE i32
-    ├─ASSIGNMENT
-    │ ├─VAR_SYMBOL sum mut
-    │ │ └─VARIABLE_TYPE i32
-    │ └─BINARY_EXPR AddInt
-    │   ├─VAR_SYMBOL sum mut
-    │   │ └─VARIABLE_TYPE i32
-    │   ├─VAR_SYMBOL i mut
-    │   │ └─VARIABLE_TYPE i32
-    │   └─VARIABLE_TYPE i32
-    └─IF_EXPR
-      ├─BINARY_EXPR Equal
+    │ ├─INT_LIT 10
+    │ └─PRIMARY_TYPE bool
+    └─BLOCK
+      ├─VARIABLE_TYPE i32
+      ├─UNARY_EXPR IncrecementInt
       │ ├─VAR_SYMBOL i mut
       │ │ └─VARIABLE_TYPE i32
-      │ ├─INT_LIT 10
-      │ └─PRIMARY_TYPE bool
-      └─BLOCK
-        ├─UNIT_STRUCT void
-        └─BREAK
-          └─VAR_SYMBOL i mut
-            └─VARIABLE_TYPE i32
+      │ └─VARIABLE_TYPE i32
+      ├─ASSIGNMENT
+      │ ├─VAR_SYMBOL sum mut
+      │ │ └─VARIABLE_TYPE i32
+      │ └─BINARY_EXPR AddInt
+      │   ├─VAR_SYMBOL sum mut
+      │   │ └─VARIABLE_TYPE i32
+      │   ├─VAR_SYMBOL i mut
+      │   │ └─VARIABLE_TYPE i32
+      │   └─VARIABLE_TYPE i32
+      └─IF_EXPR
+        ├─BINARY_EXPR Equal
+        │ ├─VAR_SYMBOL i mut
+        │ │ └─VARIABLE_TYPE i32
+        │ ├─INT_LIT 10
+        │ └─PRIMARY_TYPE bool
+        └─BLOCK
+          ├─UNIT_STRUCT void
+          └─BREAK
+            └─VAR_SYMBOL i mut
+              └─VARIABLE_TYPE i32
 ---

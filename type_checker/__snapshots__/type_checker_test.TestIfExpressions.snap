@@ -1,74 +1,76 @@
 
 [`if true { 1 } else { 2 }` - 1]
-IF_EXPR
-├─BOOL_LIT true
-├─BLOCK
-│ ├─VARIABLE_TYPE untyped int
-│ └─INT_LIT 1
-└─ELSE_BRANCH
-  └─BLOCK
-    ├─VARIABLE_TYPE untyped int
-    └─INT_LIT 2
+MODULE test
+└─IF_EXPR
+  ├─BOOL_LIT true
+  ├─BLOCK
+  │ ├─VARIABLE_TYPE untyped int
+  │ └─INT_LIT 1
+  └─ELSE_BRANCH
+    └─BLOCK
+      ├─VARIABLE_TYPE untyped int
+      └─INT_LIT 2
 ---
 
 [`mut value = 10;let other_value = if value > 10 {;	let temp = value;	value += 1;	yield temp;} else if value > 5 {;	value -= 1;	yield value;} else {;	value;}` - 1]
-VAR_DECL
-├─VAR_SYMBOL value mut
-│ └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 10
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 10
-VAR_DECL
-├─VAR_SYMBOL other_value
-│ └─VARIABLE_TYPE i32
-└─IF_EXPR
-  ├─BINARY_EXPR Greater
-  │ ├─VAR_SYMBOL value mut
-  │ │ └─VARIABLE_TYPE i32
-  │ ├─INT_LIT 10
-  │ └─PRIMARY_TYPE bool
-  ├─BLOCK
-  │ ├─VARIABLE_TYPE i32
-  │ ├─VAR_DECL
-  │ │ ├─VAR_SYMBOL temp
-  │ │ │ └─VARIABLE_TYPE i32
-  │ │ └─VAR_SYMBOL value mut
-  │ │   └─VARIABLE_TYPE i32
-  │ ├─ASSIGNMENT
-  │ │ ├─VAR_SYMBOL value mut
-  │ │ │ └─VARIABLE_TYPE i32
-  │ │ └─BINARY_EXPR AddInt
-  │ │   ├─VAR_SYMBOL value mut
-  │ │   │ └─VARIABLE_TYPE i32
-  │ │   ├─INT_LIT 1
-  │ │   └─VARIABLE_TYPE i32
-  │ └─YIELD
-  │   └─VAR_SYMBOL temp
-  │     └─VARIABLE_TYPE i32
-  └─ELSE_BRANCH
-    └─IF_EXPR
-      ├─BINARY_EXPR Greater
-      │ ├─VAR_SYMBOL value mut
-      │ │ └─VARIABLE_TYPE i32
-      │ ├─INT_LIT 5
-      │ └─PRIMARY_TYPE bool
-      ├─BLOCK
-      │ ├─VARIABLE_TYPE i32
-      │ ├─ASSIGNMENT
-      │ │ ├─VAR_SYMBOL value mut
-      │ │ │ └─VARIABLE_TYPE i32
-      │ │ └─BINARY_EXPR SubtractInt
-      │ │   ├─VAR_SYMBOL value mut
-      │ │   │ └─VARIABLE_TYPE i32
-      │ │   ├─INT_LIT 1
-      │ │   └─VARIABLE_TYPE i32
-      │ └─YIELD
-      │   └─VAR_SYMBOL value mut
-      │     └─VARIABLE_TYPE i32
-      └─ELSE_BRANCH
-        └─BLOCK
-          ├─VARIABLE_TYPE i32
-          └─VAR_SYMBOL value mut
-            └─VARIABLE_TYPE i32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL value mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 10
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 10
+└─VAR_DECL
+  ├─VAR_SYMBOL other_value
+  │ └─VARIABLE_TYPE i32
+  └─IF_EXPR
+    ├─BINARY_EXPR Greater
+    │ ├─VAR_SYMBOL value mut
+    │ │ └─VARIABLE_TYPE i32
+    │ ├─INT_LIT 10
+    │ └─PRIMARY_TYPE bool
+    ├─BLOCK
+    │ ├─VARIABLE_TYPE i32
+    │ ├─VAR_DECL
+    │ │ ├─VAR_SYMBOL temp
+    │ │ │ └─VARIABLE_TYPE i32
+    │ │ └─VAR_SYMBOL value mut
+    │ │   └─VARIABLE_TYPE i32
+    │ ├─ASSIGNMENT
+    │ │ ├─VAR_SYMBOL value mut
+    │ │ │ └─VARIABLE_TYPE i32
+    │ │ └─BINARY_EXPR AddInt
+    │ │   ├─VAR_SYMBOL value mut
+    │ │   │ └─VARIABLE_TYPE i32
+    │ │   ├─INT_LIT 1
+    │ │   └─VARIABLE_TYPE i32
+    │ └─YIELD
+    │   └─VAR_SYMBOL temp
+    │     └─VARIABLE_TYPE i32
+    └─ELSE_BRANCH
+      └─IF_EXPR
+        ├─BINARY_EXPR Greater
+        │ ├─VAR_SYMBOL value mut
+        │ │ └─VARIABLE_TYPE i32
+        │ ├─INT_LIT 5
+        │ └─PRIMARY_TYPE bool
+        ├─BLOCK
+        │ ├─VARIABLE_TYPE i32
+        │ ├─ASSIGNMENT
+        │ │ ├─VAR_SYMBOL value mut
+        │ │ │ └─VARIABLE_TYPE i32
+        │ │ └─BINARY_EXPR SubtractInt
+        │ │   ├─VAR_SYMBOL value mut
+        │ │   │ └─VARIABLE_TYPE i32
+        │ │   ├─INT_LIT 1
+        │ │   └─VARIABLE_TYPE i32
+        │ └─YIELD
+        │   └─VAR_SYMBOL value mut
+        │     └─VARIABLE_TYPE i32
+        └─ELSE_BRANCH
+          └─BLOCK
+            ├─VARIABLE_TYPE i32
+            └─VAR_SYMBOL value mut
+              └─VARIABLE_TYPE i32
 ---

@@ -1,80 +1,83 @@
 
 [`[1, 2, 3][1]` - 1]
-INDEX_EXPR
-├─ARRAY_EXPR
-│ ├─ARRAY_TYPE 3 can_infer
-│ │ └─VARIABLE_TYPE i32
-│ ├─ARRAY_VALUE
-│ │ ├─INT_VALUE 1
-│ │ ├─INT_VALUE 2
-│ │ └─INT_VALUE 3
-│ ├─CONVERSION
-│ │ ├─INT_LIT 1
-│ │ ├─VARIABLE_TYPE i32
-│ │ └─INT_VALUE 1
-│ ├─CONVERSION
-│ │ ├─INT_LIT 2
-│ │ ├─VARIABLE_TYPE i32
-│ │ └─INT_VALUE 2
-│ └─CONVERSION
-│   ├─INT_LIT 3
-│   ├─VARIABLE_TYPE i32
-│   └─INT_VALUE 3
-├─INT_LIT 1
-├─VARIABLE_TYPE i32
-└─INT_VALUE 2
+MODULE test
+└─INDEX_EXPR
+  ├─ARRAY_EXPR
+  │ ├─ARRAY_TYPE 3 can_infer
+  │ │ └─VARIABLE_TYPE i32
+  │ ├─ARRAY_VALUE
+  │ │ ├─INT_VALUE 1
+  │ │ ├─INT_VALUE 2
+  │ │ └─INT_VALUE 3
+  │ ├─CONVERSION
+  │ │ ├─INT_LIT 1
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 1
+  │ ├─CONVERSION
+  │ │ ├─INT_LIT 2
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 2
+  │ └─CONVERSION
+  │   ├─INT_LIT 3
+  │   ├─VARIABLE_TYPE i32
+  │   └─INT_VALUE 3
+  ├─INT_LIT 1
+  ├─VARIABLE_TYPE i32
+  └─INT_VALUE 2
 ---
 
 [`[1.2, 3.4, 1][2]` - 1]
-INDEX_EXPR
-├─ARRAY_EXPR
-│ ├─ARRAY_TYPE 3 can_infer
-│ │ └─VARIABLE_TYPE f64
-│ ├─ARRAY_VALUE
-│ │ ├─FLOAT_VALUE 1.2
-│ │ ├─FLOAT_VALUE 3.4
-│ │ └─FLOAT_VALUE 1
-│ ├─CONVERSION
-│ │ ├─FLOAT_LIT 1.2
-│ │ ├─VARIABLE_TYPE f64
-│ │ └─FLOAT_VALUE 1.2
-│ ├─CONVERSION
-│ │ ├─FLOAT_LIT 3.4
-│ │ ├─VARIABLE_TYPE f64
-│ │ └─FLOAT_VALUE 3.4
-│ └─CONVERSION
-│   ├─INT_LIT 1
-│   ├─VARIABLE_TYPE f64
-│   └─FLOAT_VALUE 1
-├─INT_LIT 2
-├─VARIABLE_TYPE f64
-└─FLOAT_VALUE 1
+MODULE test
+└─INDEX_EXPR
+  ├─ARRAY_EXPR
+  │ ├─ARRAY_TYPE 3 can_infer
+  │ │ └─VARIABLE_TYPE f64
+  │ ├─ARRAY_VALUE
+  │ │ ├─FLOAT_VALUE 1.2
+  │ │ ├─FLOAT_VALUE 3.4
+  │ │ └─FLOAT_VALUE 1
+  │ ├─CONVERSION
+  │ │ ├─FLOAT_LIT 1.2
+  │ │ ├─VARIABLE_TYPE f64
+  │ │ └─FLOAT_VALUE 1.2
+  │ ├─CONVERSION
+  │ │ ├─FLOAT_LIT 3.4
+  │ │ ├─VARIABLE_TYPE f64
+  │ │ └─FLOAT_VALUE 3.4
+  │ └─CONVERSION
+  │   ├─INT_LIT 1
+  │   ├─VARIABLE_TYPE f64
+  │   └─FLOAT_VALUE 1
+  ├─INT_LIT 2
+  ├─VARIABLE_TYPE f64
+  └─FLOAT_VALUE 1
 ---
 
 [`[7 == 2, 31 > 30.5][0.0]` - 1]
-INDEX_EXPR
-├─ARRAY_EXPR
-│ ├─ARRAY_TYPE 2 can_infer
-│ │ └─PRIMARY_TYPE bool
-│ ├─ARRAY_VALUE
-│ │ ├─BOOL_VALUE false
-│ │ └─BOOL_VALUE true
-│ ├─BINARY_EXPR Equal
-│ │ ├─INT_LIT 7
-│ │ ├─INT_LIT 2
-│ │ ├─PRIMARY_TYPE bool
-│ │ └─BOOL_VALUE false
-│ └─BINARY_EXPR Greater
-│   ├─CONVERSION
-│   │ ├─INT_LIT 31
-│   │ ├─VARIABLE_TYPE f32
-│   │ └─FLOAT_VALUE 31
-│   ├─CONVERSION
-│   │ ├─FLOAT_LIT 30.5
-│   │ ├─VARIABLE_TYPE f32
-│   │ └─FLOAT_VALUE 30.5
-│   ├─PRIMARY_TYPE bool
-│   └─BOOL_VALUE true
-├─FLOAT_LIT 0
-└─PRIMARY_TYPE bool
+MODULE test
+└─INDEX_EXPR
+  ├─ARRAY_EXPR
+  │ ├─ARRAY_TYPE 2 can_infer
+  │ │ └─PRIMARY_TYPE bool
+  │ ├─ARRAY_VALUE
+  │ │ ├─BOOL_VALUE false
+  │ │ └─BOOL_VALUE true
+  │ ├─BINARY_EXPR Equal
+  │ │ ├─INT_LIT 7
+  │ │ ├─INT_LIT 2
+  │ │ ├─PRIMARY_TYPE bool
+  │ │ └─BOOL_VALUE false
+  │ └─BINARY_EXPR Greater
+  │   ├─CONVERSION
+  │   │ ├─INT_LIT 31
+  │   │ ├─VARIABLE_TYPE f32
+  │   │ └─FLOAT_VALUE 31
+  │   ├─CONVERSION
+  │   │ ├─FLOAT_LIT 30.5
+  │   │ ├─VARIABLE_TYPE f32
+  │   │ └─FLOAT_VALUE 30.5
+  │   ├─PRIMARY_TYPE bool
+  │   └─BOOL_VALUE true
+  ├─FLOAT_LIT 0
+  └─PRIMARY_TYPE bool
 ---

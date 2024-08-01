@@ -1,16 +1,20 @@
 
 [`+1_23_456` - 1]
-INT_LIT 123456
+MODULE test
+└─INT_LIT 123456
 ---
 
 [`0b011` - 1]
-INT_LIT 3
+MODULE test
+└─INT_LIT 3
 ---
 
 [`0o23` - 1]
-INT_LIT 19
+MODULE test
+└─INT_LIT 19
 ---
 
 [`0xdead` - 1]
-INT_LIT 57005
+MODULE test
+└─INT_LIT 57005
 ---

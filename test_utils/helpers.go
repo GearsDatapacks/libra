@@ -29,7 +29,7 @@ func getAst(t *testing.T, input string) (*ast.Program, []diagnostics.Diagnostic)
 	return program, p.Diagnostics
 }
 
-func getIr(t *testing.T, input string) (*ir.Program, []diagnostics.Diagnostic) {
+func getIr(t *testing.T, input string) (*ir.Package, []diagnostics.Diagnostic) {
 	t.Helper()
 
 	l := lexer.New(text.NewFile("test.lb", input))
@@ -44,6 +44,7 @@ func fakeModule(program *ast.Program) *module.Module {
 	return &module.Module{
 		Id:       1,
 		Name:     "test",
+		Path:     "test",
 		Files:    []module.File{{Path: "test.lb", Ast: program}},
 		Imported: map[string]*module.Module{},
 	}

@@ -1,4 +1,5 @@
 
 [`3.14_15_9` - 1]
-FLOAT_LIT 3.14159
+MODULE test
+└─FLOAT_LIT 3.14159
 ---

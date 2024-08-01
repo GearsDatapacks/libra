@@ -1,168 +1,180 @@
 
 [`-1` - 1]
-UNARY_EXPR NegateInt
-├─INT_LIT 1
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE -1
+MODULE test
+└─UNARY_EXPR NegateInt
+  ├─INT_LIT 1
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE -1
 ---
 
 [`-2.72` - 1]
-UNARY_EXPR NegateFloat
-├─FLOAT_LIT 2.72
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE -2.72
+MODULE test
+└─UNARY_EXPR NegateFloat
+  ├─FLOAT_LIT 2.72
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE -2.72
 ---
 
 [`!true` - 1]
-UNARY_EXPR LogicalNot
-├─BOOL_LIT true
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE false
+MODULE test
+└─UNARY_EXPR LogicalNot
+  ├─BOOL_LIT true
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE false
 ---
 
 [`~104` - 1]
-UNARY_EXPR BitwiseNot
-├─INT_LIT 104
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE -105
+MODULE test
+└─UNARY_EXPR BitwiseNot
+  ├─INT_LIT 104
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE -105
 ---
 
 [`mut a = 0; a++` - 1]
-VAR_DECL
-├─VAR_SYMBOL a mut
-│ └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 0
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 0
-UNARY_EXPR IncrecementInt
-├─VAR_SYMBOL a mut
-│ └─VARIABLE_TYPE i32
-└─VARIABLE_TYPE i32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL a mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 0
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 0
+└─UNARY_EXPR IncrecementInt
+  ├─VAR_SYMBOL a mut
+  │ └─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
 ---
 
 [`mut f = 1.5; f++` - 1]
-VAR_DECL
-├─VAR_SYMBOL f mut
-│ └─VARIABLE_TYPE f64
-└─CONVERSION
-  ├─FLOAT_LIT 1.5
-  ├─VARIABLE_TYPE f64
-  └─FLOAT_VALUE 1.5
-UNARY_EXPR IncrementFloat
-├─VAR_SYMBOL f mut
-│ └─VARIABLE_TYPE f64
-└─VARIABLE_TYPE f32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL f mut
+│ │ └─VARIABLE_TYPE f64
+│ └─CONVERSION
+│   ├─FLOAT_LIT 1.5
+│   ├─VARIABLE_TYPE f64
+│   └─FLOAT_VALUE 1.5
+└─UNARY_EXPR IncrementFloat
+  ├─VAR_SYMBOL f mut
+  │ └─VARIABLE_TYPE f64
+  └─VARIABLE_TYPE f32
 ---
 
 [`mut value = 24; value--` - 1]
-VAR_DECL
-├─VAR_SYMBOL value mut
-│ └─VARIABLE_TYPE i32
-└─CONVERSION
-  ├─INT_LIT 24
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 24
-UNARY_EXPR DecrecementInt
-├─VAR_SYMBOL value mut
-│ └─VARIABLE_TYPE i32
-└─VARIABLE_TYPE i32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL value mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 24
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 24
+└─UNARY_EXPR DecrecementInt
+  ├─VAR_SYMBOL value mut
+  │ └─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
 ---
 
 [`mut countdown = 12.3; countdown--` - 1]
-VAR_DECL
-├─VAR_SYMBOL countdown mut
-│ └─VARIABLE_TYPE f64
-└─CONVERSION
-  ├─FLOAT_LIT 12.3
-  ├─VARIABLE_TYPE f64
-  └─FLOAT_VALUE 12.3
-UNARY_EXPR DecrementFloat
-├─VAR_SYMBOL countdown mut
-│ └─VARIABLE_TYPE f64
-└─VARIABLE_TYPE f32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL countdown mut
+│ │ └─VARIABLE_TYPE f64
+│ └─CONVERSION
+│   ├─FLOAT_LIT 12.3
+│   ├─VARIABLE_TYPE f64
+│   └─FLOAT_VALUE 12.3
+└─UNARY_EXPR DecrementFloat
+  ├─VAR_SYMBOL countdown mut
+  │ └─VARIABLE_TYPE f64
+  └─VARIABLE_TYPE f32
 ---
 
 [`let option: ?i32 = 10; option!` - 1]
-VAR_DECL
-├─VAR_SYMBOL option
-│ ├─OPTION_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─INT_VALUE 10
-└─CONVERSION
-  ├─INT_LIT 10
-  ├─OPTION_TYPE
-  │ └─VARIABLE_TYPE i32
-  └─INT_VALUE 10
-UNARY_EXPR CrashError
-├─VAR_SYMBOL option
-│ ├─OPTION_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─INT_VALUE 10
-└─VARIABLE_TYPE i32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL option
+│ │ ├─OPTION_TYPE
+│ │ │ └─VARIABLE_TYPE i32
+│ │ └─INT_VALUE 10
+│ └─CONVERSION
+│   ├─INT_LIT 10
+│   ├─OPTION_TYPE
+│   │ └─VARIABLE_TYPE i32
+│   └─INT_VALUE 10
+└─UNARY_EXPR CrashError
+  ├─VAR_SYMBOL option
+  │ ├─OPTION_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 10
+  └─VARIABLE_TYPE i32
 ---
 
 [`let result: !i32 = 10; result!` - 1]
-VAR_DECL
-├─VAR_SYMBOL result
-│ ├─RESULT_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─INT_VALUE 10
-└─CONVERSION
-  ├─INT_LIT 10
-  ├─RESULT_TYPE
-  │ └─VARIABLE_TYPE i32
-  └─INT_VALUE 10
-UNARY_EXPR CrashError
-├─VAR_SYMBOL result
-│ ├─RESULT_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─INT_VALUE 10
-└─VARIABLE_TYPE i32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL result
+│ │ ├─RESULT_TYPE
+│ │ │ └─VARIABLE_TYPE i32
+│ │ └─INT_VALUE 10
+│ └─CONVERSION
+│   ├─INT_LIT 10
+│   ├─RESULT_TYPE
+│   │ └─VARIABLE_TYPE i32
+│   └─INT_VALUE 10
+└─UNARY_EXPR CrashError
+  ├─VAR_SYMBOL result
+  │ ├─RESULT_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ └─INT_VALUE 10
+  └─VARIABLE_TYPE i32
 ---
 
 [`fn to_string(value: ?i32): ?string {;	let int: i32 = value?;	return "";}` - 1]
-FUNC_DECL to_string value
-├─FUNCTION_TYPE
-│ ├─OPTION_TYPE
-│ │ └─PRIMARY_TYPE string
-│ └─OPTION_TYPE
-│   └─VARIABLE_TYPE i32
-└─BLOCK
-  ├─UNIT_STRUCT void
-  ├─VAR_DECL
-  │ ├─VAR_SYMBOL int
-  │ │ └─VARIABLE_TYPE i32
-  │ └─UNARY_EXPR PropagateError
-  │   ├─VAR_SYMBOL value
-  │   │ └─OPTION_TYPE
-  │   │   └─VARIABLE_TYPE i32
+MODULE test
+└─FUNC_DECL to_string value
+  ├─FUNCTION_TYPE
+  │ ├─OPTION_TYPE
+  │ │ └─PRIMARY_TYPE string
+  │ └─OPTION_TYPE
   │   └─VARIABLE_TYPE i32
-  └─RETURN
-    └─STRING_LIT ""
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL int
+    │ │ └─VARIABLE_TYPE i32
+    │ └─UNARY_EXPR PropagateError
+    │   ├─VAR_SYMBOL value
+    │   │ └─OPTION_TYPE
+    │   │   └─VARIABLE_TYPE i32
+    │   └─VARIABLE_TYPE i32
+    └─RETURN
+      └─STRING_LIT ""
 ---
 
 [`fn map_result(result: !i32, map_fn: fn(i32): i32): !i32 {;	map_fn(result?);}` - 1]
-FUNC_DECL map_result result map_fn
-├─FUNCTION_TYPE
-│ ├─RESULT_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ ├─RESULT_TYPE
-│ │ └─VARIABLE_TYPE i32
-│ └─FUNCTION_TYPE
-│   ├─VARIABLE_TYPE i32
-│   └─VARIABLE_TYPE i32
-└─BLOCK
-  ├─VARIABLE_TYPE i32
-  └─FUNCTION_CALL
-    ├─VAR_SYMBOL map_fn
-    │ └─FUNCTION_TYPE
-    │   ├─VARIABLE_TYPE i32
-    │   └─VARIABLE_TYPE i32
+MODULE test
+└─FUNC_DECL map_result result map_fn
+  ├─FUNCTION_TYPE
+  │ ├─RESULT_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ ├─RESULT_TYPE
+  │ │ └─VARIABLE_TYPE i32
+  │ └─FUNCTION_TYPE
+  │   ├─VARIABLE_TYPE i32
+  │   └─VARIABLE_TYPE i32
+  └─BLOCK
     ├─VARIABLE_TYPE i32
-    └─UNARY_EXPR PropagateError
-      ├─VAR_SYMBOL result
-      │ └─RESULT_TYPE
+    └─FUNCTION_CALL
+      ├─VAR_SYMBOL map_fn
+      │ └─FUNCTION_TYPE
+      │   ├─VARIABLE_TYPE i32
       │   └─VARIABLE_TYPE i32
-      └─VARIABLE_TYPE i32
+      ├─VARIABLE_TYPE i32
+      └─UNARY_EXPR PropagateError
+        ├─VAR_SYMBOL result
+        │ └─RESULT_TYPE
+        │   └─VARIABLE_TYPE i32
+        └─VARIABLE_TYPE i32
 ---

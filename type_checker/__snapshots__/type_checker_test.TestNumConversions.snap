@@ -1,66 +1,72 @@
 
 [`let byte: u8 = 10.0` - 1]
-VAR_DECL
-├─VAR_SYMBOL byte
-│ ├─VARIABLE_TYPE u8
-│ └─UINT_VALUE 10
-└─CONVERSION
-  ├─FLOAT_LIT 10
-  ├─VARIABLE_TYPE u8
-  └─UINT_VALUE 10
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL byte
+  │ ├─VARIABLE_TYPE u8
+  │ └─UINT_VALUE 10
+  └─CONVERSION
+    ├─FLOAT_LIT 10
+    ├─VARIABLE_TYPE u8
+    └─UINT_VALUE 10
 ---
 
 [`let short: u16 = 902` - 1]
-VAR_DECL
-├─VAR_SYMBOL short
-│ ├─VARIABLE_TYPE u16
-│ └─UINT_VALUE 902
-└─CONVERSION
-  ├─INT_LIT 902
-  ├─VARIABLE_TYPE u16
-  └─UINT_VALUE 902
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL short
+  │ ├─VARIABLE_TYPE u16
+  │ └─UINT_VALUE 902
+  └─CONVERSION
+    ├─INT_LIT 902
+    ├─VARIABLE_TYPE u16
+    └─UINT_VALUE 902
 ---
 
 [`let int_from_float: i32 = 1.0` - 1]
-VAR_DECL
-├─VAR_SYMBOL int_from_float
-│ ├─VARIABLE_TYPE i32
-│ └─INT_VALUE 1
-└─CONVERSION
-  ├─FLOAT_LIT 1
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 1
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL int_from_float
+  │ ├─VARIABLE_TYPE i32
+  │ └─INT_VALUE 1
+  └─CONVERSION
+    ├─FLOAT_LIT 1
+    ├─VARIABLE_TYPE i32
+    └─INT_VALUE 1
 ---
 
 [`let float: f32 = 14` - 1]
-VAR_DECL
-├─VAR_SYMBOL float
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 14
-└─CONVERSION
-  ├─INT_LIT 14
-  ├─VARIABLE_TYPE f32
-  └─FLOAT_VALUE 14
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL float
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 14
+  └─CONVERSION
+    ├─INT_LIT 14
+    ├─VARIABLE_TYPE f32
+    └─FLOAT_VALUE 14
 ---
 
 [`let half: f16 = 1` - 1]
-VAR_DECL
-├─VAR_SYMBOL half
-│ ├─VARIABLE_TYPE f16
-│ └─FLOAT_VALUE 1
-└─CONVERSION
-  ├─INT_LIT 1
-  ├─VARIABLE_TYPE f16
-  └─FLOAT_VALUE 1
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL half
+  │ ├─VARIABLE_TYPE f16
+  │ └─FLOAT_VALUE 1
+  └─CONVERSION
+    ├─INT_LIT 1
+    ├─VARIABLE_TYPE f16
+    └─FLOAT_VALUE 1
 ---
 
 [`let downcasted: i32 = 1.5 -> i32` - 1]
-VAR_DECL
-├─VAR_SYMBOL downcasted
-│ ├─VARIABLE_TYPE i32
-│ └─INT_VALUE 1
-└─CONVERSION
-  ├─FLOAT_LIT 1.5
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 1
+MODULE test
+└─VAR_DECL
+  ├─VAR_SYMBOL downcasted
+  │ ├─VARIABLE_TYPE i32
+  │ └─INT_VALUE 1
+  └─CONVERSION
+    ├─FLOAT_LIT 1.5
+    ├─VARIABLE_TYPE i32
+    └─INT_VALUE 1
 ---

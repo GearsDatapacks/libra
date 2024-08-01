@@ -60,21 +60,21 @@ func (t *typeContext) Id() uint {
 	return t.id
 }
 
-func TypeCheck(mod *module.Module, manager diagnostics.Manager) (*ir.Program, diagnostics.Manager) {
+func TypeCheck(mod *module.Module, manager diagnostics.Manager) (*ir.Package, diagnostics.Manager) {
 	t := new(mod, &manager)
 
-	statements := []ir.Statement{}
+	pkg := &ir.Package{
+		Modules: map[string]*ir.Module{},
+	}
 
 	t.registerDeclarations()
-	t.typeCheckImports(&statements)
-	t.typeCheckDeclarations(&statements)
+	t.typeCheckImports(pkg)
+	t.typeCheckDeclarations(pkg)
 	t.typeCheckFunctions()
 
-	t.typeCheckStatements(&statements)
+	t.typeCheckStatements(pkg)
 
-	return &ir.Program{
-		Statements: statements,
-	}, *t.diagnostics
+	return pkg, *t.diagnostics
 }
 
 func (t *typeChecker) updateContext() {
@@ -102,46 +102,56 @@ func (t *typeChecker) registerDeclarations() {
 	}
 }
 
-func (t *typeChecker) typeCheckImports(statements *[]ir.Statement) {
+func (t *typeChecker) typeCheckImports(pkg *ir.Package) {
 	if t.stage >= tcImports {
 		return
 	}
 	t.stage = tcImports
 
 	for _, subMod := range t.subModules {
-		subMod.typeCheckImports(&[]ir.Statement{})
+		subMod.typeCheckImports(pkg)
 	}
 
 	t.updateContext()
+	if _, ok := pkg.Modules[t.module.Path]; !ok {
+		pkg.Modules[t.module.Path] = &ir.Module{
+			Name:       t.module.Name,
+			Statements: []ir.Statement{},
+		}
+	}
+	module := pkg.Modules[t.module.Path]
+
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
 			if importStmt, ok := stmt.(*ast.ImportStatement); ok {
 				stmt := t.typeCheckImport(importStmt)
 				if stmt != nil {
-					*statements = append(*statements, stmt)
+					module.Statements = append(module.Statements, stmt)
 				}
 			}
 		}
 	}
 }
 
-func (t *typeChecker) typeCheckDeclarations(statements *[]ir.Statement) {
+func (t *typeChecker) typeCheckDeclarations(pkg *ir.Package) {
 	if t.stage >= tcDecls {
 		return
 	}
 	t.stage = tcDecls
 
 	for _, subMod := range t.subModules {
-		subMod.typeCheckDeclarations(&[]ir.Statement{})
+		subMod.typeCheckDeclarations(pkg)
 	}
 
 	t.updateContext()
+	module := pkg.Modules[t.module.Path]
+
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
 			decl := t.typeCheckDeclaration(stmt)
 
 			if decl != nil {
-				*statements = append(*statements, decl)
+				module.Statements = append(module.Statements, decl)
 			}
 		}
 	}
@@ -167,23 +177,24 @@ func (t *typeChecker) typeCheckFunctions() {
 	}
 }
 
-func (t *typeChecker) typeCheckStatements(statements *[]ir.Statement) {
+func (t *typeChecker) typeCheckStatements(pkg *ir.Package) {
 	if t.stage >= tcStmts {
 		return
 	}
 	t.stage = tcStmts
 
 	for _, subMod := range t.subModules {
-		// TODO: return ir for other modules too
-		subMod.typeCheckStatements(&[]ir.Statement{})
+		subMod.typeCheckStatements(pkg)
 	}
 
 	t.updateContext()
+	module := pkg.Modules[t.module.Path]
+
 	for _, file := range t.module.Files {
 		for _, stmt := range file.Ast.Statements {
 			nextStatement := t.typeCheckStatement(stmt)
 			if nextStatement != nil {
-				*statements = append(*statements, nextStatement)
+				module.Statements = append(module.Statements, nextStatement)
 			}
 		}
 	}

@@ -1,137 +1,139 @@
 
 [`struct Person {;	name: string,;	age: i32;};const me = Person { name: "Self", age: 903 };let baby = Person { name: "Unnamed" };const my_age = me.age` - 1]
-TYPE_DECL Person
-└─STRUCT_TYPE Person
-  ├─STRUCT_FIELD age
-  │ └─VARIABLE_TYPE i32
-  └─STRUCT_FIELD name
-    └─PRIMARY_TYPE string
-VAR_DECL
-├─VAR_SYMBOL me
-│ ├─STRUCT_TYPE Person
-│ │ ├─STRUCT_FIELD age
-│ │ │ └─VARIABLE_TYPE i32
-│ │ └─STRUCT_FIELD name
-│ │   └─PRIMARY_TYPE string
-│ └─STRUCT_VALUE
-│   ├─STRUCT_MEMBER age
-│   │ └─INT_VALUE 903
-│   └─STRUCT_MEMBER name
-│     └─STRING_VALUE "Self"
-└─STRUCT_EXPR
-  ├─STRUCT_TYPE Person
-  │ ├─STRUCT_FIELD age
-  │ │ └─VARIABLE_TYPE i32
-  │ └─STRUCT_FIELD name
-  │   └─PRIMARY_TYPE string
-  ├─STRUCT_VALUE
-  │ ├─STRUCT_MEMBER age
-  │ │ └─INT_VALUE 903
-  │ └─STRUCT_MEMBER name
-  │   └─STRING_VALUE "Self"
-  ├─STRUCT_FIELD age
-  │ └─CONVERSION
-  │   ├─INT_LIT 903
-  │   ├─VARIABLE_TYPE i32
-  │   └─INT_VALUE 903
-  └─STRUCT_FIELD name
-    └─STRING_LIT "Self"
-VAR_DECL
-├─VAR_SYMBOL baby
-│ ├─STRUCT_TYPE Person
-│ │ ├─STRUCT_FIELD age
-│ │ │ └─VARIABLE_TYPE i32
-│ │ └─STRUCT_FIELD name
-│ │   └─PRIMARY_TYPE string
-│ └─STRUCT_VALUE
-│   └─STRUCT_MEMBER name
-│     └─STRING_VALUE "Unnamed"
-└─STRUCT_EXPR
-  ├─STRUCT_TYPE Person
-  │ ├─STRUCT_FIELD age
-  │ │ └─VARIABLE_TYPE i32
-  │ └─STRUCT_FIELD name
-  │   └─PRIMARY_TYPE string
-  ├─STRUCT_VALUE
-  │ └─STRUCT_MEMBER name
-  │   └─STRING_VALUE "Unnamed"
-  └─STRUCT_FIELD name
-    └─STRING_LIT "Unnamed"
-VAR_DECL
-├─VAR_SYMBOL my_age
-│ ├─VARIABLE_TYPE i32
-│ └─INT_VALUE 903
-└─MEMBER_EXPR age
-  ├─VAR_SYMBOL me
-  │ ├─STRUCT_TYPE Person
-  │ │ ├─STRUCT_FIELD age
-  │ │ │ └─VARIABLE_TYPE i32
-  │ │ └─STRUCT_FIELD name
-  │ │   └─PRIMARY_TYPE string
-  │ └─STRUCT_VALUE
-  │   ├─STRUCT_MEMBER age
-  │   │ └─INT_VALUE 903
-  │   └─STRUCT_MEMBER name
-  │     └─STRING_VALUE "Self"
-  ├─VARIABLE_TYPE i32
-  └─INT_VALUE 903
+MODULE test
+├─TYPE_DECL Person
+│ └─STRUCT_TYPE Person
+│   ├─STRUCT_FIELD age
+│   │ └─VARIABLE_TYPE i32
+│   └─STRUCT_FIELD name
+│     └─PRIMARY_TYPE string
+├─VAR_DECL
+│ ├─VAR_SYMBOL me
+│ │ ├─STRUCT_TYPE Person
+│ │ │ ├─STRUCT_FIELD age
+│ │ │ │ └─VARIABLE_TYPE i32
+│ │ │ └─STRUCT_FIELD name
+│ │ │   └─PRIMARY_TYPE string
+│ │ └─STRUCT_VALUE
+│ │   ├─STRUCT_MEMBER age
+│ │   │ └─INT_VALUE 903
+│ │   └─STRUCT_MEMBER name
+│ │     └─STRING_VALUE "Self"
+│ └─STRUCT_EXPR
+│   ├─STRUCT_TYPE Person
+│   │ ├─STRUCT_FIELD age
+│   │ │ └─VARIABLE_TYPE i32
+│   │ └─STRUCT_FIELD name
+│   │   └─PRIMARY_TYPE string
+│   ├─STRUCT_VALUE
+│   │ ├─STRUCT_MEMBER age
+│   │ │ └─INT_VALUE 903
+│   │ └─STRUCT_MEMBER name
+│   │   └─STRING_VALUE "Self"
+│   ├─STRUCT_FIELD age
+│   │ └─CONVERSION
+│   │   ├─INT_LIT 903
+│   │   ├─VARIABLE_TYPE i32
+│   │   └─INT_VALUE 903
+│   └─STRUCT_FIELD name
+│     └─STRING_LIT "Self"
+├─VAR_DECL
+│ ├─VAR_SYMBOL baby
+│ │ ├─STRUCT_TYPE Person
+│ │ │ ├─STRUCT_FIELD age
+│ │ │ │ └─VARIABLE_TYPE i32
+│ │ │ └─STRUCT_FIELD name
+│ │ │   └─PRIMARY_TYPE string
+│ │ └─STRUCT_VALUE
+│ │   └─STRUCT_MEMBER name
+│ │     └─STRING_VALUE "Unnamed"
+│ └─STRUCT_EXPR
+│   ├─STRUCT_TYPE Person
+│   │ ├─STRUCT_FIELD age
+│   │ │ └─VARIABLE_TYPE i32
+│   │ └─STRUCT_FIELD name
+│   │   └─PRIMARY_TYPE string
+│   ├─STRUCT_VALUE
+│   │ └─STRUCT_MEMBER name
+│   │   └─STRING_VALUE "Unnamed"
+│   └─STRUCT_FIELD name
+│     └─STRING_LIT "Unnamed"
+└─VAR_DECL
+  ├─VAR_SYMBOL my_age
+  │ ├─VARIABLE_TYPE i32
+  │ └─INT_VALUE 903
+  └─MEMBER_EXPR age
+    ├─VAR_SYMBOL me
+    │ ├─STRUCT_TYPE Person
+    │ │ ├─STRUCT_FIELD age
+    │ │ │ └─VARIABLE_TYPE i32
+    │ │ └─STRUCT_FIELD name
+    │ │   └─PRIMARY_TYPE string
+    │ └─STRUCT_VALUE
+    │   ├─STRUCT_MEMBER age
+    │   │ └─INT_VALUE 903
+    │   └─STRUCT_MEMBER name
+    │     └─STRING_VALUE "Self"
+    ├─VARIABLE_TYPE i32
+    └─INT_VALUE 903
 ---
 
 [`struct Foo { bar, baz: f32 };mut foo = Foo { bar: 10, baz: 13.1 };let bar = foo.bar;foo.baz = bar` - 1]
-TYPE_DECL Foo
-└─STRUCT_TYPE Foo
-  ├─STRUCT_FIELD bar
-  │ └─VARIABLE_TYPE f32
-  └─STRUCT_FIELD baz
-    └─VARIABLE_TYPE f32
-VAR_DECL
-├─VAR_SYMBOL foo mut
+MODULE test
+├─TYPE_DECL Foo
 │ └─STRUCT_TYPE Foo
 │   ├─STRUCT_FIELD bar
 │   │ └─VARIABLE_TYPE f32
 │   └─STRUCT_FIELD baz
 │     └─VARIABLE_TYPE f32
-└─STRUCT_EXPR
-  ├─STRUCT_TYPE Foo
-  │ ├─STRUCT_FIELD bar
-  │ │ └─VARIABLE_TYPE f32
-  │ └─STRUCT_FIELD baz
-  │   └─VARIABLE_TYPE f32
-  ├─STRUCT_VALUE
-  │ ├─STRUCT_MEMBER bar
-  │ │ └─FLOAT_VALUE 10
-  │ └─STRUCT_MEMBER baz
-  │   └─FLOAT_VALUE 13.1
-  ├─STRUCT_FIELD bar
-  │ └─CONVERSION
-  │   ├─INT_LIT 10
-  │   ├─VARIABLE_TYPE f32
-  │   └─FLOAT_VALUE 10
-  └─STRUCT_FIELD baz
-    └─CONVERSION
-      ├─FLOAT_LIT 13.1
-      ├─VARIABLE_TYPE f32
-      └─FLOAT_VALUE 13.1
-VAR_DECL
-├─VAR_SYMBOL bar
-│ └─VARIABLE_TYPE f32
-└─MEMBER_EXPR bar
-  ├─VAR_SYMBOL foo mut
-  │ └─STRUCT_TYPE Foo
-  │   ├─STRUCT_FIELD bar
-  │   │ └─VARIABLE_TYPE f32
-  │   └─STRUCT_FIELD baz
-  │     └─VARIABLE_TYPE f32
-  └─VARIABLE_TYPE f32
-ASSIGNMENT
-├─MEMBER_EXPR baz
+├─VAR_DECL
 │ ├─VAR_SYMBOL foo mut
 │ │ └─STRUCT_TYPE Foo
 │ │   ├─STRUCT_FIELD bar
 │ │   │ └─VARIABLE_TYPE f32
 │ │   └─STRUCT_FIELD baz
 │ │     └─VARIABLE_TYPE f32
-│ └─VARIABLE_TYPE f32
-└─VAR_SYMBOL bar
-  └─VARIABLE_TYPE f32
+│ └─STRUCT_EXPR
+│   ├─STRUCT_TYPE Foo
+│   │ ├─STRUCT_FIELD bar
+│   │ │ └─VARIABLE_TYPE f32
+│   │ └─STRUCT_FIELD baz
+│   │   └─VARIABLE_TYPE f32
+│   ├─STRUCT_VALUE
+│   │ ├─STRUCT_MEMBER bar
+│   │ │ └─FLOAT_VALUE 10
+│   │ └─STRUCT_MEMBER baz
+│   │   └─FLOAT_VALUE 13.1
+│   ├─STRUCT_FIELD bar
+│   │ └─CONVERSION
+│   │   ├─INT_LIT 10
+│   │   ├─VARIABLE_TYPE f32
+│   │   └─FLOAT_VALUE 10
+│   └─STRUCT_FIELD baz
+│     └─CONVERSION
+│       ├─FLOAT_LIT 13.1
+│       ├─VARIABLE_TYPE f32
+│       └─FLOAT_VALUE 13.1
+├─VAR_DECL
+│ ├─VAR_SYMBOL bar
+│ │ └─VARIABLE_TYPE f32
+│ └─MEMBER_EXPR bar
+│   ├─VAR_SYMBOL foo mut
+│   │ └─STRUCT_TYPE Foo
+│   │   ├─STRUCT_FIELD bar
+│   │   │ └─VARIABLE_TYPE f32
+│   │   └─STRUCT_FIELD baz
+│   │     └─VARIABLE_TYPE f32
+│   └─VARIABLE_TYPE f32
+└─ASSIGNMENT
+  ├─MEMBER_EXPR baz
+  │ ├─VAR_SYMBOL foo mut
+  │ │ └─STRUCT_TYPE Foo
+  │ │   ├─STRUCT_FIELD bar
+  │ │   │ └─VARIABLE_TYPE f32
+  │ │   └─STRUCT_FIELD baz
+  │ │     └─VARIABLE_TYPE f32
+  │ └─VARIABLE_TYPE f32
+  └─VAR_SYMBOL bar
+    └─VARIABLE_TYPE f32
 ---

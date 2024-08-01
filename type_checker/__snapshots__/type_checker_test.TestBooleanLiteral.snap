@@ -1,4 +1,5 @@
 
 [`true` - 1]
-BOOL_LIT true
+MODULE test
+└─BOOL_LIT true
 ---

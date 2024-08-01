@@ -1,60 +1,65 @@
 
 [`let x = 1; x` - 1]
-VAR_DECL
-├─VAR_SYMBOL x
-│ ├─VARIABLE_TYPE i32
-│ └─INT_VALUE 1
-└─CONVERSION
-  ├─INT_LIT 1
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL x
+│ │ ├─VARIABLE_TYPE i32
+│ │ └─INT_VALUE 1
+│ └─CONVERSION
+│   ├─INT_LIT 1
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 1
+└─VAR_SYMBOL x
   ├─VARIABLE_TYPE i32
   └─INT_VALUE 1
-VAR_SYMBOL x
-├─VARIABLE_TYPE i32
-└─INT_VALUE 1
 ---
 
 [`mut foo: f32 = 1.4; foo` - 1]
-VAR_DECL
-├─VAR_SYMBOL foo mut
-│ └─VARIABLE_TYPE f32
-└─CONVERSION
-  ├─FLOAT_LIT 1.4
-  ├─VARIABLE_TYPE f32
-  └─FLOAT_VALUE 1.4
-VAR_SYMBOL foo mut
-└─VARIABLE_TYPE f32
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL foo mut
+│ │ └─VARIABLE_TYPE f32
+│ └─CONVERSION
+│   ├─FLOAT_LIT 1.4
+│   ├─VARIABLE_TYPE f32
+│   └─FLOAT_VALUE 1.4
+└─VAR_SYMBOL foo mut
+  └─VARIABLE_TYPE f32
 ---
 
 [`const greeting: string = "Hi!"; greeting` - 1]
-VAR_DECL
-├─VAR_SYMBOL greeting
-│ ├─PRIMARY_TYPE string
-│ └─STRING_VALUE "Hi!"
-└─STRING_LIT "Hi!"
-VAR_SYMBOL greeting
-├─PRIMARY_TYPE string
-└─STRING_VALUE "Hi!"
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL greeting
+│ │ ├─PRIMARY_TYPE string
+│ │ └─STRING_VALUE "Hi!"
+│ └─STRING_LIT "Hi!"
+└─VAR_SYMBOL greeting
+  ├─PRIMARY_TYPE string
+  └─STRING_VALUE "Hi!"
 ---
 
 [`mut is_awesome = true; is_awesome` - 1]
-VAR_DECL
-├─VAR_SYMBOL is_awesome mut
-│ └─PRIMARY_TYPE bool
-└─BOOL_LIT true
-VAR_SYMBOL is_awesome mut
-└─PRIMARY_TYPE bool
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL is_awesome mut
+│ │ └─PRIMARY_TYPE bool
+│ └─BOOL_LIT true
+└─VAR_SYMBOL is_awesome mut
+  └─PRIMARY_TYPE bool
 ---
 
 [`const my_float: f32 = 15; my_float` - 1]
-VAR_DECL
-├─VAR_SYMBOL my_float
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 15
-└─CONVERSION
-  ├─INT_LIT 15
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL my_float
+│ │ ├─VARIABLE_TYPE f32
+│ │ └─FLOAT_VALUE 15
+│ └─CONVERSION
+│   ├─INT_LIT 15
+│   ├─VARIABLE_TYPE f32
+│   └─FLOAT_VALUE 15
+└─VAR_SYMBOL my_float
   ├─VARIABLE_TYPE f32
   └─FLOAT_VALUE 15
-VAR_SYMBOL my_float
-├─VARIABLE_TYPE f32
-└─FLOAT_VALUE 15
 ---

@@ -1,248 +1,273 @@
 
 [`true && false` - 1]
-BINARY_EXPR LogicalAnd
-├─BOOL_LIT true
-├─BOOL_LIT false
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE false
+MODULE test
+└─BINARY_EXPR LogicalAnd
+  ├─BOOL_LIT true
+  ├─BOOL_LIT false
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE false
 ---
 
 [`false || false` - 1]
-BINARY_EXPR LogicalOr
-├─BOOL_LIT false
-├─BOOL_LIT false
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE false
+MODULE test
+└─BINARY_EXPR LogicalOr
+  ├─BOOL_LIT false
+  ├─BOOL_LIT false
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE false
 ---
 
 [`1.5 < 2` - 1]
-BINARY_EXPR Less
-├─CONVERSION
-│ ├─FLOAT_LIT 1.5
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 1.5
-├─CONVERSION
-│ ├─INT_LIT 2
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 2
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE true
+MODULE test
+└─BINARY_EXPR Less
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 1.5
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 1.5
+  ├─CONVERSION
+  │ ├─INT_LIT 2
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 2
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE true
 ---
 
 [`17 <= 17` - 1]
-BINARY_EXPR LessEq
-├─INT_LIT 17
-├─INT_LIT 17
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE true
+MODULE test
+└─BINARY_EXPR LessEq
+  ├─INT_LIT 17
+  ├─INT_LIT 17
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE true
 ---
 
 [`3.14 > 2.71` - 1]
-BINARY_EXPR Greater
-├─CONVERSION
-│ ├─FLOAT_LIT 3.14
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 3.14
-├─CONVERSION
-│ ├─FLOAT_LIT 2.71
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 2.71
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE true
+MODULE test
+└─BINARY_EXPR Greater
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 3.14
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 3.14
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 2.71
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 2.71
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE true
 ---
 
 [`42 >= 69` - 1]
-BINARY_EXPR GreaterEq
-├─INT_LIT 42
-├─INT_LIT 69
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE false
+MODULE test
+└─BINARY_EXPR GreaterEq
+  ├─INT_LIT 42
+  ├─INT_LIT 69
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE false
 ---
 
 [`1 == 2` - 1]
-BINARY_EXPR Equal
-├─INT_LIT 1
-├─INT_LIT 2
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE false
+MODULE test
+└─BINARY_EXPR Equal
+  ├─INT_LIT 1
+  ├─INT_LIT 2
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE false
 ---
 
 [`true == true` - 1]
-BINARY_EXPR Equal
-├─BOOL_LIT true
-├─BOOL_LIT true
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE true
+MODULE test
+└─BINARY_EXPR Equal
+  ├─BOOL_LIT true
+  ├─BOOL_LIT true
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE true
 ---
 
 [`1.2 != 7.5` - 1]
-BINARY_EXPR NotEqual
-├─FLOAT_LIT 1.2
-├─FLOAT_LIT 7.5
-├─PRIMARY_TYPE bool
-└─BOOL_VALUE true
+MODULE test
+└─BINARY_EXPR NotEqual
+  ├─FLOAT_LIT 1.2
+  ├─FLOAT_LIT 7.5
+  ├─PRIMARY_TYPE bool
+  └─BOOL_VALUE true
 ---
 
 [`1 << 5` - 1]
-BINARY_EXPR LeftShift
-├─INT_LIT 1
-├─INT_LIT 5
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 32
+MODULE test
+└─BINARY_EXPR LeftShift
+  ├─INT_LIT 1
+  ├─INT_LIT 5
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 32
 ---
 
 [`8362 >> 3` - 1]
-BINARY_EXPR RightShift
-├─INT_LIT 8362
-├─INT_LIT 3
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 1045
+MODULE test
+└─BINARY_EXPR RightShift
+  ├─INT_LIT 8362
+  ├─INT_LIT 3
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 1045
 ---
 
 [`10101 | 1010` - 1]
-BINARY_EXPR BitwiseOr
-├─INT_LIT 10101
-├─INT_LIT 1010
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 10231
+MODULE test
+└─BINARY_EXPR BitwiseOr
+  ├─INT_LIT 10101
+  ├─INT_LIT 1010
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 10231
 ---
 
 [`73 & 52` - 1]
-BINARY_EXPR BitwiseAnd
-├─INT_LIT 73
-├─INT_LIT 52
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 0
+MODULE test
+└─BINARY_EXPR BitwiseAnd
+  ├─INT_LIT 73
+  ├─INT_LIT 52
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 0
 ---
 
 [`1 + 6` - 1]
-BINARY_EXPR AddInt
-├─INT_LIT 1
-├─INT_LIT 6
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 7
+MODULE test
+└─BINARY_EXPR AddInt
+  ├─INT_LIT 1
+  ├─INT_LIT 6
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 7
 ---
 
 [`2.3 + 4` - 1]
-BINARY_EXPR AddFloat
-├─CONVERSION
-│ ├─FLOAT_LIT 2.3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 2.3
-├─CONVERSION
-│ ├─INT_LIT 4
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 4
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 6.3
+MODULE test
+└─BINARY_EXPR AddFloat
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 2.3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 2.3
+  ├─CONVERSION
+  │ ├─INT_LIT 4
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 4
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 6.3
 ---
 
 [`"Hello " + "world"` - 1]
-BINARY_EXPR Concat
-├─STRING_LIT "Hello "
-├─STRING_LIT "world"
-├─PRIMARY_TYPE string
-└─STRING_VALUE "Hello world"
+MODULE test
+└─BINARY_EXPR Concat
+  ├─STRING_LIT "Hello "
+  ├─STRING_LIT "world"
+  ├─PRIMARY_TYPE string
+  └─STRING_VALUE "Hello world"
 ---
 
 [`8 - 12` - 1]
-BINARY_EXPR SubtractInt
-├─INT_LIT 8
-├─INT_LIT 12
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE -4
+MODULE test
+└─BINARY_EXPR SubtractInt
+  ├─INT_LIT 8
+  ├─INT_LIT 12
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE -4
 ---
 
 [`3 - 1.3` - 1]
-BINARY_EXPR SubtractFloat
-├─CONVERSION
-│ ├─INT_LIT 3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 3
-├─CONVERSION
-│ ├─FLOAT_LIT 1.3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 1.3
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 1.7
+MODULE test
+└─BINARY_EXPR SubtractFloat
+  ├─CONVERSION
+  │ ├─INT_LIT 3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 3
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 1.3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 1.3
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 1.7
 ---
 
 [`6 * 7` - 1]
-BINARY_EXPR MultiplyInt
-├─INT_LIT 6
-├─INT_LIT 7
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 42
+MODULE test
+└─BINARY_EXPR MultiplyInt
+  ├─INT_LIT 6
+  ├─INT_LIT 7
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 42
 ---
 
 [`1.3 * 0.4` - 1]
-BINARY_EXPR MultiplyFloat
-├─CONVERSION
-│ ├─FLOAT_LIT 1.3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 1.3
-├─CONVERSION
-│ ├─FLOAT_LIT 0.4
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 0.4
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 0.52
+MODULE test
+└─BINARY_EXPR MultiplyFloat
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 1.3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 1.3
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 0.4
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 0.4
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 0.52
 ---
 
 [`0.3 / 2` - 1]
-BINARY_EXPR Divide
-├─CONVERSION
-│ ├─FLOAT_LIT 0.3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 0.3
-├─CONVERSION
-│ ├─INT_LIT 2
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 2
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 0.15
+MODULE test
+└─BINARY_EXPR Divide
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 0.3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 0.3
+  ├─CONVERSION
+  │ ├─INT_LIT 2
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 2
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 0.15
 ---
 
 [`103 % 2` - 1]
-BINARY_EXPR ModuloInt
-├─INT_LIT 103
-├─INT_LIT 2
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 1
+MODULE test
+└─BINARY_EXPR ModuloInt
+  ├─INT_LIT 103
+  ├─INT_LIT 2
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 1
 ---
 
 [`1.4 % 1` - 1]
-BINARY_EXPR ModuloFloat
-├─CONVERSION
-│ ├─FLOAT_LIT 1.4
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 1.4
-├─CONVERSION
-│ ├─INT_LIT 1
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 1
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 0.3999999999999999
+MODULE test
+└─BINARY_EXPR ModuloFloat
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 1.4
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 1.4
+  ├─CONVERSION
+  │ ├─INT_LIT 1
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 1
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 0.3999999999999999
 ---
 
 [`2 ** 7` - 1]
-BINARY_EXPR PowerInt
-├─INT_LIT 2
-├─INT_LIT 7
-├─VARIABLE_TYPE untyped int
-└─INT_VALUE 128
+MODULE test
+└─BINARY_EXPR PowerInt
+  ├─INT_LIT 2
+  ├─INT_LIT 7
+  ├─VARIABLE_TYPE untyped int
+  └─INT_VALUE 128
 ---
 
 [`3 ** 0.5` - 1]
-BINARY_EXPR PowerFloat
-├─CONVERSION
-│ ├─INT_LIT 3
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 3
-├─CONVERSION
-│ ├─FLOAT_LIT 0.5
-│ ├─VARIABLE_TYPE f32
-│ └─FLOAT_VALUE 0.5
-├─VARIABLE_TYPE untyped float
-└─FLOAT_VALUE 1.7320508075688772
+MODULE test
+└─BINARY_EXPR PowerFloat
+  ├─CONVERSION
+  │ ├─INT_LIT 3
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 3
+  ├─CONVERSION
+  │ ├─FLOAT_LIT 0.5
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 0.5
+  ├─VARIABLE_TYPE untyped float
+  └─FLOAT_VALUE 1.7320508075688772
 ---

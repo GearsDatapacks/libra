@@ -1,117 +1,120 @@
 
 [`for i in [1,2,3] {;	if i % 2 == 0 {;		break i;	};}` - 1]
-FOR_LOOP
-├─VAR_SYMBOL i
-│ └─VARIABLE_TYPE i32
-├─ARRAY_EXPR
-│ ├─ARRAY_TYPE 3 can_infer
-│ │ └─VARIABLE_TYPE i32
-│ ├─ARRAY_VALUE
-│ │ ├─INT_VALUE 1
-│ │ ├─INT_VALUE 2
-│ │ └─INT_VALUE 3
-│ ├─CONVERSION
-│ │ ├─INT_LIT 1
-│ │ ├─VARIABLE_TYPE i32
-│ │ └─INT_VALUE 1
-│ ├─CONVERSION
-│ │ ├─INT_LIT 2
-│ │ ├─VARIABLE_TYPE i32
-│ │ └─INT_VALUE 2
-│ └─CONVERSION
-│   ├─INT_LIT 3
-│   ├─VARIABLE_TYPE i32
-│   └─INT_VALUE 3
-└─BLOCK
-  ├─VARIABLE_TYPE i32
-  └─IF_EXPR
-    ├─BINARY_EXPR Equal
-    │ ├─BINARY_EXPR ModuloInt
-    │ │ ├─VAR_SYMBOL i
-    │ │ │ └─VARIABLE_TYPE i32
-    │ │ ├─INT_LIT 2
-    │ │ └─VARIABLE_TYPE i32
-    │ ├─INT_LIT 0
-    │ └─PRIMARY_TYPE bool
-    └─BLOCK
-      ├─UNIT_STRUCT void
-      └─BREAK
-        └─VAR_SYMBOL i
-          └─VARIABLE_TYPE i32
+MODULE test
+└─FOR_LOOP
+  ├─VAR_SYMBOL i
+  │ └─VARIABLE_TYPE i32
+  ├─ARRAY_EXPR
+  │ ├─ARRAY_TYPE 3 can_infer
+  │ │ └─VARIABLE_TYPE i32
+  │ ├─ARRAY_VALUE
+  │ │ ├─INT_VALUE 1
+  │ │ ├─INT_VALUE 2
+  │ │ └─INT_VALUE 3
+  │ ├─CONVERSION
+  │ │ ├─INT_LIT 1
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 1
+  │ ├─CONVERSION
+  │ │ ├─INT_LIT 2
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 2
+  │ └─CONVERSION
+  │   ├─INT_LIT 3
+  │   ├─VARIABLE_TYPE i32
+  │   └─INT_VALUE 3
+  └─BLOCK
+    ├─VARIABLE_TYPE i32
+    └─IF_EXPR
+      ├─BINARY_EXPR Equal
+      │ ├─BINARY_EXPR ModuloInt
+      │ │ ├─VAR_SYMBOL i
+      │ │ │ └─VARIABLE_TYPE i32
+      │ │ ├─INT_LIT 2
+      │ │ └─VARIABLE_TYPE i32
+      │ ├─INT_LIT 0
+      │ └─PRIMARY_TYPE bool
+      └─BLOCK
+        ├─UNIT_STRUCT void
+        └─BREAK
+          └─VAR_SYMBOL i
+            └─VARIABLE_TYPE i32
 ---
 
 [`mut result = "";for s in ["Hello", "world"] {;	result += s;}` - 1]
-VAR_DECL
-├─VAR_SYMBOL result mut
-│ └─PRIMARY_TYPE string
-└─STRING_LIT ""
-FOR_LOOP
-├─VAR_SYMBOL s
-│ └─PRIMARY_TYPE string
-├─ARRAY_EXPR
-│ ├─ARRAY_TYPE 2 can_infer
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL result mut
 │ │ └─PRIMARY_TYPE string
-│ ├─ARRAY_VALUE
-│ │ ├─STRING_VALUE "Hello"
-│ │ └─STRING_VALUE "world"
-│ ├─STRING_LIT "Hello"
-│ └─STRING_LIT "world"
-└─BLOCK
-  ├─UNIT_STRUCT void
-  └─ASSIGNMENT
-    ├─VAR_SYMBOL result mut
-    │ └─PRIMARY_TYPE string
-    └─BINARY_EXPR Concat
+│ └─STRING_LIT ""
+└─FOR_LOOP
+  ├─VAR_SYMBOL s
+  │ └─PRIMARY_TYPE string
+  ├─ARRAY_EXPR
+  │ ├─ARRAY_TYPE 2 can_infer
+  │ │ └─PRIMARY_TYPE string
+  │ ├─ARRAY_VALUE
+  │ │ ├─STRING_VALUE "Hello"
+  │ │ └─STRING_VALUE "world"
+  │ ├─STRING_LIT "Hello"
+  │ └─STRING_LIT "world"
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    └─ASSIGNMENT
       ├─VAR_SYMBOL result mut
       │ └─PRIMARY_TYPE string
-      ├─VAR_SYMBOL s
-      │ └─PRIMARY_TYPE string
-      └─PRIMARY_TYPE string
+      └─BINARY_EXPR Concat
+        ├─VAR_SYMBOL result mut
+        │ └─PRIMARY_TYPE string
+        ├─VAR_SYMBOL s
+        │ └─PRIMARY_TYPE string
+        └─PRIMARY_TYPE string
 ---
 
 [`for kv in {true: 1, false: 0} {;	if !kv[0] {;		break kv[1];	};}` - 1]
-FOR_LOOP
-├─VAR_SYMBOL kv
-│ └─TUPLE_TYPE
-│   ├─PRIMARY_TYPE bool
-│   └─VARIABLE_TYPE i32
-├─MAP_EXPR
-│ ├─MAP_TYPE
-│ │ ├─PRIMARY_TYPE bool
-│ │ └─VARIABLE_TYPE i32
-│ ├─MAP_VALUE
-│ │ ├─KEY_VALUE
-│ │ │ ├─BOOL_VALUE false
-│ │ │ └─INT_VALUE 0
-│ │ └─KEY_VALUE
-│ │   ├─BOOL_VALUE true
-│ │   └─INT_VALUE 1
-│ ├─KEY_VALUE
-│ │ ├─BOOL_LIT true
-│ │ └─INT_LIT 1
-│ └─KEY_VALUE
-│   ├─BOOL_LIT false
-│   └─INT_LIT 0
-└─BLOCK
-  ├─VARIABLE_TYPE i32
-  └─IF_EXPR
-    ├─UNARY_EXPR LogicalNot
-    │ ├─INDEX_EXPR
-    │ │ ├─VAR_SYMBOL kv
-    │ │ │ └─TUPLE_TYPE
-    │ │ │   ├─PRIMARY_TYPE bool
-    │ │ │   └─VARIABLE_TYPE i32
-    │ │ ├─INT_LIT 0
-    │ │ └─PRIMARY_TYPE bool
-    │ └─PRIMARY_TYPE bool
-    └─BLOCK
-      ├─UNIT_STRUCT void
-      └─BREAK
-        └─INDEX_EXPR
-          ├─VAR_SYMBOL kv
-          │ └─TUPLE_TYPE
-          │   ├─PRIMARY_TYPE bool
-          │   └─VARIABLE_TYPE i32
-          ├─INT_LIT 1
-          └─VARIABLE_TYPE i32
+MODULE test
+└─FOR_LOOP
+  ├─VAR_SYMBOL kv
+  │ └─TUPLE_TYPE
+  │   ├─PRIMARY_TYPE bool
+  │   └─VARIABLE_TYPE i32
+  ├─MAP_EXPR
+  │ ├─MAP_TYPE
+  │ │ ├─PRIMARY_TYPE bool
+  │ │ └─VARIABLE_TYPE i32
+  │ ├─MAP_VALUE
+  │ │ ├─KEY_VALUE
+  │ │ │ ├─BOOL_VALUE false
+  │ │ │ └─INT_VALUE 0
+  │ │ └─KEY_VALUE
+  │ │   ├─BOOL_VALUE true
+  │ │   └─INT_VALUE 1
+  │ ├─KEY_VALUE
+  │ │ ├─BOOL_LIT true
+  │ │ └─INT_LIT 1
+  │ └─KEY_VALUE
+  │   ├─BOOL_LIT false
+  │   └─INT_LIT 0
+  └─BLOCK
+    ├─VARIABLE_TYPE i32
+    └─IF_EXPR
+      ├─UNARY_EXPR LogicalNot
+      │ ├─INDEX_EXPR
+      │ │ ├─VAR_SYMBOL kv
+      │ │ │ └─TUPLE_TYPE
+      │ │ │   ├─PRIMARY_TYPE bool
+      │ │ │   └─VARIABLE_TYPE i32
+      │ │ ├─INT_LIT 0
+      │ │ └─PRIMARY_TYPE bool
+      │ └─PRIMARY_TYPE bool
+      └─BLOCK
+        ├─UNIT_STRUCT void
+        └─BREAK
+          └─INDEX_EXPR
+            ├─VAR_SYMBOL kv
+            │ └─TUPLE_TYPE
+            │   ├─PRIMARY_TYPE bool
+            │   └─VARIABLE_TYPE i32
+            ├─INT_LIT 1
+            └─VARIABLE_TYPE i32
 ---
