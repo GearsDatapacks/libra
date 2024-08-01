@@ -115,8 +115,6 @@ func (l *lowerer) lowerExpression(expression ir.Expression) ir.Expression {
 		return l.lowerRefExpression(expr)
 	case *ir.DerefExpression:
 		return l.lowerDerefExpression(expr)
-	case *ir.EnumMember:
-		return l.lowerEnumMember(expr)
 
 	default:
 		panic(fmt.Sprintf("TODO: lower %T", expr))

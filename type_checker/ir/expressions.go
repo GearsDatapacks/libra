@@ -1508,36 +1508,5 @@ func (*DerefExpression) ConstValue() values.ConstValue {
 	return nil
 }
 
-type EnumMember struct {
-	expression
-	Name  string
-	Value values.ConstValue
-	Enum  *types.Enum
-}
-
-func (e *EnumMember) Print(node *printer.Node) {
-	node.
-		Text(
-			"%sENUM_MEMBER %s%s",
-			node.Colour(colour.NodeName),
-			node.Colour(colour.Name),
-			e.Name,
-		).
-		Node(e.Enum).
-		Node(e.Value)
-}
-
-func (e *EnumMember) Type() types.Type {
-	return e.Enum
-}
-
-func (*EnumMember) IsConst() bool {
-	return true
-}
-
-func (e *EnumMember) ConstValue() values.ConstValue {
-	return e.Value
-}
-
 // TODO:
 // RangeExpression

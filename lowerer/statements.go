@@ -14,7 +14,7 @@ func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration) ir.S
 }
 
 func (l *lowerer) lowerFunctionDeclaration(stmt *ir.FunctionDeclaration) ir.Statement {
-	return stmt
+	panic("TODO")
 }
 
 func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement) ir.Statement {
