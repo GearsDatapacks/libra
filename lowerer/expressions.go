@@ -1,6 +1,9 @@
 package lowerer
 
-import "github.com/gearsdatapacks/libra/type_checker/ir"
+import (
+	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
+)
 
 func (l *lowerer) lowerIntegerLiteral(expr *ir.IntegerLiteral, _ *[]ir.Statement) ir.Expression {
 	return expr
@@ -249,18 +252,33 @@ func (l *lowerer) lowerMemberExpression(member *ir.MemberExpression, statements 
 	}
 }
 
-func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement) ir.Expression {
+func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLabel ...string) ir.Expression {
 	if len(block.Statements) == 1 {
 		if expr, ok := block.Statements[0].(ir.Expression); ok {
 			return expr
 		}
 	}
 
+	yieldLabel := ""
+	if len(endLabel) > 0 {
+		yieldLabel = endLabel[0]
+	} else {
+		yieldLabel = l.genLabel()
+	}
+
+	yieldVar := symbols.Variable{
+		Name:       l.genVar(),
+		IsMut:      true,
+		Type:       block.ResultType,
+		ConstValue: nil,
+	}
+	defer l.endScope(l.beginScope(blockContext{endLabel: yieldLabel, yieldVariable: yieldVar}))
+
 	for _, stmt := range block.Statements {
 		l.lower(stmt, statements)
 	}
-	// TODO: return a value here
-	return &ir.InvalidExpression{}
+	*statements = append(*statements, &ir.Label{Name: yieldLabel})
+	return &ir.VariableExpression{Symbol: yieldVar}
 }
 
 func negate(condition ir.Expression) ir.Expression {
@@ -270,17 +288,28 @@ func negate(condition ir.Expression) ir.Expression {
 	}
 }
 
-func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.Statement, finalLabel ...string) ir.Expression {
-	finally := ""
-	if len(finalLabel) != 0 {
-		finally = finalLabel[0]
-	} else {
-		finally = l.genLabel()
+type ifContext struct {
+	finalLabel     string
+	returnVariable symbols.Variable
+}
+
+func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.Statement, context *ifContext) ir.Expression {
+	isFirst := context == nil
+	if context == nil {
+		context = &ifContext{
+			finalLabel: l.genLabel(),
+			returnVariable: symbols.Variable{
+				Name:       l.genVar(),
+				IsMut:      true,
+				Type:       ifExpr.Type(),
+				ConstValue: nil,
+			},
+		}
 	}
 
 	endLabel := ""
 	if ifExpr.ElseBranch == nil {
-		endLabel = finally
+		endLabel = context.finalLabel
 	} else {
 		endLabel = l.genLabel()
 	}
@@ -291,28 +320,34 @@ func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.St
 		Condition: condition,
 	})
 
-	for _, stmt := range ifExpr.Body.Statements {
-		l.lower(stmt, statements)
-	}
+	value := l.lowerBlock(ifExpr.Body, statements, context.finalLabel)
+	*statements = append(*statements, &ir.Assignment{
+		Assignee: &ir.VariableExpression{Symbol: context.returnVariable},
+		Value:    value,
+	})
 
 	if ifExpr.ElseBranch != nil {
-		*statements = append(*statements, &ir.Goto{Label: finally})
+		*statements = append(*statements, &ir.Goto{Label: context.finalLabel})
 		*statements = append(*statements, &ir.Label{Name: endLabel})
 
 		switch eb := ifExpr.ElseBranch.(type) {
 		case *ir.IfExpression:
-			l.lowerIfExpression(eb, statements, finally)
+			l.lowerIfExpression(eb, statements, context)
 		case *ir.Block:
 			l.lowerBlock(eb, statements)
+			*statements = append(*statements, &ir.Assignment{
+				Assignee: &ir.VariableExpression{Symbol: context.returnVariable},
+				Value:    value,
+			})
+			*statements = append(*statements, &ir.Label{Name: context.finalLabel})
 		}
-	} else if len(finalLabel) != 0 {
-		*statements = append(*statements, &ir.Label{Name: finally})
+	} else if !isFirst {
+		*statements = append(*statements, &ir.Label{Name: context.finalLabel})
 	} else {
 		*statements = append(*statements, &ir.Label{Name: endLabel})
 	}
 
-	// TODO: return a value here
-	return &ir.InvalidExpression{}
+	return &ir.VariableExpression{Symbol: context.returnVariable}
 }
 
 func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement) ir.Expression {
@@ -326,9 +361,17 @@ func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement)
 		Label:     loopEnd,
 	})
 
+	breakVariable := symbols.Variable{
+		Name:       l.genVar(),
+		IsMut:      true,
+		Type:       loop.Type(),
+		ConstValue: nil,
+	}
+
 	defer l.endScope(l.beginScope(loopContext{
 		breakLabel:    loopEnd,
 		continueLabel: loopStart,
+		breakVariable: breakVariable,
 	}))
 
 	for _, stmt := range loop.Body.Statements {
@@ -337,8 +380,7 @@ func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement)
 	*statements = append(*statements, &ir.Goto{Label: loopStart})
 	*statements = append(*statements, &ir.Label{Name: loopEnd})
 
-	// TODO: return a value here
-	return &ir.InvalidExpression{}
+	return &ir.VariableExpression{Symbol: breakVariable}
 }
 
 func (l *lowerer) lowerForLoop(expr *ir.ForLoop, statements *[]ir.Statement) ir.Expression {

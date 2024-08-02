@@ -34,12 +34,15 @@ func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir
 }
 
 func (l *lowerer) lowerBreakStatement(brk *ir.BreakStatement, statements *[]ir.Statement) {
-	// TODO: do something with the value
+	context := findContext[loopContext](l)
 	if brk.Value != nil {
-		_ = l.lowerExpression(brk.Value, statements)
+		value := l.lowerExpression(brk.Value, statements)
+		*statements = append(*statements, &ir.Assignment{
+			Assignee: &ir.VariableExpression{Symbol: context.breakVariable},
+			Value:    value,
+		})
 	}
 
-	context := findContext[loopContext](l)
 	*statements = append(*statements, &ir.Goto{Label: context.breakLabel})
 }
 

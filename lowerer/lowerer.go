@@ -5,11 +5,13 @@ import (
 
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/symbols"
 )
 
 type lowerer struct {
 	diagnostics diagnostics.Manager
 	labelId     int
+	varId       int
 	scope       *scope
 }
 
@@ -21,6 +23,12 @@ type scope struct {
 type loopContext struct {
 	breakLabel,
 	continueLabel string
+	breakVariable symbols.Variable
+}
+
+type blockContext struct {
+	endLabel string
+	yieldVariable symbols.Variable
 }
 
 func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.Package, diagnostics.Manager) {
@@ -50,6 +58,12 @@ func (l *lowerer) genLabel() string {
 	id := l.labelId
 	l.labelId++
 	return fmt.Sprintf("label%d", id)
+}
+
+func (l *lowerer) genVar() string {
+	id := l.varId
+	l.varId++
+	return fmt.Sprintf("var%d", id)
 }
 
 func (l *lowerer) beginScope(context any) any {
@@ -96,7 +110,7 @@ func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 		l.lowerTypeDeclaration(stmt, statements)
 
 	case ir.Expression:
-		l.lowerExpression(stmt, statements)
+		*statements = append(*statements, l.lowerExpression(stmt, statements))
 
 	default:
 		panic(fmt.Sprintf("TODO: lower %T", stmt))
@@ -146,7 +160,7 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	case *ir.Block:
 		return l.lowerBlock(expr, statements)
 	case *ir.IfExpression:
-		return l.lowerIfExpression(expr, statements)
+		return l.lowerIfExpression(expr, statements, nil)
 	case *ir.WhileLoop:
 		return l.lowerWhileLoop(expr, statements)
 	case *ir.ForLoop:
