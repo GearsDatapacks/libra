@@ -2,63 +2,67 @@ package lowerer
 
 import "github.com/gearsdatapacks/libra/type_checker/ir"
 
-func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration) ir.Statement {
-	value := l.lowerExpression(varDecl.Value)
+func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, statements *[]ir.Statement) {
+	value := l.lowerExpression(varDecl.Value, statements)
 	if value == varDecl.Value {
-		return varDecl
+		*statements = append(*statements, varDecl)
+		return
 	}
-	return &ir.VariableDeclaration{
+	*statements = append(*statements, &ir.VariableDeclaration{
 		Symbol: varDecl.Symbol,
 		Value:  value,
-	}
+	})
 }
 
-func (l *lowerer) lowerFunctionDeclaration(stmt *ir.FunctionDeclaration) ir.Statement {
+func (l *lowerer) lowerFunctionDeclaration(stmt *ir.FunctionDeclaration, statements *[]ir.Statement) {
 	panic("TODO")
 }
 
-func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement) ir.Statement {
+func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir.Statement) {
 	if ret.Value == nil {
-		return ret
+		*statements = append(*statements, ret)
+		return
 	}
 
-	value := l.lowerExpression(ret.Value)
+	value := l.lowerExpression(ret.Value, statements)
 	if value == ret.Value {
-		return ret
+		*statements = append(*statements, ret)
 	}
-	return &ir.ReturnStatement{
+	*statements = append(*statements, &ir.ReturnStatement{
 		Value: value,
-	}
+	})
 }
 
-func (l *lowerer) lowerBreakStatement(brk *ir.BreakStatement) ir.Statement {
-	if brk.Value == nil {
-		return brk
+func (l *lowerer) lowerBreakStatement(brk *ir.BreakStatement, statements *[]ir.Statement) {
+	// TODO: do something with the value
+	if brk.Value != nil {
+		_ = l.lowerExpression(brk.Value, statements)
 	}
 
-	value := l.lowerExpression(brk.Value)
-	if value == brk.Value {
-		return brk
-	}
-	return &ir.ReturnStatement{
-		Value: value,
-	}
+	context := findContext[loopContext](l)
+	*statements = append(*statements, &ir.Goto{Label: context.breakLabel})
 }
 
-func (l *lowerer) lowerYieldStatement(yield *ir.YieldStatement) ir.Statement {
-	value := l.lowerExpression(yield.Value)
+func (l *lowerer) lowerContinueStatement(_ *ir.ContinueStatement, statements *[]ir.Statement) {
+	context := findContext[loopContext](l)
+	*statements = append(*statements, &ir.Goto{Label: context.continueLabel})
+}
+
+func (l *lowerer) lowerYieldStatement(yield *ir.YieldStatement, statements *[]ir.Statement) {
+	value := l.lowerExpression(yield.Value, statements)
 	if value == yield.Value {
-		return yield
+		*statements = append(*statements, yield)
+		return
 	}
-	return &ir.ReturnStatement{
+	*statements = append(*statements, &ir.YieldStatement{
 		Value: value,
-	}
+	})
 }
 
-func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement) ir.Statement {
-	return stmt
+func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement, statements *[]ir.Statement) {
+	*statements = append(*statements, stmt)
 }
 
-func (l *lowerer) lowerTypeDeclaration(stmt *ir.TypeDeclaration) ir.Statement {
-	return stmt
+func (l *lowerer) lowerTypeDeclaration(stmt *ir.TypeDeclaration, statements *[]ir.Statement) {
+	*statements = append(*statements, stmt)
 }

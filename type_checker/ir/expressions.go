@@ -825,6 +825,12 @@ type InvalidExpression struct {
 	Expression
 }
 
+func (i *InvalidExpression) Print(node *printer.Node) {
+	node.
+		Text("%sINVALID_EXPR", node.Colour(colour.NodeName)).
+		OptionalNode(i.Expression)
+}
+
 func (i *InvalidExpression) Type() types.Type {
 	return types.Invalid
 }
