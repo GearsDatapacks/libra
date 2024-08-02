@@ -6,6 +6,7 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 type lowerer struct {
@@ -27,28 +28,48 @@ type loopContext struct {
 }
 
 type blockContext struct {
-	endLabel string
+	endLabel      string
 	yieldVariable symbols.Variable
 }
 
-func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.Package, diagnostics.Manager) {
+func makeMain() *ir.FunctionDeclaration {
+	return &ir.FunctionDeclaration{
+		Name:       "main",
+		Parameters: []string{},
+		Body: &ir.Block{
+			Statements: []ir.Statement{},
+			ResultType: types.Void,
+		},
+		Type: &types.Function{
+			Parameters: []types.Type{},
+			ReturnType: types.Void,
+		},
+		Exported: false,
+	}
+}
+
+func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage, diagnostics.Manager) {
 	lowerer := lowerer{
 		diagnostics: diagnostics,
 	}
 
-	lowered := &ir.Package{
-		Modules: map[string]*ir.Module{},
+	lowered := &ir.LoweredPackage{
+		Modules: map[string]*ir.LoweredModule{},
 	}
 
 	for name, module := range pkg.Modules {
-		mod := &ir.Module{
-			Name:       name,
-			Statements: []ir.Statement{},
+		mainFunction := makeMain()
+		mod := &ir.LoweredModule{
+			Name:         name,
+			MainFunction: mainFunction,
+			Types:        []*ir.TypeDeclaration{},
+			Functions:    []*ir.FunctionDeclaration{mainFunction},
+			Globals:      []*ir.VariableDeclaration{},
 		}
 		lowered.Modules[name] = mod
 
 		for _, stmt := range module.Statements {
-			lowerer.lower(stmt, &mod.Statements)
+			lowerer.lowerGlobal(stmt, mod)
 		}
 	}
 	return lowered, lowerer.diagnostics
@@ -90,12 +111,21 @@ func findContext[Context any](l *lowerer) Context {
 	panic("Should find context")
 }
 
+func (l *lowerer) lowerGlobal(statement ir.Statement, mod *ir.LoweredModule) {
+	switch stmt := statement.(type) {
+	case *ir.FunctionDeclaration:
+		mod.Functions = append(mod.Functions, l.lowerFunctionDeclaration(stmt))
+	case *ir.TypeDeclaration:
+		mod.Types = append(mod.Types, l.lowerTypeDeclaration(stmt))
+	default:
+		l.lower(statement, &mod.MainFunction.Body.Statements)
+	}
+}
+
 func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 	switch stmt := statement.(type) {
 	case *ir.VariableDeclaration:
 		l.lowerVariableDeclaration(stmt, statements)
-	case *ir.FunctionDeclaration:
-		l.lowerFunctionDeclaration(stmt, statements)
 	case *ir.ReturnStatement:
 		l.lowerReturnStatement(stmt, statements)
 	case *ir.BreakStatement:
@@ -106,8 +136,9 @@ func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 		l.lowerYieldStatement(stmt, statements)
 	case *ir.ImportStatement:
 		l.lowerImportStatement(stmt, statements)
-	case *ir.TypeDeclaration:
-		l.lowerTypeDeclaration(stmt, statements)
+
+	case *ir.TypeDeclaration, *ir.FunctionDeclaration:
+		panic("Declarations not allowed here")
 
 	case ir.Expression:
 		*statements = append(*statements, l.lowerExpression(stmt, statements))

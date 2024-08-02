@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	pkg, diags = lowerer.Lower(pkg, diags)
+	lowered, diags := lowerer.Lower(pkg, diags)
 
 	if len(diags) != 0 {
 		for _, diag := range diags {
@@ -50,6 +50,6 @@ func main() {
 		return
 	}
 
-	pkg.Print()
+	lowered.Print()
 	fmt.Println()
 }

@@ -14,8 +14,19 @@ func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, stat
 	})
 }
 
-func (l *lowerer) lowerFunctionDeclaration(stmt *ir.FunctionDeclaration, statements *[]ir.Statement) {
-	panic("TODO")
+func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir.FunctionDeclaration {
+	statements := []ir.Statement{}
+	l.lowerBlock(funcDecl.Body, &statements)
+	return &ir.FunctionDeclaration{
+		Name:       funcDecl.Name,
+		Parameters: funcDecl.Parameters,
+		Body: &ir.Block{
+			Statements: statements,
+			ResultType: funcDecl.Body.ResultType,
+		},
+		Type:     funcDecl.Type,
+		Exported: funcDecl.Exported,
+	}
 }
 
 func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir.Statement) {
@@ -66,6 +77,6 @@ func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement, statements *[]i
 	*statements = append(*statements, stmt)
 }
 
-func (l *lowerer) lowerTypeDeclaration(stmt *ir.TypeDeclaration, statements *[]ir.Statement) {
-	*statements = append(*statements, stmt)
+func (l *lowerer) lowerTypeDeclaration(stmt *ir.TypeDeclaration) *ir.TypeDeclaration {
+	return stmt
 }
