@@ -2,7 +2,6 @@ package lowerer
 
 import (
 	"fmt"
-	"os"
 	"slices"
 
 	"github.com/gearsdatapacks/libra/colour"
@@ -18,9 +17,9 @@ func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.St
 		diagnostics: l.diagnostics,
 		blocks:      []*basicBlock{},
 		currentBlock: &basicBlock{
-			statements:  []ir.Statement{},
-			entries:     []*connection{},
-			exits:       []*connection{},
+			statements: []ir.Statement{},
+			entries:    []*connection{},
+			exits:      []*connection{},
 		},
 	}
 	g.analyse(statements, location)
@@ -108,10 +107,10 @@ func (g *graph) analyse(statements []ir.Statement, location text.Location) {
 	g.separateBlocks(statements)
 	g.makeConnections()
 
-	p := printer.New(os.Stdout, true)
-	p.Node(g)
-	p.Print()
-	fmt.Println()
+	// p := printer.New(os.Stdout, true)
+	// p.Node(g)
+	// p.Print()
+	// fmt.Println()
 
 	g.removeUnreachable()
 	if !g.checkPaths() {
@@ -265,6 +264,10 @@ func (g *graph) checkPaths() bool {
 			continue
 		}
 		if len(block.exits) == 0 {
+			if len(block.statements) == 0 {
+				return false
+			}
+
 			switch block.statements[len(block.statements)-1].(type) {
 			case *ir.ReturnStatement:
 			default:

@@ -7,14 +7,80 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
-func optimiseExpression(expr ir.Expression) ir.Expression {
-	return foldConstants(expr)
+func optimiseExpression(expression ir.Expression) ir.Expression {
+	if expression.IsConst() {
+		return foldConstants(expression)
+	}
+
+	switch expr := expression.(type) {
+	case *ir.IntegerLiteral,
+		*ir.UintLiteral,
+		*ir.FloatLiteral,
+		*ir.BooleanLiteral,
+		*ir.StringLiteral:
+		panic("Must be const")
+
+	case *ir.UnaryExpression:
+		switch expr.Operator.Id {
+		case ir.LogicalNot:
+			return optimiseNegation(expr.Operand, expr)
+		}
+	}
+
+	return expression
+}
+
+func optimiseNegation(expression ir.Expression, original ir.Expression) ir.Expression {
+	switch expr := expression.(type) {
+	case *ir.UnaryExpression:
+		switch expr.Operator.Id {
+		case ir.LogicalNot:
+			return expr.Operand
+		}
+	case *ir.BinaryExpression:
+		switch expr.Operator {
+		case ir.Less:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.GreaterEq,
+				Right:    expr.Right,
+			}
+		case ir.LessEq:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.Greater,
+				Right:    expr.Right,
+			}
+		case ir.Greater:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.LessEq,
+				Right:    expr.Right,
+			}
+		case ir.GreaterEq:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.Less,
+				Right:    expr.Right,
+			}
+		case ir.Equal:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.NotEqual,
+				Right:    expr.Right,
+			}
+		case ir.NotEqual:
+			return &ir.BinaryExpression{
+				Left:     expr.Left,
+				Operator: ir.Equal,
+				Right:    expr.Right,
+			}
+		}
+	}
+	return original
 }
 
 func foldConstants(expression ir.Expression) ir.Expression {
-	if !expression.IsConst() {
-		return expression
-	}
 	return constValueToExpr(expression.ConstValue(), expression.Type())
 }
 

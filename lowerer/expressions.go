@@ -338,7 +338,7 @@ func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.St
 		case *ir.IfExpression:
 			l.lowerIfExpression(eb, statements, context)
 		case *ir.Block:
-			l.lowerBlock(eb, statements)
+			value := l.lowerBlock(eb, statements)
 			*statements = append(*statements, &ir.Assignment{
 				Assignee: &ir.VariableExpression{Symbol: context.returnVariable},
 				Value:    value,
