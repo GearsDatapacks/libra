@@ -17,15 +17,14 @@ func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, stat
 func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir.FunctionDeclaration {
 	statements := []ir.Statement{}
 	l.lowerBlock(funcDecl.Body, &statements)
+	statements = l.cfa(statements, funcDecl.Location)
 	return &ir.FunctionDeclaration{
 		Name:       funcDecl.Name,
 		Parameters: funcDecl.Parameters,
-		Body: &ir.Block{
-			Statements: statements,
-			ResultType: funcDecl.Body.ResultType,
-		},
-		Type:     funcDecl.Type,
-		Exported: funcDecl.Exported,
+		Body:       &ir.Block{Statements: statements, ResultType: funcDecl.Body.ResultType},
+		Type:       funcDecl.Type,
+		Exported:   funcDecl.Exported,
+		Location:   funcDecl.Location,
 	}
 }
 
@@ -38,6 +37,7 @@ func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir
 	value := l.lowerExpression(ret.Value, statements)
 	if value == ret.Value {
 		*statements = append(*statements, ret)
+		return
 	}
 	*statements = append(*statements, &ir.ReturnStatement{
 		Value: value,

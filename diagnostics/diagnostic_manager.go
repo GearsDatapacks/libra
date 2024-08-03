@@ -450,3 +450,8 @@ func NoEnumMember(name string, member string) *Partial {
 	msg := fmt.Sprintf("Enum %q has no member %q", name, member)
 	return partial(Error, msg)
 }
+
+func NotAllPathsReturn(location text.Location) *Diagnostic {
+	const msg = "Not all code paths return a value"
+	return makeError(msg, location)
+}

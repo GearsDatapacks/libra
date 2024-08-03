@@ -143,6 +143,7 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		Body:       body,
 		Type:       fnType,
 		Exported:   funcDec.Exported,
+		Location:   funcDec.NameLocation,
 	}
 }
 

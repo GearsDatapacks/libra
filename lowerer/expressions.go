@@ -27,7 +27,7 @@ func (l *lowerer) lowerVariableExpression(expr *ir.VariableExpression, _ *[]ir.S
 
 func (l *lowerer) lowerBinaryExpression(binExpr *ir.BinaryExpression, statements *[]ir.Statement) ir.Expression {
 	left := l.lowerExpression(binExpr.Left, statements)
-	right := l.lowerExpression(binExpr.Left, statements)
+	right := l.lowerExpression(binExpr.Right, statements)
 	if left == binExpr.Left && right == binExpr.Right {
 		return binExpr
 	}
@@ -260,6 +260,7 @@ func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLab
 	}
 
 	yieldLabel := ""
+	addLabel := len(endLabel) == 0
 	if len(endLabel) > 0 {
 		yieldLabel = endLabel[0]
 	} else {
@@ -277,7 +278,10 @@ func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLab
 	for _, stmt := range block.Statements {
 		l.lower(stmt, statements)
 	}
-	*statements = append(*statements, &ir.Label{Name: yieldLabel})
+
+	if addLabel {
+		*statements = append(*statements, &ir.Label{Name: yieldLabel})
+	}
 	return &ir.VariableExpression{Symbol: yieldVar}
 }
 
@@ -391,8 +395,17 @@ func (l *lowerer) lowerTypeExpression(expr *ir.TypeExpression, _ *[]ir.Statement
 	return expr
 }
 
-func (l *lowerer) lowerFunctionExpression(expr *ir.FunctionExpression, statements *[]ir.Statement) ir.Expression {
-	panic("TODO")
+func (l *lowerer) lowerFunctionExpression(funcExpr *ir.FunctionExpression, _ *[]ir.Statement) ir.Expression {
+	statements := []ir.Statement{}
+	l.lowerBlock(funcExpr.Body, &statements)
+	statements = l.cfa(statements, funcExpr.Location)
+
+	return &ir.FunctionExpression{
+		Parameters: funcExpr.Parameters,
+		Body:       &ir.Block{Statements: statements, ResultType: funcExpr.Body.ResultType},
+		DataType:   funcExpr.DataType,
+		Location:   funcExpr.Location,
+	}
 }
 
 func (l *lowerer) lowerRefExpression(ref *ir.RefExpression, statements *[]ir.Statement) ir.Expression {

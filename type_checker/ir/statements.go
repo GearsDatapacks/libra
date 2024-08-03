@@ -3,6 +3,7 @@ package ir
 import (
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 )
@@ -28,6 +29,7 @@ type FunctionDeclaration struct {
 	Body       *Block
 	Type       *types.Function
 	Exported   bool
+	Location text.Location
 }
 
 func (f *FunctionDeclaration) Print(node *printer.Node) {

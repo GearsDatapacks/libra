@@ -5,6 +5,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
@@ -1416,6 +1417,7 @@ type FunctionExpression struct {
 	Parameters []string
 	Body       *Block
 	DataType   *types.Function
+	Location text.Location
 }
 
 func (f *FunctionExpression) Print(node *printer.Node) {

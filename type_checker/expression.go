@@ -1045,6 +1045,7 @@ func (t *typeChecker) typeCheckFunctionExpression(fn *ast.FunctionExpression) ir
 			Parameters: paramTypes,
 			ReturnType: returnType,
 		},
+		Location: fn.Location,
 	}
 }
 
