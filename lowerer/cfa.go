@@ -2,6 +2,7 @@ package lowerer
 
 import (
 	"fmt"
+	"os"
 	"slices"
 
 	"github.com/gearsdatapacks/libra/colour"
@@ -15,15 +16,35 @@ import (
 func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.Statement {
 	g := graph{
 		diagnostics: l.diagnostics,
-		blocks:      []basicBlock{},
-		connections: []connection{},
+		blocks:      []*basicBlock{},
+		currentBlock: &basicBlock{
+			statements:  []ir.Statement{},
+			entries:     []*connection{},
+			exits:       []*connection{},
+		},
 	}
 	g.analyse(statements, location)
 	l.diagnostics = g.diagnostics
 	result := []ir.Statement{}
-	for _, block := range g.blocks {
+
+	for i, block := range g.blocks {
 		if !block.unreachable {
+			if len(block.statements) == 0 && len(block.exits) == 1 {
+				continue
+			}
+
+			if len(block.entries) != 0 {
+				result = append(result, &ir.Label{Name: fmt.Sprintf("block%d", i)})
+			}
+
 			result = append(result, block.statements...)
+			for _, exit := range block.exits {
+				if exit.condition == nil {
+					result = append(result, &ir.Goto{Label: fmt.Sprintf("block%d", exit.to)})
+				} else {
+					result = append(result, &ir.GotoIf{Condition: exit.condition, Label: fmt.Sprintf("block%d", exit.to)})
+				}
+			}
 		}
 	}
 
@@ -33,8 +54,8 @@ func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.St
 type basicBlock struct {
 	label       string
 	statements  []ir.Statement
-	entries     []int
-	exits       []int
+	entries     []*connection
+	exits       []*connection
 	unreachable bool
 }
 
@@ -45,9 +66,8 @@ type connection struct {
 
 type graph struct {
 	diagnostics  diagnostics.Manager
-	blocks       []basicBlock
-	currentBlock basicBlock
-	connections  []connection
+	blocks       []*basicBlock
+	currentBlock *basicBlock
 }
 
 func (g *graph) Print(node *printer.Node) {
@@ -63,7 +83,7 @@ func (g *graph) Print(node *printer.Node) {
 						" %s<- %s%d",
 						n.Colour(colour.Symbol),
 						n.Colour(colour.Literal),
-						entry,
+						entry.from,
 					)
 				}
 
@@ -73,7 +93,7 @@ func (g *graph) Print(node *printer.Node) {
 						" %s-> %s%d",
 						n.Colour(colour.Symbol),
 						n.Colour(colour.Literal),
-						exit,
+						exit.to,
 					)
 				}
 			},
@@ -88,10 +108,10 @@ func (g *graph) analyse(statements []ir.Statement, location text.Location) {
 	g.separateBlocks(statements)
 	g.makeConnections()
 
-	// p := printer.New(os.Stdout, true)
-	// p.Node(g)
-	// p.Print()
-	// fmt.Println()
+	p := printer.New(os.Stdout, true)
+	p.Node(g)
+	p.Print()
+	fmt.Println()
 
 	g.removeUnreachable()
 	if !g.checkPaths() {
@@ -104,7 +124,6 @@ func (g *graph) separateBlocks(statements []ir.Statement) {
 		switch stmt := statement.(type) {
 		case *ir.Label:
 			g.beginBlock(stmt.Name)
-			g.statement(stmt)
 		case *ir.Goto:
 			g.statement(stmt)
 			g.endBlock()
@@ -126,14 +145,12 @@ func (g *graph) separateBlocks(statements []ir.Statement) {
 }
 
 func (g *graph) endBlock() {
-	if len(g.currentBlock.statements) != 0 {
-		g.blocks = append(g.blocks, g.currentBlock)
-	}
-	g.currentBlock = basicBlock{
+	g.blocks = append(g.blocks, g.currentBlock)
+	g.currentBlock = &basicBlock{
 		label:      "",
 		statements: []ir.Statement{},
-		entries:    []int{},
-		exits:      []int{},
+		entries:    []*connection{},
+		exits:      []*connection{},
 	}
 }
 
@@ -151,11 +168,18 @@ func (g *graph) makeConnections() {
 		return
 	}
 	for i, block := range g.blocks[:len(g.blocks)-1] {
-		switch stmt := block.statements[len(block.statements)-1].(type) {
+		var last ir.Statement
+		if len(block.statements) != 0 {
+			last = block.statements[len(block.statements)-1]
+		}
+
+		switch stmt := last.(type) {
 		case *ir.Goto:
 			g.connection(i, g.blockWithLabel(stmt.Label))
+			block.statements = block.statements[:len(block.statements)-1]
 		case *ir.GotoIf:
 			g.conditionalConnection(i, g.blockWithLabel(stmt.Label), stmt.Condition)
+			block.statements = block.statements[:len(block.statements)-1]
 		case *ir.ReturnStatement:
 		default:
 			g.connection(i, i+1)
@@ -182,13 +206,13 @@ func (g *graph) doConnection(from, to int, condition ir.Expression) {
 		}
 	}
 
-	g.connections = append(g.connections, connection{
+	conn := &connection{
 		from:      from,
 		to:        to,
 		condition: condition,
-	})
-	g.blocks[to].entries = append(g.blocks[to].entries, from)
-	g.blocks[from].exits = append(g.blocks[from].exits, to)
+	}
+	g.blocks[to].entries = append(g.blocks[to].entries, conn)
+	g.blocks[from].exits = append(g.blocks[from].exits, conn)
 }
 
 func (g *graph) blockWithLabel(label string) int {
@@ -217,9 +241,9 @@ func (g *graph) removeUnreachable() {
 			g.blocks[i].unreachable = true
 
 			for _, exit := range block.exits {
-				g.blocks[exit].entries = slices.DeleteFunc(
-					g.blocks[exit].entries,
-					func(entry int) bool { return entry == i },
+				g.blocks[exit.to].entries = slices.DeleteFunc(
+					g.blocks[exit.to].entries,
+					func(entry *connection) bool { return entry.from == i },
 				)
 			}
 			g.blocks[i].exits = block.exits[:0]
