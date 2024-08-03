@@ -255,7 +255,7 @@ func (l *lowerer) lowerMemberExpression(member *ir.MemberExpression, statements 
 func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLabel ...string) ir.Expression {
 	if len(block.Statements) == 1 {
 		if expr, ok := block.Statements[0].(ir.Expression); ok {
-			return expr
+			return l.lowerExpression(expr, statements)
 		}
 	}
 
@@ -286,10 +286,10 @@ func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLab
 }
 
 func negate(condition ir.Expression) ir.Expression {
-	return &ir.UnaryExpression{
+	return optimiseExpression(&ir.UnaryExpression{
 		Operator: ir.UnaryOperator{Id: ir.LogicalNot},
 		Operand:  condition,
-	}
+	})
 }
 
 type ifContext struct {

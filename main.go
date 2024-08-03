@@ -9,11 +9,27 @@ import (
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 )
 
+type debugKind int
+
+const (
+	none debugKind = iota
+	ast
+	ir
+	lowered
+)
+
 func main() {
 	mod, diags := module.Load(os.Args[1])
-	debugAst := false
-	if len(os.Args) > 2 && os.Args[2] == "--ast" {
-		debugAst = true
+	debugKind := none
+	if len(os.Args) > 3 && os.Args[2] == "--debug" {
+		switch os.Args[3] {
+		case "ast":
+			debugKind = ast
+		case "ir":
+			debugKind = ir
+		case "lowered":
+			debugKind = lowered
+		}
 	}
 
 	if len(diags) != 0 {
@@ -23,7 +39,7 @@ func main() {
 		return
 	}
 
-	if debugAst {
+	if debugKind == ast {
 		for _, file := range mod.Files {
 			fmt.Println(file.Path + ":")
 			file.Ast.Print()
@@ -38,6 +54,12 @@ func main() {
 		for _, diag := range diags {
 			diag.Print()
 		}
+		return
+	}
+
+	if debugKind == ir {
+		pkg.Print()
+		fmt.Println()
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.Statement {
@@ -26,11 +27,6 @@ func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.St
 		}
 	}
 
-	// p := printer.New(os.Stdout, true)
-	// p.Node(&g)
-	// p.Print()
-	// fmt.Println()
-
 	return result
 }
 
@@ -43,8 +39,8 @@ type basicBlock struct {
 }
 
 type connection struct {
-	from, to    int
-	conditional bool
+	from, to  int
+	condition ir.Expression
 }
 
 type graph struct {
@@ -91,6 +87,12 @@ func (g *graph) Print(node *printer.Node) {
 func (g *graph) analyse(statements []ir.Statement, location text.Location) {
 	g.separateBlocks(statements)
 	g.makeConnections()
+
+	// p := printer.New(os.Stdout, true)
+	// p.Node(g)
+	// p.Print()
+	// fmt.Println()
+
 	g.removeUnreachable()
 	if !g.checkPaths() {
 		g.diagnostics = append(g.diagnostics, *diagnostics.NotAllPathsReturn(location))
@@ -151,27 +153,42 @@ func (g *graph) makeConnections() {
 	for i, block := range g.blocks[:len(g.blocks)-1] {
 		switch stmt := block.statements[len(block.statements)-1].(type) {
 		case *ir.Goto:
-			g.connection(i, g.blockWithLabel(stmt.Label), false)
+			g.connection(i, g.blockWithLabel(stmt.Label))
 		case *ir.GotoIf:
-			g.connection(i, g.blockWithLabel(stmt.Label), true)
+			g.conditionalConnection(i, g.blockWithLabel(stmt.Label), stmt.Condition)
 		case *ir.ReturnStatement:
 		default:
-			g.connection(i, i+1, false)
+			g.connection(i, i+1)
 		}
 	}
 }
 
-func (g *graph) connection(from, to int, conditional bool) {
+func (g *graph) connection(from, to int) {
+	g.doConnection(from, to, nil)
+}
+
+func (g *graph) conditionalConnection(from, to int, condition ir.Expression) {
+	g.doConnection(from, to, condition)
+	g.doConnection(from, from+1, negate(condition))
+}
+
+func (g *graph) doConnection(from, to int, condition ir.Expression) {
+	if condition != nil {
+		if boolean, ok := condition.ConstValue().(values.BoolValue); ok {
+			if boolean.Value {
+				g.doConnection(from, to, nil)
+			}
+			return
+		}
+	}
+
 	g.connections = append(g.connections, connection{
-		from:        from,
-		to:          to,
-		conditional: conditional,
+		from:      from,
+		to:        to,
+		condition: condition,
 	})
 	g.blocks[to].entries = append(g.blocks[to].entries, from)
 	g.blocks[from].exits = append(g.blocks[from].exits, to)
-	if conditional {
-		g.connection(from, from+1, false)
-	}
 }
 
 func (g *graph) blockWithLabel(label string) int {

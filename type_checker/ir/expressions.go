@@ -85,6 +85,43 @@ func (i *IntegerLiteral) ConstValue() values.ConstValue {
 	}
 }
 
+type UintLiteral struct {
+	expression
+	Value uint64
+}
+
+func (i  UintLiteral) Print(node *printer.Node) {
+	node.Text(
+		"%sUINT_LIT %s%v",
+		node.Colour(colour.NodeName),
+		node.Colour(colour.Literal),
+		i.Value,
+	)
+}
+
+func (i UintLiteral) Type() types.Type {
+	ui := types.Numeric{
+		Kind:         types.NumInt,
+		BitWidth:     maxInt(minUintWidth(i.Value), 32),
+		Downcastable: &types.Downcastable{},
+	}
+	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
+	ui.Downcastable.MinIntWidth = minIntWidth(int64(i.Value))
+	ui.Downcastable.MinUintWidth = minUintWidth(i.Value)
+
+	return ui
+}
+
+func  (UintLiteral) IsConst() bool {
+	return true
+}
+
+func (i  UintLiteral) ConstValue() values.ConstValue {
+	return values.UintValue{
+		Value: i.Value,
+	}
+}
+
 type FloatLiteral struct {
 	expression
 	Value float64

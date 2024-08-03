@@ -1,6 +1,8 @@
 package lowerer
 
-import "github.com/gearsdatapacks/libra/type_checker/ir"
+import (
+	"github.com/gearsdatapacks/libra/type_checker/ir"
+)
 
 func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, statements *[]ir.Statement) {
 	value := l.lowerExpression(varDecl.Value, statements)
