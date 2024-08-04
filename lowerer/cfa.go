@@ -20,7 +20,9 @@ func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.St
 			statements: []ir.Statement{},
 			entries:    []*connection{},
 			exits:      []*connection{},
+			isStart:    true,
 		},
+		connections: []*connection{},
 	}
 	g.analyse(statements, location)
 	l.diagnostics = g.diagnostics
@@ -28,10 +30,6 @@ func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.St
 
 	for i, block := range g.blocks {
 		if !block.unreachable {
-			if len(block.statements) == 0 && len(block.exits) == 1 {
-				continue
-			}
-
 			if len(block.entries) != 0 {
 				result = append(result, &ir.Label{Name: fmt.Sprintf("block%d", i)})
 			}
@@ -56,6 +54,7 @@ type basicBlock struct {
 	entries     []*connection
 	exits       []*connection
 	unreachable bool
+	isStart     bool
 }
 
 type connection struct {
@@ -67,6 +66,7 @@ type graph struct {
 	diagnostics  diagnostics.Manager
 	blocks       []*basicBlock
 	currentBlock *basicBlock
+	connections  []*connection
 }
 
 func (g *graph) Print(node *printer.Node) {
@@ -113,6 +113,7 @@ func (g *graph) analyse(statements []ir.Statement, location text.Location) {
 	// fmt.Println()
 
 	g.removeUnreachable()
+	g.remapIds()
 	if !g.checkPaths() {
 		g.diagnostics = append(g.diagnostics, *diagnostics.NotAllPathsReturn(location))
 	}
@@ -212,6 +213,7 @@ func (g *graph) doConnection(from, to int, condition ir.Expression) {
 	}
 	g.blocks[to].entries = append(g.blocks[to].entries, conn)
 	g.blocks[from].exits = append(g.blocks[from].exits, conn)
+	g.connections = append(g.connections, conn)
 }
 
 func (g *graph) blockWithLabel(label string) int {
@@ -225,32 +227,73 @@ func (g *graph) blockWithLabel(label string) int {
 
 func (g *graph) removeUnreachable() {
 	for i, block := range g.blocks {
-		// The first block always has an entry point
-		if i == 0 {
+		// Don't re-traverse already unreachable blocks
+		if block.unreachable {
 			continue
 		}
-		if len(block.entries) == 0 {
-			// Don't re-traverse already unreachable blocks
-			if block.unreachable {
-				continue
-			}
 
+		// The first block always has an entry point
+		if len(block.entries) == 0 && !block.isStart {
 			// We can't actually remove the block, since that messes up
 			// all the indices, so we just mark the block as unreachable.
-			g.blocks[i].unreachable = true
+			block.unreachable = true
 
 			for _, exit := range block.exits {
-				g.blocks[exit.to].entries = slices.DeleteFunc(
-					g.blocks[exit.to].entries,
+				exitBlock := g.blocks[exit.to]
+				exitBlock.entries = slices.DeleteFunc(
+					exitBlock.entries,
 					func(entry *connection) bool { return entry.from == i },
 				)
 			}
-			g.blocks[i].exits = block.exits[:0]
+			block.exits = block.exits[:0]
 			// We have to re-check all blocks because a block whose only
 			// entry point is another unreachable block is also unreachable
 			g.removeUnreachable()
 			return
 		}
+
+		if len(block.statements) == 0 && len(block.exits) == 1 {
+			exit := g.blocks[block.exits[0].to]
+			exit.entries = slices.DeleteFunc(
+				exit.entries,
+				func(c *connection) bool { return c.from == i },
+			)
+
+			for _, entry := range block.entries {
+				entry.to = block.exits[0].to
+				exit.entries = append(exit.entries, entry)
+			}
+			if block.isStart {
+				exit.isStart = true
+			}
+
+			block.unreachable = true
+			g.removeUnreachable()
+			return
+		}
+	}
+}
+
+func (g *graph) remapIds() {
+	ids := make([]int, 0, len(g.blocks))
+	for i := range len(g.blocks) {
+		ids = append(ids, i)
+	}
+	for i := range len(g.blocks) {
+		if !g.blocks[i].unreachable {
+			continue
+		}
+
+		for j := i + 1; j < len(g.blocks); j++ {
+			ids[j]--
+		}
+	}
+	g.blocks = slices.DeleteFunc(g.blocks, func(block *basicBlock) bool {
+		return block.unreachable
+	})
+	for _, connection := range g.connections {
+		connection.from = ids[connection.from]
+		connection.to = ids[connection.to]
 	}
 }
 
