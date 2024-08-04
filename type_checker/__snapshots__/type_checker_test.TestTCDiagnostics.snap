@@ -498,3 +498,11 @@ let int: i32 = 1.5
 
 
 ---
+
+[`if true {;	10;} else {;  "twenty";}` - 1]
+test.lb:3:8:
+} else {
+       ^ If-else branches must yield matching types. Expected "untyped int", found "string"
+
+
+---

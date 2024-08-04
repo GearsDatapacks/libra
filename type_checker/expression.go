@@ -911,9 +911,16 @@ func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Express
 	}
 
 	body := t.typeCheckBlock(ifStmt.Body, true)
-	var elseBranch ir.Statement
+	var elseBranch ir.Expression
 	if ifStmt.ElseBranch != nil {
-		elseBranch = t.typeCheckStatement(ifStmt.ElseBranch)
+		elseBranch = t.typeCheckExpression(ifStmt.ElseBranch)
+		if !types.Assignable(body.ResultType, elseBranch.Type()) {
+			t.diagnostics.Report(diagnostics.BranchTypesMustMatch(
+				ifStmt.ElseBranch.GetLocation(),
+				body.ResultType,
+				elseBranch.Type(),
+			))
+		}
 	}
 	return &ir.IfExpression{
 		Condition:  condition,

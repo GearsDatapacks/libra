@@ -533,7 +533,7 @@ func (p *parser) parseIfExpression() (ast.Expression, *diagnostics.Diagnostic) {
 		return nil, err
 	}
 
-	var elseBranch ast.Statement
+	var elseBranch ast.Expression
 
 	if p.isKeyword("else") {
 		p.consume()

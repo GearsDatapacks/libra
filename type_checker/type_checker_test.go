@@ -530,5 +530,10 @@ struct Tagged`,
 		"fn opt_to_res(): ?i32 { let res: !i32 = 10; res? }",
 		`enum Empty {}; Empty.Member`,
 		`enum Float: f32 { A = 1.2, B }`,
+		`if true {
+	10
+} else {
+  "twenty"
+}`,
 	)
 }

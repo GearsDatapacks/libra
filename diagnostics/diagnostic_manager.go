@@ -451,6 +451,13 @@ func NoEnumMember(name string, member string) *Partial {
 	return partial(Error, msg)
 }
 
+func BranchTypesMustMatch(location text.Location, expected, got tcType) *Diagnostic {
+	msg := fmt.Sprintf("If-else branches must yield matching types. Expected %q, found %q", expected, got)
+	return makeError(msg, location)
+}
+
+// Lowerer errors
+
 func NotAllPathsReturn(location text.Location) *Diagnostic {
 	const msg = "Not all code paths return a value"
 	return makeError(msg, location)

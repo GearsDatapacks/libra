@@ -590,7 +590,7 @@ type IfExpression struct {
 	Location   text.Location
 	Condition  Expression
 	Body       *Block
-	ElseBranch Statement
+	ElseBranch Expression
 }
 
 func (i *IfExpression) Print(node *printer.Node) {
