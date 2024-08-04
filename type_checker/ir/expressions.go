@@ -640,12 +640,12 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 	}
 }
 
-type UnOpId int
-
 type UnaryOperator struct {
 	Id       UnOpId
 	DataType types.Type
 }
+
+type UnOpId int
 
 const (
 	_ UnOpId = iota

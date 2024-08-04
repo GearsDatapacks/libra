@@ -13,24 +13,232 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 	}
 
 	switch expr := expression.(type) {
-	case *ir.IntegerLiteral,
-		*ir.UintLiteral,
-		*ir.FloatLiteral,
-		*ir.BooleanLiteral,
-		*ir.StringLiteral:
-		panic("Must be const")
-
 	case *ir.UnaryExpression:
 		switch expr.Operator.Id {
 		case ir.LogicalNot:
+			return optimiseLogicalNot(expr.Operand, expr)
+		case ir.NegateInt, ir.NegateFloat:
 			return optimiseNegation(expr.Operand, expr)
+		case ir.BitwiseNot:
+			return optimiseComplement(expr.Operand, expr)
+		}
+
+	case *ir.BinaryExpression:
+		switch expr.Operator {
+		case ir.LogicalAnd:
+			if boolean, ok := expr.Left.ConstValue().(values.BoolValue); ok {
+				if boolean.Value {
+					return expr.Right
+				} else {
+					return &ir.BooleanLiteral{Value: false}
+				}
+			}
+			if boolean, ok := expr.Right.ConstValue().(values.BoolValue); ok {
+				if boolean.Value {
+					return expr.Left
+				} else {
+					return &ir.BooleanLiteral{Value: false}
+				}
+			}
+		case ir.LogicalOr:
+			if boolean, ok := expr.Left.ConstValue().(values.BoolValue); ok {
+				if boolean.Value {
+					return &ir.BooleanLiteral{Value: true}
+				} else {
+					return expr.Right
+				}
+			}
+			if boolean, ok := expr.Right.ConstValue().(values.BoolValue); ok {
+				if boolean.Value {
+					return &ir.BooleanLiteral{Value: true}
+				} else {
+					return expr.Left
+				}
+			}
+		case ir.LeftShift:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+
+		case ir.RightShift:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+		case ir.BitwiseOr:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return expr.Right
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return expr.Left
+				}
+			}
+		case ir.BitwiseAnd:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				}
+			}
+		case ir.AddInt:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return expr.Right
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return expr.Left
+				}
+			}
+		case ir.AddFloat:
+			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return expr.Right
+				}
+			}
+			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return expr.Left
+				}
+			}
+		case ir.Concat:
+			if str, ok := expr.Left.ConstValue().(values.StringValue); ok {
+				if len(str.Value) == 0 {
+					return expr.Right
+				}
+			}
+			if str, ok := expr.Right.ConstValue().(values.StringValue); ok {
+				if len(str.Value) == 0 {
+					return expr.Left
+				}
+			}
+		case ir.SubtractInt:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.UnaryExpression{
+						Operator: ir.UnaryOperator{Id: ir.NegateInt},
+						Operand:  expr.Right,
+					}
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return expr.Left
+				}
+			}
+		case ir.SubtractFloat:
+			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return &ir.UnaryExpression{
+						Operator: ir.UnaryOperator{Id: ir.NegateFloat},
+						Operand:  expr.Right,
+					}
+				}
+			}
+			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return expr.Left
+				}
+			}
+		case ir.MultiplyInt:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				} else if int.Value == 1 {
+					return expr.Right
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				} else if int.Value == 1 {
+					return expr.Left
+				}
+			}
+		case ir.MultiplyFloat:
+			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return &ir.FloatLiteral{Value: 0}
+				} else if float.Value == 1 {
+					return expr.Right
+				}
+			}
+			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return &ir.FloatLiteral{Value: 0}
+				} else if float.Value == 1 {
+					return expr.Left
+				}
+			}
+		case ir.Divide:
+			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
+				if float.Value == 1 {
+					return expr.Left
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 1 {
+					return expr.Left
+				}
+			}
+		case ir.PowerInt:
+			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 0}
+				} else if int.Value == 1 {
+					return &ir.IntegerLiteral{Value: 1}
+				}
+			}
+			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
+				if int.Value == 0 {
+					return &ir.IntegerLiteral{Value: 1}
+				} else if int.Value == 1 {
+					return expr.Left
+				}
+			}
+		case ir.PowerFloat:
+			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return &ir.FloatLiteral{Value: 0}
+				} else if float.Value == 1 {
+					return &ir.FloatLiteral{Value: 1}
+				}
+			}
+			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
+				if float.Value == 0 {
+					return &ir.FloatLiteral{Value: 1}
+				} else if float.Value == 1 {
+					return expr.Left
+				}
+			}
 		}
 	}
 
 	return expression
 }
 
-func optimiseNegation(expression ir.Expression, original ir.Expression) ir.Expression {
+func optimiseLogicalNot(expression ir.Expression, original ir.Expression) ir.Expression {
 	switch expr := expression.(type) {
 	case *ir.UnaryExpression:
 		switch expr.Operator.Id {
@@ -75,6 +283,28 @@ func optimiseNegation(expression ir.Expression, original ir.Expression) ir.Expre
 				Operator: ir.Equal,
 				Right:    expr.Right,
 			}
+		}
+	}
+	return original
+}
+
+func optimiseNegation(expression ir.Expression, original ir.Expression) ir.Expression {
+	switch expr := expression.(type) {
+	case *ir.UnaryExpression:
+		switch expr.Operator.Id {
+		case ir.NegateInt, ir.NegateFloat:
+			return expr.Operand
+		}
+	}
+	return original
+}
+
+func optimiseComplement(expression ir.Expression, original ir.Expression) ir.Expression {
+	switch expr := expression.(type) {
+	case *ir.UnaryExpression:
+		switch expr.Operator.Id {
+		case ir.BitwiseNot:
+			return expr.Operand
 		}
 	}
 	return original
