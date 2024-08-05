@@ -148,5 +148,6 @@ func (t *Table) registerGlobals() {
 	t.Register(&Type{"string", types.String})
 	t.Register(&Type{"void", types.Void})
 	t.Register(&Type{"Type", types.RuntimeType})
+	t.Register(&Type{"never", types.Never})
 	t.Register(&Type{"Error", &types.ErrorTag})
 }

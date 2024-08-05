@@ -90,7 +90,7 @@ type UintLiteral struct {
 	Value uint64
 }
 
-func (i  UintLiteral) Print(node *printer.Node) {
+func (i UintLiteral) Print(node *printer.Node) {
 	node.Text(
 		"%sUINT_LIT %s%v",
 		node.Colour(colour.NodeName),
@@ -112,11 +112,11 @@ func (i UintLiteral) Type() types.Type {
 	return ui
 }
 
-func  (UintLiteral) IsConst() bool {
+func (UintLiteral) IsConst() bool {
 	return true
 }
 
-func (i  UintLiteral) ConstValue() values.ConstValue {
+func (i UintLiteral) ConstValue() values.ConstValue {
 	return values.UintValue{
 		Value: i.Value,
 	}
@@ -1331,6 +1331,7 @@ func (*Block) ConstValue() values.ConstValue {
 type IfExpression struct {
 	expression
 	Condition  Expression
+	ResultType types.Type
 	Body       *Block
 	ElseBranch Statement
 }
@@ -1354,7 +1355,7 @@ func (i *IfExpression) Print(node *printer.Node) {
 }
 
 func (i *IfExpression) Type() types.Type {
-	return i.Body.Type()
+	return i.ResultType
 }
 
 func (*IfExpression) IsConst() bool {
@@ -1454,7 +1455,7 @@ type FunctionExpression struct {
 	Parameters []string
 	Body       *Block
 	DataType   *types.Function
-	Location text.Location
+	Location   text.Location
 }
 
 func (f *FunctionExpression) Print(node *printer.Node) {

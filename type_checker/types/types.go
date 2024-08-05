@@ -26,6 +26,10 @@ func Assignable(to, from Type) bool {
 		return true
 	}
 
+	if from == Never {
+		return true
+	}
+
 	if alias, ok := to.(*Alias); ok {
 		return Assignable(alias.Type, from)
 	}
@@ -115,6 +119,7 @@ const (
 	Bool
 	String
 	RuntimeType
+	Never
 )
 
 var typeNames = map[PrimaryType]string{
@@ -122,6 +127,7 @@ var typeNames = map[PrimaryType]string{
 	Bool:        "bool",
 	String:      "string",
 	RuntimeType: "Type",
+	Never:       "never",
 }
 
 var Void = NewUnit("void")

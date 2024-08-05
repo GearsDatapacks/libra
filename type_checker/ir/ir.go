@@ -99,6 +99,34 @@ func MutableExpr(expr Expression) bool {
 	}
 }
 
+type scopeKind int
+
+const (
+	BlockScope scopeKind = iota
+	LoopScope
+	FunctionScope
+)
+
+func Diverges(stmt Statement, scope scopeKind) bool {
+	switch s := stmt.(type) {
+	case *VariableDeclaration,
+		*FunctionDeclaration,
+		*ImportStatement,
+		*TypeDeclaration:
+		return false
+	case *ReturnStatement:
+		return scope < FunctionScope
+	case *BreakStatement:
+		return scope < LoopScope
+	case *YieldStatement:
+		return scope < BlockScope
+	case Expression:
+		return s.Type() == types.Never
+	default:
+		panic("Unreachable")
+	}
+}
+
 func Index(left, index Expression) (types.Type, *diagnostics.Partial) {
 	if index.IsConst() {
 		if left.IsConst() {

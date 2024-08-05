@@ -882,8 +882,13 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 	}
 
 	stmts := []ir.Statement{}
+	var resultType types.Type = types.Void
 	for _, stmt := range block.Statements {
-		stmts = append(stmts, t.typeCheckStatement(stmt))
+		nextStatement := t.typeCheckStatement(stmt)
+		if ir.Diverges(nextStatement, ir.BlockScope) {
+			resultType = types.Never
+		}
+		stmts = append(stmts, nextStatement)
 	}
 	if len(stmts) == 1 {
 		if expr, ok := stmts[0].(ir.Expression); ok {
@@ -894,8 +899,7 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 		}
 	}
 
-	var resultType types.Type = types.Void
-	if createScope {
+	if createScope && resultType != types.Never {
 		resultType = t.symbols.Context.(*symbols.BlockContext).ResultType
 	}
 	return &ir.Block{
@@ -911,10 +915,17 @@ func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Express
 	}
 
 	body := t.typeCheckBlock(ifStmt.Body, true)
+	resultType := body.ResultType
 	var elseBranch ir.Expression
+
 	if ifStmt.ElseBranch != nil {
 		elseBranch = t.typeCheckExpression(ifStmt.ElseBranch)
-		if !types.Assignable(body.ResultType, elseBranch.Type()) {
+
+		if resultType == types.Never {
+			resultType = elseBranch.Type()
+		}
+		
+		if !types.Assignable(resultType, elseBranch.Type()) {
 			t.diagnostics.Report(diagnostics.BranchTypesMustMatch(
 				ifStmt.ElseBranch.GetLocation(),
 				body.ResultType,
@@ -922,8 +933,10 @@ func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Express
 			))
 		}
 	}
+
 	return &ir.IfExpression{
 		Condition:  condition,
+		ResultType: resultType,
 		Body:       body,
 		ElseBranch: elseBranch,
 	}
