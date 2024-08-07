@@ -71,6 +71,7 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 		for _, stmt := range module.Statements {
 			lowerer.lowerGlobal(stmt, mod)
 		}
+		mainFunction.Body.Statements = lowerer.cfa(mainFunction.Body.Statements, nil, false)
 	}
 	return lowered, lowerer.diagnostics
 }

@@ -3,6 +3,7 @@ package lowerer
 import (
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/symbols"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func (l *lowerer) lowerIntegerLiteral(expr *ir.IntegerLiteral, _ *[]ir.Statement) ir.Expression {
@@ -398,7 +399,7 @@ func (l *lowerer) lowerTypeExpression(expr *ir.TypeExpression, _ *[]ir.Statement
 func (l *lowerer) lowerFunctionExpression(funcExpr *ir.FunctionExpression, _ *[]ir.Statement) ir.Expression {
 	statements := []ir.Statement{}
 	l.lowerBlock(funcExpr.Body, &statements)
-	statements = l.cfa(statements, funcExpr.Location)
+	statements = l.cfa(statements, &funcExpr.Location, funcExpr.DataType.ReturnType != types.Void)
 
 	return &ir.FunctionExpression{
 		Parameters: funcExpr.Parameters,

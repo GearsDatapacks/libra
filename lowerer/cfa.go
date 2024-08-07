@@ -12,34 +12,42 @@ import (
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
-func (l *lowerer) cfa(statements []ir.Statement, location text.Location) []ir.Statement {
+func (l *lowerer) cfa(
+	statements []ir.Statement,
+	location *text.Location,
+	shouldReturn bool,
+) []ir.Statement {
 	g := graph{
 		diagnostics: l.diagnostics,
 		blocks:      []*basicBlock{},
 		currentBlock: &basicBlock{
 			statements: []ir.Statement{},
 			entries:    []*connection{},
-			exits:      []*connection{},
+			exit:       nil,
 			isStart:    true,
 		},
 		connections: []*connection{},
 	}
-	g.analyse(statements, location)
+	g.analyse(statements, location, shouldReturn)
 	l.diagnostics = g.diagnostics
 	result := []ir.Statement{}
 
 	for i, block := range g.blocks {
 		if !block.unreachable {
-			if len(block.entries) != 0 {
+			if len(block.entries) != 0 || block.isStart {
 				result = append(result, &ir.Label{Name: fmt.Sprintf("block%d", i)})
 			}
 
 			result = append(result, block.statements...)
-			for _, exit := range block.exits {
+			if exit := block.exit; exit != nil {
 				if exit.condition == nil {
 					result = append(result, &ir.Goto{Label: fmt.Sprintf("block%d", exit.to)})
 				} else {
-					result = append(result, &ir.GotoIf{Condition: exit.condition, Label: fmt.Sprintf("block%d", exit.to)})
+					result = append(result, &ir.Branch{
+						Condition: exit.condition,
+						IfLabel:   fmt.Sprintf("block%d", exit.to),
+						ElseLabel: fmt.Sprintf("block%d", exit.elseTo),
+					})
 				}
 			}
 		}
@@ -52,7 +60,7 @@ type basicBlock struct {
 	label       string
 	statements  []ir.Statement
 	entries     []*connection
-	exits       []*connection
+	exit        *connection
 	unreachable bool
 	isStart     bool
 }
@@ -60,6 +68,7 @@ type basicBlock struct {
 type connection struct {
 	from, to  int
 	condition ir.Expression
+	elseTo    int
 }
 
 type graph struct {
@@ -87,13 +96,21 @@ func (g *graph) Print(node *printer.Node) {
 				}
 
 				printer.Nodes(n, block.statements)
-				for _, exit := range block.exits {
+				if exit := block.exit; exit != nil {
 					n.Text(
 						" %s-> %s%d",
 						n.Colour(colour.Symbol),
 						n.Colour(colour.Literal),
 						exit.to,
 					)
+					if exit.condition != nil {
+						n.Text(
+							" %s-> %s%d",
+							n.Colour(colour.Symbol),
+							n.Colour(colour.Literal),
+							exit.elseTo,
+						)
+					}
 				}
 			},
 			node.Colour(colour.NodeName),
@@ -103,7 +120,11 @@ func (g *graph) Print(node *printer.Node) {
 	}
 }
 
-func (g *graph) analyse(statements []ir.Statement, location text.Location) {
+func (g *graph) analyse(
+	statements []ir.Statement,
+	location *text.Location,
+	shouldReturn bool,
+) {
 	g.separateBlocks(statements)
 	g.makeConnections()
 
@@ -114,8 +135,8 @@ func (g *graph) analyse(statements []ir.Statement, location text.Location) {
 
 	g.removeUnreachable()
 	g.remapIds()
-	if !g.checkPaths() {
-		g.diagnostics = append(g.diagnostics, *diagnostics.NotAllPathsReturn(location))
+	if shouldReturn && !g.checkPaths() {
+		g.diagnostics = append(g.diagnostics, *diagnostics.NotAllPathsReturn(*location))
 	}
 }
 
@@ -150,7 +171,7 @@ func (g *graph) endBlock() {
 		label:      "",
 		statements: []ir.Statement{},
 		entries:    []*connection{},
-		exits:      []*connection{},
+		exit:       nil,
 	}
 }
 
@@ -188,19 +209,20 @@ func (g *graph) makeConnections() {
 }
 
 func (g *graph) connection(from, to int) {
-	g.doConnection(from, to, nil)
+	g.doConnection(from, to, nil, 0)
 }
 
 func (g *graph) conditionalConnection(from, to int, condition ir.Expression) {
-	g.doConnection(from, to, condition)
-	g.doConnection(from, from+1, negate(condition))
+	g.doConnection(from, to, condition, from+1)
 }
 
-func (g *graph) doConnection(from, to int, condition ir.Expression) {
+func (g *graph) doConnection(from, to int, condition ir.Expression, elseTo int) {
 	if condition != nil {
 		if boolean, ok := condition.ConstValue().(values.BoolValue); ok {
 			if boolean.Value {
-				g.doConnection(from, to, nil)
+				g.doConnection(from, to, nil, 0)
+			} else {
+				g.doConnection(from, elseTo, nil, 0)
 			}
 			return
 		}
@@ -210,9 +232,13 @@ func (g *graph) doConnection(from, to int, condition ir.Expression) {
 		from:      from,
 		to:        to,
 		condition: condition,
+		elseTo:    elseTo,
 	}
 	g.blocks[to].entries = append(g.blocks[to].entries, conn)
-	g.blocks[from].exits = append(g.blocks[from].exits, conn)
+	if condition != nil {
+		g.blocks[elseTo].entries = append(g.blocks[elseTo].entries, conn)
+	}
+	g.blocks[from].exit = conn
 	g.connections = append(g.connections, conn)
 }
 
@@ -238,29 +264,46 @@ func (g *graph) removeUnreachable() {
 			// all the indices, so we just mark the block as unreachable.
 			block.unreachable = true
 
-			for _, exit := range block.exits {
+			if exit := block.exit; exit != nil {
 				exitBlock := g.blocks[exit.to]
 				exitBlock.entries = slices.DeleteFunc(
 					exitBlock.entries,
 					func(entry *connection) bool { return entry.from == i },
 				)
+
+				if exit.condition != nil {
+					exitBlock := g.blocks[exit.elseTo]
+					exitBlock.entries = slices.DeleteFunc(
+						exitBlock.entries,
+						func(entry *connection) bool { return entry.from == i },
+					)
+				}
 			}
-			block.exits = block.exits[:0]
+			block.exit = nil
 			// We have to re-check all blocks because a block whose only
 			// entry point is another unreachable block is also unreachable
 			g.removeUnreachable()
 			return
 		}
 
-		if len(block.statements) == 0 && len(block.exits) == 1 {
-			exit := g.blocks[block.exits[0].to]
+		if len(block.statements) == 0 && block.exit != nil && block.exit.condition == nil {
+			exit := g.blocks[block.exit.to]
 			exit.entries = slices.DeleteFunc(
 				exit.entries,
 				func(c *connection) bool { return c.from == i },
 			)
 
+			if block.exit.condition != nil {
+				exit := g.blocks[block.exit.elseTo]
+				exit.entries = slices.DeleteFunc(
+					exit.entries,
+					func(c *connection) bool { return c.from == i },
+				)
+			}
+
 			for _, entry := range block.entries {
-				entry.to = block.exits[0].to
+				entry.to = block.exit.to
+				entry.elseTo = block.exit.elseTo
 				exit.entries = append(exit.entries, entry)
 			}
 			if block.isStart {
@@ -270,6 +313,18 @@ func (g *graph) removeUnreachable() {
 			block.unreachable = true
 			g.removeUnreachable()
 			return
+		}
+
+		if block.exit != nil && block.exit.condition == nil {
+			nextBlock := g.blocks[block.exit.to]
+
+			if len(nextBlock.entries) == 1 && !nextBlock.isStart {
+				block.statements = append(block.statements, nextBlock.statements...)
+				block.exit = nextBlock.exit
+				nextBlock.unreachable = true
+				g.removeUnreachable()
+				return
+			}
 		}
 	}
 }
@@ -294,6 +349,7 @@ func (g *graph) remapIds() {
 	for _, connection := range g.connections {
 		connection.from = ids[connection.from]
 		connection.to = ids[connection.to]
+		connection.elseTo = ids[connection.elseTo]
 	}
 }
 
@@ -306,7 +362,7 @@ func (g *graph) checkPaths() bool {
 		if len(block.entries) == 0 {
 			continue
 		}
-		if len(block.exits) == 0 {
+		if block.exit == nil {
 			if len(block.statements) == 0 {
 				return false
 			}

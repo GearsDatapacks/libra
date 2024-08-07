@@ -2,6 +2,7 @@ package lowerer
 
 import (
 	"github.com/gearsdatapacks/libra/type_checker/ir"
+	"github.com/gearsdatapacks/libra/type_checker/types"
 )
 
 func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, statements *[]ir.Statement) {
@@ -19,7 +20,7 @@ func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, stat
 func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir.FunctionDeclaration {
 	statements := []ir.Statement{}
 	l.lowerBlock(funcDecl.Body, &statements)
-	statements = l.cfa(statements, funcDecl.Location)
+	statements = l.cfa(statements, &funcDecl.Location, funcDecl.Type.ReturnType != types.Void)
 	return &ir.FunctionDeclaration{
 		Name:       funcDecl.Name,
 		Parameters: funcDecl.Parameters,

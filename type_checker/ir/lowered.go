@@ -94,3 +94,23 @@ func (g *GotoIf) Print(node *printer.Node) {
 		).
 		Node(g.Condition)
 }
+
+type Branch struct {
+	Condition Expression
+	IfLabel   string
+	ElseLabel string
+}
+
+func (b *Branch) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sBRANCH %s%s %selse %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			b.IfLabel,
+			node.Colour(colour.Attribute),
+			node.Colour(colour.Name),
+			b.ElseLabel,
+		).
+		Node(b.Condition)
+}
