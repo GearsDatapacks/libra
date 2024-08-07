@@ -140,7 +140,7 @@ MODULE test
   │ └─OPTION_TYPE
   │   └─VARIABLE_TYPE i32
   └─BLOCK
-    ├─UNIT_STRUCT void
+    ├─PRIMARY_TYPE never
     ├─VAR_DECL
     │ ├─VAR_SYMBOL int
     │ │ └─VARIABLE_TYPE i32

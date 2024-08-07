@@ -1,0 +1,142 @@
+
+[`mut condition = true;if condition {;	let a = 10;}` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL condition mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
+    ├─BRANCH block2 else block1
+    │ └─UNARY_EXPR LogicalNot
+    │   ├─VAR_SYMBOL condition mut
+    │   │ └─PRIMARY_TYPE bool
+    │   └─PRIMARY_TYPE bool
+    ├─LABEL block1
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 10
+    │ └─INT_LIT 10
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var1 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block2
+    ├─LABEL block2
+    └─VAR_SYMBOL var0 mut
+      └─UNIT_STRUCT void
+---
+
+[`mut condition = true;if condition {;	let a = 10;} else {;	let b = 20;}` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL condition mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
+    ├─BRANCH block2 else block1
+    │ └─UNARY_EXPR LogicalNot
+    │   ├─VAR_SYMBOL condition mut
+    │   │ └─PRIMARY_TYPE bool
+    │   └─PRIMARY_TYPE bool
+    ├─LABEL block1
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 10
+    │ └─INT_LIT 10
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var1 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block3
+    ├─LABEL block2
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL b
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 20
+    │ └─INT_LIT 20
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var2 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block3
+    ├─LABEL block3
+    └─VAR_SYMBOL var0 mut
+      └─UNIT_STRUCT void
+---
+
+[`mut condition = true;if condition {;	let a = 10;} else if !condition {;	let b = 20;} else {;	let c = 30;}` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL condition mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
+    ├─BRANCH block2 else block1
+    │ └─UNARY_EXPR LogicalNot
+    │   ├─VAR_SYMBOL condition mut
+    │   │ └─PRIMARY_TYPE bool
+    │   └─PRIMARY_TYPE bool
+    ├─LABEL block1
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 10
+    │ └─INT_LIT 10
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var1 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block5
+    ├─LABEL block2
+    ├─BRANCH block4 else block3
+    │ └─VAR_SYMBOL condition mut
+    │   └─PRIMARY_TYPE bool
+    ├─LABEL block3
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL b
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 20
+    │ └─INT_LIT 20
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var2 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block5
+    ├─LABEL block4
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL c
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 30
+    │ └─INT_LIT 30
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var3 mut
+    │   └─UNIT_STRUCT void
+    ├─GOTO block5
+    ├─LABEL block5
+    └─VAR_SYMBOL var0 mut
+      └─UNIT_STRUCT void
+---

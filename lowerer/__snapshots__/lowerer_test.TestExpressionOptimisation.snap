@@ -1,0 +1,226 @@
+
+[`mut a = 10; !(a == 10)` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 10
+    └─BINARY_EXPR NotEqual
+      ├─VAR_SYMBOL a mut
+      │ └─VARIABLE_TYPE i32
+      ├─INT_LIT 10
+      └─PRIMARY_TYPE bool
+---
+
+[`mut a = 0; !(a < 20)` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 0
+    └─BINARY_EXPR GreaterEq
+      ├─VAR_SYMBOL a mut
+      │ └─VARIABLE_TYPE i32
+      ├─INT_LIT 20
+      └─PRIMARY_TYPE bool
+---
+
+[`mut a = true; !!a` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
+    └─VAR_SYMBOL a mut
+      └─PRIMARY_TYPE bool
+---
+
+[`mut a = 5; a * 1` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 5
+    └─VAR_SYMBOL a mut
+      └─VARIABLE_TYPE i32
+---
+
+[`mut a = 31; a + 0` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 31
+    └─VAR_SYMBOL a mut
+      └─VARIABLE_TYPE i32
+---
+
+[`mut a = 1; a * 0` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 1
+    └─INT_LIT 0
+---
+
+[`mut a = 13; a / 1` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 13
+    └─VAR_SYMBOL a mut
+      └─VARIABLE_TYPE i32
+---
+
+[`mut a = 21; a ** 0` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 21
+    └─INT_LIT 1
+---
+
+[`mut a = 20; -(-a)` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 20
+    └─VAR_SYMBOL a mut
+      └─VARIABLE_TYPE i32
+---
+
+[`mut a = 1; ~(~a)` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 1
+    └─VAR_SYMBOL a mut
+      └─VARIABLE_TYPE i32
+---
+
+[`mut a = false; a || true` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT false
+    └─BOOL_LIT true
+---
+
+[`mut a = true; a && false` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
+    └─BOOL_LIT false
+---
+
+[`mut a = false; a && true` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT false
+    └─VAR_SYMBOL a mut
+      └─PRIMARY_TYPE bool
+---
+
+[`mut a = false; a || false` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT false
+    └─VAR_SYMBOL a mut
+      └─PRIMARY_TYPE bool
+---

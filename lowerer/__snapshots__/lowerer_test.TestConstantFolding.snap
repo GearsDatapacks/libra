@@ -1,0 +1,55 @@
+
+[`1 + 2` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    └─INT_LIT 3
+---
+
+[`true && false` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    └─BOOL_LIT false
+---
+
+[`"Hello, " + "world!"` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    └─STRING_LIT "Hello, world!"
+---
+
+[`1 == 2 || 3 == 3` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    └─BOOL_LIT true
+---
+
+[`(4 / 2) + 1` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    └─FLOAT_LIT 3
+---

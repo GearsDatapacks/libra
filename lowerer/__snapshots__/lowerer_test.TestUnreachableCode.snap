@@ -1,0 +1,77 @@
+
+[`fn foo() {;	if true {;		return;	};	let bar = 10;	bar + 1;	return;}` - 1]
+MODULE test
+├─FUNC_DECL main
+│ ├─FUNCTION_TYPE
+│ │ └─UNIT_STRUCT void
+│ └─BLOCK
+│   ├─UNIT_STRUCT void
+│   └─LABEL block0
+└─FUNC_DECL foo
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─PRIMARY_TYPE never
+    ├─LABEL block0
+    └─RETURN
+---
+
+[`if false {;	let a = 1;} else {;	let b = 1;}` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL b
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 1
+    │ └─INT_LIT 1
+    ├─ASSIGNMENT
+    │ ├─VAR_SYMBOL var0 mut
+    │ │ └─UNIT_STRUCT void
+    │ └─VAR_SYMBOL var2 mut
+    │   └─UNIT_STRUCT void
+    └─VAR_SYMBOL var0 mut
+      └─UNIT_STRUCT void
+---
+
+[`mut i = 0;while true {;	i++;};i--` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL i mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 0
+    ├─GOTO block1
+    ├─LABEL block1
+    ├─UNARY_EXPR IncrecementInt
+    │ ├─VAR_SYMBOL i mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VARIABLE_TYPE i32
+    └─GOTO block1
+---
+
+[`while false {;	let foo = 1;};let bar = 2` - 1]
+MODULE test
+└─FUNC_DECL main
+  ├─FUNCTION_TYPE
+  │ └─UNIT_STRUCT void
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_SYMBOL var0 mut
+    │ └─UNIT_STRUCT void
+    └─VAR_DECL
+      ├─VAR_SYMBOL bar
+      │ ├─VARIABLE_TYPE i32
+      │ └─INT_VALUE 2
+      └─INT_LIT 2
+---

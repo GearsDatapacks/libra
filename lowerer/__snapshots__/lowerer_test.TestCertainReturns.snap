@@ -1,0 +1,77 @@
+
+[`fn add(a, b: i32): i32 {;	if true {;		return a + b;	};}` - 1]
+MODULE test
+├─FUNC_DECL main
+│ ├─FUNCTION_TYPE
+│ │ └─UNIT_STRUCT void
+│ └─BLOCK
+│   ├─UNIT_STRUCT void
+│   └─LABEL block0
+└─FUNC_DECL add a b
+  ├─FUNCTION_TYPE
+  │ ├─VARIABLE_TYPE i32
+  │ ├─VARIABLE_TYPE i32
+  │ └─VARIABLE_TYPE i32
+  └─BLOCK
+    ├─PRIMARY_TYPE never
+    ├─LABEL block0
+    └─RETURN
+      └─BINARY_EXPR AddInt
+        ├─VAR_SYMBOL a
+        │ └─VARIABLE_TYPE i32
+        ├─VAR_SYMBOL b
+        │ └─VARIABLE_TYPE i32
+        └─VARIABLE_TYPE i32
+---
+
+[`fn add(a, b: i32): i32 {;	mut result = a;	mut counter = b;	while true {;		if counter == 0 {;			return result;		};		result++;		counter--;	};}` - 1]
+MODULE test
+├─FUNC_DECL main
+│ ├─FUNCTION_TYPE
+│ │ └─UNIT_STRUCT void
+│ └─BLOCK
+│   ├─UNIT_STRUCT void
+│   └─LABEL block0
+└─FUNC_DECL add a b
+  ├─FUNCTION_TYPE
+  │ ├─VARIABLE_TYPE i32
+  │ ├─VARIABLE_TYPE i32
+  │ └─VARIABLE_TYPE i32
+  └─BLOCK
+    ├─UNIT_STRUCT void
+    ├─LABEL block0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL result mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL a
+    │   └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL counter mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL b
+    │   └─VARIABLE_TYPE i32
+    ├─GOTO block1
+    ├─LABEL block1
+    ├─BRANCH block3 else block2
+    │ └─BINARY_EXPR NotEqual
+    │   ├─VAR_SYMBOL counter mut
+    │   │ └─VARIABLE_TYPE i32
+    │   ├─INT_LIT 0
+    │   └─PRIMARY_TYPE bool
+    ├─LABEL block2
+    ├─RETURN
+    │ └─VAR_SYMBOL result mut
+    │   └─VARIABLE_TYPE i32
+    ├─LABEL block3
+    ├─VAR_SYMBOL var2 mut
+    │ └─PRIMARY_TYPE never
+    ├─UNARY_EXPR IncrecementInt
+    │ ├─VAR_SYMBOL result mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VARIABLE_TYPE i32
+    ├─UNARY_EXPR DecrecementInt
+    │ ├─VAR_SYMBOL counter mut
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VARIABLE_TYPE i32
+    └─GOTO block1
+---

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer"
+	"github.com/gearsdatapacks/libra/lowerer"
 	"github.com/gearsdatapacks/libra/module"
 	"github.com/gearsdatapacks/libra/parser"
 	"github.com/gearsdatapacks/libra/parser/ast"
@@ -38,6 +39,18 @@ func getIr(t *testing.T, input string) (*ir.Package, []diagnostics.Diagnostic) {
 	p := parser.New(tokens, l.Diagnostics)
 	program := p.Parse()
 	return typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
+}
+
+func getLowered(t *testing.T, input string) (*ir.LoweredPackage, []diagnostics.Diagnostic) {
+	t.Helper()
+
+	l := lexer.New(text.NewFile("test.lb", input))
+	tokens := l.Tokenise()
+
+	p := parser.New(tokens, l.Diagnostics)
+	program := p.Parse()
+	pkg, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
+	return lowerer.Lower(pkg, diags)
 }
 
 func fakeModule(program *ast.Program) *module.Module {

@@ -7,7 +7,7 @@ MODULE test
 │ │ ├─VARIABLE_TYPE i32
 │ │ └─VARIABLE_TYPE i32
 │ └─BLOCK
-│   ├─UNIT_STRUCT void
+│   ├─PRIMARY_TYPE never
 │   ├─VAR_DECL
 │   │ ├─VAR_SYMBOL c
 │   │ │ └─VARIABLE_TYPE i32

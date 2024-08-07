@@ -1,0 +1,16 @@
+
+[`fn add(a, b: i32): i32 {;	if a == 0 {;		return b;	} else if b == 0 {;		return a;	};}` - 1]
+test.lb:1:4:
+fn add(a, b: i32): i32 {
+   ^ Not all code paths return a value
+
+
+---
+
+[`fn foo(a: i32): i32 {;	while a != 0 {;		return a;	};}` - 1]
+test.lb:1:4:
+fn foo(a: i32): i32 {
+   ^ Not all code paths return a value
+
+
+---

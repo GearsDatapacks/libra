@@ -89,3 +89,31 @@ func MatchTCErrorSnaps(t *testing.T, tests ...string) {
 		matchSnap(t, src, diags.String())
 	}
 }
+
+func MatchLoweredSnaps(t *testing.T, tests ...string) {
+	t.Helper()
+
+	for _, src := range tests {
+		program, diags := getLowered(t, src)
+		for _, diag := range diags {
+			diag.Print()
+		}
+		AssertEq(t, len(diags), 0,
+			fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
+		matchSnap(t, src, program.String())
+	}
+}
+
+func MatchLowerErrors(t *testing.T, tests ...string) {
+	t.Helper()
+
+	for _, src := range tests {
+		_, diagnostics := getLowered(t, src)
+		var diags bytes.Buffer
+		for _, diag := range diagnostics {
+			diag.WriteTo(&diags, false)
+		}
+
+		matchSnap(t, src, diags.String())
+	}
+}
