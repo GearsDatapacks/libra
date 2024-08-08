@@ -76,8 +76,8 @@ func (l *lowerer) lowerYieldStatement(yield *ir.YieldStatement, statements *[]ir
 	})
 }
 
-func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement, statements *[]ir.Statement) {
-	*statements = append(*statements, stmt)
+func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement) *ir.ImportStatement {
+	return stmt
 }
 
 func (l *lowerer) lowerTypeDeclaration(stmt *ir.TypeDeclaration) *ir.TypeDeclaration {

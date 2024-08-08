@@ -118,6 +118,8 @@ func (l *lowerer) lowerGlobal(statement ir.Statement, mod *ir.LoweredModule) {
 		mod.Functions = append(mod.Functions, l.lowerFunctionDeclaration(stmt))
 	case *ir.TypeDeclaration:
 		mod.Types = append(mod.Types, l.lowerTypeDeclaration(stmt))
+	case *ir.ImportStatement:
+		mod.Imports = append(mod.Imports, l.lowerImportStatement(stmt))
 	default:
 		l.lower(statement, &mod.MainFunction.Body.Statements)
 	}
@@ -135,10 +137,8 @@ func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 		l.lowerContinueStatement(stmt, statements)
 	case *ir.YieldStatement:
 		l.lowerYieldStatement(stmt, statements)
-	case *ir.ImportStatement:
-		l.lowerImportStatement(stmt, statements)
 
-	case *ir.TypeDeclaration, *ir.FunctionDeclaration:
+	case *ir.TypeDeclaration, *ir.FunctionDeclaration, *ir.ImportStatement:
 		panic("Declarations not allowed here")
 
 	case ir.Expression:

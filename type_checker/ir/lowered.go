@@ -34,6 +34,7 @@ func (p *LoweredPackage) Print() {
 
 type LoweredModule struct {
 	Name         string
+	Imports      []*ImportStatement
 	Types        []*TypeDeclaration
 	MainFunction *FunctionDeclaration
 	Functions    []*FunctionDeclaration
@@ -48,6 +49,7 @@ func (m *LoweredModule) Print(node *printer.Node) {
 		m.Name,
 	)
 
+	printer.Nodes(node, m.Imports)
 	printer.Nodes(node, m.Types)
 	printer.Nodes(node, m.Functions)
 	printer.Nodes(node, m.Globals)
