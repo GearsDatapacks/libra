@@ -13,13 +13,7 @@ type compiler struct {
 	mainModule,
 	currentModule llvm.Module
 	builder llvm.Builder
-	// TODO: replace with proper symbol table
-	currentFunction *fnContext
-}
-
-type fnContext struct {
-	scope  map[string]llvm.Value
-	blocks map[string]llvm.BasicBlock
+	table   *table
 }
 
 func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
@@ -28,6 +22,7 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 		context:    context,
 		mainModule: context.NewModule("main"),
 		builder:    context.NewBuilder(),
+		table: newTable(),
 	}
 
 	for _, mod := range pkg.Modules {
@@ -49,6 +44,7 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 	panic("NO")
 }
 
+// TODO: Forward-declare functions
 func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	paramTypes := make([]llvm.Type, 0, len(fn.Parameters))
 	for _, param := range fn.Type.Parameters {
@@ -63,34 +59,35 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	ty := llvm.FunctionType(retTy, paramTypes, false)
 	function := llvm.AddFunction(c.currentModule, fn.Name, ty)
 	// function.SetLinkage(llvm.ExternalLinkage)
-	c.currentFunction = &fnContext{
-		scope:  map[string]llvm.Value{},
+	c.table = childTable(c.table)
+	c.table.context = &fnContext{
 		blocks: map[string]llvm.BasicBlock{},
 	}
 	for i, param := range function.Params() {
 		param.SetName(fn.Parameters[i])
-		c.currentFunction.scope[fn.Parameters[i]] = param
+		c.table.addValue(fn.Parameters[i], param)
 	}
 
 	for _, stmt := range fn.Body.Statements {
 		if label, ok := stmt.(*ir.Label); ok {
 			block := c.context.AddBasicBlock(function, label.Name)
-			c.currentFunction.blocks[label.Name] = block
+			c.table.context.blocks[label.Name] = block
 		}
 	}
 
 	for _, stmt := range fn.Body.Statements {
 		c.compileStatement(stmt)
 	}
+	c.table.addValue(fn.Name, function)
 	// TODO: Don't crash here
-	// llvm.VerifyFunction(function, llvm.AbortProcessAction)
+	llvm.VerifyFunction(function, llvm.AbortProcessAction)
 }
 
 func (c *compiler) compileStatement(statement ir.Statement) {
 	switch stmt := statement.(type) {
 	case *ir.VariableDeclaration:
 		value := c.compileExpression(stmt.Value)
-		c.currentFunction.scope[stmt.Symbol.Name] = value
+		c.table.addValue(stmt.Symbol.Name, value)
 	case *ir.ReturnStatement:
 		if stmt.Value == nil {
 			c.builder.CreateRetVoid()
@@ -100,16 +97,16 @@ func (c *compiler) compileStatement(statement ir.Statement) {
 		}
 
 	case *ir.Label:
-		block := c.currentFunction.blocks[stmt.Name]
+		block := c.table.context.blocks[stmt.Name]
 		c.builder.SetInsertPointAtEnd(block)
 	case *ir.Goto:
-		c.builder.CreateBr(c.currentFunction.blocks[stmt.Label])
+		c.builder.CreateBr(c.table.context.blocks[stmt.Label])
 	case *ir.Branch:
 		cond := c.compileExpression(stmt.Condition)
 		c.builder.CreateCondBr(
 			cond,
-			c.currentFunction.blocks[stmt.IfLabel],
-			c.currentFunction.blocks[stmt.ElseLabel],
+			c.table.context.blocks[stmt.IfLabel],
+			c.table.context.blocks[stmt.ElseLabel],
 		)
 	case ir.Expression:
 		c.compileExpression(stmt)
@@ -139,7 +136,12 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.FloatLiteral:
 		return llvm.ConstFloat(c.context.DoubleType(), expr.Value)
 	case *ir.FunctionCall:
-		panic("TODO")
+		callee := c.compileExpression(expr.Function)
+		args := make([]llvm.Value, 0, len(expr.Arguments))
+		for _, arg := range expr.Arguments {
+			args = append(args, c.compileExpression(arg))
+		}
+		return c.builder.CreateCall(callee.GlobalValueType(), callee, args, "call_tmp")
 	case *ir.FunctionExpression:
 		panic("TODO")
 	case *ir.IndexExpression:
@@ -169,7 +171,7 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.UnaryExpression:
 		panic("TODO")
 	case *ir.VariableExpression:
-		return c.currentFunction.scope[expr.Symbol.Name]
+		return c.table.getValue(expr.Symbol.Name)
 	default:
 		panic("Unreachable")
 	}

@@ -175,7 +175,9 @@ func (l *lowerer) lowerFunctionCall(call *ir.FunctionCall, statements *[]ir.Stat
 		lowered := l.lowerExpression(arg, statements)
 		if !changed && lowered != arg {
 			changed = true
-			args = append(args, call.Arguments[:i-1]...)
+			if i != 0 {
+				args = append(args, call.Arguments[:i-1]...)
+			}
 		}
 		if changed {
 			args = append(args, lowered)
