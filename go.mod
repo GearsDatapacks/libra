@@ -2,10 +2,11 @@ module github.com/gearsdatapacks/libra
 
 go 1.22
 
+require github.com/gkampitakis/go-snaps v0.5.4 // direct
+
 require (
 	github.com/gkampitakis/ciinfo v0.3.0 // indirect
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
-	github.com/gkampitakis/go-snaps v0.5.4 // direct
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/maruel/natural v1.1.1 // indirect
@@ -14,4 +15,5 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	tinygo.org/x/go-llvm v0.0.0-20240804145059-aaff3eb751f0
 )

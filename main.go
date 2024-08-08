@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gearsdatapacks/libra/codegen"
 	"github.com/gearsdatapacks/libra/lowerer"
 	"github.com/gearsdatapacks/libra/module"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
@@ -63,7 +64,7 @@ func main() {
 		return
 	}
 
-	lowered, diags := lowerer.Lower(pkg, diags)
+	loweredPkg, diags := lowerer.Lower(pkg, diags)
 
 	if len(diags) != 0 {
 		for _, diag := range diags {
@@ -72,6 +73,11 @@ func main() {
 		return
 	}
 
-	lowered.Print()
-	fmt.Println()
+	if debugKind == lowered {
+		loweredPkg.Print()
+		fmt.Println()
+		return
+	}
+
+	codegen.Compile(loweredPkg)
 }

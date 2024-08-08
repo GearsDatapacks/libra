@@ -8,11 +8,13 @@ import (
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/printer"
 	"github.com/gearsdatapacks/libra/type_checker/values"
+	"tinygo.org/x/go-llvm"
 )
 
 type Type interface {
 	printer.Printable
 	String() string
+	ToLlvm(llvm.Context) llvm.Type
 	valid(Type) bool
 }
 
@@ -174,6 +176,23 @@ func (pt PrimaryType) GetEnumValue(
 	return values.StringValue{Value: name}, nil
 }
 
+func (pt PrimaryType) ToLlvm(context llvm.Context) llvm.Type {
+	switch pt {
+	case Invalid:
+		panic("Type should not be invalid at this point")
+	case Bool:
+		return context.Int1Type()
+	case String:
+		panic("TODO: String types")
+	case RuntimeType:
+		panic("TODO: Runtime types")
+	case Never:
+		panic("TODO: Never types")
+	default:
+		panic("Unreachable")
+	}
+}
+
 type NumKind int
 
 const (
@@ -317,6 +336,50 @@ func (v Numeric) GetEnumValue(
 	return values.IntValue{Value: last.Value + 1}, nil
 }
 
+func (n Numeric) ToLlvm(context llvm.Context) llvm.Type {
+	switch n.Kind {
+	case NumFloat:
+		switch n.BitWidth {
+		case 16:
+			panic("TODO: F16 types")
+		case 32:
+			return context.FloatType()
+		case 64:
+			return context.DoubleType()
+		default:
+			panic("Invalid float bit-width")
+		}
+	case NumInt:
+		switch n.BitWidth {
+		case 8:
+			return context.Int8Type()
+		case 16:
+			return context.Int16Type()
+		case 32:
+			return context.Int32Type()
+		case 64:
+			return context.Int64Type()
+		default:
+			panic("Invalid int bit-width")
+		}
+	case NumUint:
+		switch n.BitWidth {
+		case 8:
+			return context.Int8Type()
+		case 16:
+			return context.Int16Type()
+		case 32:
+			return context.Int32Type()
+		case 64:
+			return context.Int64Type()
+		default:
+			panic("Invalid uint bit-width")
+		}
+	default:
+		panic("unreachable")
+	}
+}
+
 type ListType struct {
 	ElemType Type
 }
@@ -350,6 +413,10 @@ func (l *ListType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostic
 
 func (l *ListType) Item() Type {
 	return l.ElemType
+}
+
+func (*ListType) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type ArrayType struct {
@@ -414,6 +481,10 @@ func (a *ArrayType) Item() Type {
 	return a.ElemType
 }
 
+func (*ArrayType) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type MapType struct {
 	KeyType   Type
 	ValueType Type
@@ -450,6 +521,10 @@ func (m *MapType) indexBy(index Type, _ []values.ConstValue) (Type, *diagnostics
 
 func (m *MapType) Item() Type {
 	return &TupleType{Types: []Type{m.KeyType, m.ValueType}}
+}
+
+func (*MapType) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type TupleType struct {
@@ -509,6 +584,10 @@ func (a *TupleType) indexBy(t Type, constVals []values.ConstValue) (Type, *diagn
 	return a.Types[index], nil
 }
 
+func (*TupleType) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type Function struct {
 	Parameters []Type
 	ReturnType Type
@@ -559,6 +638,10 @@ func (fn *Function) valid(other Type) bool {
 	}
 
 	return Match(fn.ReturnType, function.ReturnType)
+}
+
+func (*Function) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type Alias struct {
@@ -654,6 +737,10 @@ func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
 	return Invalid, diagnostics.NoMember(s, member)
 }
 
+func (*Struct) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type TupleStruct struct {
 	Name  string
 	Types []Type
@@ -710,6 +797,10 @@ func (a *TupleStruct) indexBy(t Type, constVals []values.ConstValue) (Type, *dia
 	return a.Types[index], nil
 }
 
+func (*TupleStruct) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type Interface struct {
 	Name    string
 	Methods map[string]*Function
@@ -757,6 +848,10 @@ func (i *Interface) member(member string) (Type, *diagnostics.Partial) {
 		return ty, nil
 	}
 	return Invalid, diagnostics.NoMember(i, member)
+}
+
+func (*Interface) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type Union struct {
@@ -832,6 +927,10 @@ func (u *Union) StaticMemberValue(member string) values.ConstValue {
 	return nil
 }
 
+func (*Union) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type UnionVariant struct {
 	Union *Union
 	Name  string
@@ -880,6 +979,10 @@ func (v *UnionVariant) toReal() Type {
 
 func (v *UnionVariant) unwrap() Type {
 	return Unwrap(v.Type)
+}
+
+func (*UnionVariant) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type InlineUnion struct {
@@ -943,6 +1046,10 @@ func MakeUnion(a, b Type) Type {
 	}
 }
 
+func (*InlineUnion) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type Module struct {
 	Name   string
 	Module interface {
@@ -972,6 +1079,10 @@ func (m *Module) member(member string) (Type, *diagnostics.Partial) {
 		return ty, nil
 	}
 	return Invalid, diagnostics.NoMember(m, member)
+}
+
+func (*Module) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type Pointer struct {
@@ -1012,6 +1123,10 @@ func (p *Pointer) valid(other Type) bool {
 
 func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
 	return Member(p.Underlying, member)
+}
+
+func (*Pointer) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type Explicit struct {
@@ -1092,6 +1207,10 @@ func (u *UnitStruct) valid(other Type) bool {
 	return false
 }
 
+func (*UnitStruct) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type Tag struct {
 	Name  string
 	Id    int
@@ -1137,6 +1256,10 @@ func (t *Tag) valid(other Type) bool {
 	return false
 }
 
+func (*Tag) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 var ErrorTag = Tag{
 	Name:  "Error",
 	Types: []Type{},
@@ -1169,6 +1292,10 @@ func (r *Result) valid(other Type) bool {
 	return Assignable(r.OkType, other)
 }
 
+func (*Result) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
 type Option struct {
 	SomeType Type
 }
@@ -1194,6 +1321,10 @@ func (r *Option) valid(other Type) bool {
 		return true
 	}
 	return Assignable(r.SomeType, other)
+}
+
+func (*Option) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type Enum struct {
@@ -1257,6 +1388,10 @@ func (e *Enum) staticMember(member string) (Type, *diagnostics.Partial) {
 
 func (e *Enum) StaticMemberValue(member string) values.ConstValue {
 	return e.Members[member]
+}
+
+func (*Enum) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
 }
 
 type pseudo interface {

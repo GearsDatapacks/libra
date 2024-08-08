@@ -138,6 +138,20 @@ func (g *graph) analyse(
 	if shouldReturn && !g.checkPaths() {
 		g.diagnostics = append(g.diagnostics, *diagnostics.NotAllPathsReturn(*location))
 	}
+
+	if !shouldReturn {
+		for _, block := range g.blocks {
+			if block.exit == nil {
+				var last ir.Statement
+				if len(block.statements) != 0 {
+					last = block.statements[len(block.statements)-1]
+				}
+				if _, ok := last.(*ir.ReturnStatement); !ok {
+					block.statements = append(block.statements, &ir.ReturnStatement{})
+				}
+			}
+		}
+	}
 }
 
 func (g *graph) separateBlocks(statements []ir.Statement) {
