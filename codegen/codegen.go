@@ -1,8 +1,6 @@
 package codegen
 
 import (
-	"fmt"
-
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"tinygo.org/x/go-llvm"
@@ -16,7 +14,7 @@ type compiler struct {
 	table   *table
 }
 
-func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
+func Compile(pkg *ir.LoweredPackage) llvm.Module {
 	context := llvm.NewContext()
 	compiler := &compiler{
 		context:    context,
@@ -44,8 +42,7 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 		}
 	}
 
-	fmt.Println(compiler.mainModule.String())
-	panic("NO")
+	return compiler.mainModule
 }
 
 func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {

@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gearsdatapacks/libra/codegen"
 	"github.com/gearsdatapacks/libra/lowerer"
 	"github.com/gearsdatapacks/libra/module"
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
+	"tinygo.org/x/go-llvm"
 )
 
 type debugKind int
@@ -17,6 +19,7 @@ const (
 	ast
 	ir
 	lowered
+	llir
 )
 
 func main() {
@@ -30,6 +33,8 @@ func main() {
 			debugKind = ir
 		case "lowered":
 			debugKind = lowered
+		case "llir":
+			debugKind = llir
 		}
 	}
 
@@ -79,5 +84,42 @@ func main() {
 		return
 	}
 
-	codegen.Compile(loweredPkg)
+	module := codegen.Compile(loweredPkg)
+
+	if debugKind == llir {
+		fmt.Println(module.String())
+	}
+
+	outputCode(module)
+}
+
+func outputCode(module llvm.Module) {
+	triple := llvm.DefaultTargetTriple()
+	llvm.InitializeAllTargetInfos()
+	llvm.InitializeAllTargets()
+	llvm.InitializeAllTargetMCs()
+	llvm.InitializeAllAsmParsers()
+	llvm.InitializeAllAsmPrinters()
+	target, err := llvm.GetTargetFromTriple(triple)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cpu := "generic"
+	features := ""
+	machine := target.CreateTargetMachine(
+		triple,
+		cpu,
+		features,
+		llvm.CodeGenLevelDefault,
+		llvm.RelocPIC,
+		llvm.CodeModelDefault,
+	)
+	module.SetTarget(triple)
+
+	buffer, err := machine.EmitToMemoryBuffer(module, llvm.ObjectFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	os.WriteFile("out.o", buffer.Bytes(), os.ModePerm)
 }
