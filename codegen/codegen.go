@@ -57,7 +57,11 @@ func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {
 		retTy = fn.Type.ReturnType.ToLlvm(c.context)
 	}
 	ty := llvm.FunctionType(retTy, paramTypes, false)
-	function := llvm.AddFunction(c.currentModule, fn.Name, ty)
+	name := fn.Name
+	if fn.Extern != nil {
+		name = *fn.Extern
+	}
+	function := llvm.AddFunction(c.currentModule, name, ty)
 	// function.SetLinkage(llvm.ExternalLinkage)
 	for i, param := range function.Params() {
 		param.SetName(fn.Parameters[i])
@@ -67,9 +71,6 @@ func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {
 
 func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	if fn.Extern != nil {
-		if *fn.Extern != fn.Name {
-			panic("TODO: Add support for renamed externals")
-		}
 		return
 	}
 
