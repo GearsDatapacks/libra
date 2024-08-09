@@ -22,7 +22,7 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 		context:    context,
 		mainModule: context.NewModule("main"),
 		builder:    context.NewBuilder(),
-		table: newTable(),
+		table:      newTable(),
 	}
 
 	for _, mod := range pkg.Modules {
@@ -74,7 +74,7 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	c.table.context = &fnContext{
 		blocks: map[string]llvm.BasicBlock{},
 	}
-	
+
 	for i, param := range function.Params() {
 		c.table.addValue(fn.Parameters[i], param)
 	}
@@ -134,7 +134,7 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.Assignment:
 		panic("TODO")
 	case *ir.BinaryExpression:
-		panic("TODO")
+		return c.compileBinaryExpression(expr)
 	case *ir.BooleanLiteral:
 		var value uint64 = 0
 		if expr.Value {
@@ -184,6 +184,74 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 		panic("TODO")
 	case *ir.VariableExpression:
 		return c.table.getValue(expr.Symbol.Name)
+	default:
+		panic("Unreachable")
+	}
+}
+
+func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) llvm.Value {
+	left := c.compileExpression(binExpr.Left)
+	right := c.compileExpression(binExpr.Right)
+
+	switch binExpr.Operator {
+	case ir.AddFloat:
+		return c.builder.CreateFAdd(left, right, "fadd_tmp")
+	case ir.AddInt:
+		return c.builder.CreateAdd(left, right, "add_tmp")
+	case ir.BitwiseAnd:
+		return c.builder.CreateAnd(left, right, "bit_and_tmp")
+	case ir.BitwiseOr:
+		return c.builder.CreateOr(left, right, "bit_or_tmp")
+	case ir.Concat:
+		panic("TODO")
+	case ir.Divide:
+		panic("TODO")
+	case ir.Equal:
+		// TODO: Non-integer comparisons
+		return c.builder.CreateICmp(llvm.IntEQ, left, right, "eq_tmp")
+	case ir.Greater:
+		// TODO: Float and unsigned comparisons
+		return c.builder.CreateICmp(llvm.IntSGT, left, right, "gt_tmp")
+	case ir.GreaterEq:
+		// TODO: Float and unsigned comparisons
+		return c.builder.CreateICmp(llvm.IntSGE, left, right, "ge_tmp")
+	case ir.LeftShift:
+		return c.builder.CreateShl(left, right, "shl_tmp")
+	case ir.Less:
+		// TODO: Float and unsigned comparisons
+		return c.builder.CreateICmp(llvm.IntSLT, left, right, "lt_tmp")
+	case ir.LessEq:
+		// TODO: Float and unsigned comparisons
+		return c.builder.CreateICmp(llvm.IntSLE, left, right, "le_tmp")
+	case ir.LogicalAnd:
+		return c.builder.CreateAnd(left, right, "and_tmp")
+	case ir.LogicalOr:
+		return c.builder.CreateOr(left, right, "or_tmp")
+	case ir.ModuloFloat:
+		panic("TODO")
+	case ir.ModuloInt:
+		panic("TODO")
+	case ir.MultiplyFloat:
+		return c.builder.CreateFMul(left, right, "fmul_tmp")
+	case ir.MultiplyInt:
+		return c.builder.CreateMul(left, right, "mul_tmp")
+	case ir.NotEqual:
+		// TODO: Non-integer comparisons
+		return c.builder.CreateICmp(llvm.IntNE, left, right, "ne_tmp")
+	case ir.PowerFloat:
+		panic("TODO")
+	case ir.PowerInt:
+		panic("TODO")
+	case ir.ArithmeticRightShift:
+		return c.builder.CreateAShr(left, right, "arsh_tmp")
+	case ir.LogicalRightShift:
+		return c.builder.CreateLShr(left, right, "lrsh_tmp")
+	case ir.SubtractFloat:
+		return c.builder.CreateFSub(left, right, "fsub_tmp")
+	case ir.SubtractInt:
+		return c.builder.CreateSub(left, right, "sub_tmp")
+	case ir.Union:
+		panic("Unreachable")
 	default:
 		panic("Unreachable")
 	}

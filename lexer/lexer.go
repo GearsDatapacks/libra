@@ -315,6 +315,10 @@ func (l *lexer) parsePunctuation() (token.Kind, bool) {
 		} else if l.next() == '>' {
 			kind = token.DOUBLE_RIGHT_ANGLE
 			l.consume()
+			if l.next() == '>' {
+				kind = token.TRIPLE_RIGHT_ANGLE
+				l.consume()
+			}
 		}
 	case '-':
 		kind = token.MINUS

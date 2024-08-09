@@ -225,7 +225,11 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 		}
 	case token.DOUBLE_RIGHT_ANGLE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.RightShift
+			binOp = ir.ArithmeticRightShift
+		}
+	case token.TRIPLE_RIGHT_ANGLE:
+		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
+			binOp = ir.LogicalRightShift
 		}
 	case token.PLUS:
 		if types.Assignable(types.String, lType) && types.Assignable(types.String, rType) {
@@ -924,7 +928,7 @@ func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Express
 		if resultType == types.Never {
 			resultType = elseBranch.Type()
 		}
-		
+
 		if !types.Assignable(resultType, elseBranch.Type()) {
 			t.diagnostics.Report(diagnostics.BranchTypesMustMatch(
 				ifStmt.ElseBranch.GetLocation(),

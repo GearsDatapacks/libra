@@ -262,7 +262,8 @@ const (
 	Equal
 	NotEqual
 	LeftShift
-	RightShift
+	ArithmeticRightShift
+	LogicalRightShift
 	BitwiseOr
 	Union
 	BitwiseAnd
@@ -303,8 +304,10 @@ func (b BinaryOperator) String() string {
 		return "NotEqual"
 	case LeftShift:
 		return "LeftShift"
-	case RightShift:
-		return "RightShift"
+	case ArithmeticRightShift:
+		return "ArithmeticRightShift"
+	case LogicalRightShift:
+		return "LogicalRightShift"
 	case Union:
 		return "Union"
 	case BitwiseOr:
@@ -373,7 +376,10 @@ func (b BinaryOperator) Type() types.Type {
 	case LeftShift:
 		ty = types.I32
 
-	case RightShift:
+	case ArithmeticRightShift:
+		ty = types.I32
+
+	case LogicalRightShift:
 		ty = types.I32
 
 	case BitwiseOr:
@@ -527,7 +533,7 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 			Value: left.Value << right.Value,
 		}
 
-	case RightShift:
+	case ArithmeticRightShift:
 		left := b.Left.ConstValue().(values.IntValue)
 		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{

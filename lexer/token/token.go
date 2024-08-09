@@ -48,6 +48,7 @@ const (
 
 	DOUBLE_LEFT_ANGLE
 	DOUBLE_RIGHT_ANGLE
+	TRIPLE_RIGHT_ANGLE
 
 	PLUS
 	MINUS
@@ -143,6 +144,8 @@ func (kind Kind) String() string {
 		return "`<<`"
 	case DOUBLE_RIGHT_ANGLE:
 		return "`>>`"
+	case TRIPLE_RIGHT_ANGLE:
+		return "`>>>`"
 	case PLUS:
 		return "`+`"
 	case MINUS:

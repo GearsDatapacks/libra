@@ -63,11 +63,11 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return expr.Left
 				}
 			}
 
-		case ir.RightShift:
+		case ir.ArithmeticRightShift, ir.LogicalRightShift:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
 					return &ir.IntegerLiteral{Value: 0}
@@ -75,7 +75,7 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return expr.Left
 				}
 			}
 		case ir.BitwiseOr:
