@@ -30,6 +30,10 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 		// TODO: Codegen globals and types
 
 		for _, fn := range mod.Functions {
+			compiler.registerFn(fn)
+		}
+
+		for _, fn := range mod.Functions {
 			compiler.compileFn(fn)
 		}
 
@@ -44,8 +48,7 @@ func Compile(pkg *ir.LoweredPackage) llvm.MemoryBuffer {
 	panic("NO")
 }
 
-// TODO: Forward-declare functions
-func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
+func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {
 	paramTypes := make([]llvm.Type, 0, len(fn.Parameters))
 	for _, param := range fn.Type.Parameters {
 		paramTypes = append(paramTypes, param.ToLlvm(c.context))
@@ -59,12 +62,20 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	ty := llvm.FunctionType(retTy, paramTypes, false)
 	function := llvm.AddFunction(c.currentModule, fn.Name, ty)
 	// function.SetLinkage(llvm.ExternalLinkage)
+	for i, param := range function.Params() {
+		param.SetName(fn.Parameters[i])
+	}
+	c.table.addValue(fn.Name, function)
+}
+
+func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
+	function := c.table.getValue(fn.Name)
 	c.table = childTable(c.table)
 	c.table.context = &fnContext{
 		blocks: map[string]llvm.BasicBlock{},
 	}
+	
 	for i, param := range function.Params() {
-		param.SetName(fn.Parameters[i])
 		c.table.addValue(fn.Parameters[i], param)
 	}
 
@@ -78,7 +89,8 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 	for _, stmt := range fn.Body.Statements {
 		c.compileStatement(stmt)
 	}
-	c.table.addValue(fn.Name, function)
+
+	c.table = c.table.parent
 	// TODO: Don't crash here
 	llvm.VerifyFunction(function, llvm.AbortProcessAction)
 }
