@@ -11,8 +11,22 @@ func (p *parser) parseIdentifierAttribute() (ast.Attribute, *diagnostics.Diagnos
 	name := p.expect(token.IDENTIFIER)
 	return &ast.TextAttribute{
 		Location: tok.Location,
-		Name: tok.ExtraValue,
-		Text: name.Value,
+		Name:     tok.ExtraValue,
+		Text:     name.Value,
+	}, nil
+}
+
+func (p *parser) parseOptionalIdentAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
+	tok := p.consume()
+	name := ""
+	if p.canContinue() {
+		name = p.expect(token.IDENTIFIER).Value
+	}
+
+	return &ast.TextAttribute{
+		Location: tok.Location,
+		Name:     tok.ExtraValue,
+		Text:     name,
 	}, nil
 }
 
@@ -32,8 +46,8 @@ func (p *parser) parseTypeAttribute() (ast.Attribute, *diagnostics.Diagnostic) {
 		return nil, err
 	}
 	return &ast.ExpressionAttribute{
-		Location: tok.Location,
-		Name: tok.ExtraValue,
+		Location:   tok.Location,
+		Name:       tok.ExtraValue,
 		Expression: ty,
 	}, nil
 }
@@ -51,7 +65,7 @@ func (p *parser) parseAttributeWithOptionalBody() (ast.Attribute, *diagnostics.D
 	}
 	return &ast.TextAttribute{
 		Location: tok.Location,
-		Name: tok.ExtraValue,
-		Text: text,
+		Name:     tok.ExtraValue,
+		Text:     text,
 	}, nil
 }

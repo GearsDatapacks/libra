@@ -66,6 +66,13 @@ func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {
 }
 
 func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
+	if fn.Extern != nil {
+		if *fn.Extern != fn.Name {
+			panic("TODO: Add support for renamed externals")
+		}
+		return
+	}
+
 	function := c.table.getValue(fn.Name)
 	c.table = childTable(c.table)
 	c.table.context = &fnContext{
@@ -150,7 +157,11 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 		for _, arg := range expr.Arguments {
 			args = append(args, c.compileExpression(arg))
 		}
-		return c.builder.CreateCall(callee.GlobalValueType(), callee, args, "call_tmp")
+		var name string
+		if expr.ReturnType != types.Void {
+			name = "call_tmp"
+		}
+		return c.builder.CreateCall(callee.GlobalValueType(), callee, args, name)
 	case *ir.FunctionExpression:
 		panic("TODO")
 	case *ir.IndexExpression:

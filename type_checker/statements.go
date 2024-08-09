@@ -135,7 +135,24 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		t.symbols.Register(symbol)
 	}
 
-	body := t.typeCheckBlock(funcDec.Body, false)
+	var body *ir.Block
+
+	if funcDec.Body != nil {
+		body = t.typeCheckBlock(funcDec.Body, false)
+	}
+
+	var extern *string
+	if funcDec.Extern == nil {
+		if funcDec.Body == nil {
+			t.diagnostics.Report(diagnostics.NoBody(funcDec.NameLocation))
+		}
+	} else {
+		if funcDec.Body != nil {
+			t.diagnostics.Report(diagnostics.ExternWithBody(funcDec.NameLocation))
+		} else {
+			extern = funcDec.Extern
+		}
+	}
 
 	return &ir.FunctionDeclaration{
 		Name:       funcDec.Name,
@@ -143,6 +160,7 @@ func (t *typeChecker) typeCheckFunctionDeclaration(funcDec *ast.FunctionDeclarat
 		Body:       body,
 		Type:       fnType,
 		Exported:   funcDec.Exported,
+		Extern:     extern,
 		Location:   funcDec.NameLocation,
 	}
 }

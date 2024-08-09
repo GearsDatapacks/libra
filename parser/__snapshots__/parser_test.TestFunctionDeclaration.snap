@@ -13,7 +13,7 @@ FUNC_DECL print (0:2)
   └─IDENT this (19:23)
 ---
 
-[`fn (i32) add(;other: i32;,;);:i32;{ 7 }` - 1]
+[`fn (i32) add(;other: i32;,;);:i32 { 7 }` - 1]
 FUNC_DECL add (0:2)
 ├─METHOD_OF
 │ └─IDENT i32 (4:7)
@@ -77,4 +77,8 @@ FUNC_DECL add (0:2)
 ├─IDENT i64 (31:34)
 └─BLOCK (35:36)
   └─IDENT c (37:38)
+---
+
+[`fn foo()` - 1]
+FUNC_DECL foo (0:2)
 ---

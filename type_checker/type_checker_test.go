@@ -227,6 +227,8 @@ func TestFunctions(t *testing.T) {
 add(1, 2)`,
 		"fn one(): i32 { 1 }",
 		"fn nop() {}; nop()",
+`@extern
+fn strlen(text: string): i32`,
 	)
 }
 
@@ -535,5 +537,10 @@ struct Tagged`,
 } else {
   "twenty"
 }`,
+`@extern
+fn add(a, b: i32): i32 {
+	return a + b
+}`,
+`fn not_extern(): f32`,
 	)
 }

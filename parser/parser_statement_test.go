@@ -19,12 +19,13 @@ func TestFunctionDeclaration(t *testing.T) {
 	utils.MatchAstSnaps(t,
 		`fn hello() { "Hello, world!" }`,
 		"fn (i32) print() {\nthis\n}",
-		"fn (i32) add(\nother: i32\n,\n)\n:i32\n{ 7 }",
+		"fn (i32) add(\nother: i32\n,\n)\n:i32 { 7 }",
 		"fn u8.zero(): u8 {0}",
 		"fn sum(a,b,c:f64) : usize{ 3.14 }",
 		"fn inc(mut x: u32): u32 { x }",
 		"fn (mut foo) bar(): foo { this }",
 		"fn add(a = 1, mut b: i64 = 2): i64 { c }",
+		`fn foo()`,
 	)
 }
 
@@ -134,7 +135,8 @@ Lorem ipsum.
 I can put @end here, but if I put it on its own line,
 it will close this block.
 @end
-fn do_things() {}
-`,
+fn do_things() {}`,
+		`@extern
+fn external()`,
 	)
 }

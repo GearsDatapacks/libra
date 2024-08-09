@@ -18,15 +18,20 @@ func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, stat
 }
 
 func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir.FunctionDeclaration {
-	statements := []ir.Statement{}
-	l.lowerBlock(funcDecl.Body, &statements)
-	statements = l.cfa(statements, &funcDecl.Location, funcDecl.Type.ReturnType != types.Void)
+	var body *ir.Block
+	if funcDecl.Body != nil {
+		statements := []ir.Statement{}
+		l.lowerBlock(funcDecl.Body, &statements)
+		statements = l.cfa(statements, &funcDecl.Location, funcDecl.Type.ReturnType != types.Void)
+		body = &ir.Block{Statements: statements, ResultType: funcDecl.Body.ResultType}
+	}
 	return &ir.FunctionDeclaration{
 		Name:       funcDecl.Name,
 		Parameters: funcDecl.Parameters,
-		Body:       &ir.Block{Statements: statements, ResultType: funcDecl.Body.ResultType},
+		Body:       body,
 		Type:       funcDecl.Type,
 		Exported:   funcDecl.Exported,
+		Extern:     funcDecl.Extern,
 		Location:   funcDecl.Location,
 	}
 }

@@ -230,9 +230,15 @@ func (p *parser) parseFunctionDeclaration() (ast.Statement, *diagnostics.Diagnos
 	if err != nil {
 		return nil, err
 	}
-	body, err := p.parseBlock(true)
-	if err != nil {
-		return nil, err
+
+	var body *ast.Block
+
+	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
+		block, err := p.parseBlock(true)
+		if err != nil {
+			return nil, err
+		}
+		body = block
 	}
 
 	return &ast.FunctionDeclaration{
@@ -440,9 +446,9 @@ func (p *parser) parseEnumMember() (*ast.EnumMember, *diagnostics.Diagnostic) {
 	}
 
 	return &ast.EnumMember{
-		Name:  name.Value,
+		Name:     name.Value,
 		Location: name.Location,
-		Value: value,
+		Value:    value,
 	}, nil
 }
 

@@ -69,9 +69,13 @@ FUNC_DECL deprecated (12:14)
   └─deprecated = ""
 ---
 
-[`@doc;Does some stuff.;Lorem ipsum.;I can put @end here, but if I put it on its own line,;it will close this block.;@end;fn do_things() {};` - 1]
+[`@doc;Does some stuff.;Lorem ipsum.;I can put @end here, but if I put it on its own line,;it will close this block.;@end;fn do_things() {}` - 1]
 FUNC_DECL do_things (120:122)
 ├─BLOCK (135:136)
 └─ATTRIBUTES
   └─doc = "Does some stuff.\nLorem ipsum.\nI can put @end here, but if I put it on its own line,\nit will close this block."
+---
+
+[`@extern;fn external()` - 1]
+FUNC_DECL external extern external (8:10)
 ---

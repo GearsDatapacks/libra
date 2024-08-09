@@ -251,6 +251,7 @@ func (p *parser) register() {
 	// Attributes
 
 	p.registerAttribute("tag", p.parseTypeAttribute)
+	p.registerAttribute("extern", p.parseOptionalIdentAttribute)
 	p.registerAttribute("impl", p.parseIdentifierAttribute)
 	p.registerAttribute("untagged", p.parseFlagAttribute)
 	p.registerAttribute("todo", p.parseAttributeWithOptionalBody)

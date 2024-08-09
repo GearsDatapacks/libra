@@ -1,12 +1,6 @@
 
 [`fn foo() {;	if true {;		return;	};	let bar = 10;	bar + 1;	return;}` - 1]
 MODULE test
-├─FUNC_DECL main
-│ ├─FUNCTION_TYPE
-│ │ └─UNIT_STRUCT void
-│ └─BLOCK
-│   ├─UNIT_STRUCT void
-│   └─LABEL block0
 └─FUNC_DECL foo
   ├─FUNCTION_TYPE
   │ └─UNIT_STRUCT void
@@ -34,8 +28,9 @@ MODULE test
     │ │ └─UNIT_STRUCT void
     │ └─VAR_SYMBOL var2 mut
     │   └─UNIT_STRUCT void
-    └─VAR_SYMBOL var0 mut
-      └─UNIT_STRUCT void
+    ├─VAR_SYMBOL var0 mut
+    │ └─UNIT_STRUCT void
+    └─RETURN
 ---
 
 [`mut i = 0;while true {;	i++;};i--` - 1]
@@ -69,9 +64,10 @@ MODULE test
     ├─LABEL block0
     ├─VAR_SYMBOL var0 mut
     │ └─UNIT_STRUCT void
-    └─VAR_DECL
-      ├─VAR_SYMBOL bar
-      │ ├─VARIABLE_TYPE i32
-      │ └─INT_VALUE 2
-      └─INT_LIT 2
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL bar
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 2
+    │ └─INT_LIT 2
+    └─RETURN
 ---

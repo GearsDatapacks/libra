@@ -26,6 +26,7 @@ MODULE test
     │ └─VARIABLE_TYPE i32
     ├─GOTO block1
     ├─LABEL block3
-    └─VAR_SYMBOL var0 mut
-      └─UNIT_STRUCT void
+    ├─VAR_SYMBOL var0 mut
+    │ └─UNIT_STRUCT void
+    └─RETURN
 ---

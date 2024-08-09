@@ -103,7 +103,7 @@ MODULE test
 
 [`8362 >> 3` - 1]
 MODULE test
-└─BINARY_EXPR RightShift
+└─BINARY_EXPR ArithmeticRightShift
   ├─INT_LIT 8362
   ├─INT_LIT 3
   ├─VARIABLE_TYPE untyped int

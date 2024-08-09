@@ -105,6 +105,7 @@ type FunctionDeclaration struct {
 	ReturnType   Expression
 	Body         *Block
 	Implements   *string
+	Extern       *string
 	Attributes   DeclarationAttributes
 }
 
@@ -135,6 +136,16 @@ func (fd *FunctionDeclaration) Print(node *printer.Node) {
 			fd.MemberOf.Name,
 		)
 	}
+
+	if fd.Extern != nil {
+		node.Text(
+			" %sextern %s%s",
+			node.Colour(colour.Attribute),
+			node.Colour(colour.Name),
+			*fd.Extern,
+		)
+	}
+
 	node.
 		Location(fd).
 		OptionalNode(fd.MethodOf)
@@ -143,7 +154,7 @@ func (fd *FunctionDeclaration) Print(node *printer.Node) {
 
 	node.
 		OptionalNode(fd.ReturnType).
-		Node(fd.Body).
+		OptionalNode(fd.Body).
 		Node(fd.Attributes)
 }
 
@@ -152,12 +163,20 @@ func (f *FunctionDeclaration) GetLocation() text.Location {
 }
 
 func (f *FunctionDeclaration) tryAddAttribute(attribute Attribute) bool {
-	if attribute.GetName() == "impl" {
+	switch attribute.GetName() {
+	case "impl":
 		f.Implements = &attribute.(*TextAttribute).Text
 		return true
+	case "extern":
+		text := attribute.(*TextAttribute).Text
+		if text == "" {
+			text = f.Name
+		}
+		f.Extern = &text
+		return true
+	default:
+		return f.Attributes.tryAddAttribute(attribute)
 	}
-
-	return f.Attributes.tryAddAttribute(attribute)
 }
 
 type ReturnStatement struct {

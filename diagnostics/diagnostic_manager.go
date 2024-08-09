@@ -456,6 +456,16 @@ func BranchTypesMustMatch(location text.Location, expected, got tcType) *Diagnos
 	return makeError(msg, location)
 }
 
+func ExternWithBody(location text.Location) *Diagnostic {
+	const msg = "Functions marked external cannot have bodies"
+	return makeError(msg, location)
+}
+
+func NoBody(location text.Location) *Diagnostic {
+	const msg = "Functions must have bodies or be marked extern"
+	return makeError(msg, location)
+}
+
 // Lowerer errors
 
 func NotAllPathsReturn(location text.Location) *Diagnostic {

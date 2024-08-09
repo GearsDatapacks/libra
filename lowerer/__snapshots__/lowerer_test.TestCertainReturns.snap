@@ -1,12 +1,6 @@
 
 [`fn add(a, b: i32): i32 {;	if true {;		return a + b;	};}` - 1]
 MODULE test
-├─FUNC_DECL main
-│ ├─FUNCTION_TYPE
-│ │ └─UNIT_STRUCT void
-│ └─BLOCK
-│   ├─UNIT_STRUCT void
-│   └─LABEL block0
 └─FUNC_DECL add a b
   ├─FUNCTION_TYPE
   │ ├─VARIABLE_TYPE i32
@@ -26,12 +20,6 @@ MODULE test
 
 [`fn add(a, b: i32): i32 {;	mut result = a;	mut counter = b;	while true {;		if counter == 0 {;			return result;		};		result++;		counter--;	};}` - 1]
 MODULE test
-├─FUNC_DECL main
-│ ├─FUNCTION_TYPE
-│ │ └─UNIT_STRUCT void
-│ └─BLOCK
-│   ├─UNIT_STRUCT void
-│   └─LABEL block0
 └─FUNC_DECL add a b
   ├─FUNCTION_TYPE
   │ ├─VARIABLE_TYPE i32

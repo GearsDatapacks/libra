@@ -11,11 +11,12 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 10
-    └─BINARY_EXPR NotEqual
-      ├─VAR_SYMBOL a mut
-      │ └─VARIABLE_TYPE i32
-      ├─INT_LIT 10
-      └─PRIMARY_TYPE bool
+    ├─BINARY_EXPR NotEqual
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ ├─INT_LIT 10
+    │ └─PRIMARY_TYPE bool
+    └─RETURN
 ---
 
 [`mut a = 0; !(a < 20)` - 1]
@@ -30,11 +31,12 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 0
-    └─BINARY_EXPR GreaterEq
-      ├─VAR_SYMBOL a mut
-      │ └─VARIABLE_TYPE i32
-      ├─INT_LIT 20
-      └─PRIMARY_TYPE bool
+    ├─BINARY_EXPR GreaterEq
+    │ ├─VAR_SYMBOL a mut
+    │ │ └─VARIABLE_TYPE i32
+    │ ├─INT_LIT 20
+    │ └─PRIMARY_TYPE bool
+    └─RETURN
 ---
 
 [`mut a = true; !!a` - 1]
@@ -49,8 +51,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT true
-    └─VAR_SYMBOL a mut
-      └─PRIMARY_TYPE bool
+    ├─VAR_SYMBOL a mut
+    │ └─PRIMARY_TYPE bool
+    └─RETURN
 ---
 
 [`mut a = 5; a * 1` - 1]
@@ -65,8 +68,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 5
-    └─VAR_SYMBOL a mut
-      └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL a mut
+    │ └─VARIABLE_TYPE i32
+    └─RETURN
 ---
 
 [`mut a = 31; a + 0` - 1]
@@ -81,8 +85,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 31
-    └─VAR_SYMBOL a mut
-      └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL a mut
+    │ └─VARIABLE_TYPE i32
+    └─RETURN
 ---
 
 [`mut a = 1; a * 0` - 1]
@@ -97,7 +102,8 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 1
-    └─INT_LIT 0
+    ├─INT_LIT 0
+    └─RETURN
 ---
 
 [`mut a = 13; a / 1` - 1]
@@ -112,8 +118,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 13
-    └─VAR_SYMBOL a mut
-      └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL a mut
+    │ └─VARIABLE_TYPE i32
+    └─RETURN
 ---
 
 [`mut a = 21; a ** 0` - 1]
@@ -128,7 +135,8 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 21
-    └─INT_LIT 1
+    ├─INT_LIT 1
+    └─RETURN
 ---
 
 [`mut a = 20; -(-a)` - 1]
@@ -143,8 +151,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 20
-    └─VAR_SYMBOL a mut
-      └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL a mut
+    │ └─VARIABLE_TYPE i32
+    └─RETURN
 ---
 
 [`mut a = 1; ~(~a)` - 1]
@@ -159,8 +168,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 1
-    └─VAR_SYMBOL a mut
-      └─VARIABLE_TYPE i32
+    ├─VAR_SYMBOL a mut
+    │ └─VARIABLE_TYPE i32
+    └─RETURN
 ---
 
 [`mut a = false; a || true` - 1]
@@ -175,7 +185,8 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    └─BOOL_LIT true
+    ├─BOOL_LIT true
+    └─RETURN
 ---
 
 [`mut a = true; a && false` - 1]
@@ -190,7 +201,8 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT true
-    └─BOOL_LIT false
+    ├─BOOL_LIT false
+    └─RETURN
 ---
 
 [`mut a = false; a && true` - 1]
@@ -205,8 +217,9 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    └─VAR_SYMBOL a mut
-      └─PRIMARY_TYPE bool
+    ├─VAR_SYMBOL a mut
+    │ └─PRIMARY_TYPE bool
+    └─RETURN
 ---
 
 [`mut a = false; a || false` - 1]
@@ -221,6 +234,7 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    └─VAR_SYMBOL a mut
-      └─PRIMARY_TYPE bool
+    ├─VAR_SYMBOL a mut
+    │ └─PRIMARY_TYPE bool
+    └─RETURN
 ---

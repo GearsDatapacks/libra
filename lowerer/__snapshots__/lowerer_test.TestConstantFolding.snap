@@ -7,7 +7,8 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    └─INT_LIT 3
+    ├─INT_LIT 3
+    └─RETURN
 ---
 
 [`true && false` - 1]
@@ -18,7 +19,8 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    └─BOOL_LIT false
+    ├─BOOL_LIT false
+    └─RETURN
 ---
 
 [`"Hello, " + "world!"` - 1]
@@ -29,7 +31,8 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    └─STRING_LIT "Hello, world!"
+    ├─STRING_LIT "Hello, world!"
+    └─RETURN
 ---
 
 [`1 == 2 || 3 == 3` - 1]
@@ -40,7 +43,8 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    └─BOOL_LIT true
+    ├─BOOL_LIT true
+    └─RETURN
 ---
 
 [`(4 / 2) + 1` - 1]
@@ -51,5 +55,6 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    └─FLOAT_LIT 3
+    ├─FLOAT_LIT 3
+    └─RETURN
 ---

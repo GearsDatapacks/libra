@@ -10,7 +10,7 @@ import (
 
 type VariableDeclaration struct {
 	Symbol *symbols.Variable
-	Value Expression
+	Value  Expression
 }
 
 func (v *VariableDeclaration) Print(node *printer.Node) {
@@ -29,7 +29,8 @@ type FunctionDeclaration struct {
 	Body       *Block
 	Type       *types.Function
 	Exported   bool
-	Location text.Location
+	Extern     *string
+	Location   text.Location
 }
 
 func (f *FunctionDeclaration) Print(node *printer.Node) {
@@ -51,7 +52,16 @@ func (f *FunctionDeclaration) Print(node *printer.Node) {
 		node.Text(" %s%s", node.Colour(colour.Name), param)
 	}
 
-	node.Node(f.Body)
+	if f.Extern != nil {
+		node.Text(
+			" %sextern %s%s",
+			node.Colour(colour.Attribute),
+			node.Colour(colour.Name),
+			*f.Extern,
+		)
+	}
+
+	node.OptionalNode(f.Body)
 }
 
 type ReturnStatement struct {

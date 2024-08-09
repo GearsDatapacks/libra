@@ -60,3 +60,11 @@ MODULE test
   │   └─UNIT_STRUCT void
   └─UNIT_STRUCT void
 ---
+
+[`@extern;fn strlen(text: string): i32` - 1]
+MODULE test
+└─FUNC_DECL strlen text extern strlen
+  └─FUNCTION_TYPE
+    ├─VARIABLE_TYPE i32
+    └─PRIMARY_TYPE string
+---
