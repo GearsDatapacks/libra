@@ -1,0 +1,106 @@
+
+[`mut a: i16 = 1; mut b: i32 = 2; a + b` - 1]
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL a mut
+│ │ └─VARIABLE_TYPE i16
+│ └─CONVERSION
+│   ├─INT_LIT 1
+│   ├─VARIABLE_TYPE i16
+│   └─INT_VALUE 1
+├─VAR_DECL
+│ ├─VAR_SYMBOL b mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 2
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 2
+└─BINARY_EXPR AddInt
+  ├─CONVERSION
+  │ ├─VAR_SYMBOL a mut
+  │ │ └─VARIABLE_TYPE i16
+  │ └─VARIABLE_TYPE i32
+  ├─VAR_SYMBOL b mut
+  │ └─VARIABLE_TYPE i32
+  └─VARIABLE_TYPE i32
+---
+
+[`mut a: f32 = 0.2; mut b = 3.14; a + b` - 1]
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL a mut
+│ │ └─VARIABLE_TYPE f32
+│ └─CONVERSION
+│   ├─FLOAT_LIT 0.2
+│   ├─VARIABLE_TYPE f32
+│   └─FLOAT_VALUE 0.2
+├─VAR_DECL
+│ ├─VAR_SYMBOL b mut
+│ │ └─VARIABLE_TYPE f64
+│ └─CONVERSION
+│   ├─FLOAT_LIT 3.14
+│   ├─VARIABLE_TYPE f64
+│   └─FLOAT_VALUE 3.14
+└─BINARY_EXPR AddFloat
+  ├─CONVERSION
+  │ ├─VAR_SYMBOL a mut
+  │ │ └─VARIABLE_TYPE f32
+  │ └─VARIABLE_TYPE f64
+  ├─VAR_SYMBOL b mut
+  │ └─VARIABLE_TYPE f64
+  └─VARIABLE_TYPE f64
+---
+
+[`mut i = 12; let f: f32 = 9.1; i + f` - 1]
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL i mut
+│ │ └─VARIABLE_TYPE i32
+│ └─CONVERSION
+│   ├─INT_LIT 12
+│   ├─VARIABLE_TYPE i32
+│   └─INT_VALUE 12
+├─VAR_DECL
+│ ├─VAR_SYMBOL f
+│ │ ├─VARIABLE_TYPE f32
+│ │ └─FLOAT_VALUE 9.1
+│ └─CONVERSION
+│   ├─FLOAT_LIT 9.1
+│   ├─VARIABLE_TYPE f32
+│   └─FLOAT_VALUE 9.1
+└─BINARY_EXPR AddFloat
+  ├─CONVERSION
+  │ ├─VAR_SYMBOL i mut
+  │ │ └─VARIABLE_TYPE i32
+  │ └─VARIABLE_TYPE f32
+  ├─VAR_SYMBOL f
+  │ ├─VARIABLE_TYPE f32
+  │ └─FLOAT_VALUE 9.1
+  └─VARIABLE_TYPE f32
+---
+
+[`mut i: i64 = 10; mut u: u32 = 2; i + u` - 1]
+MODULE test
+├─VAR_DECL
+│ ├─VAR_SYMBOL i mut
+│ │ └─VARIABLE_TYPE i64
+│ └─CONVERSION
+│   ├─INT_LIT 10
+│   ├─VARIABLE_TYPE i64
+│   └─INT_VALUE 10
+├─VAR_DECL
+│ ├─VAR_SYMBOL u mut
+│ │ └─VARIABLE_TYPE u32
+│ └─CONVERSION
+│   ├─INT_LIT 2
+│   ├─VARIABLE_TYPE u32
+│   └─UINT_VALUE 2
+└─BINARY_EXPR AddInt
+  ├─VAR_SYMBOL i mut
+  │ └─VARIABLE_TYPE i64
+  ├─CONVERSION
+  │ ├─VAR_SYMBOL u mut
+  │ │ └─VARIABLE_TYPE u32
+  │ └─VARIABLE_TYPE i64
+  └─VARIABLE_TYPE i64
+---

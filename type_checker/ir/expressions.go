@@ -136,10 +136,8 @@ func (f *FloatLiteral) Print(node *printer.Node) {
 	)
 }
 
-var maxFloat16 = 6.5504e+4
-
 func minFloatWidth(f float64) int {
-	if f <= maxFloat16 && f >= -maxFloat16 {
+	if f <= types.MaxFloat16 && f >= -types.MaxFloat16 {
 		return 16
 	}
 	if f <= math.MaxFloat32 && f >= -math.MaxFloat32 {
@@ -249,10 +247,10 @@ func (v *VariableExpression) ConstValue() values.ConstValue {
 	return v.Symbol.ConstValue
 }
 
-type BinaryOperator int
+type BinOpId int
 
 const (
-	_ BinaryOperator = iota
+	_ BinOpId = iota
 	LogicalAnd
 	LogicalOr
 	Less
@@ -282,8 +280,13 @@ const (
 	UntypedBit = 1 << 8
 )
 
-func (b BinaryOperator) String() string {
-	b = b & ^UntypedBit
+type BinaryOperator struct {
+	Id       BinOpId
+	DataType types.Type
+}
+
+func (bo BinaryOperator) String() string {
+	b := bo.Id & ^UntypedBit
 
 	switch b {
 	case LogicalAnd:
@@ -344,11 +347,11 @@ func (b BinaryOperator) String() string {
 }
 
 func (b BinaryOperator) Type() types.Type {
-	untyped := b&UntypedBit != 0
-	b = b & ^UntypedBit
+	untyped := b.Id&UntypedBit != 0
+	id := b.Id & ^UntypedBit
 	var ty types.Type = types.Invalid
 
-	switch b {
+	switch id {
 	case LogicalAnd:
 		ty = types.Bool
 
@@ -392,40 +395,40 @@ func (b BinaryOperator) Type() types.Type {
 		ty = types.I32
 
 	case AddInt:
-		ty = types.I32
+		ty = b.DataType
 
 	case AddFloat:
-		ty = types.F32
+		ty = b.DataType
 
 	case Concat:
 		ty = types.String
 
 	case SubtractInt:
-		ty = types.I32
+		ty = b.DataType
 
 	case SubtractFloat:
-		ty = types.F32
+		ty = b.DataType
 
 	case MultiplyInt:
-		ty = types.I32
+		ty = b.DataType
 
 	case MultiplyFloat:
-		ty = types.F32
+		ty = b.DataType
 
 	case Divide:
 		ty = types.F32
 
 	case ModuloInt:
-		ty = types.I32
+		ty = b.DataType
 
 	case ModuloFloat:
-		ty = types.F32
+		ty = b.DataType
 
 	case PowerInt:
-		ty = types.I32
+		ty = b.DataType
 
 	case PowerFloat:
-		ty = types.F32
+		ty = b.DataType
 	}
 
 	if untyped {
@@ -473,7 +476,7 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 		return nil
 	}
 
-	switch b.Operator & ^UntypedBit {
+	switch b.Operator.Id & ^UntypedBit {
 	case LogicalAnd:
 		left := b.Left.ConstValue().(values.BoolValue)
 		right := b.Right.ConstValue().(values.BoolValue)

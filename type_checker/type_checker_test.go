@@ -465,6 +465,15 @@ func TestNumConversions(t *testing.T) {
 	)
 }
 
+func TestNumOperatorConversions(t *testing.T) {
+	utils.MatchIrSnaps(t,
+		"mut a: i16 = 1; mut b: i32 = 2; a + b",
+		"mut a: f32 = 0.2; mut b = 3.14; a + b",
+		"mut i = 12; let f: f32 = 9.1; i + f",
+		"mut i: i64 = 10; mut u: u32 = 2; i + u",
+	)
+}
+
 // TODO: Add a way to create fake modules, for the following errors:
 // FieldPrivate
 // NoExport
@@ -541,6 +550,8 @@ struct Tagged`,
 fn add(a, b: i32): i32 {
 	return a + b
 }`,
-`fn not_extern(): f32`,
+"fn not_extern(): f32",
+"mut u: u32 = 3; mut i: i32 = 21; u + i",
+"mut u: u32 = 3; mut f: f16 = 2.1; u + f",
 	)
 }

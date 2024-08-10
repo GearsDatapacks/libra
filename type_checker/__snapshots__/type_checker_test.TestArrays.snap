@@ -44,24 +44,21 @@ MODULE test
 MODULE test
 └─ARRAY_EXPR
   ├─ARRAY_TYPE 3 can_infer
-  │ └─VARIABLE_TYPE f32
+  │ └─VARIABLE_TYPE f64
   ├─ARRAY_VALUE
   │ ├─FLOAT_VALUE 3.5
   │ ├─FLOAT_VALUE 1.2
   │ └─FLOAT_VALUE 1.44
   ├─CONVERSION
   │ ├─BINARY_EXPR AddFloat
-  │ │ ├─CONVERSION
-  │ │ │ ├─FLOAT_LIT 1.5
-  │ │ │ ├─VARIABLE_TYPE f32
-  │ │ │ └─FLOAT_VALUE 1.5
+  │ │ ├─FLOAT_LIT 1.5
   │ │ ├─CONVERSION
   │ │ │ ├─INT_LIT 2
-  │ │ │ ├─VARIABLE_TYPE f32
+  │ │ │ ├─VARIABLE_TYPE untyped float
   │ │ │ └─FLOAT_VALUE 2
   │ │ ├─VARIABLE_TYPE untyped float
   │ │ └─FLOAT_VALUE 3.5
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE f64
   │ └─FLOAT_VALUE 3.5
   ├─CONVERSION
   │ ├─BINARY_EXPR Divide
@@ -69,20 +66,17 @@ MODULE test
   │ │ ├─INT_LIT 5
   │ │ ├─VARIABLE_TYPE untyped float
   │ │ └─FLOAT_VALUE 1.2
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE f64
   │ └─FLOAT_VALUE 1.2
   └─CONVERSION
     ├─BINARY_EXPR PowerFloat
-    │ ├─CONVERSION
-    │ │ ├─FLOAT_LIT 1.2
-    │ │ ├─VARIABLE_TYPE f32
-    │ │ └─FLOAT_VALUE 1.2
+    │ ├─FLOAT_LIT 1.2
     │ ├─CONVERSION
     │ │ ├─INT_LIT 2
-    │ │ ├─VARIABLE_TYPE f32
+    │ │ ├─VARIABLE_TYPE untyped float
     │ │ └─FLOAT_VALUE 2
     │ ├─VARIABLE_TYPE untyped float
     │ └─FLOAT_VALUE 1.44
-    ├─VARIABLE_TYPE f32
+    ├─VARIABLE_TYPE f64
     └─FLOAT_VALUE 1.44
 ---

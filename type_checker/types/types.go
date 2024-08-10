@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"math"
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/diagnostics"
@@ -114,6 +115,42 @@ func Unwrap(ty Type) Type {
 	return ty
 }
 
+type CastKind int
+
+const (
+	NoCast CastKind = iota
+	IdentityCast
+	ImplicitCast
+	OperatorCast
+	ExplicitCast
+)
+
+func Cast(from, to Type, maxKind CastKind) CastKind {
+	if castable, ok := from.(castTo); ok {
+		kind := castable.castTo(to)
+		if kind != NoCast && kind <= maxKind {
+			return kind
+		}
+	}
+
+	if castable, ok := to.(castFrom); ok {
+		kind := castable.castFrom(from)
+		if kind != NoCast && kind <= maxKind {
+			return kind
+		}
+	}
+
+	if Match(to, from) {
+		return IdentityCast
+	}
+
+	if Assignable(to, from) {
+		return ImplicitCast
+	}
+
+	return NoCast
+}
+
 type PrimaryType int
 
 const (
@@ -197,8 +234,8 @@ type NumKind int
 
 const (
 	_ NumKind = iota
-	NumInt
 	NumUint
+	NumInt
 	NumFloat
 )
 
@@ -290,7 +327,7 @@ func (v Numeric) valid(other Type) bool {
 		return true
 	}
 
-	if variable.Downcastable != nil {
+	if variable.Untyped() {
 		switch v.Kind {
 		case NumInt:
 			if variable.Downcastable.MinIntWidth != 0 &&
@@ -315,10 +352,65 @@ func (v Numeric) valid(other Type) bool {
 }
 
 func (v Numeric) toReal() Type {
-	if v.Downcastable != nil {
-		v.Downcastable = nil
-	}
+	v.Downcastable = nil
 	return v
+}
+
+const MaxFloat16 = 6.5504e+4
+
+func (n Numeric) MaxValue() float64 {
+	switch n.Kind {
+	case NumUint:
+		return math.Exp2(float64(n.BitWidth)) - 1
+	case NumInt:
+		return math.Exp2(float64(n.BitWidth-1)) - 1
+	case NumFloat:
+		switch n.BitWidth {
+		case 16:
+			return MaxFloat16
+		case 32:
+			return math.MaxFloat32
+		case 64:
+			return math.MaxFloat64
+		default:
+			panic("Unreachable")
+		}
+	default:
+		panic("unreachable")
+	}
+}
+
+func (from Numeric) castTo(t Type) CastKind {
+	to, ok := t.(Numeric)
+	if !ok {
+		return NoCast
+	}
+
+	if Assignable(to, from) {
+		kind := IdentityCast
+		if from.Untyped() && !to.Untyped() {
+			kind = ImplicitCast
+		} else if from.Untyped() && to.Untyped() && from.Kind != to.Kind {
+			kind = ImplicitCast
+		}
+
+		return kind
+	}
+
+	if to.Kind >= from.Kind && to.MaxValue() >= from.MaxValue() {
+		return OperatorCast
+	}
+
+	return ExplicitCast
+}
+
+func (to Numeric) castFrom(from Type) CastKind {
+	if from == Bool {
+		if to.Kind == NumInt || to.Kind == NumUint {
+			return ExplicitCast
+		}
+	}
+	return NoCast
 }
 
 func (v Numeric) GetEnumValue(
@@ -927,6 +1019,13 @@ func (u *Union) StaticMemberValue(member string) values.ConstValue {
 	return nil
 }
 
+func (to *Union) castFrom(from Type) CastKind {
+	if Assignable(to, from) {
+		return ImplicitCast
+	}
+	return NoCast
+}
+
 func (*Union) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
@@ -979,6 +1078,13 @@ func (v *UnionVariant) toReal() Type {
 
 func (v *UnionVariant) unwrap() Type {
 	return Unwrap(v.Type)
+}
+
+func (to *UnionVariant) castFrom(from Type) CastKind {
+	if Assignable(to, from) {
+		return ImplicitCast
+	}
+	return NoCast
 }
 
 func (*UnionVariant) ToLlvm(llvm.Context) llvm.Type {
@@ -1173,6 +1279,21 @@ func (e *Explicit) unwrap() Type {
 	return Unwrap(e.Type)
 }
 
+func (from *Explicit) castTo(to Type) CastKind {
+	if Assignable(to, from.Type) {
+		return ExplicitCast
+	}
+
+	return NoCast
+}
+
+func (to *Explicit) castFrom(from Type) CastKind {
+	if Assignable(to, from) {
+		return ImplicitCast
+	}
+	return NoCast
+}
+
 type UnitStruct struct {
 	Name string
 	Id   int
@@ -1258,6 +1379,13 @@ func (t *Tag) valid(other Type) bool {
 
 func (*Tag) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (to *Tag) castFrom(from Type) CastKind {
+	if Assignable(to, from) {
+		return IdentityCast
+	}
+	return NoCast
 }
 
 var ErrorTag = Tag{
@@ -1390,6 +1518,20 @@ func (e *Enum) StaticMemberValue(member string) values.ConstValue {
 	return e.Members[member]
 }
 
+func (from *Enum) castTo(to Type) CastKind {
+	if Assignable(to, from.Underlying) {
+		return ExplicitCast
+	}
+	return NoCast
+}
+
+func (to *Enum) castFrom(from Type) CastKind {
+	if Assignable(to.Underlying, from) {
+		return ExplicitCast
+	}
+	return NoCast
+}
+
 func (*Enum) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
@@ -1420,4 +1562,12 @@ type Iterator interface {
 
 type HasEnumValue interface {
 	GetEnumValue([]values.ConstValue, string) (values.ConstValue, *diagnostics.Partial)
+}
+
+type castTo interface {
+	castTo(Type) CastKind
+}
+
+type castFrom interface {
+	castFrom(Type) CastKind
 }

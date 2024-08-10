@@ -22,12 +22,17 @@ MODULE test
 │ ├─VAR_SYMBOL result mut
 │ │ └─RESULT_TYPE
 │ │   └─VARIABLE_TYPE i32
-│ └─TUPLE_STRUCT_EXPR
-│   ├─TUPLE_STRUCT_TYPE MyError
-│   │ └─PRIMARY_TYPE string
-│   ├─TUPLE_VALUE
-│   │ └─STRING_VALUE "Error: uninitialised"
-│   └─STRING_LIT "Error: uninitialised"
+│ └─CONVERSION
+│   ├─TUPLE_STRUCT_EXPR
+│   │ ├─TUPLE_STRUCT_TYPE MyError
+│   │ │ └─PRIMARY_TYPE string
+│   │ ├─TUPLE_VALUE
+│   │ │ └─STRING_VALUE "Error: uninitialised"
+│   │ └─STRING_LIT "Error: uninitialised"
+│   ├─RESULT_TYPE
+│   │ └─VARIABLE_TYPE i32
+│   └─TUPLE_VALUE
+│     └─STRING_VALUE "Error: uninitialised"
 ├─ASSIGNMENT
 │ ├─VAR_SYMBOL result mut
 │ │ └─RESULT_TYPE

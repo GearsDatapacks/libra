@@ -522,3 +522,19 @@ fn not_extern(): f32
 
 
 ---
+
+[`mut u: u32 = 3; mut i: i32 = 21; u + i` - 1]
+test.lb:1:36:
+mut u: u32 = 3; mut i: i32 = 21; u + i
+                                   ^ Operator "+" is not defined for types "u32" and "i32"
+
+
+---
+
+[`mut u: u32 = 3; mut f: f16 = 2.1; u + f` - 1]
+test.lb:1:37:
+mut u: u32 = 3; mut f: f16 = 2.1; u + f
+                                    ^ Operator "+" is not defined for types "u32" and "f16"
+
+
+---

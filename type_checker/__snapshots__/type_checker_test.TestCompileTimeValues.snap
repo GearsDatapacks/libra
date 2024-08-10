@@ -74,15 +74,12 @@ MODULE test
 └─BINARY_EXPR AddFloat
   ├─CONVERSION
   │ ├─INT_LIT 1
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 1
-  ├─CONVERSION
-  │ ├─BINARY_EXPR Divide
-  │ │ ├─INT_LIT 2
-  │ │ ├─INT_LIT 4
-  │ │ ├─VARIABLE_TYPE untyped float
-  │ │ └─FLOAT_VALUE 0.5
-  │ ├─VARIABLE_TYPE f32
+  ├─BINARY_EXPR Divide
+  │ ├─INT_LIT 2
+  │ ├─INT_LIT 4
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 0.5
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 1.5

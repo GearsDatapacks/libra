@@ -22,12 +22,19 @@ MODULE test
 │ │ │     └─UNIT_STRUCT void
 │ │ └─TUPLE_VALUE
 │ │   └─STRING_VALUE "Hello"
-│ └─TUPLE_STRUCT_EXPR
-│   ├─TUPLE_STRUCT_TYPE Message
-│   │ └─PRIMARY_TYPE string
-│   ├─TUPLE_VALUE
-│   │ └─STRING_VALUE "Hello"
-│   └─STRING_LIT "Hello"
+│ └─CONVERSION
+│   ├─TUPLE_STRUCT_EXPR
+│   │ ├─TUPLE_STRUCT_TYPE Message
+│   │ │ └─PRIMARY_TYPE string
+│   │ ├─TUPLE_VALUE
+│   │ │ └─STRING_VALUE "Hello"
+│   │ └─STRING_LIT "Hello"
+│   ├─INTERFACE_TYPE Printable
+│   │ └─INTERFACE_MEMBER print
+│   │   └─FUNCTION_TYPE
+│   │     └─UNIT_STRUCT void
+│   └─TUPLE_VALUE
+│     └─STRING_VALUE "Hello"
 └─FUNCTION_CALL
   ├─MEMBER_EXPR print
   │ ├─VAR_SYMBOL my_printable

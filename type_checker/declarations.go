@@ -383,7 +383,7 @@ func (t *typeChecker) typeCheckEnumDeclaration(decl *ast.EnumDeclaration) ir.Sta
 
 		if member.Value != nil {
 			expression := t.typeCheckExpression(member.Value)
-			conversion := convert(expression, ty.Underlying, implicit)
+			conversion := convert(expression, ty.Underlying, types.ImplicitCast)
 			if conversion == nil {
 				t.diagnostics.Report(diagnostics.NotAssignable(
 					member.Value.GetLocation(),

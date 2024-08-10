@@ -43,7 +43,10 @@ MODULE test
   │ │ └─BINARY_EXPR AddInt
   │ │   ├─VAR_SYMBOL value
   │ │   │ └─VARIABLE_TYPE i32
-  │ │   ├─INT_LIT 1
+  │ │   ├─CONVERSION
+  │ │   │ ├─INT_LIT 1
+  │ │   │ ├─VARIABLE_TYPE i32
+  │ │   │ └─INT_VALUE 1
   │ │   └─VARIABLE_TYPE i32
   │ └─FUNCTION_TYPE
   │   ├─VARIABLE_TYPE i32

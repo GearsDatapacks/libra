@@ -191,7 +191,10 @@ MODULE test
     │ ├─VAR_SYMBOL index
     │ │ ├─VARIABLE_TYPE i32
     │ │ └─INT_VALUE 1
-    │ ├─INT_LIT 1
+    │ ├─CONVERSION
+    │ │ ├─INT_LIT 1
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 1
     │ ├─VARIABLE_TYPE i32
     │ └─INT_VALUE 2
     ├─ENUM_TYPE WeekDay

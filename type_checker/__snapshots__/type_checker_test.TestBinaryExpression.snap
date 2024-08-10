@@ -20,13 +20,10 @@ MODULE test
 [`1.5 < 2` - 1]
 MODULE test
 └─BINARY_EXPR Less
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 1.5
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 1.5
+  ├─FLOAT_LIT 1.5
   ├─CONVERSION
   │ ├─INT_LIT 2
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 2
   ├─PRIMARY_TYPE bool
   └─BOOL_VALUE true
@@ -44,14 +41,8 @@ MODULE test
 [`3.14 > 2.71` - 1]
 MODULE test
 └─BINARY_EXPR Greater
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 3.14
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 3.14
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 2.71
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 2.71
+  ├─FLOAT_LIT 3.14
+  ├─FLOAT_LIT 2.71
   ├─PRIMARY_TYPE bool
   └─BOOL_VALUE true
 ---
@@ -140,13 +131,10 @@ MODULE test
 [`2.3 + 4` - 1]
 MODULE test
 └─BINARY_EXPR AddFloat
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 2.3
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 2.3
+  ├─FLOAT_LIT 2.3
   ├─CONVERSION
   │ ├─INT_LIT 4
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 4
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 6.3
@@ -175,12 +163,9 @@ MODULE test
 └─BINARY_EXPR SubtractFloat
   ├─CONVERSION
   │ ├─INT_LIT 3
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 3
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 1.3
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 1.3
+  ├─FLOAT_LIT 1.3
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 1.7
 ---
@@ -197,14 +182,8 @@ MODULE test
 [`1.3 * 0.4` - 1]
 MODULE test
 └─BINARY_EXPR MultiplyFloat
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 1.3
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 1.3
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 0.4
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 0.4
+  ├─FLOAT_LIT 1.3
+  ├─FLOAT_LIT 0.4
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 0.52
 ---
@@ -212,13 +191,10 @@ MODULE test
 [`0.3 / 2` - 1]
 MODULE test
 └─BINARY_EXPR Divide
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 0.3
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 0.3
+  ├─FLOAT_LIT 0.3
   ├─CONVERSION
   │ ├─INT_LIT 2
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 2
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 0.15
@@ -236,13 +212,10 @@ MODULE test
 [`1.4 % 1` - 1]
 MODULE test
 └─BINARY_EXPR ModuloFloat
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 1.4
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 1.4
+  ├─FLOAT_LIT 1.4
   ├─CONVERSION
   │ ├─INT_LIT 1
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 1
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 0.3999999999999999
@@ -262,12 +235,9 @@ MODULE test
 └─BINARY_EXPR PowerFloat
   ├─CONVERSION
   │ ├─INT_LIT 3
-  │ ├─VARIABLE_TYPE f32
+  │ ├─VARIABLE_TYPE untyped float
   │ └─FLOAT_VALUE 3
-  ├─CONVERSION
-  │ ├─FLOAT_LIT 0.5
-  │ ├─VARIABLE_TYPE f32
-  │ └─FLOAT_VALUE 0.5
+  ├─FLOAT_LIT 0.5
   ├─VARIABLE_TYPE untyped float
   └─FLOAT_VALUE 1.7320508075688772
 ---

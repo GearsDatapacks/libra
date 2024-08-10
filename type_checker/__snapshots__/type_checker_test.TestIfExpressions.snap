@@ -28,7 +28,10 @@ MODULE test
     ├─BINARY_EXPR Greater
     │ ├─VAR_SYMBOL value mut
     │ │ └─VARIABLE_TYPE i32
-    │ ├─INT_LIT 10
+    │ ├─CONVERSION
+    │ │ ├─INT_LIT 10
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 10
     │ └─PRIMARY_TYPE bool
     ├─BLOCK
     │ ├─VARIABLE_TYPE i32
@@ -43,7 +46,10 @@ MODULE test
     │ │ └─BINARY_EXPR AddInt
     │ │   ├─VAR_SYMBOL value mut
     │ │   │ └─VARIABLE_TYPE i32
-    │ │   ├─INT_LIT 1
+    │ │   ├─CONVERSION
+    │ │   │ ├─INT_LIT 1
+    │ │   │ ├─VARIABLE_TYPE i32
+    │ │   │ └─INT_VALUE 1
     │ │   └─VARIABLE_TYPE i32
     │ └─YIELD
     │   └─VAR_SYMBOL temp
@@ -53,7 +59,10 @@ MODULE test
         ├─BINARY_EXPR Greater
         │ ├─VAR_SYMBOL value mut
         │ │ └─VARIABLE_TYPE i32
-        │ ├─INT_LIT 5
+        │ ├─CONVERSION
+        │ │ ├─INT_LIT 5
+        │ │ ├─VARIABLE_TYPE i32
+        │ │ └─INT_VALUE 5
         │ └─PRIMARY_TYPE bool
         ├─BLOCK
         │ ├─VARIABLE_TYPE i32
@@ -63,7 +72,10 @@ MODULE test
         │ │ └─BINARY_EXPR SubtractInt
         │ │   ├─VAR_SYMBOL value mut
         │ │   │ └─VARIABLE_TYPE i32
-        │ │   ├─INT_LIT 1
+        │ │   ├─CONVERSION
+        │ │   │ ├─INT_LIT 1
+        │ │   │ ├─VARIABLE_TYPE i32
+        │ │   │ └─INT_VALUE 1
         │ │   └─VARIABLE_TYPE i32
         │ └─YIELD
         │   └─VAR_SYMBOL value mut

@@ -66,6 +66,9 @@ MODULE test
   └─BINARY_EXPR SubtractInt
     ├─VAR_SYMBOL count mut
     │ └─VARIABLE_TYPE i32
-    ├─INT_LIT 2
+    ├─CONVERSION
+    │ ├─INT_LIT 2
+    │ ├─VARIABLE_TYPE i32
+    │ └─INT_VALUE 2
     └─VARIABLE_TYPE i32
 ---

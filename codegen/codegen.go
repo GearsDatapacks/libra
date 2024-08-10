@@ -202,7 +202,7 @@ func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) llvm.Va
 	left := c.compileExpression(binExpr.Left)
 	right := c.compileExpression(binExpr.Right)
 
-	switch binExpr.Operator {
+	switch binExpr.Operator.Id {
 	case ir.AddFloat:
 		return c.builder.CreateFAdd(left, right, "fadd_tmp")
 	case ir.AddInt:

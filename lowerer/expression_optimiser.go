@@ -24,7 +24,7 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		}
 
 	case *ir.BinaryExpression:
-		switch expr.Operator {
+		switch expr.Operator.Id {
 		case ir.LogicalAnd:
 			if boolean, ok := expr.Left.ConstValue().(values.BoolValue); ok {
 				if boolean.Value {
@@ -246,41 +246,41 @@ func optimiseLogicalNot(expression ir.Expression, original ir.Expression) ir.Exp
 			return expr.Operand
 		}
 	case *ir.BinaryExpression:
-		switch expr.Operator {
+		switch expr.Operator.Id {
 		case ir.Less:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.GreaterEq,
+				Operator: ir.BinaryOperator{Id: ir.GreaterEq, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		case ir.LessEq:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.Greater,
+				Operator: ir.BinaryOperator{Id: ir.Greater, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		case ir.Greater:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.LessEq,
+				Operator: ir.BinaryOperator{Id: ir.LessEq, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		case ir.GreaterEq:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.Less,
+				Operator: ir.BinaryOperator{Id: ir.Less, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		case ir.Equal:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.NotEqual,
+				Operator: ir.BinaryOperator{Id: ir.NotEqual, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		case ir.NotEqual:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.Equal,
+				Operator: ir.BinaryOperator{Id: ir.Equal, DataType: expr.Operator.DataType},
 				Right:    expr.Right,
 			}
 		}

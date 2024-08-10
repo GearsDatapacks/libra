@@ -70,12 +70,9 @@ MODULE test
   │ └─BINARY_EXPR Greater
   │   ├─CONVERSION
   │   │ ├─INT_LIT 31
-  │   │ ├─VARIABLE_TYPE f32
+  │   │ ├─VARIABLE_TYPE untyped float
   │   │ └─FLOAT_VALUE 31
-  │   ├─CONVERSION
-  │   │ ├─FLOAT_LIT 30.5
-  │   │ ├─VARIABLE_TYPE f32
-  │   │ └─FLOAT_VALUE 30.5
+  │   ├─FLOAT_LIT 30.5
   │   ├─PRIMARY_TYPE bool
   │   └─BOOL_VALUE true
   ├─FLOAT_LIT 0

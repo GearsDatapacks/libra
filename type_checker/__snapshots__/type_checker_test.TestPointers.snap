@@ -46,7 +46,10 @@ MODULE test
   ├─BINARY_EXPR Less
   │ ├─VAR_SYMBOL value mut
   │ │ └─VARIABLE_TYPE i32
-  │ ├─INT_LIT 10
+  │ ├─CONVERSION
+  │ │ ├─INT_LIT 10
+  │ │ ├─VARIABLE_TYPE i32
+  │ │ └─INT_VALUE 10
   │ └─PRIMARY_TYPE bool
   └─BLOCK
     ├─UNIT_STRUCT void
@@ -60,7 +63,10 @@ MODULE test
         │ └─VAR_SYMBOL ptr
         │   └─POINTER_TYPE mut
         │     └─VARIABLE_TYPE i32
-        ├─INT_LIT 1
+        ├─CONVERSION
+        │ ├─INT_LIT 1
+        │ ├─VARIABLE_TYPE i32
+        │ └─INT_VALUE 1
         └─VARIABLE_TYPE i32
 ---
 
@@ -77,7 +83,10 @@ MODULE test
   ├─VAR_SYMBOL downcasted_ptr
   │ └─POINTER_TYPE
   │   └─VARIABLE_TYPE i32
-  └─REF_EXPR mut
-    └─VAR_SYMBOL mutable mut
+  └─CONVERSION
+    ├─REF_EXPR mut
+    │ └─VAR_SYMBOL mutable mut
+    │   └─VARIABLE_TYPE i32
+    └─POINTER_TYPE
       └─VARIABLE_TYPE i32
 ---

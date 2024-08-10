@@ -58,14 +58,14 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	}
 
 	if expectedType != nil {
-		conversion := convert(value, expectedType, implicit)
+		conversion := convert(value, expectedType, types.ImplicitCast)
 		if conversion == nil {
 			t.diagnostics.Report(diagnostics.NotAssignable(varDec.Value.GetLocation(), expectedType, value.Type()))
 		} else {
 			value = conversion
 		}
 	} else {
-		value = convert(value, types.ToReal(value.Type()), implicit)
+		value = convert(value, types.ToReal(value.Type()), types.ImplicitCast)
 	}
 
 	varType := expectedType
@@ -190,7 +190,7 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 	}
 
 	value := t.typeCheckExpression(ret.Value)
-	if conversion := convert(value, expectedType, implicit); conversion != nil {
+	if conversion := convert(value, expectedType, types.ImplicitCast); conversion != nil {
 		value = conversion
 	} else {
 		t.diagnostics.Report(diagnostics.NotAssignable(ret.Value.GetLocation(), expectedType, value.Type()))

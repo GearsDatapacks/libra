@@ -135,14 +135,14 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	if left.Type() == types.Invalid || right.Type() == types.Invalid {
 		return &ir.BinaryExpression{
 			Left:     left,
-			Operator: 0,
+			Operator: ir.BinaryOperator{},
 			Right:    right,
 		}
 	}
 
 	left, right, operator := getBinaryOperator(binExpr.Operator.Kind, left, right)
 
-	if operator == 0 {
+	if operator.Id == 0 {
 		t.diagnostics.Report(diagnostics.BinaryOperatorUndefined(binExpr.Operator.Location, binExpr.Operator.Value, left.Type(), right.Type()))
 	}
 
@@ -156,15 +156,12 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Expression, binOp ir.BinaryOperator) {
 	lhs = left
 	rhs = right
-	binOp = 0
+	binOp = ir.BinaryOperator{}
 	lType := left.Type()
 	rType := right.Type()
 
 	leftNum, leftNumeric := lType.(types.Numeric)
 	rightNum, rightNumeric := rType.(types.Numeric)
-	isFloat :=
-		(leftNumeric && leftNum.Kind == types.NumFloat) ||
-			(rightNumeric && rightNum.Kind == types.NumFloat)
 
 	lUntyped := leftNumeric && leftNum.Untyped()
 	rUntyped := rightNumeric && rightNum.Untyped()
@@ -173,141 +170,204 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 	switch op {
 	case token.DOUBLE_AMPERSAND:
 		if types.Assignable(types.Bool, lType) && types.Assignable(types.Bool, rType) {
-			binOp = ir.LogicalAnd
+			binOp.Id = ir.LogicalAnd
 		}
 	case token.DOUBLE_PIPE:
 		if types.Assignable(types.Bool, lType) && types.Assignable(types.Bool, rType) {
-			binOp = ir.LogicalOr
+			binOp.Id = ir.LogicalOr
 		}
 	case token.LEFT_ANGLE:
 		if leftNumeric && rightNumeric {
-			binOp = ir.Less
-			if isFloat {
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
 			}
+
+			binOp.Id = ir.Less
+
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
 		}
 	case token.RIGHT_ANGLE:
 		if leftNumeric && rightNumeric {
-			binOp = ir.Greater
-			if isFloat {
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
 			}
+			binOp.Id = ir.Greater
+
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
 		}
 	case token.LEFT_ANGLE_EQUALS:
 		if leftNumeric && rightNumeric {
-			binOp = ir.LessEq
-			if isFloat {
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
 			}
+			binOp.Id = ir.LessEq
+
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
 		}
 	case token.RIGHT_ANGLE_EQUALS:
 		if leftNumeric && rightNumeric {
-			binOp = ir.GreaterEq
-			if isFloat {
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
 			}
+			binOp.Id = ir.GreaterEq
+
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
 		}
 	case token.DOUBLE_EQUALS:
 		if types.Assignable(rType, lType) || types.Assignable(lType, rType) {
-			binOp = ir.Equal
+			binOp.Id = ir.Equal
 		}
 	case token.BANG_EQUALS:
 		if types.Assignable(rType, lType) || types.Assignable(lType, rType) {
-			binOp = ir.NotEqual
+			binOp.Id = ir.NotEqual
 		}
 	case token.DOUBLE_LEFT_ANGLE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.LeftShift
+			binOp.Id = ir.LeftShift
 		}
 	case token.DOUBLE_RIGHT_ANGLE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.ArithmeticRightShift
+			binOp.Id = ir.ArithmeticRightShift
 		}
 	case token.TRIPLE_RIGHT_ANGLE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.LogicalRightShift
+			binOp.Id = ir.LogicalRightShift
 		}
 	case token.PLUS:
 		if types.Assignable(types.String, lType) && types.Assignable(types.String, rType) {
-			binOp = ir.Concat
+			binOp.Id = ir.Concat
 		}
 
 		if leftNumeric && rightNumeric {
-			if isFloat {
-				binOp = ir.AddFloat
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			// TODO: Add a proper error message for this
+			if resultType == nil {
+				return
+			}
+			
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				binOp.Id = ir.AddFloat
 			} else {
-				binOp = ir.AddInt
+				binOp.Id = ir.AddInt
 			}
 		}
 	case token.MINUS:
 		if leftNumeric && rightNumeric {
-			if isFloat {
-				binOp = ir.SubtractFloat
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				binOp.Id = ir.SubtractFloat
 			} else {
-				binOp = ir.SubtractInt
+				binOp.Id = ir.SubtractInt
 			}
 		}
 	case token.STAR:
 		if leftNumeric && rightNumeric {
-			if isFloat {
-				binOp = ir.MultiplyFloat
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				binOp.Id = ir.MultiplyFloat
 			} else {
-				binOp = ir.MultiplyInt
+				binOp.Id = ir.MultiplyInt
 			}
 		}
 	case token.SLASH:
 		if leftNumeric && rightNumeric {
-			binOp = ir.Divide
-			if isFloat {
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
 			}
+			binOp.Id = ir.Divide
+			binOp.DataType = resultType
+
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
 		}
 	case token.PERCENT:
 		if leftNumeric && rightNumeric {
-			if isFloat {
-				binOp = ir.ModuloFloat
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				binOp.Id = ir.ModuloFloat
 			} else {
-				binOp = ir.ModuloInt
+				binOp.Id = ir.ModuloInt
 			}
 		}
 	case token.DOUBLE_STAR:
 		if leftNumeric && rightNumeric {
-			if isFloat {
-				binOp = ir.PowerFloat
-				lhs = convert(lhs, types.F32, operator)
-				rhs = convert(rhs, types.F32, operator)
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				binOp.Id = ir.PowerFloat
 			} else {
-				binOp = ir.PowerInt
+				binOp.Id = ir.PowerInt
 			}
 		}
 	case token.PIPE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.BitwiseOr
+			binOp.Id = ir.BitwiseOr
 		}
 		if types.Assignable(types.RuntimeType, lType) && types.Assignable(types.RuntimeType, rType) {
-			binOp = ir.Union
+			binOp.Id = ir.Union
 		}
 	case token.AMPERSAND:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp = ir.BitwiseAnd
+			binOp.Id = ir.BitwiseAnd
 		}
 	}
 
-	if untyped && binOp != 0 {
-		binOp = binOp | ir.UntypedBit
+	if untyped && binOp.Id != 0 {
+		binOp.Id = binOp.Id | ir.UntypedBit
 	}
 	return
 }
@@ -503,7 +563,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expression {
 	value := t.typeCheckExpression(expr.Left)
 	ty := t.typeCheckType(expr.Type)
-	conversion := convert(value, ty, explicit)
+	conversion := convert(value, ty, types.ExplicitCast)
 	if conversion == nil {
 		t.diagnostics.Report(diagnostics.CannotCast(expr.Left.GetLocation(), value.Type(), ty))
 		return &ir.InvalidExpression{
@@ -522,7 +582,7 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 		if elemType == types.Invalid {
 			elemType = types.ToReal(value.Type())
 		}
-		converted := convert(value, elemType, operator)
+		converted := convert(value, elemType, types.OperatorCast)
 		if converted == nil {
 			t.diagnostics.Report(diagnostics.NotAssignable(elem.GetLocation(), elemType, value.Type()))
 		} else {
@@ -553,7 +613,7 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 		length := -1
 
 		if ident, ok := indexExpr.Index.(*ast.Identifier); !ok || ident.Name != "_" {
-			expr := convert(t.typeCheckExpression(indexExpr.Index), types.I32, implicit)
+			expr := convert(t.typeCheckExpression(indexExpr.Index), types.I32, types.ImplicitCast)
 			if expr == nil {
 				t.diagnostics.Report(diagnostics.CountMustBeInt(indexExpr.Index.GetLocation()))
 			} else if expr.IsConst() {
@@ -602,7 +662,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 		if keyType == types.Invalid {
 			keyType = types.ToReal(key.Type())
 		}
-		convertedKey := convert(key, keyType, operator)
+		convertedKey := convert(key, keyType, types.OperatorCast)
 		if convertedKey == nil {
 			t.diagnostics.Report(diagnostics.NotAssignable(kv.Key.GetLocation(), keyType, key.Type()))
 			continue
@@ -612,7 +672,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 		if valueType == types.Invalid {
 			valueType = types.ToReal(value.Type())
 		}
-		convertedValue := convert(value, valueType, operator)
+		convertedValue := convert(value, valueType, types.OperatorCast)
 		if convertedValue == nil {
 			t.diagnostics.Report(diagnostics.NotAssignable(kv.Value.GetLocation(), valueType, value.Type()))
 			continue
@@ -658,7 +718,7 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	if assignment.Operator.Kind != token.EQUALS {
 		left, right, operator := getBinaryOperator(assignment.Operator.Kind-token.EQUALS, assignee, value)
 
-		if operator == 0 {
+		if operator.Id == 0 {
 			t.diagnostics.Report(diagnostics.BinaryOperatorUndefined(assignment.Operator.Location, assignment.Operator.Value, left.Type(), right.Type()))
 		}
 
@@ -674,7 +734,7 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	} else if !ir.MutableExpr(assignee) {
 		t.diagnostics.Report(diagnostics.ValueImmutable(assignment.Assignee.GetLocation()))
 	} else {
-		conversion := convert(value, assignee.Type(), implicit)
+		conversion := convert(value, assignee.Type(), types.ImplicitCast)
 		if conversion == nil {
 			t.diagnostics.Report(diagnostics.NotAssignable(assignment.Assignee.GetLocation(), assignee.Type(), value.Type()))
 		} else {
@@ -700,7 +760,7 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 		if ty != types.RuntimeType {
 			isType = false
 		}
-		values = append(values, convert(expr, ty, implicit))
+		values = append(values, convert(expr, ty, types.ImplicitCast))
 	}
 
 	if isType && len(dataTypes) != 0 {
@@ -762,7 +822,7 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 	for i, arg := range call.Arguments {
 		value := t.typeCheckExpression(arg)
 		expectedType := funcType.Parameters[i]
-		conversion := convert(value, expectedType, implicit)
+		conversion := convert(value, expectedType, types.ImplicitCast)
 		if conversion == nil {
 			args = append(args, value)
 			t.diagnostics.Report(diagnostics.NotAssignable(arg.GetLocation(), expectedType, value.Type()))
@@ -801,7 +861,7 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 				value = t.lookupVariable(*member.Name, member.Location)
 			}
 
-			conversion := convert(value, field.Type, implicit)
+			conversion := convert(value, field.Type, types.ImplicitCast)
 			if conversion != nil {
 				value = conversion
 			} else {
@@ -840,7 +900,7 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 				value = t.lookupVariable(*member.Name, member.Location)
 			}
 
-			conversion := convert(value, field, implicit)
+			conversion := convert(value, field, types.ImplicitCast)
 			if conversion != nil {
 				value = conversion
 			} else {

@@ -32,7 +32,10 @@ MODULE test
     ├─BINARY_EXPR Less
     │ ├─VAR_SYMBOL i mut
     │ │ └─VARIABLE_TYPE i32
-    │ ├─INT_LIT 10
+    │ ├─CONVERSION
+    │ │ ├─INT_LIT 10
+    │ │ ├─VARIABLE_TYPE i32
+    │ │ └─INT_VALUE 10
     │ └─PRIMARY_TYPE bool
     └─BLOCK
       ├─VARIABLE_TYPE i32
