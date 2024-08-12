@@ -1,10 +1,12 @@
 package codegen
 
-import "tinygo.org/x/go-llvm"
+import (
+	"tinygo.org/x/go-llvm"
+)
 
 type table struct {
-	parent *table
-	values map[string]llvm.Value
+	parent  *table
+	values  map[string]llvm.Value
 	context *fnContext
 }
 

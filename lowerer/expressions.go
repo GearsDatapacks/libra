@@ -387,7 +387,7 @@ func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement)
 	*statements = append(*statements, &ir.Goto{Label: loopStart})
 	*statements = append(*statements, &ir.Label{Name: loopEnd})
 
-	return &ir.VariableExpression{Symbol: breakVariable}
+	return &ir.IntegerLiteral{}
 }
 
 func (l *lowerer) lowerForLoop(expr *ir.ForLoop, statements *[]ir.Statement) ir.Expression {

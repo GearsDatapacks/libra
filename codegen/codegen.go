@@ -176,7 +176,15 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.RefExpression:
 		panic("TODO")
 	case *ir.StringLiteral:
-		panic("TODO")
+		alloca := c.builder.CreateAlloca(types.String.ToLlvm(c.context), "str_tmp")
+		str := llvm.ConstString(expr.Value, true)
+		c.builder.CreateStore(str, alloca)
+		return c.builder.CreateGEP(
+			types.String.ToLlvm(c.context),
+			alloca,
+			[]llvm.Value{llvm.ConstInt(c.context.Int64Type(), 0, false)},
+			"gep_tmp",
+		)
 	case *ir.StructExpression:
 		panic("TODO")
 	case *ir.TupleExpression:

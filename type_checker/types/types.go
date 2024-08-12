@@ -220,7 +220,8 @@ func (pt PrimaryType) ToLlvm(context llvm.Context) llvm.Type {
 	case Bool:
 		return context.Int1Type()
 	case String:
-		panic("TODO: String types")
+		// TODO: Use proper strings, not cstrings
+		return llvm.PointerType(context.Int8Type(), 0)
 	case RuntimeType:
 		panic("TODO: Runtime types")
 	case Never:
