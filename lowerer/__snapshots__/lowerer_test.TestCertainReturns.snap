@@ -40,8 +40,8 @@ MODULE test
     │   └─VARIABLE_TYPE i32
     ├─GOTO block1
     ├─LABEL block1
-    ├─BRANCH block3 else block2
-    │ └─BINARY_EXPR NotEqual
+    ├─BRANCH block2 else block3
+    │ └─BINARY_EXPR Equal
     │   ├─VAR_SYMBOL counter mut
     │   │ └─VARIABLE_TYPE i32
     │   ├─INT_LIT 0
@@ -51,8 +51,7 @@ MODULE test
     │ └─VAR_SYMBOL result mut
     │   └─VARIABLE_TYPE i32
     ├─LABEL block3
-    ├─VAR_SYMBOL var2 mut
-    │ └─PRIMARY_TYPE never
+    ├─INT_LIT 0
     ├─UNARY_EXPR IncrecementInt
     │ ├─VAR_SYMBOL result mut
     │ │ └─VARIABLE_TYPE i32

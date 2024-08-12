@@ -13,8 +13,8 @@ MODULE test
     │ └─INT_LIT 0
     ├─GOTO block1
     ├─LABEL block1
-    ├─BRANCH block3 else block2
-    │ └─BINARY_EXPR GreaterEq
+    ├─BRANCH block2 else block3
+    │ └─BINARY_EXPR Less
     │   ├─VAR_SYMBOL i mut
     │   │ └─VARIABLE_TYPE i32
     │   ├─INT_LIT 10
@@ -26,7 +26,6 @@ MODULE test
     │ └─VARIABLE_TYPE i32
     ├─GOTO block1
     ├─LABEL block3
-    ├─VAR_SYMBOL var0 mut
-    │ └─UNIT_STRUCT void
+    ├─INT_LIT 0
     └─RETURN
 ---

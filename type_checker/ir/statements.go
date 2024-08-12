@@ -20,7 +20,7 @@ func (v *VariableDeclaration) Print(node *printer.Node) {
 			node.Colour(colour.NodeName),
 		).
 		Node(v.Symbol).
-		Node(v.Value)
+		OptionalNode(v.Value)
 }
 
 type FunctionDeclaration struct {

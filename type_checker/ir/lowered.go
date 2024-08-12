@@ -97,6 +97,22 @@ func (g *GotoIf) Print(node *printer.Node) {
 		Node(g.Condition)
 }
 
+type GotoUnless struct {
+	Condition Expression
+	Label     string
+}
+
+func (g *GotoUnless) Print(node *printer.Node) {
+	node.
+		Text(
+			"%sGOTO_UNLESS %s%s",
+			node.Colour(colour.NodeName),
+			node.Colour(colour.Name),
+			g.Label,
+		).
+		Node(g.Condition)
+}
+
 type Branch struct {
 	Condition Expression
 	IfLabel   string

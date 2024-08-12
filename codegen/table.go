@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"fmt"
+
 	"tinygo.org/x/go-llvm"
 )
 
@@ -38,5 +40,5 @@ func (t *table) getValue(name string) value {
 	if t.parent != nil {
 		return t.parent.getValue(name)
 	}
-	panic("Should find value")
+	panic(fmt.Sprintf("Should find value %s", name))
 }

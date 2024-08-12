@@ -159,18 +159,10 @@ func (g *graph) separateBlocks(statements []ir.Statement) {
 		switch stmt := statement.(type) {
 		case *ir.Label:
 			g.beginBlock(stmt.Name)
-		case *ir.Goto:
+		case *ir.Goto, *ir.GotoIf, *ir.GotoUnless, *ir.ReturnStatement:
 			g.statement(stmt)
 			g.endBlock()
-		case *ir.GotoIf:
-			g.statement(stmt)
-			g.endBlock()
-		case *ir.VariableDeclaration:
-			g.statement(stmt)
-		case *ir.ReturnStatement:
-			g.statement(stmt)
-			g.endBlock()
-		case ir.Expression:
+		case *ir.VariableDeclaration, ir.Expression:
 			g.statement(stmt)
 		default:
 			panic(fmt.Sprintf("Unexpected lowered statement %T", statement))
@@ -215,6 +207,9 @@ func (g *graph) makeConnections() {
 		case *ir.GotoIf:
 			g.conditionalConnection(i, g.blockWithLabel(stmt.Label), stmt.Condition)
 			block.statements = block.statements[:len(block.statements)-1]
+		case *ir.GotoUnless:
+			g.connectionUnless(i, g.blockWithLabel(stmt.Label), stmt.Condition)
+			block.statements = block.statements[:len(block.statements)-1]
 		case *ir.ReturnStatement:
 		default:
 			g.connection(i, i+1)
@@ -228,6 +223,10 @@ func (g *graph) connection(from, to int) {
 
 func (g *graph) conditionalConnection(from, to int, condition ir.Expression) {
 	g.doConnection(from, to, condition, from+1)
+}
+
+func (g *graph) connectionUnless(from, to int, condition ir.Expression) {
+	g.doConnection(from, from+1, condition, to)
 }
 
 func (g *graph) doConnection(from, to int, condition ir.Expression, elseTo int) {

@@ -74,7 +74,7 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 		return
 	}
 
-	function := c.table.getValue(fn.Name).toLlvm(c)
+	function := c.table.getValue(fn.Name).toRValue(c)
 	c.table = childTable(c.table)
 	c.table.context = &fnContext{
 		blocks: map[string]llvm.BasicBlock{},
@@ -104,15 +104,17 @@ func (c *compiler) compileStatement(statement ir.Statement) {
 	switch stmt := statement.(type) {
 	case *ir.VariableDeclaration:
 		alloca := c.builder.CreateAlloca(stmt.Symbol.Type.ToLlvm(c.context), stmt.Symbol.Name)
-		value := c.compileExpression(stmt.Value, true).toLlvm(c)
-		c.builder.CreateStore(value, alloca)
+		if stmt.Value != nil {
+			value := c.compileExpression(stmt.Value, true).toRValue(c)
+			c.builder.CreateStore(value, alloca)
+		}
 
 		c.table.addValue(stmt.Symbol.Name, stackVariable(alloca))
 	case *ir.ReturnStatement:
 		if stmt.Value == nil {
 			c.builder.CreateRetVoid()
 		} else {
-			value := c.compileExpression(stmt.Value, true).toLlvm(c)
+			value := c.compileExpression(stmt.Value, true).toRValue(c)
 			c.builder.CreateRet(value)
 		}
 
@@ -122,7 +124,7 @@ func (c *compiler) compileStatement(statement ir.Statement) {
 	case *ir.Goto:
 		c.builder.CreateBr(c.table.context.blocks[stmt.Label])
 	case *ir.Branch:
-		cond := c.compileExpression(stmt.Condition, true).toLlvm(c)
+		cond := c.compileExpression(stmt.Condition, true).toRValue(c)
 		c.builder.CreateCondBr(
 			cond,
 			c.table.context.blocks[stmt.IfLabel],
@@ -140,7 +142,11 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 	case *ir.ArrayExpression:
 		panic("TODO")
 	case *ir.Assignment:
-		panic("TODO")
+		lValue := c.compileExpression(expr.Assignee, true).toLValue()
+		rValue := c.compileExpression(expr.Value, true).toRValue(c)
+		c.builder.CreateStore(rValue, lValue)
+		return llvmValue(rValue)
+
 	case *ir.BinaryExpression:
 		if !used {
 			return llvmValue{}
@@ -156,7 +162,7 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		}
 		return llvmValue(llvm.ConstInt(c.context.Int1Type(), value, false))
 	case *ir.Conversion:
-		panic("TODO")
+		return c.compileExpression(expr.Expression, used)
 	case *ir.DerefExpression:
 		panic("TODO")
 	case *ir.FloatLiteral:
@@ -165,10 +171,10 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		}
 		return llvmValue(llvm.ConstFloat(c.context.DoubleType(), expr.Value))
 	case *ir.FunctionCall:
-		callee := c.compileExpression(expr.Function, true).toLlvm(c)
+		callee := c.compileExpression(expr.Function, true).toRValue(c)
 		args := make([]llvm.Value, 0, len(expr.Arguments))
 		for _, arg := range expr.Arguments {
-			args = append(args, c.compileExpression(arg, true).toLlvm(c))
+			args = append(args, c.compileExpression(arg, true).toRValue(c))
 		}
 		var name string
 		if expr.ReturnType != types.Void && used {
@@ -223,8 +229,8 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 }
 
 func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) value {
-	left := c.compileExpression(binExpr.Left, true).toLlvm(c)
-	right := c.compileExpression(binExpr.Right, true).toLlvm(c)
+	left := c.compileExpression(binExpr.Left, true).toRValue(c)
+	right := c.compileExpression(binExpr.Right, true).toRValue(c)
 
 	var v llvm.Value
 

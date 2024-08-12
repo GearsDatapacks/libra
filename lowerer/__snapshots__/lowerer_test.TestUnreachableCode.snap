@@ -23,13 +23,7 @@ MODULE test
     │ │ ├─VARIABLE_TYPE i32
     │ │ └─INT_VALUE 1
     │ └─INT_LIT 1
-    ├─ASSIGNMENT
-    │ ├─VAR_SYMBOL var0 mut
-    │ │ └─UNIT_STRUCT void
-    │ └─VAR_SYMBOL var2 mut
-    │   └─UNIT_STRUCT void
-    ├─VAR_SYMBOL var0 mut
-    │ └─UNIT_STRUCT void
+    ├─INT_LIT 0
     └─RETURN
 ---
 
@@ -62,8 +56,7 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    ├─VAR_SYMBOL var0 mut
-    │ └─UNIT_STRUCT void
+    ├─INT_LIT 0
     ├─VAR_DECL
     │ ├─VAR_SYMBOL bar
     │ │ ├─VARIABLE_TYPE i32

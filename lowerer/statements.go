@@ -6,7 +6,7 @@ import (
 )
 
 func (l *lowerer) lowerVariableDeclaration(varDecl *ir.VariableDeclaration, statements *[]ir.Statement) {
-	value := l.lowerExpression(varDecl.Value, statements)
+	value := l.lowerExpression(varDecl.Value, statements, true)
 	if value == varDecl.Value {
 		*statements = append(*statements, varDecl)
 		return
@@ -21,7 +21,9 @@ func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir
 	var body *ir.Block
 	if funcDecl.Body != nil {
 		statements := []ir.Statement{}
-		l.lowerBlock(funcDecl.Body, &statements)
+		for _, stmt := range funcDecl.Body.Statements {
+			l.lower(stmt, &statements)
+		}
 		statements = l.cfa(statements, &funcDecl.Location, funcDecl.Type.ReturnType != types.Void)
 		body = &ir.Block{Statements: statements, ResultType: funcDecl.Body.ResultType}
 	}
@@ -42,7 +44,7 @@ func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir
 		return
 	}
 
-	value := l.lowerExpression(ret.Value, statements)
+	value := l.lowerExpression(ret.Value, statements, true)
 	if value == ret.Value {
 		*statements = append(*statements, ret)
 		return
@@ -55,7 +57,7 @@ func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir
 func (l *lowerer) lowerBreakStatement(brk *ir.BreakStatement, statements *[]ir.Statement) {
 	context := findContext[loopContext](l)
 	if brk.Value != nil {
-		value := l.lowerExpression(brk.Value, statements)
+		value := l.lowerExpression(brk.Value, statements, true)
 		*statements = append(*statements, &ir.Assignment{
 			Assignee: &ir.VariableExpression{Symbol: context.breakVariable},
 			Value:    value,
@@ -71,14 +73,13 @@ func (l *lowerer) lowerContinueStatement(_ *ir.ContinueStatement, statements *[]
 }
 
 func (l *lowerer) lowerYieldStatement(yield *ir.YieldStatement, statements *[]ir.Statement) {
-	value := l.lowerExpression(yield.Value, statements)
-	if value == yield.Value {
-		*statements = append(*statements, yield)
-		return
-	}
-	*statements = append(*statements, &ir.YieldStatement{
-		Value: value,
+	context := findContext[blockContext](l)
+	value := l.lowerExpression(yield.Value, statements, true)
+	*statements = append(*statements, &ir.Assignment{
+		Assignee: &ir.VariableExpression{Symbol: context.yieldVariable},
+		Value:    value,
 	})
+	*statements = append(*statements, &ir.Goto{Label: context.endLabel})
 }
 
 func (l *lowerer) lowerImportStatement(stmt *ir.ImportStatement) *ir.ImportStatement {

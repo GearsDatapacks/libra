@@ -27,8 +27,8 @@ func (l *lowerer) lowerVariableExpression(expr *ir.VariableExpression, _ *[]ir.S
 }
 
 func (l *lowerer) lowerBinaryExpression(binExpr *ir.BinaryExpression, statements *[]ir.Statement) ir.Expression {
-	left := l.lowerExpression(binExpr.Left, statements)
-	right := l.lowerExpression(binExpr.Right, statements)
+	left := l.lowerExpression(binExpr.Left, statements, true)
+	right := l.lowerExpression(binExpr.Right, statements, true)
 	if left == binExpr.Left && right == binExpr.Right {
 		return binExpr
 	}
@@ -40,7 +40,7 @@ func (l *lowerer) lowerBinaryExpression(binExpr *ir.BinaryExpression, statements
 }
 
 func (l *lowerer) lowerUnaryExpression(unExpr *ir.UnaryExpression, statements *[]ir.Statement) ir.Expression {
-	operand := l.lowerExpression(unExpr.Operand, statements)
+	operand := l.lowerExpression(unExpr.Operand, statements, true)
 	if operand == unExpr.Operand {
 		return unExpr
 	}
@@ -51,7 +51,7 @@ func (l *lowerer) lowerUnaryExpression(unExpr *ir.UnaryExpression, statements *[
 }
 
 func (l *lowerer) lowerConversion(conversion *ir.Conversion, statements *[]ir.Statement) ir.Expression {
-	expr := l.lowerExpression(conversion.Expression, statements)
+	expr := l.lowerExpression(conversion.Expression, statements, true)
 	if expr == conversion.Expression {
 		return conversion
 	}
@@ -69,7 +69,7 @@ func (l *lowerer) lowerArrayExpression(array *ir.ArrayExpression, statements *[]
 	values := make([]ir.Expression, 0, len(array.Elements))
 	changed := false
 	for i, elem := range array.Elements {
-		lowered := l.lowerExpression(elem, statements)
+		lowered := l.lowerExpression(elem, statements, true)
 		if !changed && lowered != elem {
 			changed = true
 			values = append(values, array.Elements[:i-1]...)
@@ -88,8 +88,8 @@ func (l *lowerer) lowerArrayExpression(array *ir.ArrayExpression, statements *[]
 }
 
 func (l *lowerer) lowerIndexExpression(i *ir.IndexExpression, statements *[]ir.Statement) ir.Expression {
-	left := l.lowerExpression(i.Left, statements)
-	index := l.lowerExpression(i.Index, statements)
+	left := l.lowerExpression(i.Left, statements, true)
+	index := l.lowerExpression(i.Index, statements, true)
 	if left == i.Left && index == i.Index {
 		return i
 	}
@@ -104,8 +104,8 @@ func (l *lowerer) lowerMapExpression(mapExpr *ir.MapExpression, statements *[]ir
 	keyValues := make([]ir.KeyValue, 0, len(mapExpr.KeyValues))
 	changed := false
 	for i, kv := range mapExpr.KeyValues {
-		key := l.lowerExpression(kv.Key, statements)
-		value := l.lowerExpression(kv.Value, statements)
+		key := l.lowerExpression(kv.Key, statements, true)
+		value := l.lowerExpression(kv.Value, statements, true)
 		if !changed && (key != kv.Key || value != kv.Value) {
 			keyValues = append(keyValues, mapExpr.KeyValues[:i-1]...)
 			changed = true
@@ -127,7 +127,7 @@ func (l *lowerer) lowerTupleExpression(tuple *ir.TupleExpression, statements *[]
 	values := make([]ir.Expression, 0, len(tuple.Values))
 	changed := false
 	for i, value := range tuple.Values {
-		lowered := l.lowerExpression(value, statements)
+		lowered := l.lowerExpression(value, statements, true)
 		if !changed && lowered != value {
 			changed = true
 			values = append(values, tuple.Values[:i-1]...)
@@ -146,8 +146,8 @@ func (l *lowerer) lowerTupleExpression(tuple *ir.TupleExpression, statements *[]
 }
 
 func (l *lowerer) lowerAssignment(assignment *ir.Assignment, statements *[]ir.Statement) ir.Expression {
-	assignee := l.lowerExpression(assignment.Assignee, statements)
-	value := l.lowerExpression(assignment.Value, statements)
+	assignee := l.lowerExpression(assignment.Assignee, statements, true)
+	value := l.lowerExpression(assignment.Value, statements, true)
 	if assignee == assignment.Assignee && value == assignment.Value {
 		return assignment
 	}
@@ -158,7 +158,7 @@ func (l *lowerer) lowerAssignment(assignment *ir.Assignment, statements *[]ir.St
 }
 
 func (l *lowerer) lowerTypeCheck(tc *ir.TypeCheck, statements *[]ir.Statement) ir.Expression {
-	value := l.lowerExpression(tc.Value, statements)
+	value := l.lowerExpression(tc.Value, statements, true)
 	if value == tc.Value {
 		return tc
 	}
@@ -172,7 +172,7 @@ func (l *lowerer) lowerFunctionCall(call *ir.FunctionCall, statements *[]ir.Stat
 	args := make([]ir.Expression, 0, len(call.Arguments))
 	changed := false
 	for i, arg := range call.Arguments {
-		lowered := l.lowerExpression(arg, statements)
+		lowered := l.lowerExpression(arg, statements, true)
 		if !changed && lowered != arg {
 			changed = true
 			if i != 0 {
@@ -183,7 +183,7 @@ func (l *lowerer) lowerFunctionCall(call *ir.FunctionCall, statements *[]ir.Stat
 			args = append(args, lowered)
 		}
 	}
-	function := l.lowerExpression(call.Function, statements)
+	function := l.lowerExpression(call.Function, statements, true)
 	if !changed && function == call.Function {
 		return call
 	}
@@ -205,7 +205,7 @@ func (l *lowerer) lowerStructExpression(structExpr *ir.StructExpression, stateme
 	fields := make(map[string]ir.Expression, len(structExpr.Fields))
 	changed := false
 	for name, value := range structExpr.Fields {
-		lowered := l.lowerExpression(value, statements)
+		lowered := l.lowerExpression(value, statements, true)
 		if lowered != value {
 			changed = true
 		}
@@ -225,7 +225,7 @@ func (l *lowerer) lowerTupleStructExpression(tuple *ir.TupleStructExpression, st
 	fields := make([]ir.Expression, 0, len(tuple.Fields))
 	changed := false
 	for i, arg := range tuple.Fields {
-		lowered := l.lowerExpression(arg, statements)
+		lowered := l.lowerExpression(arg, statements, true)
 		if !changed && lowered != arg {
 			changed = true
 			fields = append(fields, tuple.Fields[:i-1]...)
@@ -244,7 +244,7 @@ func (l *lowerer) lowerTupleStructExpression(tuple *ir.TupleStructExpression, st
 }
 
 func (l *lowerer) lowerMemberExpression(member *ir.MemberExpression, statements *[]ir.Statement) ir.Expression {
-	left := l.lowerExpression(member.Left, statements)
+	left := l.lowerExpression(member.Left, statements, true)
 	if left == member.Left {
 		return member
 	}
@@ -255,44 +255,45 @@ func (l *lowerer) lowerMemberExpression(member *ir.MemberExpression, statements 
 	}
 }
 
-func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, endLabel ...string) ir.Expression {
+func (l *lowerer) lowerBlock(block *ir.Block, statements *[]ir.Statement, outerContext ...blockContext) ir.Expression {
 	if len(block.Statements) == 1 {
 		if expr, ok := block.Statements[0].(ir.Expression); ok {
-			return l.lowerExpression(expr, statements)
+			return l.lowerExpression(expr, statements, true)
 		}
 	}
 
-	yieldLabel := ""
-	addLabel := len(endLabel) == 0
-	if len(endLabel) > 0 {
-		yieldLabel = endLabel[0]
+	var context blockContext
+	addLabel := len(outerContext) == 0
+	if addLabel {
+		yieldVar := symbols.Variable{
+			Name:       l.genVar(),
+			IsMut:      true,
+			Type:       block.ResultType,
+			ConstValue: nil,
+		}
+		context = blockContext{
+			endLabel:      l.genLabel(),
+			yieldVariable: yieldVar,
+		}
+
+		*statements = append(*statements, &ir.VariableDeclaration{
+			Symbol: &yieldVar,
+			Value:  nil,
+		})
 	} else {
-		yieldLabel = l.genLabel()
+		context = outerContext[0]
 	}
 
-	yieldVar := symbols.Variable{
-		Name:       l.genVar(),
-		IsMut:      true,
-		Type:       block.ResultType,
-		ConstValue: nil,
-	}
-	defer l.endScope(l.beginScope(blockContext{endLabel: yieldLabel, yieldVariable: yieldVar}))
+	defer l.endScope(l.beginScope(context))
 
 	for _, stmt := range block.Statements {
 		l.lower(stmt, statements)
 	}
 
 	if addLabel {
-		*statements = append(*statements, &ir.Label{Name: yieldLabel})
+		*statements = append(*statements, &ir.Label{Name: context.endLabel})
 	}
-	return &ir.VariableExpression{Symbol: yieldVar}
-}
-
-func negate(condition ir.Expression) ir.Expression {
-	return optimiseExpression(&ir.UnaryExpression{
-		Operator: ir.UnaryOperator{Id: ir.LogicalNot},
-		Operand:  condition,
-	})
+	return &ir.VariableExpression{Symbol: context.yieldVariable}
 }
 
 type ifContext struct {
@@ -300,17 +301,25 @@ type ifContext struct {
 	returnVariable symbols.Variable
 }
 
-func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.Statement, context *ifContext) ir.Expression {
+func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.Statement, context *ifContext, used bool) ir.Expression {
 	isFirst := context == nil
 	if context == nil {
+		variable := symbols.Variable{
+			Name:       l.genVar(),
+			IsMut:      true,
+			Type:       ifExpr.Type(),
+			ConstValue: nil,
+		}
+
+		if used {
+			*statements = append(*statements, &ir.VariableDeclaration{
+				Symbol: &variable,
+				Value:  nil,
+			})
+		}
 		context = &ifContext{
-			finalLabel: l.genLabel(),
-			returnVariable: symbols.Variable{
-				Name:       l.genVar(),
-				IsMut:      true,
-				Type:       ifExpr.Type(),
-				ConstValue: nil,
-			},
+			finalLabel:     l.genLabel(),
+			returnVariable: variable,
 		}
 	}
 
@@ -321,13 +330,15 @@ func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.St
 		endLabel = l.genLabel()
 	}
 
-	condition := l.lowerExpression(negate(ifExpr.Condition), statements)
-	*statements = append(*statements, &ir.GotoIf{
+	*statements = append(*statements, &ir.GotoUnless{
 		Label:     endLabel,
-		Condition: condition,
+		Condition: l.lowerExpression(ifExpr.Condition, statements, true),
 	})
 
-	value := l.lowerBlock(ifExpr.Body, statements, context.finalLabel)
+	value := l.lowerBlock(ifExpr.Body, statements, blockContext{
+		endLabel:      context.finalLabel,
+		yieldVariable: context.returnVariable,
+	})
 	*statements = append(*statements, &ir.Assignment{
 		Assignee: &ir.VariableExpression{Symbol: context.returnVariable},
 		Value:    value,
@@ -339,12 +350,11 @@ func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.St
 
 		switch eb := ifExpr.ElseBranch.(type) {
 		case *ir.IfExpression:
-			l.lowerIfExpression(eb, statements, context)
+			l.lowerIfExpression(eb, statements, context, used)
 		case *ir.Block:
-			value := l.lowerBlock(eb, statements)
-			*statements = append(*statements, &ir.Assignment{
-				Assignee: &ir.VariableExpression{Symbol: context.returnVariable},
-				Value:    value,
+			l.lowerBlock(eb, statements, blockContext{
+				endLabel:      context.finalLabel,
+				yieldVariable: context.returnVariable,
 			})
 			*statements = append(*statements, &ir.Label{Name: context.finalLabel})
 		}
@@ -354,26 +364,34 @@ func (l *lowerer) lowerIfExpression(ifExpr *ir.IfExpression, statements *[]ir.St
 		*statements = append(*statements, &ir.Label{Name: endLabel})
 	}
 
-	return &ir.VariableExpression{Symbol: context.returnVariable}
+	if used {
+		return &ir.VariableExpression{Symbol: context.returnVariable}
+	}
+	// TODO: Return void or something
+	return &ir.IntegerLiteral{}
 }
 
-func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement) ir.Expression {
+func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement, used bool) ir.Expression {
 	loopStart := l.genLabel()
-	*statements = append(*statements, &ir.Label{Name: loopStart})
-
-	condition := l.lowerExpression(negate(loop.Condition), statements)
 	loopEnd := l.genLabel()
-	*statements = append(*statements, &ir.GotoIf{
-		Condition: condition,
-		Label:     loopEnd,
-	})
-
 	breakVariable := symbols.Variable{
 		Name:       l.genVar(),
 		IsMut:      true,
 		Type:       loop.Type(),
 		ConstValue: nil,
 	}
+
+	if used {
+		*statements = append(*statements, &ir.VariableDeclaration{
+			Symbol: &breakVariable,
+			Value:  nil,
+		})
+	}
+	*statements = append(*statements, &ir.Label{Name: loopStart})
+	*statements = append(*statements, &ir.GotoUnless{
+		Condition: l.lowerExpression(loop.Condition, statements, true),
+		Label:     loopEnd,
+	})
 
 	defer l.endScope(l.beginScope(loopContext{
 		breakLabel:    loopEnd,
@@ -387,6 +405,9 @@ func (l *lowerer) lowerWhileLoop(loop *ir.WhileLoop, statements *[]ir.Statement)
 	*statements = append(*statements, &ir.Goto{Label: loopStart})
 	*statements = append(*statements, &ir.Label{Name: loopEnd})
 
+	if used {
+		return &ir.VariableExpression{Symbol: breakVariable}
+	}
 	return &ir.IntegerLiteral{}
 }
 
@@ -400,7 +421,9 @@ func (l *lowerer) lowerTypeExpression(expr *ir.TypeExpression, _ *[]ir.Statement
 
 func (l *lowerer) lowerFunctionExpression(funcExpr *ir.FunctionExpression, _ *[]ir.Statement) ir.Expression {
 	statements := []ir.Statement{}
-	l.lowerBlock(funcExpr.Body, &statements)
+	for _, stmt := range funcExpr.Body.Statements {
+		l.lower(stmt, &statements)
+	}
 	statements = l.cfa(statements, &funcExpr.Location, funcExpr.DataType.ReturnType != types.Void)
 
 	return &ir.FunctionExpression{
@@ -412,7 +435,7 @@ func (l *lowerer) lowerFunctionExpression(funcExpr *ir.FunctionExpression, _ *[]
 }
 
 func (l *lowerer) lowerRefExpression(ref *ir.RefExpression, statements *[]ir.Statement) ir.Expression {
-	value := l.lowerExpression(ref.Value, statements)
+	value := l.lowerExpression(ref.Value, statements, true)
 	if value == ref.Value {
 		return ref
 	}
@@ -423,7 +446,7 @@ func (l *lowerer) lowerRefExpression(ref *ir.RefExpression, statements *[]ir.Sta
 }
 
 func (l *lowerer) lowerDerefExpression(deref *ir.DerefExpression, statements *[]ir.Statement) ir.Expression {
-	value := l.lowerExpression(deref.Value, statements)
+	value := l.lowerExpression(deref.Value, statements, true)
 	if value == deref.Value {
 		return deref
 	}

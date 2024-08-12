@@ -147,14 +147,14 @@ func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 		panic("Declarations not allowed here")
 
 	case ir.Expression:
-		*statements = append(*statements, l.lowerExpression(stmt, statements))
+		*statements = append(*statements, l.lowerExpression(stmt, statements, false))
 
 	default:
 		panic(fmt.Sprintf("TODO: lower %T", stmt))
 	}
 }
 
-func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Statement) ir.Expression {
+func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Statement, used bool) ir.Expression {
 	var lowered ir.Expression
 	switch expr := expression.(type) {
 	case *ir.IntegerLiteral:
@@ -198,9 +198,9 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	case *ir.Block:
 		lowered = l.lowerBlock(expr, statements)
 	case *ir.IfExpression:
-		lowered = l.lowerIfExpression(expr, statements, nil)
+		lowered = l.lowerIfExpression(expr, statements, nil, used)
 	case *ir.WhileLoop:
-		lowered = l.lowerWhileLoop(expr, statements)
+		lowered = l.lowerWhileLoop(expr, statements, used)
 	case *ir.ForLoop:
 		lowered = l.lowerForLoop(expr, statements)
 	case *ir.TypeExpression:
