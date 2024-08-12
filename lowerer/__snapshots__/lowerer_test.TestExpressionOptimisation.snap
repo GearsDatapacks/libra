@@ -1,5 +1,5 @@
 
-[`mut a = 10; !(a == 10)` - 1]
+[`mut a = 10; let value = !(a == 10)` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -11,15 +11,18 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 10
-    ├─BINARY_EXPR NotEqual
-    │ ├─VAR_SYMBOL a mut
-    │ │ └─VARIABLE_TYPE i32
-    │ ├─INT_LIT 10
-    │ └─PRIMARY_TYPE bool
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BINARY_EXPR NotEqual
+    │   ├─VAR_SYMBOL a mut
+    │   │ └─VARIABLE_TYPE i32
+    │   ├─INT_LIT 10
+    │   └─PRIMARY_TYPE bool
     └─RETURN
 ---
 
-[`mut a = 0; !(a < 20)` - 1]
+[`mut a = 0; let value = !(a < 20)` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -31,15 +34,18 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 0
-    ├─BINARY_EXPR GreaterEq
-    │ ├─VAR_SYMBOL a mut
-    │ │ └─VARIABLE_TYPE i32
-    │ ├─INT_LIT 20
-    │ └─PRIMARY_TYPE bool
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BINARY_EXPR GreaterEq
+    │   ├─VAR_SYMBOL a mut
+    │   │ └─VARIABLE_TYPE i32
+    │   ├─INT_LIT 20
+    │   └─PRIMARY_TYPE bool
     └─RETURN
 ---
 
-[`mut a = true; !!a` - 1]
+[`mut a = true; let value = !!a` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -51,12 +57,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT true
-    ├─VAR_SYMBOL a mut
-    │ └─PRIMARY_TYPE bool
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─VAR_SYMBOL a mut
+    │   └─PRIMARY_TYPE bool
     └─RETURN
 ---
 
-[`mut a = 5; a * 1` - 1]
+[`mut a = 5; let value = a * 1` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -68,12 +77,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 5
-    ├─VAR_SYMBOL a mut
-    │ └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL a mut
+    │   └─VARIABLE_TYPE i32
     └─RETURN
 ---
 
-[`mut a = 31; a + 0` - 1]
+[`mut a = 31; let value = a + 0` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -85,12 +97,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 31
-    ├─VAR_SYMBOL a mut
-    │ └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL a mut
+    │   └─VARIABLE_TYPE i32
     └─RETURN
 ---
 
-[`mut a = 1; a * 0` - 1]
+[`mut a = 1; let value = a * 0` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -102,11 +117,14 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 1
-    ├─INT_LIT 0
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 0
     └─RETURN
 ---
 
-[`mut a = 13; a / 1` - 1]
+[`mut a = 13; let value = a / 1` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -118,12 +136,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 13
-    ├─VAR_SYMBOL a mut
-    │ └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE f32
+    │ └─VAR_SYMBOL a mut
+    │   └─VARIABLE_TYPE i32
     └─RETURN
 ---
 
-[`mut a = 21; a ** 0` - 1]
+[`mut a = 21; let value = a ** 0` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -135,11 +156,14 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 21
-    ├─INT_LIT 1
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─INT_LIT 1
     └─RETURN
 ---
 
-[`mut a = 20; -(-a)` - 1]
+[`mut a = 20; let value = -(-a)` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -151,12 +175,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 20
-    ├─VAR_SYMBOL a mut
-    │ └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL a mut
+    │   └─VARIABLE_TYPE i32
     └─RETURN
 ---
 
-[`mut a = 1; ~(~a)` - 1]
+[`mut a = 1; let value = ~(~a)` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -168,12 +195,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─VARIABLE_TYPE i32
     │ └─INT_LIT 1
-    ├─VAR_SYMBOL a mut
-    │ └─VARIABLE_TYPE i32
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─VARIABLE_TYPE i32
+    │ └─VAR_SYMBOL a mut
+    │   └─VARIABLE_TYPE i32
     └─RETURN
 ---
 
-[`mut a = false; a || true` - 1]
+[`mut a = false; let value = a || true` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -185,11 +215,14 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    ├─BOOL_LIT true
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT true
     └─RETURN
 ---
 
-[`mut a = true; a && false` - 1]
+[`mut a = true; let value = a && false` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -201,11 +234,14 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT true
-    ├─BOOL_LIT false
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─BOOL_LIT false
     └─RETURN
 ---
 
-[`mut a = false; a && true` - 1]
+[`mut a = false; let value = a && true` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -217,12 +253,15 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    ├─VAR_SYMBOL a mut
-    │ └─PRIMARY_TYPE bool
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─VAR_SYMBOL a mut
+    │   └─PRIMARY_TYPE bool
     └─RETURN
 ---
 
-[`mut a = false; a || false` - 1]
+[`mut a = false; let value = a || false` - 1]
 MODULE test
 └─FUNC_DECL main
   ├─FUNCTION_TYPE
@@ -234,7 +273,10 @@ MODULE test
     │ ├─VAR_SYMBOL a mut
     │ │ └─PRIMARY_TYPE bool
     │ └─BOOL_LIT false
-    ├─VAR_SYMBOL a mut
-    │ └─PRIMARY_TYPE bool
+    ├─VAR_DECL
+    │ ├─VAR_SYMBOL value
+    │ │ └─PRIMARY_TYPE bool
+    │ └─VAR_SYMBOL a mut
+    │   └─PRIMARY_TYPE bool
     └─RETURN
 ---

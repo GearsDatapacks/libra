@@ -51,7 +51,6 @@ MODULE test
     │ └─VAR_SYMBOL result mut
     │   └─VARIABLE_TYPE i32
     ├─LABEL block3
-    ├─INT_LIT 0
     ├─UNARY_EXPR IncrecementInt
     │ ├─VAR_SYMBOL result mut
     │ │ └─VARIABLE_TYPE i32

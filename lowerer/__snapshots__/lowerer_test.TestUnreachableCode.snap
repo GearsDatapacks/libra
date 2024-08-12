@@ -23,7 +23,6 @@ MODULE test
     │ │ ├─VARIABLE_TYPE i32
     │ │ └─INT_VALUE 1
     │ └─INT_LIT 1
-    ├─INT_LIT 0
     └─RETURN
 ---
 
@@ -56,7 +55,6 @@ MODULE test
   └─BLOCK
     ├─UNIT_STRUCT void
     ├─LABEL block0
-    ├─INT_LIT 0
     ├─VAR_DECL
     │ ├─VAR_SYMBOL bar
     │ │ ├─VARIABLE_TYPE i32

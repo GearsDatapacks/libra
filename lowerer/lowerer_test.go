@@ -40,30 +40,30 @@ while i < 10 {
 
 func TestConstantFolding(t *testing.T) {
 	utils.MatchLoweredSnaps(t,
-		"1 + 2",
-		"true && false",
-		`"Hello, " + "world!"`,
-		"1 == 2 || 3 == 3",
-		"(4 / 2) + 1",
+		"let value = 1 + 2",
+		"let value = true && false",
+		`let value = "Hello, " + "world!"`,
+		"let value = 1 == 2 || 3 == 3",
+		"let value = (4 / 2) + 1",
 	)
 }
 
 func TestExpressionOptimisation(t *testing.T) {
 	utils.MatchLoweredSnaps(t,
-		"mut a = 10; !(a == 10)",
-		"mut a = 0; !(a < 20)",
-		"mut a = true; !!a",
-		"mut a = 5; a * 1",
-		"mut a = 31; a + 0",
-		"mut a = 1; a * 0",
-		"mut a = 13; a / 1",
-		"mut a = 21; a ** 0",
-		"mut a = 20; -(-a)",
-		"mut a = 1; ~(~a)",
-		"mut a = false; a || true",
-		"mut a = true; a && false",
-		"mut a = false; a && true",
-		"mut a = false; a || false",
+		"mut a = 10; let value = !(a == 10)",
+		"mut a = 0; let value = !(a < 20)",
+		"mut a = true; let value = !!a",
+		"mut a = 5; let value = a * 1",
+		"mut a = 31; let value = a + 0",
+		"mut a = 1; let value = a * 0",
+		"mut a = 13; let value = a / 1",
+		"mut a = 21; let value = a ** 0",
+		"mut a = 20; let value = -(-a)",
+		"mut a = 1; let value = ~(~a)",
+		"mut a = false; let value = a || true",
+		"mut a = true; let value = a && false",
+		"mut a = false; let value = a && true",
+		"mut a = false; let value = a || false",
 	)
 }
 

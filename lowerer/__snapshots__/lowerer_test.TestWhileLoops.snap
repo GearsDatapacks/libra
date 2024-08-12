@@ -26,6 +26,5 @@ MODULE test
     │ └─VARIABLE_TYPE i32
     ├─GOTO block1
     ├─LABEL block3
-    ├─INT_LIT 0
     └─RETURN
 ---

@@ -147,7 +147,10 @@ func (l *lowerer) lower(statement ir.Statement, statements *[]ir.Statement) {
 		panic("Declarations not allowed here")
 
 	case ir.Expression:
-		*statements = append(*statements, l.lowerExpression(stmt, statements, false))
+		expr := l.lowerExpression(stmt, statements, false)
+		if expr != nil {
+			*statements = append(*statements, expr)
+		}
 
 	default:
 		panic(fmt.Sprintf("TODO: lower %T", stmt))
@@ -158,27 +161,45 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	var lowered ir.Expression
 	switch expr := expression.(type) {
 	case *ir.IntegerLiteral:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerIntegerLiteral(expr, statements)
 	case *ir.FloatLiteral:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerFloatLiteral(expr, statements)
 	case *ir.BooleanLiteral:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerBooleanLiteral(expr, statements)
 	case *ir.StringLiteral:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerStringLiteral(expr, statements)
 	case *ir.VariableExpression:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerVariableExpression(expr, statements)
 	case *ir.BinaryExpression:
-		lowered = l.lowerBinaryExpression(expr, statements)
+		lowered = l.lowerBinaryExpression(expr, statements, used)
 	case *ir.UnaryExpression:
-		lowered = l.lowerUnaryExpression(expr, statements)
+		lowered = l.lowerUnaryExpression(expr, statements, used)
 	case *ir.Conversion:
-		lowered = l.lowerConversion(expr, statements)
+		lowered = l.lowerConversion(expr, statements, used)
 	case *ir.InvalidExpression:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerInvalidExpression(expr, statements)
 	case *ir.ArrayExpression:
 		lowered = l.lowerArrayExpression(expr, statements)
 	case *ir.IndexExpression:
-		lowered = l.lowerIndexExpression(expr, statements)
+		lowered = l.lowerIndexExpression(expr, statements, used)
 	case *ir.MapExpression:
 		lowered = l.lowerMapExpression(expr, statements)
 	case *ir.Assignment:
@@ -186,7 +207,7 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	case *ir.TupleExpression:
 		lowered = l.lowerTupleExpression(expr, statements)
 	case *ir.TypeCheck:
-		lowered = l.lowerTypeCheck(expr, statements)
+		lowered = l.lowerTypeCheck(expr, statements, used)
 	case *ir.FunctionCall:
 		lowered = l.lowerFunctionCall(expr, statements)
 	case *ir.StructExpression:
@@ -194,9 +215,9 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	case *ir.TupleStructExpression:
 		lowered = l.lowerTupleStructExpression(expr, statements)
 	case *ir.MemberExpression:
-		lowered = l.lowerMemberExpression(expr, statements)
+		lowered = l.lowerMemberExpression(expr, statements, used)
 	case *ir.Block:
-		lowered = l.lowerBlock(expr, statements)
+		lowered = l.lowerBlock(expr, statements, used)
 	case *ir.IfExpression:
 		lowered = l.lowerIfExpression(expr, statements, nil, used)
 	case *ir.WhileLoop:
@@ -204,17 +225,26 @@ func (l *lowerer) lowerExpression(expression ir.Expression, statements *[]ir.Sta
 	case *ir.ForLoop:
 		lowered = l.lowerForLoop(expr, statements)
 	case *ir.TypeExpression:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerTypeExpression(expr, statements)
 	case *ir.FunctionExpression:
+		if !used {
+			return nil
+		}
 		lowered = l.lowerFunctionExpression(expr, statements)
 	case *ir.RefExpression:
-		lowered = l.lowerRefExpression(expr, statements)
+		lowered = l.lowerRefExpression(expr, statements, used)
 	case *ir.DerefExpression:
-		lowered = l.lowerDerefExpression(expr, statements)
+		lowered = l.lowerDerefExpression(expr, statements, used)
 
 	default:
 		panic(fmt.Sprintf("TODO: lower %T", expr))
 	}
 
+	if lowered == nil {
+		return nil
+	}
 	return optimiseExpression(lowered)
 }

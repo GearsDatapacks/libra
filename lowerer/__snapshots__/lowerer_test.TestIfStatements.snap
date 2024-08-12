@@ -27,7 +27,6 @@ MODULE test
     │   └─UNIT_STRUCT void
     ├─GOTO block2
     ├─LABEL block2
-    ├─INT_LIT 0
     └─RETURN
 ---
 
@@ -66,7 +65,6 @@ MODULE test
     │ └─INT_LIT 20
     ├─GOTO block3
     ├─LABEL block3
-    ├─INT_LIT 0
     └─RETURN
 ---
 
@@ -123,6 +121,5 @@ MODULE test
     │ └─INT_LIT 30
     ├─GOTO block5
     ├─LABEL block5
-    ├─INT_LIT 0
     └─RETURN
 ---
