@@ -66,7 +66,7 @@ func (c *compiler) registerFn(fn *ir.FunctionDeclaration) {
 	for i, param := range function.Params() {
 		param.SetName(fn.Parameters[i])
 	}
-	c.table.addValue(fn.Name, function)
+	c.table.addValue(fn.Name, llvmValue(function))
 }
 
 func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
@@ -74,14 +74,14 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 		return
 	}
 
-	function := c.table.getValue(fn.Name)
+	function := c.table.getValue(fn.Name).toLlvm(c)
 	c.table = childTable(c.table)
 	c.table.context = &fnContext{
 		blocks: map[string]llvm.BasicBlock{},
 	}
 
 	for i, param := range function.Params() {
-		c.table.addValue(fn.Parameters[i], param)
+		c.table.addValue(fn.Parameters[i], llvmValue(param))
 	}
 
 	for _, stmt := range fn.Body.Statements {
@@ -103,13 +103,16 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 func (c *compiler) compileStatement(statement ir.Statement) {
 	switch stmt := statement.(type) {
 	case *ir.VariableDeclaration:
-		value := c.compileExpression(stmt.Value)
-		c.table.addValue(stmt.Symbol.Name, value)
+		alloca := c.builder.CreateAlloca(stmt.Symbol.Type.ToLlvm(c.context), stmt.Symbol.Name)
+		value := c.compileExpression(stmt.Value, true).toLlvm(c)
+		c.builder.CreateStore(value, alloca)
+
+		c.table.addValue(stmt.Symbol.Name, stackVariable(alloca))
 	case *ir.ReturnStatement:
 		if stmt.Value == nil {
 			c.builder.CreateRetVoid()
 		} else {
-			value := c.compileExpression(stmt.Value)
+			value := c.compileExpression(stmt.Value, true).toLlvm(c)
 			c.builder.CreateRet(value)
 		}
 
@@ -119,56 +122,68 @@ func (c *compiler) compileStatement(statement ir.Statement) {
 	case *ir.Goto:
 		c.builder.CreateBr(c.table.context.blocks[stmt.Label])
 	case *ir.Branch:
-		cond := c.compileExpression(stmt.Condition)
+		cond := c.compileExpression(stmt.Condition, true).toLlvm(c)
 		c.builder.CreateCondBr(
 			cond,
 			c.table.context.blocks[stmt.IfLabel],
 			c.table.context.blocks[stmt.ElseLabel],
 		)
 	case ir.Expression:
-		c.compileExpression(stmt)
+		c.compileExpression(stmt, false)
 	default:
 		panic("Unreachable")
 	}
 }
 
-func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
+func (c *compiler) compileExpression(expression ir.Expression, used bool) value {
 	switch expr := expression.(type) {
 	case *ir.ArrayExpression:
 		panic("TODO")
 	case *ir.Assignment:
 		panic("TODO")
 	case *ir.BinaryExpression:
+		if !used {
+			return llvmValue{}
+		}
 		return c.compileBinaryExpression(expr)
 	case *ir.BooleanLiteral:
+		if !used {
+			return llvmValue{}
+		}
 		var value uint64 = 0
 		if expr.Value {
 			value = 1
 		}
-		return llvm.ConstInt(c.context.Int1Type(), value, false)
+		return llvmValue(llvm.ConstInt(c.context.Int1Type(), value, false))
 	case *ir.Conversion:
 		panic("TODO")
 	case *ir.DerefExpression:
 		panic("TODO")
 	case *ir.FloatLiteral:
-		return llvm.ConstFloat(c.context.DoubleType(), expr.Value)
+		if !used {
+			return llvmValue{}
+		}
+		return llvmValue(llvm.ConstFloat(c.context.DoubleType(), expr.Value))
 	case *ir.FunctionCall:
-		callee := c.compileExpression(expr.Function)
+		callee := c.compileExpression(expr.Function, true).toLlvm(c)
 		args := make([]llvm.Value, 0, len(expr.Arguments))
 		for _, arg := range expr.Arguments {
-			args = append(args, c.compileExpression(arg))
+			args = append(args, c.compileExpression(arg, true).toLlvm(c))
 		}
 		var name string
-		if expr.ReturnType != types.Void {
+		if expr.ReturnType != types.Void && used {
 			name = "call_tmp"
 		}
-		return c.builder.CreateCall(callee.GlobalValueType(), callee, args, name)
+		return llvmValue(c.builder.CreateCall(callee.GlobalValueType(), callee, args, name))
 	case *ir.FunctionExpression:
 		panic("TODO")
 	case *ir.IndexExpression:
 		panic("TODO")
 	case *ir.IntegerLiteral:
-		return llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true)
+		if !used {
+			return llvmValue{}
+		}
+		return llvmValue(llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true))
 	case *ir.MapExpression:
 		panic("TODO")
 	case *ir.MemberExpression:
@@ -176,15 +191,18 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.RefExpression:
 		panic("TODO")
 	case *ir.StringLiteral:
+		if !used {
+			return llvmValue{}
+		}
 		alloca := c.builder.CreateAlloca(types.String.ToLlvm(c.context), "str_tmp")
 		str := llvm.ConstString(expr.Value, true)
 		c.builder.CreateStore(str, alloca)
-		return c.builder.CreateGEP(
+		return llvmValue(c.builder.CreateGEP(
 			types.String.ToLlvm(c.context),
 			alloca,
 			[]llvm.Value{llvm.ConstInt(c.context.Int64Type(), 0, false)},
 			"gep_tmp",
-		)
+		))
 	case *ir.StructExpression:
 		panic("TODO")
 	case *ir.TupleExpression:
@@ -196,80 +214,90 @@ func (c *compiler) compileExpression(expression ir.Expression) llvm.Value {
 	case *ir.TypeExpression:
 		panic("TODO")
 	case ir.UintLiteral:
-		return llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true)
+		if !used {
+			return llvmValue{}
+		}
+		return llvmValue(llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true))
 	case *ir.UnaryExpression:
 		panic("TODO")
 	case *ir.VariableExpression:
+		if !used {
+			return llvmValue{}
+		}
 		return c.table.getValue(expr.Symbol.Name)
 	default:
 		panic("Unreachable")
 	}
 }
 
-func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) llvm.Value {
-	left := c.compileExpression(binExpr.Left)
-	right := c.compileExpression(binExpr.Right)
+func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) value {
+	left := c.compileExpression(binExpr.Left, true).toLlvm(c)
+	right := c.compileExpression(binExpr.Right, true).toLlvm(c)
+
+	var v llvm.Value
 
 	switch binExpr.Operator.Id {
 	case ir.AddFloat:
-		return c.builder.CreateFAdd(left, right, "fadd_tmp")
+		v = c.builder.CreateFAdd(left, right, "fadd_tmp")
 	case ir.AddInt:
-		return c.builder.CreateAdd(left, right, "add_tmp")
+		v = c.builder.CreateAdd(left, right, "add_tmp")
 	case ir.BitwiseAnd:
-		return c.builder.CreateAnd(left, right, "bit_and_tmp")
+		v = c.builder.CreateAnd(left, right, "bit_and_tmp")
 	case ir.BitwiseOr:
-		return c.builder.CreateOr(left, right, "bit_or_tmp")
+		v = c.builder.CreateOr(left, right, "bit_or_tmp")
 	case ir.Concat:
 		panic("TODO")
 	case ir.Divide:
 		panic("TODO")
 	case ir.Equal:
 		// TODO: Non-integer comparisons
-		return c.builder.CreateICmp(llvm.IntEQ, left, right, "eq_tmp")
+		v = c.builder.CreateICmp(llvm.IntEQ, left, right, "eq_tmp")
 	case ir.Greater:
 		// TODO: Float and unsigned comparisons
-		return c.builder.CreateICmp(llvm.IntSGT, left, right, "gt_tmp")
+		v = c.builder.CreateICmp(llvm.IntSGT, left, right, "gt_tmp")
 	case ir.GreaterEq:
 		// TODO: Float and unsigned comparisons
-		return c.builder.CreateICmp(llvm.IntSGE, left, right, "ge_tmp")
+		v = c.builder.CreateICmp(llvm.IntSGE, left, right, "ge_tmp")
 	case ir.LeftShift:
-		return c.builder.CreateShl(left, right, "shl_tmp")
+		v = c.builder.CreateShl(left, right, "shl_tmp")
 	case ir.Less:
 		// TODO: Float and unsigned comparisons
-		return c.builder.CreateICmp(llvm.IntSLT, left, right, "lt_tmp")
+		v = c.builder.CreateICmp(llvm.IntSLT, left, right, "lt_tmp")
 	case ir.LessEq:
 		// TODO: Float and unsigned comparisons
-		return c.builder.CreateICmp(llvm.IntSLE, left, right, "le_tmp")
+		v = c.builder.CreateICmp(llvm.IntSLE, left, right, "le_tmp")
 	case ir.LogicalAnd:
-		return c.builder.CreateAnd(left, right, "and_tmp")
+		v = c.builder.CreateAnd(left, right, "and_tmp")
 	case ir.LogicalOr:
-		return c.builder.CreateOr(left, right, "or_tmp")
+		v = c.builder.CreateOr(left, right, "or_tmp")
 	case ir.ModuloFloat:
 		panic("TODO")
 	case ir.ModuloInt:
 		panic("TODO")
 	case ir.MultiplyFloat:
-		return c.builder.CreateFMul(left, right, "fmul_tmp")
+		v = c.builder.CreateFMul(left, right, "fmul_tmp")
 	case ir.MultiplyInt:
-		return c.builder.CreateMul(left, right, "mul_tmp")
+		v = c.builder.CreateMul(left, right, "mul_tmp")
 	case ir.NotEqual:
 		// TODO: Non-integer comparisons
-		return c.builder.CreateICmp(llvm.IntNE, left, right, "ne_tmp")
+		v = c.builder.CreateICmp(llvm.IntNE, left, right, "ne_tmp")
 	case ir.PowerFloat:
 		panic("TODO")
 	case ir.PowerInt:
 		panic("TODO")
 	case ir.ArithmeticRightShift:
-		return c.builder.CreateAShr(left, right, "arsh_tmp")
+		v = c.builder.CreateAShr(left, right, "arsh_tmp")
 	case ir.LogicalRightShift:
-		return c.builder.CreateLShr(left, right, "lrsh_tmp")
+		v = c.builder.CreateLShr(left, right, "lrsh_tmp")
 	case ir.SubtractFloat:
-		return c.builder.CreateFSub(left, right, "fsub_tmp")
+		v = c.builder.CreateFSub(left, right, "fsub_tmp")
 	case ir.SubtractInt:
-		return c.builder.CreateSub(left, right, "sub_tmp")
+		v = c.builder.CreateSub(left, right, "sub_tmp")
 	case ir.Union:
 		panic("Unreachable")
 	default:
 		panic("Unreachable")
 	}
+
+	return llvmValue(v)
 }

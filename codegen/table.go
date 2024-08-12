@@ -6,7 +6,7 @@ import (
 
 type table struct {
 	parent  *table
-	values  map[string]llvm.Value
+	values  map[string]value
 	context *fnContext
 }
 
@@ -16,22 +16,22 @@ type fnContext struct {
 
 func newTable() *table {
 	return &table{
-		values: map[string]llvm.Value{},
+		values: map[string]value{},
 	}
 }
 
 func childTable(parent *table) *table {
 	return &table{
 		parent: parent,
-		values: map[string]llvm.Value{},
+		values: map[string]value{},
 	}
 }
 
-func (t *table) addValue(name string, value llvm.Value) {
+func (t *table) addValue(name string, value value) {
 	t.values[name] = value
 }
 
-func (t *table) getValue(name string) llvm.Value {
+func (t *table) getValue(name string) value {
 	if value, ok := t.values[name]; ok {
 		return value
 	}
