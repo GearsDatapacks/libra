@@ -169,7 +169,7 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		if !used {
 			return llvmValue{}
 		}
-		return llvmValue(llvm.ConstFloat(c.context.DoubleType(), expr.Value))
+		return llvmValue(llvm.ConstFloat(expr.Type().ToLlvm(c.context), expr.Value))
 	case *ir.FunctionCall:
 		callee := c.compileExpression(expr.Function, true).toRValue(c)
 		args := make([]llvm.Value, 0, len(expr.Arguments))
@@ -189,7 +189,12 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		if !used {
 			return llvmValue{}
 		}
-		return llvmValue(llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true))
+		return llvmValue(llvm.ConstInt(expr.Type().ToLlvm(c.context), uint64(expr.Value), true))
+	case *ir.UintLiteral:
+		if !used {
+			return llvmValue{}
+		}
+		return llvmValue(llvm.ConstInt(expr.Type().ToLlvm(c.context), expr.Value, true))
 	case *ir.MapExpression:
 		panic("TODO")
 	case *ir.MemberExpression:

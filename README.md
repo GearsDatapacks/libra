@@ -1042,6 +1042,20 @@ Therefore, Hello, world is just a single line of Libra:
 print("Hello, world!")
 ```
 
+
+## Attributes
+An attribute is an annotation of a certain statement or expression which tells the compiler to treat it in a special or different way. Attributes begin with `@`, and mostly appear above declarations. Attributes are hardcoded in the compiler and cannot be added by programmers.
+
+Example:
+```rust
+tag MyTag
+
+@tag MyTag
+struct MyTaggedStruct {
+  ...
+}
+```
+
 ## WIP
 This section is a working in progress, and these concepts are all likely to change. This is simply somewhere for me to note down ideas as I come up with them; they will be refined later.
 
@@ -1253,19 +1267,6 @@ let mean = averages.mean
 averages.value(10)
 ```
 
-### Attributes
-An attribute is an annotation of a certain statement or expression which tells the compiler to treat it in a special or different way. Attributes begin with `@`, and mostly appear above declarations. Attributes are hardcoded in the compiler and cannot be added by programmers.
-
-Example:
-```rust
-tag MyTag
-
-@tag MyTag
-struct MyTaggedStruct {
-  ...
-}
-```
-
 Below is a list of all tags available to developers:
 - `tag` - Adds a defined type to a certain tag
 - `impl` - Marks a method as being an implementation for an interface
@@ -1274,3 +1275,4 @@ Below is a list of all tags available to developers:
 - `doc` - Adds a doc comment to a declaration
 - `deprecated` - Marks a function or type as deprecated
 - `gen` - Generates methods for a type using a generator function (`fn(Type): $T: fn`)
+- `extern` - Marks a function as external, no defined by a Libra library

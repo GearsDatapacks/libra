@@ -58,7 +58,7 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.LeftShift:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				}
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
@@ -70,7 +70,7 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.ArithmeticRightShift, ir.LogicalRightShift:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				}
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
@@ -92,12 +92,12 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.BitwiseAnd:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				}
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				}
 			}
 		case ir.AddInt:
@@ -164,14 +164,14 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.MultiplyInt:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if int.Value == 1 {
 					return expr.Right
 				}
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if int.Value == 1 {
 					return expr.Left
 				}
@@ -179,14 +179,14 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.MultiplyFloat:
 			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
 				if float.Value == 0 {
-					return &ir.FloatLiteral{Value: 0}
+					return &ir.FloatLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if float.Value == 1 {
 					return expr.Right
 				}
 			}
 			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
 				if float.Value == 0 {
-					return &ir.FloatLiteral{Value: 0}
+					return &ir.FloatLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if float.Value == 1 {
 					return expr.Left
 				}
@@ -205,14 +205,14 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.PowerInt:
 			if int, ok := expr.Left.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 0}
+					return &ir.IntegerLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if int.Value == 1 {
-					return &ir.IntegerLiteral{Value: 1}
+					return &ir.IntegerLiteral{Value: 1, DataType: expr.Operator.Type()}
 				}
 			}
 			if int, ok := expr.Right.ConstValue().(values.IntValue); ok {
 				if int.Value == 0 {
-					return &ir.IntegerLiteral{Value: 1}
+					return &ir.IntegerLiteral{Value: 1, DataType: expr.Operator.Type()}
 				} else if int.Value == 1 {
 					return expr.Left
 				}
@@ -220,14 +220,14 @@ func optimiseExpression(expression ir.Expression) ir.Expression {
 		case ir.PowerFloat:
 			if float, ok := expr.Left.ConstValue().(values.FloatValue); ok {
 				if float.Value == 0 {
-					return &ir.FloatLiteral{Value: 0}
+					return &ir.FloatLiteral{Value: 0, DataType: expr.Operator.Type()}
 				} else if float.Value == 1 {
-					return &ir.FloatLiteral{Value: 1}
+					return &ir.FloatLiteral{Value: 1, DataType: expr.Operator.Type()}
 				}
 			}
 			if float, ok := expr.Right.ConstValue().(values.FloatValue); ok {
 				if float.Value == 0 {
-					return &ir.FloatLiteral{Value: 1}
+					return &ir.FloatLiteral{Value: 1, DataType: expr.Operator.Type()}
 				} else if float.Value == 1 {
 					return expr.Left
 				}
@@ -250,37 +250,37 @@ func optimiseLogicalNot(expression ir.Expression, original ir.Expression) ir.Exp
 		case ir.Less:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.GreaterEq, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.GreaterEq, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		case ir.LessEq:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.Greater, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.Greater, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		case ir.Greater:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.LessEq, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.LessEq, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		case ir.GreaterEq:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.Less, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.Less, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		case ir.Equal:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.NotEqual, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.NotEqual, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		case ir.NotEqual:
 			return &ir.BinaryExpression{
 				Left:     expr.Left,
-				Operator: ir.BinaryOperator{Id: ir.Equal, DataType: expr.Operator.DataType},
+				Operator: ir.BinaryOperator{Id: ir.Equal, DataType: expr.Operator.Type()},
 				Right:    expr.Right,
 			}
 		}
@@ -318,15 +318,18 @@ func constValueToExpr(constValue values.ConstValue, ty types.Type) ir.Expression
 	switch value := constValue.(type) {
 	case values.IntValue:
 		return &ir.IntegerLiteral{
-			Value: value.Value,
+			Value:    value.Value,
+			DataType: ty,
 		}
 	case values.UintValue:
 		return &ir.UintLiteral{
-			Value: value.Value,
+			Value:    value.Value,
+			DataType: ty,
 		}
 	case values.FloatValue:
 		return &ir.FloatLiteral{
-			Value: value.Value,
+			Value:    value.Value,
+			DataType: ty,
 		}
 	case values.BoolValue:
 		return &ir.BooleanLiteral{

@@ -38,10 +38,12 @@ func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expres
 	case *ast.IntegerLiteral:
 		return &ir.IntegerLiteral{
 			Value: expr.Value,
+			DataType: types.IntType(expr.Value),
 		}
 	case *ast.FloatLiteral:
 		return &ir.FloatLiteral{
 			Value: expr.Value,
+			DataType: types.FloatType(expr.Value),
 		}
 	case *ast.BooleanLiteral:
 		return &ir.BooleanLiteral{

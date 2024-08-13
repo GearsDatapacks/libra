@@ -15,35 +15,10 @@ type expression struct{}
 
 func (expression) irExpr() {}
 
-func minIntWidth(i int64) int {
-	if i <= math.MaxInt8 && i >= math.MinInt8 {
-		return 8
-	}
-	if i <= math.MaxInt16 && i >= math.MinInt16 {
-		return 16
-	}
-	if i <= math.MaxInt32 && i >= math.MinInt32 {
-		return 32
-	}
-	return 64
-}
-
-func minUintWidth(u uint64) int {
-	if u <= math.MaxUint8 {
-		return 8
-	}
-	if u <= math.MaxUint16 {
-		return 16
-	}
-	if u <= math.MaxUint32 {
-		return 32
-	}
-	return 64
-}
-
 type IntegerLiteral struct {
 	expression
 	Value int64
+	DataType types.Type
 }
 
 func (i *IntegerLiteral) Print(node *printer.Node) {
@@ -55,24 +30,17 @@ func (i *IntegerLiteral) Print(node *printer.Node) {
 	)
 }
 
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (i IntegerLiteral) Type() types.Type {
-	ui := types.Numeric{
-		Kind:         types.NumInt,
-		BitWidth:     maxInt(minIntWidth(i.Value), 32),
-		Downcastable: &types.Downcastable{},
-	}
-	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
-	ui.Downcastable.MinIntWidth = minIntWidth(i.Value)
-	ui.Downcastable.MinUintWidth = minUintWidth(uint64(i.Value))
+	// ui := types.Numeric{
+	// 	Kind:         types.NumInt,
+	// 	BitWidth:     maxInt(minIntWidth(i.Value), 32),
+	// 	Downcastable: &types.Downcastable{},
+	// }
+	// ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
+	// ui.Downcastable.MinIntWidth = minIntWidth(i.Value)
+	// ui.Downcastable.MinUintWidth = minUintWidth(uint64(i.Value))
 
-	return ui
+	return i.DataType
 }
 
 func (IntegerLiteral) IsConst() bool {
@@ -88,6 +56,7 @@ func (i *IntegerLiteral) ConstValue() values.ConstValue {
 type UintLiteral struct {
 	expression
 	Value uint64
+	DataType types.Type
 }
 
 func (i UintLiteral) Print(node *printer.Node) {
@@ -99,17 +68,8 @@ func (i UintLiteral) Print(node *printer.Node) {
 	)
 }
 
-func (i UintLiteral) Type() types.Type {
-	ui := types.Numeric{
-		Kind:         types.NumInt,
-		BitWidth:     maxInt(minUintWidth(i.Value), 32),
-		Downcastable: &types.Downcastable{},
-	}
-	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
-	ui.Downcastable.MinIntWidth = minIntWidth(int64(i.Value))
-	ui.Downcastable.MinUintWidth = minUintWidth(i.Value)
-
-	return ui
+func (u UintLiteral) Type() types.Type {
+	return u.DataType
 }
 
 func (UintLiteral) IsConst() bool {
@@ -125,6 +85,7 @@ func (i UintLiteral) ConstValue() values.ConstValue {
 type FloatLiteral struct {
 	expression
 	Value float64
+	DataType types.Type
 }
 
 func (f *FloatLiteral) Print(node *printer.Node) {
@@ -136,28 +97,8 @@ func (f *FloatLiteral) Print(node *printer.Node) {
 	)
 }
 
-func minFloatWidth(f float64) int {
-	if f <= types.MaxFloat16 && f >= -types.MaxFloat16 {
-		return 16
-	}
-	if f <= math.MaxFloat32 && f >= -math.MaxFloat32 {
-		return 32
-	}
-	return 64
-}
-
 func (f *FloatLiteral) Type() types.Type {
-	uf := types.Numeric{
-		Kind:         types.NumFloat,
-		BitWidth:     64,
-		Downcastable: &types.Downcastable{},
-	}
-	uf.Downcastable.MinFloatWidth = minFloatWidth(f.Value)
-	if float64(int64(f.Value)) == f.Value {
-		uf.Downcastable.MinIntWidth = minIntWidth(int64(f.Value))
-		uf.Downcastable.MinUintWidth = minUintWidth(uint64(f.Value))
-	}
-	return uf
+	return f.DataType
 }
 
 func (FloatLiteral) IsConst() bool {

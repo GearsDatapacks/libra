@@ -266,6 +266,90 @@ func Float(width int) Numeric {
 	}
 }
 
+func minIntWidth(i int64) int {
+	if i <= math.MaxInt8 && i >= math.MinInt8 {
+		return 8
+	}
+	if i <= math.MaxInt16 && i >= math.MinInt16 {
+		return 16
+	}
+	if i <= math.MaxInt32 && i >= math.MinInt32 {
+		return 32
+	}
+	return 64
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minUintWidth(u uint64) int {
+	if u <= math.MaxUint8 {
+		return 8
+	}
+	if u <= math.MaxUint16 {
+		return 16
+	}
+	if u <= math.MaxUint32 {
+		return 32
+	}
+	return 64
+}
+
+func minFloatWidth(f float64) int {
+	if f <= MaxFloat16 && f >= -MaxFloat16 {
+		return 16
+	}
+	if f <= math.MaxFloat32 && f >= -math.MaxFloat32 {
+		return 32
+	}
+	return 64
+}
+
+func IntType(value int64) Numeric {
+	ui := Numeric{
+		Kind:         NumInt,
+		BitWidth:     maxInt(minIntWidth(value), 32),
+		Downcastable: &Downcastable{},
+	}
+	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(value))
+	ui.Downcastable.MinIntWidth = minIntWidth(value)
+	ui.Downcastable.MinUintWidth = minUintWidth(uint64(value))
+
+	return ui
+}
+
+func UintType(value uint64) Numeric {
+	ui := Numeric{
+		Kind:         NumInt,
+		BitWidth:     maxInt(minUintWidth(value), 32),
+		Downcastable: &Downcastable{},
+	}
+	ui.Downcastable.MinFloatWidth = minFloatWidth(float64(value))
+	ui.Downcastable.MinIntWidth = minIntWidth(int64(value))
+	ui.Downcastable.MinUintWidth = minUintWidth(value)
+
+	return ui
+}
+
+func FloatType(value float64) Numeric {
+	uf := Numeric{
+		Kind:         NumFloat,
+		BitWidth:     64,
+		Downcastable: &Downcastable{},
+	}
+	uf.Downcastable.MinFloatWidth = minFloatWidth(value)
+	if float64(int64(value)) == value {
+		uf.Downcastable.MinIntWidth = minIntWidth(int64(value))
+		uf.Downcastable.MinUintWidth = minUintWidth(uint64(value))
+	}
+
+	return uf
+}
+
 type Numeric struct {
 	Kind         NumKind
 	BitWidth     int
