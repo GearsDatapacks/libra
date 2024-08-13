@@ -217,7 +217,7 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		}
 		return llvmValue(llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true))
 	case *ir.UnaryExpression:
-		panic("TODO")
+		return c.compileUnaryExpression(expr)
 	case *ir.VariableExpression:
 		if !used {
 			return llvmValue{}
@@ -293,6 +293,39 @@ func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) value {
 		v = c.builder.CreateSub(left, right, "sub_tmp")
 	case ir.Union:
 		panic("Unreachable")
+	default:
+		panic("Unreachable")
+	}
+
+	return llvmValue(v)
+}
+
+func (c *compiler) compileUnaryExpression(unExpr *ir.UnaryExpression) value {
+	operand := c.compileExpression(unExpr.Operand, true).toRValue(c)
+
+	var v llvm.Value
+
+	switch unExpr.Operator.Id {
+	case ir.BitwiseNot:
+		v = c.builder.CreateNot(operand, "bit_not_tmp")
+	case ir.CrashError:
+		panic("TODO")
+	case ir.DecrecementInt:
+		panic("TODO")
+	case ir.DecrementFloat:
+		panic("TODO")
+	case ir.IncrecementInt:
+		panic("TODO")
+	case ir.IncrementFloat:
+		panic("TODO")
+	case ir.LogicalNot:
+		v = c.builder.CreateNot(operand, "not_tmp")
+	case ir.NegateFloat:
+		v = c.builder.CreateFNeg(operand, "fneg_tmp")
+	case ir.NegateInt:
+		v = c.builder.CreateNeg(operand, "neg_tmp")
+	case ir.PropagateError:
+		panic("TODO")
 	default:
 		panic("Unreachable")
 	}
