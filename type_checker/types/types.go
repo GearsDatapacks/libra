@@ -1316,8 +1316,8 @@ func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
 	return Member(p.Underlying, member)
 }
 
-func (*Pointer) ToLlvm(llvm.Context) llvm.Type {
-	panic("TODO")
+func (p *Pointer) ToLlvm(context llvm.Context) llvm.Type {
+	return llvm.PointerType(p.Underlying.ToLlvm(context), 0)
 }
 
 type Explicit struct {

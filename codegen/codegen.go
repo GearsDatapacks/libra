@@ -97,7 +97,7 @@ func (c *compiler) compileFn(fn *ir.FunctionDeclaration) {
 
 	c.table = c.table.parent
 	// TODO: Don't crash here
-	llvm.VerifyFunction(function, llvm.AbortProcessAction)
+	// llvm.VerifyFunction(function, llvm.AbortProcessAction)
 }
 
 func (c *compiler) compileStatement(statement ir.Statement) {
@@ -164,7 +164,11 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 	case *ir.Conversion:
 		return c.compileExpression(expr.Expression, used)
 	case *ir.DerefExpression:
-		panic("TODO")
+		value := c.compileExpression(expr.Value, true).toRValue(c)
+		return deref{
+			value: value,
+			ty:    expr.Type().ToLlvm(c.context),
+		}
 	case *ir.FloatLiteral:
 		if !used {
 			return llvmValue{}
@@ -200,7 +204,9 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 	case *ir.MemberExpression:
 		panic("TODO")
 	case *ir.RefExpression:
-		panic("TODO")
+		value := c.compileExpression(expr.Value, true)
+		return llvmValue(value.toRef(c))
+
 	case *ir.StringLiteral:
 		if !used {
 			return llvmValue{}
