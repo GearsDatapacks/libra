@@ -213,7 +213,7 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		}
 		return llvmValue(c.builder.CreateGlobalString(expr.Value, ".str_const"))
 	case *ir.StructExpression:
-		panic("TODO")
+		return c.compileStructExpression(expr)
 	case *ir.TupleExpression:
 		panic("TODO")
 	case *ir.TupleStructExpression:
@@ -340,4 +340,13 @@ func (c *compiler) compileUnaryExpression(unExpr *ir.UnaryExpression) value {
 	}
 
 	return llvmValue(v)
+}
+
+func (c *compiler) compileStructExpression(s *ir.StructExpression) value {
+	values := make([]llvm.Value, 0, len(s.Fields))
+	structType := types.Unwrap(s.Struct).(*types.Struct)
+	for _, name := range structType.FieldOrder {
+		values = append(values, c.compileExpression(s.Fields[name], true).toRValue(c))
+	}
+	return llvmValue(llvm.ConstStruct(values, false))
 }

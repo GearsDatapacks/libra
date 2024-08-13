@@ -100,10 +100,17 @@ func (t *typeChecker) registerStructDeclaration(decl *ast.StructDeclaration) {
 				Types: []types.Type{},
 			}
 		} else {
+			fieldOrder := make([]string, 0, len(decl.Body))
+
+			for _, field := range decl.Body {
+				fieldOrder = append(fieldOrder, *field.Name)
+			}
+
 			ty = &types.Struct{
-				Name:     decl.Name,
-				ModuleId: t.module.Id,
-				Fields:   map[string]types.StructField{},
+				Name:       decl.Name,
+				ModuleId:   t.module.Id,
+				Fields:     map[string]types.StructField{},
+				FieldOrder: fieldOrder,
 			}
 		}
 	}

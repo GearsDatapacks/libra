@@ -856,9 +856,10 @@ func (s StructField) Print(node *printer.Node) {
 }
 
 type Struct struct {
-	Name     string
-	ModuleId uint
-	Fields   map[string]StructField
+	Name       string
+	ModuleId   uint
+	Fields     map[string]StructField
+	FieldOrder []string
 }
 
 func (s *Struct) String() string {
@@ -914,8 +915,12 @@ func (s *Struct) member(member string) (Type, *diagnostics.Partial) {
 	return Invalid, diagnostics.NoMember(s, member)
 }
 
-func (*Struct) ToLlvm(llvm.Context) llvm.Type {
-	panic("TODO")
+func (s *Struct) ToLlvm(context llvm.Context) llvm.Type {
+	types := make([]llvm.Type, 0, len(s.FieldOrder))
+	for _, name := range s.FieldOrder {
+		types = append(types, s.Fields[name].Type.ToLlvm(context))
+	}
+	return llvm.StructType(types, false)
 }
 
 type TupleStruct struct {
