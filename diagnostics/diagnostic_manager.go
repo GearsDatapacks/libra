@@ -307,7 +307,7 @@ func NotCallable(location text.Location, ty tcType) *Diagnostic {
 	return makeError(msg, location)
 }
 
-func WrongNumberAgruments(location text.Location, expected, actual int) *Diagnostic {
+func WrongNumberArguments(location text.Location, expected, actual int) *Diagnostic {
 	msg := fmt.Sprintf("Incorrect number of arguments (expected %d, found %d)", expected, actual)
 	return makeError(msg, location)
 }

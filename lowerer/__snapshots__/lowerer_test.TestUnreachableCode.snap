@@ -40,7 +40,7 @@ MODULE test
     │ └─INT_LIT 0
     ├─GOTO block1
     ├─LABEL block1
-    ├─UNARY_EXPR IncrecementInt
+    ├─UNARY_EXPR IncrementInt
     │ ├─VAR_SYMBOL i mut
     │ │ └─VARIABLE_TYPE i32
     │ └─VARIABLE_TYPE i32

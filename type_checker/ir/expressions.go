@@ -612,9 +612,9 @@ const (
 
 const (
 	postfix UnOpId = iota | (1 << 16)
-	IncrecementInt
+	IncrementInt
 	IncrementFloat
-	DecrecementInt
+	DecrementInt
 	DecrementFloat
 	PropagateError
 	CrashError
@@ -634,12 +634,12 @@ func (u UnaryOperator) String() string {
 		return "LogicalNot"
 	case BitwiseNot:
 		return "BitwiseNot"
-	case IncrecementInt:
-		return "IncrecementInt"
+	case IncrementInt:
+		return "IncrementInt"
 	case IncrementFloat:
 		return "IncrementFloat"
-	case DecrecementInt:
-		return "DecrecementInt"
+	case DecrementInt:
+		return "DecrementInt"
 	case DecrementFloat:
 		return "DecrementFloat"
 	case PropagateError:
@@ -667,11 +667,11 @@ func (u UnaryOperator) Type() types.Type {
 		ty = types.Bool
 	case BitwiseNot:
 		ty = u.DataType
-	case IncrecementInt:
+	case IncrementInt:
 		ty = u.DataType
 	case IncrementFloat:
 		ty = u.DataType
-	case DecrecementInt:
+	case DecrementInt:
 		ty = u.DataType
 	case DecrementFloat:
 		ty = u.DataType
@@ -746,11 +746,11 @@ func (u *UnaryExpression) ConstValue() values.ConstValue {
 		return values.IntValue{
 			Value: ^value.Value,
 		}
-	case IncrecementInt:
+	case IncrementInt:
 		fallthrough
 	case IncrementFloat:
 		fallthrough
-	case DecrecementInt:
+	case DecrementInt:
 		fallthrough
 	case DecrementFloat:
 		fallthrough

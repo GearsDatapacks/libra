@@ -362,9 +362,12 @@ func (p *parser) parseInteger() (ast.Expression, *diagnostics.Diagnostic) {
 
 	if len(tok.Value) >= 2 {
 		switch tok.Value[:2] {
-		case "0b": radix = 2
-		case "0o": radix = 8
-		case "0x": radix = 16
+		case "0b":
+			radix = 2
+		case "0o":
+			radix = 8
+		case "0x":
+			radix = 16
 		}
 	}
 
@@ -587,7 +590,7 @@ func (p *parser) parseForLoop() (ast.Expression, *diagnostics.Diagnostic) {
 	location := p.consume().Location
 	defer p.exitScope(p.enterScope())
 
-	variable := p.delcareIdentifier().Value
+	variable := p.declareIdentifier().Value
 	p.expectKeyword("in")
 
 	p.noBraces = true

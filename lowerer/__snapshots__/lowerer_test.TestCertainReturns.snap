@@ -51,11 +51,11 @@ MODULE test
     │ └─VAR_SYMBOL result mut
     │   └─VARIABLE_TYPE i32
     ├─LABEL block3
-    ├─UNARY_EXPR IncrecementInt
+    ├─UNARY_EXPR IncrementInt
     │ ├─VAR_SYMBOL result mut
     │ │ └─VARIABLE_TYPE i32
     │ └─VARIABLE_TYPE i32
-    ├─UNARY_EXPR DecrecementInt
+    ├─UNARY_EXPR DecrementInt
     │ ├─VAR_SYMBOL counter mut
     │ │ └─VARIABLE_TYPE i32
     │ └─VARIABLE_TYPE i32

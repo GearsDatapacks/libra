@@ -125,10 +125,10 @@ func (p *parser) registerAttribute(name string, fn func() (ast.Attribute, *diagn
 }
 
 func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, extra ...bool) {
-	rightassociative := false
+	rightAssociative := false
 	typeSyntax := false
 	if len(extra) > 0 {
-		rightassociative = extra[0]
+		rightAssociative = extra[0]
 	}
 	if len(extra) > 1 {
 		typeSyntax = extra[1]
@@ -136,7 +136,7 @@ func (p *parser) registerLedOp(kind token.Kind, precedence int, fn ledFn, extra 
 
 	leftPrecedence := precedence
 	rightPrecedence := precedence
-	if rightassociative {
+	if rightAssociative {
 		rightPrecedence -= 1
 	}
 
@@ -373,7 +373,7 @@ func (p *parser) isKeyword(value string) bool {
 	return !isDeclared
 }
 
-func (p *parser) delcareIdentifier() token.Token {
+func (p *parser) declareIdentifier() token.Token {
 	ident := p.expect(token.IDENTIFIER)
 	p.identifiers[ident.Value] = ident.Location
 	return ident

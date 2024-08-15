@@ -52,9 +52,9 @@ func (l *lowerer) lowerUnaryExpression(unExpr *ir.UnaryExpression, statements *[
 	// These operators all have side effects, so we want to make sure
 	// that their operands are correctly preserved
 	case ir.CrashError,
-		ir.DecrecementInt,
+		ir.DecrementInt,
 		ir.DecrementFloat,
-		ir.IncrecementInt,
+		ir.IncrementInt,
 		ir.IncrementFloat,
 		ir.PropagateError:
 		used = true

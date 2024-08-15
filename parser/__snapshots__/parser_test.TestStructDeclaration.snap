@@ -3,8 +3,8 @@
 STRUCT_DECL Unit (0:6)
 ---
 
-[`struct Mything123` - 1]
-STRUCT_DECL Mything123 (0:6)
+[`struct MyThing123` - 1]
+STRUCT_DECL MyThing123 (0:6)
 ---
 
 [`struct Wrapper { value }` - 1]

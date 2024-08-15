@@ -64,7 +64,7 @@ func TestTypeDeclaration(t *testing.T) {
 func TestStructDeclaration(t *testing.T) {
 	utils.MatchAstSnaps(t,
 		"struct Unit",
-		"struct Mything123",
+		"struct MyThing123",
 		"struct Wrapper { value }",
 		"struct Three{a,b,c,}",
 		"struct Empty {}",

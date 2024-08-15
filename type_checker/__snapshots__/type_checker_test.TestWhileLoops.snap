@@ -39,7 +39,7 @@ MODULE test
     │ └─PRIMARY_TYPE bool
     └─BLOCK
       ├─VARIABLE_TYPE i32
-      ├─UNARY_EXPR IncrecementInt
+      ├─UNARY_EXPR IncrementInt
       │ ├─VAR_SYMBOL i mut
       │ │ └─VARIABLE_TYPE i32
       │ └─VARIABLE_TYPE i32

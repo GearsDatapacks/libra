@@ -436,23 +436,24 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 				binOp.Id = ir.BitwiseAnd
 			}
 		}
-	case token.CARET:if leftNumeric && rightNumeric {
-		resultType := upcastNumbers(leftNum, rightNum)
+	case token.CARET:
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
 
-		if resultType == nil {
-			return
-		}
+			if resultType == nil {
+				return
+			}
 
-		binOp.DataType = resultType
-		lhs = convert(lhs, resultType, types.OperatorCast)
-		rhs = convert(rhs, resultType, types.OperatorCast)
-		num := resultType.(types.Numeric)
-		if num.Kind == types.NumFloat {
-			return
-		} else {
-			binOp.Id = ir.BitwiseXor
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.BitwiseXor
+			}
 		}
-	}
 	}
 
 	if untyped && binOp.Id != 0 {
@@ -586,7 +587,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 			if isFloat {
 				id = ir.IncrementFloat
 			} else {
-				id = ir.IncrecementInt
+				id = ir.IncrementInt
 			}
 		}
 	case token.DOUBLE_MINUS:
@@ -599,7 +600,7 @@ func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expressi
 			if isFloat {
 				id = ir.DecrementFloat
 			} else {
-				id = ir.DecrecementInt
+				id = ir.DecrementInt
 			}
 		}
 	case token.QUESTION:
@@ -897,7 +898,7 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 	}
 
 	if len(call.Arguments) != len(funcType.Parameters) {
-		t.diagnostics.Report(diagnostics.WrongNumberAgruments(call.Callee.GetLocation(), len(funcType.Parameters), len(call.Arguments)))
+		t.diagnostics.Report(diagnostics.WrongNumberArguments(call.Callee.GetLocation(), len(funcType.Parameters), len(call.Arguments)))
 		return &ir.InvalidExpression{
 			Expression: &ir.FunctionCall{
 				Function:   fn,

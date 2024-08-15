@@ -319,11 +319,11 @@ func (c *compiler) compileUnaryExpression(unExpr *ir.UnaryExpression) value {
 		v = c.builder.CreateNot(operand, "bit_not_tmp")
 	case ir.CrashError:
 		panic("TODO")
-	case ir.DecrecementInt:
+	case ir.DecrementInt:
 		panic("TODO")
 	case ir.DecrementFloat:
 		panic("TODO")
-	case ir.IncrecementInt:
+	case ir.IncrementInt:
 		panic("TODO")
 	case ir.IncrementFloat:
 		panic("TODO")

@@ -40,7 +40,7 @@ MODULE test
 │   ├─INT_LIT 0
 │   ├─VARIABLE_TYPE i32
 │   └─INT_VALUE 0
-└─UNARY_EXPR IncrecementInt
+└─UNARY_EXPR IncrementInt
   ├─VAR_SYMBOL a mut
   │ └─VARIABLE_TYPE i32
   └─VARIABLE_TYPE i32
@@ -70,7 +70,7 @@ MODULE test
 │   ├─INT_LIT 24
 │   ├─VARIABLE_TYPE i32
 │   └─INT_VALUE 24
-└─UNARY_EXPR DecrecementInt
+└─UNARY_EXPR DecrementInt
   ├─VAR_SYMBOL value mut
   │ └─VARIABLE_TYPE i32
   └─VARIABLE_TYPE i32

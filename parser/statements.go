@@ -67,7 +67,7 @@ func (p *parser) parseStatement() (ast.Statement, *diagnostics.Diagnostic) {
 
 func (p *parser) parseVariableDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	keyword := p.consume()
-	identifier := p.delcareIdentifier()
+	identifier := p.declareIdentifier()
 
 	typeAnnotation, err := p.parseOptionalTypeAnnotation()
 	if err != nil {
@@ -300,7 +300,7 @@ func (p *parser) parseBreakStatement() (ast.Statement, *diagnostics.Diagnostic) 
 
 func (p *parser) parseTypeDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier().Value
+	name := p.declareIdentifier().Value
 	p.expect(token.EQUALS)
 	ty, err := p.parseTypeExpression()
 	if err != nil {
@@ -340,7 +340,7 @@ func (p *parser) parseStructField() (*ast.StructField, *diagnostics.Diagnostic) 
 
 func (p *parser) parseStructDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier()
+	name := p.declareIdentifier()
 	var body []ast.StructField
 
 	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
@@ -374,7 +374,7 @@ func (p *parser) parseInterfaceMember() (*ast.InterfaceMember, *diagnostics.Diag
 
 func (p *parser) parseInterfaceDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier().Value
+	name := p.declareIdentifier().Value
 	p.expect(token.LEFT_BRACE)
 	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseInterfaceMember)
 
@@ -395,7 +395,7 @@ func (p *parser) parseImportStatement() (ast.Statement, *diagnostics.Diagnostic)
 		symbols = parseDelimExprList(
 			p, token.RIGHT_BRACE,
 			func() (ast.ImportedSymbol, *diagnostics.Diagnostic) {
-				ident := p.delcareIdentifier()
+				ident := p.declareIdentifier()
 				return ast.ImportedSymbol{
 					Location: ident.Location,
 					Name:     ident.Value,
@@ -425,7 +425,7 @@ func (p *parser) parseImportStatement() (ast.Statement, *diagnostics.Diagnostic)
 			p.Diagnostics.Report(diagnostics.OneImportModifierAllowed(p.next().Location))
 		}
 		p.consume()
-		name := p.delcareIdentifier().Value
+		name := p.declareIdentifier().Value
 		alias = &name
 	}
 
@@ -454,7 +454,7 @@ func (p *parser) parseEnumMember() (*ast.EnumMember, *diagnostics.Diagnostic) {
 
 func (p *parser) parseEnumDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier().Value
+	name := p.declareIdentifier().Value
 	valueType, err := p.parseOptionalTypeAnnotation()
 	if err != nil {
 		return nil, err
@@ -494,7 +494,7 @@ func (p *parser) parseUnionMember() (*ast.UnionMember, *diagnostics.Diagnostic) 
 
 func (p *parser) parseUnionDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier().Value
+	name := p.declareIdentifier().Value
 	p.expect(token.LEFT_BRACE)
 	members := parseDerefExprList(p, token.RIGHT_BRACE, p.parseUnionMember)
 
@@ -508,7 +508,7 @@ func (p *parser) parseUnionDeclaration() (ast.Statement, *diagnostics.Diagnostic
 
 func (p *parser) parseTagDeclaration() (ast.Statement, *diagnostics.Diagnostic) {
 	location := p.consume().Location
-	name := p.delcareIdentifier().Value
+	name := p.declareIdentifier().Value
 	var body []ast.Expression
 
 	if p.canContinue() && p.next().Kind == token.LEFT_BRACE {
