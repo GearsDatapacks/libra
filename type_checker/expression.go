@@ -236,16 +236,58 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 			binOp.Id = ir.NotEqual
 		}
 	case token.DOUBLE_LEFT_ANGLE:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp.Id = ir.LeftShift
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.LeftShift
+			}
 		}
 	case token.DOUBLE_RIGHT_ANGLE:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp.Id = ir.ArithmeticRightShift
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.ArithmeticRightShift
+			}
 		}
 	case token.TRIPLE_RIGHT_ANGLE:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp.Id = ir.LogicalRightShift
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.LogicalRightShift
+			}
 		}
 	case token.PLUS:
 		if types.Assignable(types.String, lType) && types.Assignable(types.String, rType) {
@@ -356,22 +398,61 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 			}
 		}
 
-	// TODO: Allow more than just i32
 	case token.PIPE:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp.Id = ir.BitwiseOr
-		}
-		if types.Assignable(types.RuntimeType, lType) && types.Assignable(types.RuntimeType, rType) {
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.BitwiseOr
+			}
+		} else if types.Assignable(types.RuntimeType, lType) && types.Assignable(types.RuntimeType, rType) {
 			binOp.Id = ir.Union
 		}
 	case token.AMPERSAND:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
-			binOp.Id = ir.BitwiseAnd
+		if leftNumeric && rightNumeric {
+			resultType := upcastNumbers(leftNum, rightNum)
+
+			if resultType == nil {
+				return
+			}
+
+			binOp.DataType = resultType
+			lhs = convert(lhs, resultType, types.OperatorCast)
+			rhs = convert(rhs, resultType, types.OperatorCast)
+			num := resultType.(types.Numeric)
+			if num.Kind == types.NumFloat {
+				return
+			} else {
+				binOp.Id = ir.BitwiseAnd
+			}
 		}
-	case token.CARET:
-		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
+	case token.CARET:if leftNumeric && rightNumeric {
+		resultType := upcastNumbers(leftNum, rightNum)
+
+		if resultType == nil {
+			return
+		}
+
+		binOp.DataType = resultType
+		lhs = convert(lhs, resultType, types.OperatorCast)
+		rhs = convert(rhs, resultType, types.OperatorCast)
+		num := resultType.(types.Numeric)
+		if num.Kind == types.NumFloat {
+			return
+		} else {
 			binOp.Id = ir.BitwiseXor
 		}
+	}
 	}
 
 	if untyped && binOp.Id != 0 {
@@ -479,13 +560,13 @@ func getPrefixOperator(tokKind token.Kind, operand ir.Expression) ir.UnaryOperat
 		id = id | ir.UntypedBit
 	}
 
-	return ir.UnaryOperator{Id: id}
+	return ir.UnaryOperator{Id: id, DataType: opType}
 }
 
 func (t *typeChecker) getPostfixOperator(tokKind token.Kind, operand ir.Expression) (ir.UnaryOperator, *diagnostics.Partial) {
 	var id ir.UnOpId
-	var ty types.Type
 	opType := operand.Type()
+	ty := opType
 
 	num, numeric := opType.(types.Numeric)
 	isFloat := numeric && num.Kind == types.NumFloat

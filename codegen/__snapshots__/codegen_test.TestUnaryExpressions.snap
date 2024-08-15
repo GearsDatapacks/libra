@@ -24,7 +24,7 @@ define void @main() {
 block0:
   %f = alloca double, align 8
   store double 4.200000e+00, ptr %f, align 8
-  %neg = alloca float, align 4
+  %neg = alloca double, align 8
   %load_tmp = load double, ptr %f, align 8
   %fneg_tmp = fneg double %load_tmp
   store double %fneg_tmp, ptr %neg, align 8

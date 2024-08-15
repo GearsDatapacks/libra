@@ -292,6 +292,7 @@ func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) value {
 	case ir.PowerInt:
 		panic("TODO")
 	case ir.ArithmeticRightShift:
+		// TODO: Probably use lshr for unsigned types
 		v = c.builder.CreateAShr(left, right, "arsh_tmp")
 	case ir.LogicalRightShift:
 		v = c.builder.CreateLShr(left, right, "lrsh_tmp")

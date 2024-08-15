@@ -9,7 +9,7 @@ MODULE test
       └─INT_LIT 25
 ---
 
-[`;mut i = 0;mut sum = 0;let result = while i < 10 {;	i++;	sum += i;	if i == 10 {;		break i;	};};` - 1]
+[`mut i = 0;mut sum = 0;let result = while i < 10 {;	i++;	sum += i;	if i == 10 {;		break i;	};}` - 1]
 MODULE test
 ├─VAR_DECL
 │ ├─VAR_SYMBOL i mut

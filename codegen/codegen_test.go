@@ -26,8 +26,11 @@ func TestBinaryExpressions(t *testing.T) {
 		"mut a: u64 = 10283; mut b: u64 = 732; let res = a * b",
 		"mut a = 3.2; mut b = 2.1; let res = a * b",
 		"mut a = 203; mut b = 41; let res = a & b",
+		"mut a: u64 = 32427; mut b: u64 = 23824523; let res = a & b",
 		"mut a = 49; mut b = 4163; let res = a ^ b",
+		"mut a: i8 = 91; mut b: i8 = 84; let res = a ^ b",
 		"mut a = 924; mut b = 91; let res = a | b",
+		"mut a: u32 = 2746; mut b: u32 = 1024; let res = a | b",
 		"mut a = true; mut b = false; let or = a || b",
 		"mut a = false; mut b = true; let and = a && b",
 		"mut a = 20; mut b = 30; let eq = a == b",
@@ -37,8 +40,11 @@ func TestBinaryExpressions(t *testing.T) {
 		"mut a = 12; mut b = 47; let lt = a < b",
 		"mut a = 12; mut b = 47; let le = a <= b",
 		"mut a = 1; mut b = 30; let shift = a << b",
+		"mut a: u8 = 31; mut b: u8 = 3; let shift = a << b",
 		"mut a = 72041; mut b = 3; let shift = a >> b",
+		"mut a: i64 = 476354293423; mut b: i64 = 40; let shift = a >> b",
 		"mut a = 72041; mut b = 3; let shift = a >>> b",
+		"mut a: u16 = 60203; mut b: u16 = 5; let shift = a >>> b",
 	)
 }
 

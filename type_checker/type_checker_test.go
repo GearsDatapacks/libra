@@ -48,8 +48,7 @@ func TestIfStatements(t *testing.T) {
 func TestWhileLoops(t *testing.T) {
 	utils.MatchIrSnaps(t,
 		"while true { break 25 }",
-		`
-mut i = 0
+		`mut i = 0
 mut sum = 0
 let result = while i < 10 {
 	i++
@@ -57,8 +56,7 @@ let result = while i < 10 {
 	if i == 10 {
 		break i
 	}
-}
-`,
+}`,
 	)
 }
 

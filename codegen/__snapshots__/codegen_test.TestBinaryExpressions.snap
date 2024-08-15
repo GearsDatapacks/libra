@@ -159,6 +159,26 @@ block0:
 
 ---
 
+[`mut a: u64 = 32427; mut b: u64 = 23824523; let res = a & b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i64, align 8
+  store i64 32427, ptr %a, align 4
+  %b = alloca i64, align 8
+  store i64 23824523, ptr %b, align 4
+  %res = alloca i64, align 8
+  %load_tmp = load i64, ptr %a, align 4
+  %load_tmp1 = load i64, ptr %b, align 4
+  %bit_and_tmp = and i64 %load_tmp, %load_tmp1
+  store i64 %bit_and_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
 [`mut a = 49; mut b = 4163; let res = a ^ b` - 1]
 ; ModuleID = 'main'
 source_filename = "main"
@@ -179,6 +199,26 @@ block0:
 
 ---
 
+[`mut a: i8 = 91; mut b: i8 = 84; let res = a ^ b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i8, align 1
+  store i8 91, ptr %a, align 1
+  %b = alloca i8, align 1
+  store i8 84, ptr %b, align 1
+  %res = alloca i8, align 1
+  %load_tmp = load i8, ptr %a, align 1
+  %load_tmp1 = load i8, ptr %b, align 1
+  %xor_tmp = xor i8 %load_tmp, %load_tmp1
+  store i8 %xor_tmp, ptr %res, align 1
+  ret void
+}
+
+---
+
 [`mut a = 924; mut b = 91; let res = a | b` - 1]
 ; ModuleID = 'main'
 source_filename = "main"
@@ -189,6 +229,26 @@ block0:
   store i32 924, ptr %a, align 4
   %b = alloca i32, align 4
   store i32 91, ptr %b, align 4
+  %res = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %bit_or_tmp = or i32 %load_tmp, %load_tmp1
+  store i32 %bit_or_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a: u32 = 2746; mut b: u32 = 1024; let res = a | b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 2746, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 1024, ptr %b, align 4
   %res = alloca i32, align 4
   %load_tmp = load i32, ptr %a, align 4
   %load_tmp1 = load i32, ptr %b, align 4
@@ -379,6 +439,26 @@ block0:
 
 ---
 
+[`mut a: u8 = 31; mut b: u8 = 3; let shift = a << b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i8, align 1
+  store i8 31, ptr %a, align 1
+  %b = alloca i8, align 1
+  store i8 3, ptr %b, align 1
+  %shift = alloca i8, align 1
+  %load_tmp = load i8, ptr %a, align 1
+  %load_tmp1 = load i8, ptr %b, align 1
+  %shl_tmp = shl i8 %load_tmp, %load_tmp1
+  store i8 %shl_tmp, ptr %shift, align 1
+  ret void
+}
+
+---
+
 [`mut a = 72041; mut b = 3; let shift = a >> b` - 1]
 ; ModuleID = 'main'
 source_filename = "main"
@@ -399,6 +479,26 @@ block0:
 
 ---
 
+[`mut a: i64 = 476354293423; mut b: i64 = 40; let shift = a >> b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i64, align 8
+  store i64 476354293423, ptr %a, align 4
+  %b = alloca i64, align 8
+  store i64 40, ptr %b, align 4
+  %shift = alloca i64, align 8
+  %load_tmp = load i64, ptr %a, align 4
+  %load_tmp1 = load i64, ptr %b, align 4
+  %arsh_tmp = ashr i64 %load_tmp, %load_tmp1
+  store i64 %arsh_tmp, ptr %shift, align 4
+  ret void
+}
+
+---
+
 [`mut a = 72041; mut b = 3; let shift = a >>> b` - 1]
 ; ModuleID = 'main'
 source_filename = "main"
@@ -414,6 +514,26 @@ block0:
   %load_tmp1 = load i32, ptr %b, align 4
   %lrsh_tmp = lshr i32 %load_tmp, %load_tmp1
   store i32 %lrsh_tmp, ptr %shift, align 4
+  ret void
+}
+
+---
+
+[`mut a: u16 = 60203; mut b: u16 = 5; let shift = a >>> b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i16, align 2
+  store i16 -5333, ptr %a, align 2
+  %b = alloca i16, align 2
+  store i16 5, ptr %b, align 2
+  %shift = alloca i16, align 2
+  %load_tmp = load i16, ptr %a, align 2
+  %load_tmp1 = load i16, ptr %b, align 2
+  %lrsh_tmp = lshr i16 %load_tmp, %load_tmp1
+  store i16 %lrsh_tmp, ptr %shift, align 2
   ret void
 }
 

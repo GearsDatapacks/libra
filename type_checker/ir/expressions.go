@@ -17,7 +17,7 @@ func (expression) irExpr() {}
 
 type IntegerLiteral struct {
 	expression
-	Value int64
+	Value    int64
 	DataType types.Type
 }
 
@@ -31,15 +31,6 @@ func (i *IntegerLiteral) Print(node *printer.Node) {
 }
 
 func (i IntegerLiteral) Type() types.Type {
-	// ui := types.Numeric{
-	// 	Kind:         types.NumInt,
-	// 	BitWidth:     maxInt(minIntWidth(i.Value), 32),
-	// 	Downcastable: &types.Downcastable{},
-	// }
-	// ui.Downcastable.MinFloatWidth = minFloatWidth(float64(i.Value))
-	// ui.Downcastable.MinIntWidth = minIntWidth(i.Value)
-	// ui.Downcastable.MinUintWidth = minUintWidth(uint64(i.Value))
-
 	return i.DataType
 }
 
@@ -55,7 +46,7 @@ func (i *IntegerLiteral) ConstValue() values.ConstValue {
 
 type UintLiteral struct {
 	expression
-	Value uint64
+	Value    uint64
 	DataType types.Type
 }
 
@@ -84,7 +75,7 @@ func (i UintLiteral) ConstValue() values.ConstValue {
 
 type FloatLiteral struct {
 	expression
-	Value float64
+	Value    float64
 	DataType types.Type
 }
 
@@ -321,25 +312,25 @@ func (b BinaryOperator) Type() types.Type {
 		ty = types.Bool
 
 	case LeftShift:
-		ty = types.I32
+		ty = b.DataType
 
 	case ArithmeticRightShift:
-		ty = types.I32
+		ty = b.DataType
 
 	case LogicalRightShift:
-		ty = types.I32
+		ty = b.DataType
 
 	case BitwiseOr:
-		ty = types.I32
+		ty = b.DataType
 
 	case Union:
 		ty = types.RuntimeType
 
 	case BitwiseAnd:
-		ty = types.I32
+		ty = b.DataType
 
 	case BitwiseXor:
-		ty = types.I32
+		ty = b.DataType
 
 	case AddInt:
 		ty = b.DataType
@@ -667,23 +658,23 @@ func (u UnaryOperator) Type() types.Type {
 
 	switch id {
 	case NegateInt:
-		ty = types.I32
+		ty = u.DataType
 	case NegateFloat:
-		ty = types.F32
+		ty = u.DataType
 	case Identity:
-		ty = types.I32
+		ty = u.DataType
 	case LogicalNot:
 		ty = types.Bool
 	case BitwiseNot:
-		ty = types.I32
+		ty = u.DataType
 	case IncrecementInt:
-		ty = types.I32
+		ty = u.DataType
 	case IncrementFloat:
-		ty = types.F32
+		ty = u.DataType
 	case DecrecementInt:
-		ty = types.I32
+		ty = u.DataType
 	case DecrementFloat:
-		ty = types.F32
+		ty = u.DataType
 	case PropagateError:
 		return u.DataType
 	case CrashError:

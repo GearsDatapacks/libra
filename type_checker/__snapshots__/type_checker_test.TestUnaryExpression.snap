@@ -58,7 +58,7 @@ MODULE test
 └─UNARY_EXPR IncrementFloat
   ├─VAR_SYMBOL f mut
   │ └─VARIABLE_TYPE f64
-  └─VARIABLE_TYPE f32
+  └─VARIABLE_TYPE f64
 ---
 
 [`mut value = 24; value--` - 1]
@@ -88,7 +88,7 @@ MODULE test
 └─UNARY_EXPR DecrementFloat
   ├─VAR_SYMBOL countdown mut
   │ └─VARIABLE_TYPE f64
-  └─VARIABLE_TYPE f32
+  └─VARIABLE_TYPE f64
 ---
 
 [`let option: ?i32 = 10; option!` - 1]
