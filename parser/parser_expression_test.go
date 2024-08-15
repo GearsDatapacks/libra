@@ -113,6 +113,7 @@ func TestBinaryExpressions(t *testing.T) {
 		"15.04* 1_2_3",
 		"true||false",
 		"[1,2,3]<< 4",
+		"21 ^ 35",
 	)
 }
 
@@ -256,6 +257,7 @@ func TestOperatorPrecedence(t *testing.T) {
 		"fns[1]() * 3",
 		"a = 1 + 2",
 		"foo = bar = baz",
+		"a ^ b + 1",
 	)
 }
 

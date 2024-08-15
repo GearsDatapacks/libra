@@ -172,3 +172,11 @@ ASSIGNMENT_EXPR = (0:15)
   ├─IDENT bar (6:9)
   └─IDENT baz (12:15)
 ---
+
+[`a ^ b + 1` - 1]
+BIN_EXPR ^ (0:9)
+├─IDENT a (0:1)
+└─BIN_EXPR + (4:9)
+  ├─IDENT b (4:5)
+  └─INT_LIT 1 (8:9)
+---

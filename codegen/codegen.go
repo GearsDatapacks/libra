@@ -247,6 +247,8 @@ func (c *compiler) compileBinaryExpression(binExpr *ir.BinaryExpression) value {
 		v = c.builder.CreateAdd(left, right, "add_tmp")
 	case ir.BitwiseAnd:
 		v = c.builder.CreateAnd(left, right, "bit_and_tmp")
+	case ir.BitwiseXor:
+		v = c.builder.CreateXor(left, right, "xor_tmp")
 	case ir.BitwiseOr:
 		v = c.builder.CreateOr(left, right, "bit_or_tmp")
 	case ir.Concat:

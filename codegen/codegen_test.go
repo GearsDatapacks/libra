@@ -26,6 +26,7 @@ func TestBinaryExpressions(t *testing.T) {
 		"mut a: u64 = 10283; mut b: u64 = 732; let res = a * b",
 		"mut a = 3.2; mut b = 2.1; let res = a * b",
 		"mut a = 203; mut b = 41; let res = a & b",
+		"mut a = 49; mut b = 4163; let res = a ^ b",
 		"mut a = 924; mut b = 91; let res = a | b",
 		"mut a = true; mut b = false; let or = a || b",
 		"mut a = false; mut b = true; let and = a && b",

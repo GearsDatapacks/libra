@@ -339,6 +339,7 @@ func (p *parser) register() {
 	p.registerLedOp(token.TRIPLE_RIGHT_ANGLE, Bitwise, p.parseBinaryExpression)
 	p.registerLedOp(token.PIPE, Bitwise, p.parseBinaryExpression, false, true)
 	p.registerLedOp(token.AMPERSAND, Bitwise, p.parseBinaryExpression)
+	p.registerLedOp(token.CARET, Bitwise, p.parseBinaryExpression)
 
 	p.registerLedOp(token.PLUS, Additive, p.parseBinaryExpression)
 	p.registerLedOp(token.MINUS, Additive, p.parseBinaryExpression)

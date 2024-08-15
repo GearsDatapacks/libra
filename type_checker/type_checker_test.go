@@ -98,6 +98,7 @@ func TestBinaryExpression(t *testing.T) {
 		"8362 >> 3",
 		"10101 | 1010",
 		"73 & 52",
+		"14 ^ 38",
 		"1 + 6",
 		"2.3 + 4",
 		`"Hello " + "world"`,

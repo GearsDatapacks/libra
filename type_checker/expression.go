@@ -37,12 +37,12 @@ func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expres
 	switch expr := expression.(type) {
 	case *ast.IntegerLiteral:
 		return &ir.IntegerLiteral{
-			Value: expr.Value,
+			Value:    expr.Value,
 			DataType: types.IntType(expr.Value),
 		}
 	case *ast.FloatLiteral:
 		return &ir.FloatLiteral{
-			Value: expr.Value,
+			Value:    expr.Value,
 			DataType: types.FloatType(expr.Value),
 		}
 	case *ast.BooleanLiteral:
@@ -259,7 +259,7 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 			if resultType == nil {
 				return
 			}
-			
+
 			binOp.DataType = resultType
 			lhs = convert(lhs, resultType, types.OperatorCast)
 			rhs = convert(rhs, resultType, types.OperatorCast)
@@ -355,6 +355,8 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 				binOp.Id = ir.PowerInt
 			}
 		}
+
+	// TODO: Allow more than just i32
 	case token.PIPE:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
 			binOp.Id = ir.BitwiseOr
@@ -365,6 +367,10 @@ func getBinaryOperator(op token.Kind, left, right ir.Expression) (lhs, rhs ir.Ex
 	case token.AMPERSAND:
 		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
 			binOp.Id = ir.BitwiseAnd
+		}
+	case token.CARET:
+		if types.Assignable(types.I32, lType) && types.Assignable(types.I32, rType) {
+			binOp.Id = ir.BitwiseXor
 		}
 	}
 

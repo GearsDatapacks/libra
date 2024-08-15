@@ -68,6 +68,7 @@ const (
 
 	PIPE
 	AMPERSAND
+	CARET
 	ARROW
 	TILDE
 	SEMICOLON
@@ -174,6 +175,8 @@ func (kind Kind) String() string {
 		return "`->`"
 	case AMPERSAND:
 		return "`&`"
+	case CARET:
+		return "`^`"
 	case TILDE:
 		return "`~`"
 	case SEMICOLON:

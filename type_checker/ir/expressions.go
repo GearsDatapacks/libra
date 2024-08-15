@@ -206,6 +206,7 @@ const (
 	BitwiseOr
 	Union
 	BitwiseAnd
+	BitwiseXor
 	AddInt
 	AddFloat
 	Concat
@@ -258,6 +259,8 @@ func (bo BinaryOperator) String() string {
 		return "BitwiseOr"
 	case BitwiseAnd:
 		return "BitwiseAnd"
+	case BitwiseXor:
+		return "BitwiseXor"
 	case AddInt:
 		return "AddInt"
 	case AddFloat:
@@ -333,6 +336,9 @@ func (b BinaryOperator) Type() types.Type {
 		ty = types.RuntimeType
 
 	case BitwiseAnd:
+		ty = types.I32
+
+	case BitwiseXor:
 		ty = types.I32
 
 	case AddInt:
@@ -503,6 +509,13 @@ func (b *BinaryExpression) ConstValue() values.ConstValue {
 		right := b.Right.ConstValue().(values.IntValue)
 		return values.IntValue{
 			Value: left.Value & right.Value,
+		}
+
+	case BitwiseXor:
+		left := b.Left.ConstValue().(values.IntValue)
+		right := b.Right.ConstValue().(values.IntValue)
+		return values.IntValue{
+			Value: left.Value ^ right.Value,
 		}
 
 	case AddInt:

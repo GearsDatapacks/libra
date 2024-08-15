@@ -159,6 +159,26 @@ block0:
 
 ---
 
+[`mut a = 49; mut b = 4163; let res = a ^ b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 49, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 4163, ptr %b, align 4
+  %res = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %xor_tmp = xor i32 %load_tmp, %load_tmp1
+  store i32 %xor_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
 [`mut a = 924; mut b = 91; let res = a | b` - 1]
 ; ModuleID = 'main'
 source_filename = "main"
