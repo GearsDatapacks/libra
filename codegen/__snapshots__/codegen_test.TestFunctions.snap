@@ -1,0 +1,37 @@
+
+[`fn add(a, b: i32): i32 {;	return a + b;};;let added = add(1, 4);let added2 = add(added, 1)` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %added = alloca i32, align 4
+  %call_tmp = call i32 @add(i32 1, i32 4)
+  store i32 %call_tmp, ptr %added, align 4
+  %added2 = alloca i32, align 4
+  %call_tmp1 = call i32 @add(i32 1)
+  store i32 %call_tmp1, ptr %added2, align 4
+  ret void
+}
+
+define i32 @add(i32 %a, i32 %b) {
+block0:
+  %add_tmp = add i32 %a, %b
+  ret i32 %add_tmp
+}
+
+---
+
+[`@extern;fn exit(code: i32);;exit(31)` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  call void @exit(i32 31)
+  ret void
+}
+
+declare void @exit(i32)
+
+---

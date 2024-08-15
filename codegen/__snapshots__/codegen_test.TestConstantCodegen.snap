@@ -1,0 +1,65 @@
+
+[`let value = 10` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %value = alloca i32, align 4
+  store i32 10, ptr %value, align 4
+  ret void
+}
+
+---
+
+[`let value: u16 = 301` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %value = alloca i16, align 2
+  store i16 301, ptr %value, align 2
+  ret void
+}
+
+---
+
+[`let weight = 61.2` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %weight = alloca double, align 8
+  store double 6.120000e+01, ptr %weight, align 8
+  ret void
+}
+
+---
+
+[`let half_precision: f32 = 1.3` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %half_precision = alloca float, align 4
+  store float 0x3FF4CCCCC0000000, ptr %half_precision, align 4
+  ret void
+}
+
+---
+
+[`let b = true` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %b = alloca i1, align 1
+  store i1 true, ptr %b, align 1
+  ret void
+}
+
+---

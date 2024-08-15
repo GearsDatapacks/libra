@@ -1,0 +1,63 @@
+
+[`let value = 1; let ptr = &value; let value2 = ptr.*` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %value = alloca i32, align 4
+  store i32 1, ptr %value, align 4
+  %ptr = alloca ptr, align 8
+  %alloca_tmp = alloca i32, align 4
+  store i32 1, ptr %alloca_tmp, align 4
+  store ptr %alloca_tmp, ptr %ptr, align 8
+  %value2 = alloca i32, align 4
+  %load_tmp = load ptr, ptr %ptr, align 8
+  %deref_tmp = load i32, ptr %load_tmp, align 4
+  store i32 %deref_tmp, ptr %value2, align 4
+  ret void
+}
+
+---
+
+[`let ptr = &12; let value = ptr.*` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %ptr = alloca ptr, align 8
+  %alloca_tmp = alloca i32, align 4
+  store i32 12, ptr %alloca_tmp, align 4
+  store ptr %alloca_tmp, ptr %ptr, align 8
+  %value = alloca i32, align 4
+  %load_tmp = load ptr, ptr %ptr, align 8
+  %deref_tmp = load i32, ptr %load_tmp, align 4
+  store i32 %deref_tmp, ptr %value, align 4
+  ret void
+}
+
+---
+
+[`mut value = 1;let ptr = &mut value;ptr.* = value + 1;value = ptr.* + 1` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %value = alloca i32, align 4
+  store i32 1, ptr %value, align 4
+  %ptr = alloca ptr, align 8
+  store ptr %value, ptr %ptr, align 8
+  %load_tmp = load ptr, ptr %ptr, align 8
+  %load_tmp1 = load i32, ptr %value, align 4
+  %add_tmp = add i32 %load_tmp1, 1
+  store i32 %add_tmp, ptr %load_tmp, align 4
+  %load_tmp2 = load ptr, ptr %ptr, align 8
+  %deref_tmp = load i32, ptr %load_tmp2, align 4
+  %add_tmp3 = add i32 %deref_tmp, 1
+  store i32 %add_tmp3, ptr %value, align 4
+  ret void
+}
+
+---

@@ -1,0 +1,55 @@
+
+[`mut age = 1; age += 1` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %age = alloca i32, align 4
+  store i32 1, ptr %age, align 4
+  %load_tmp = load i32, ptr %age, align 4
+  %add_tmp = add i32 %load_tmp, 1
+  store i32 %add_tmp, ptr %age, align 4
+  ret void
+}
+
+---
+
+[`mut value = 100; value = 200` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %value = alloca i32, align 4
+  store i32 100, ptr %value, align 4
+  ret void
+}
+
+---
+
+[`mut x: f32 = 1; x = 3.1` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %x = alloca float, align 4
+  store float 1.000000e+00, ptr %x, align 4
+  ret void
+}
+
+---
+
+[`mut cond = true; cond = false` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %cond = alloca i1, align 1
+  store i1 true, ptr %cond, align 1
+  ret void
+}
+
+---

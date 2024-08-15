@@ -1,0 +1,68 @@
+
+[`mut a = 31; let neg = -a` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 31, ptr %a, align 4
+  %neg = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %neg_tmp = sub i32 0, %load_tmp
+  store i32 %neg_tmp, ptr %neg, align 4
+  ret void
+}
+
+---
+
+[`mut f = 4.2; let neg = -f` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %f = alloca double, align 8
+  store double 4.200000e+00, ptr %f, align 8
+  %neg = alloca float, align 4
+  %load_tmp = load double, ptr %f, align 8
+  %fneg_tmp = fneg double %load_tmp
+  store double %fneg_tmp, ptr %neg, align 8
+  ret void
+}
+
+---
+
+[`mut b = true; let not = !b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %b = alloca i1, align 1
+  store i1 true, ptr %b, align 1
+  %not = alloca i1, align 1
+  %load_tmp = load i1, ptr %b, align 1
+  %not_tmp = xor i1 %load_tmp, true
+  store i1 %not_tmp, ptr %not, align 1
+  ret void
+}
+
+---
+
+[`mut bits = 478134; let not = ~bits` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %bits = alloca i32, align 4
+  store i32 478134, ptr %bits, align 4
+  %not = alloca i32, align 4
+  %load_tmp = load i32, ptr %bits, align 4
+  %bit_not_tmp = xor i32 %load_tmp, -1
+  store i32 %bit_not_tmp, ptr %not, align 4
+  ret void
+}
+
+---

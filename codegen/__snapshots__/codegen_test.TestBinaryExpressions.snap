@@ -1,0 +1,400 @@
+
+[`mut a = 1; mut b = 2; let res = a + b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 1, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 2, ptr %b, align 4
+  %res = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %add_tmp = add i32 %load_tmp, %load_tmp1
+  store i32 %add_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a: f32 = 4; mut b: f32 = 9.2; let res = a + b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca float, align 4
+  store float 4.000000e+00, ptr %a, align 4
+  %b = alloca float, align 4
+  store float 0x4022666660000000, ptr %b, align 4
+  %res = alloca float, align 4
+  %load_tmp = load float, ptr %a, align 4
+  %load_tmp1 = load float, ptr %b, align 4
+  %fadd_tmp = fadd float %load_tmp, %load_tmp1
+  store float %fadd_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a: u8 = 4; mut b: u8 = 23; let res = a + b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i8, align 1
+  store i8 4, ptr %a, align 1
+  %b = alloca i8, align 1
+  store i8 23, ptr %b, align 1
+  %res = alloca i8, align 1
+  %load_tmp = load i8, ptr %a, align 1
+  %load_tmp1 = load i8, ptr %b, align 1
+  %add_tmp = add i8 %load_tmp, %load_tmp1
+  store i8 %add_tmp, ptr %res, align 1
+  ret void
+}
+
+---
+
+[`mut a: i16 = 31; mut b: i16 = 4; let res = a - b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i16, align 2
+  store i16 31, ptr %a, align 2
+  %b = alloca i16, align 2
+  store i16 4, ptr %b, align 2
+  %res = alloca i16, align 2
+  %load_tmp = load i16, ptr %a, align 2
+  %load_tmp1 = load i16, ptr %b, align 2
+  %sub_tmp = sub i16 %load_tmp, %load_tmp1
+  store i16 %sub_tmp, ptr %res, align 2
+  ret void
+}
+
+---
+
+[`mut a: f32 = 1.9; mut b: f32 = 4.8; let res = a - b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca float, align 4
+  store float 0x3FFE666660000000, ptr %a, align 4
+  %b = alloca float, align 4
+  store float 0x4013333340000000, ptr %b, align 4
+  %res = alloca float, align 4
+  %load_tmp = load float, ptr %a, align 4
+  %load_tmp1 = load float, ptr %b, align 4
+  %fsub_tmp = fsub float %load_tmp, %load_tmp1
+  store float %fsub_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a: u64 = 10283; mut b: u64 = 732; let res = a * b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i64, align 8
+  store i64 10283, ptr %a, align 4
+  %b = alloca i64, align 8
+  store i64 732, ptr %b, align 4
+  %res = alloca i64, align 8
+  %load_tmp = load i64, ptr %a, align 4
+  %load_tmp1 = load i64, ptr %b, align 4
+  %mul_tmp = mul i64 %load_tmp, %load_tmp1
+  store i64 %mul_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a = 3.2; mut b = 2.1; let res = a * b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca double, align 8
+  store double 3.200000e+00, ptr %a, align 8
+  %b = alloca double, align 8
+  store double 2.100000e+00, ptr %b, align 8
+  %res = alloca double, align 8
+  %load_tmp = load double, ptr %a, align 8
+  %load_tmp1 = load double, ptr %b, align 8
+  %fmul_tmp = fmul double %load_tmp, %load_tmp1
+  store double %fmul_tmp, ptr %res, align 8
+  ret void
+}
+
+---
+
+[`mut a = 203; mut b = 41; let res = a & b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 203, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 41, ptr %b, align 4
+  %res = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %bit_and_tmp = and i32 %load_tmp, %load_tmp1
+  store i32 %bit_and_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a = 924; mut b = 91; let res = a | b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 924, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 91, ptr %b, align 4
+  %res = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %bit_or_tmp = or i32 %load_tmp, %load_tmp1
+  store i32 %bit_or_tmp, ptr %res, align 4
+  ret void
+}
+
+---
+
+[`mut a = true; mut b = false; let or = a || b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i1, align 1
+  store i1 true, ptr %a, align 1
+  %b = alloca i1, align 1
+  store i1 false, ptr %b, align 1
+  %or = alloca i1, align 1
+  %load_tmp = load i1, ptr %a, align 1
+  %load_tmp1 = load i1, ptr %b, align 1
+  %or_tmp = or i1 %load_tmp, %load_tmp1
+  store i1 %or_tmp, ptr %or, align 1
+  ret void
+}
+
+---
+
+[`mut a = false; mut b = true; let and = a && b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i1, align 1
+  store i1 false, ptr %a, align 1
+  %b = alloca i1, align 1
+  store i1 true, ptr %b, align 1
+  %and = alloca i1, align 1
+  %load_tmp = load i1, ptr %a, align 1
+  %load_tmp1 = load i1, ptr %b, align 1
+  %and_tmp = and i1 %load_tmp, %load_tmp1
+  store i1 %and_tmp, ptr %and, align 1
+  ret void
+}
+
+---
+
+[`mut a = 20; mut b = 30; let eq = a == b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 20, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 30, ptr %b, align 4
+  %eq = alloca i1, align 1
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %eq_tmp = icmp eq i32 %load_tmp, %load_tmp1
+  store i1 %eq_tmp, ptr %eq, align 1
+  ret void
+}
+
+---
+
+[`mut a: i8 = 12; mut b: i8 = 31; let neq = a != b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i8, align 1
+  store i8 12, ptr %a, align 1
+  %b = alloca i8, align 1
+  store i8 31, ptr %b, align 1
+  %neq = alloca i1, align 1
+  %load_tmp = load i8, ptr %a, align 1
+  %load_tmp1 = load i8, ptr %b, align 1
+  %ne_tmp = icmp ne i8 %load_tmp, %load_tmp1
+  store i1 %ne_tmp, ptr %neq, align 1
+  ret void
+}
+
+---
+
+[`mut a = 82; mut b = 103; let gt = a > b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 82, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 103, ptr %b, align 4
+  %gt = alloca i1, align 1
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %gt_tmp = icmp sgt i32 %load_tmp, %load_tmp1
+  store i1 %gt_tmp, ptr %gt, align 1
+  ret void
+}
+
+---
+
+[`mut a = 91; mut b = 91; let ge = a >= b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 91, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 91, ptr %b, align 4
+  %ge = alloca i1, align 1
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %ge_tmp = icmp sge i32 %load_tmp, %load_tmp1
+  store i1 %ge_tmp, ptr %ge, align 1
+  ret void
+}
+
+---
+
+[`mut a = 12; mut b = 47; let lt = a < b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 12, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 47, ptr %b, align 4
+  %lt = alloca i1, align 1
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %lt_tmp = icmp slt i32 %load_tmp, %load_tmp1
+  store i1 %lt_tmp, ptr %lt, align 1
+  ret void
+}
+
+---
+
+[`mut a = 12; mut b = 47; let le = a <= b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 12, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 47, ptr %b, align 4
+  %le = alloca i1, align 1
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %le_tmp = icmp sle i32 %load_tmp, %load_tmp1
+  store i1 %le_tmp, ptr %le, align 1
+  ret void
+}
+
+---
+
+[`mut a = 1; mut b = 30; let shift = a << b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 1, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 30, ptr %b, align 4
+  %shift = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %shl_tmp = shl i32 %load_tmp, %load_tmp1
+  store i32 %shl_tmp, ptr %shift, align 4
+  ret void
+}
+
+---
+
+[`mut a = 72041; mut b = 3; let shift = a >> b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 72041, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 3, ptr %b, align 4
+  %shift = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %arsh_tmp = ashr i32 %load_tmp, %load_tmp1
+  store i32 %arsh_tmp, ptr %shift, align 4
+  ret void
+}
+
+---
+
+[`mut a = 72041; mut b = 3; let shift = a >>> b` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %a = alloca i32, align 4
+  store i32 72041, ptr %a, align 4
+  %b = alloca i32, align 4
+  store i32 3, ptr %b, align 4
+  %shift = alloca i32, align 4
+  %load_tmp = load i32, ptr %a, align 4
+  %load_tmp1 = load i32, ptr %b, align 4
+  %lrsh_tmp = lshr i32 %load_tmp, %load_tmp1
+  store i32 %lrsh_tmp, ptr %shift, align 4
+  ret void
+}
+
+---

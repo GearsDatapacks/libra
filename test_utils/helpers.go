@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gearsdatapacks/libra/codegen"
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/lexer"
 	"github.com/gearsdatapacks/libra/lowerer"
@@ -16,6 +17,7 @@ import (
 	typechecker "github.com/gearsdatapacks/libra/type_checker"
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gkampitakis/go-snaps/snaps"
+	"tinygo.org/x/go-llvm"
 )
 
 func getAst(t *testing.T, input string) (*ast.Program, []diagnostics.Diagnostic) {
@@ -51,6 +53,28 @@ func getLowered(t *testing.T, input string) (*ir.LoweredPackage, []diagnostics.D
 	program := p.Parse()
 	pkg, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
 	return lowerer.Lower(pkg, diags)
+}
+
+func getCode(t *testing.T, input string) llvm.Module {
+	t.Helper()
+
+	l := lexer.New(text.NewFile("test.lb", input))
+	tokens := l.Tokenise()
+
+	p := parser.New(tokens, l.Diagnostics)
+	program := p.Parse()
+	pkg, diags := typechecker.TypeCheck(fakeModule(program), p.Diagnostics)
+	lowered, diags := lowerer.Lower(pkg, diags)
+
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			diag.Print()
+		}
+	}
+	AssertEq(t, len(diags), 0,
+		fmt.Sprintf("Expected no diagnostics (got %d)", len(diags)))
+
+	return codegen.Compile(lowered)
 }
 
 func fakeModule(program *ast.Program) *module.Module {

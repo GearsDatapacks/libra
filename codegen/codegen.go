@@ -222,11 +222,6 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		panic("TODO")
 	case *ir.TypeExpression:
 		panic("TODO")
-	case ir.UintLiteral:
-		if !used {
-			return llvmValue{}
-		}
-		return llvmValue(llvm.ConstInt(c.context.Int32Type(), uint64(expr.Value), true))
 	case *ir.UnaryExpression:
 		return c.compileUnaryExpression(expr)
 	case *ir.VariableExpression:

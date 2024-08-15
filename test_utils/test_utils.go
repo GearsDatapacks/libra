@@ -117,3 +117,12 @@ func MatchLowerErrors(t *testing.T, tests ...string) {
 		matchSnap(t, src, diags.String())
 	}
 }
+
+func MatchCodegenSnaps(t *testing.T, tests ...string) {
+	t.Helper()
+
+	for _, src := range tests {
+		module := getCode(t, src)
+		matchSnap(t, src, module.String())
+	}
+}
