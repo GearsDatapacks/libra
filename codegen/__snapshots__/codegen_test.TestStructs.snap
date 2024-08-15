@@ -1,0 +1,39 @@
+
+[`struct Vector2 { x, y: f32 }; let my_vec = Vector2 { x: 10, y: 3.1 }` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %my_vec = alloca { float, float }, align 8
+  store { float, float } { float 1.000000e+01, float 0x4008CCCCC0000000 }, ptr %my_vec, align 4
+  ret void
+}
+
+---
+
+[`struct Colour { r, g, b, a: u8 }; let red = Colour { r: 0xFF, g: 0, b: 0, a: 0xFF }` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %red = alloca { i8, i8, i8, i8 }, align 8
+  store { i8, i8, i8, i8 } { i8 -1, i8 0, i8 0, i8 -1 }, ptr %red, align 1
+  ret void
+}
+
+---
+
+[`struct Vector2 { x, y: f64 };;struct Transform {;	translate: Vector2, rotate: f64,;};	;let transform = Transform {;	translate: Vector2 { x: 72.3, y: 9.5 },;	rotate: 83.4;}` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %transform = alloca { { double, double }, double }, align 8
+  store { { double, double }, double } { { double, double } { double 7.230000e+01, double 9.500000e+00 }, double 8.340000e+01 }, ptr %transform, align 8
+  ret void
+}
+
+---

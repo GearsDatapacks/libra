@@ -92,3 +92,20 @@ ptr.* = value + 1
 value = ptr.* + 1`,
 	)
 }
+
+func TestStructs(t *testing.T) {
+	utils.MatchCodegenSnaps(t,
+		"struct Vector2 { x, y: f32 }; let my_vec = Vector2 { x: 10, y: 3.1 }",
+		"struct Colour { r, g, b, a: u8 }; let red = Colour { r: 0xFF, g: 0, b: 0, a: 0xFF }",
+`struct Vector2 { x, y: f64 }
+
+struct Transform {
+	translate: Vector2, rotate: f64,
+}
+	
+let transform = Transform {
+	translate: Vector2 { x: 72.3, y: 9.5 },
+	rotate: 83.4
+}`,
+	)
+}
