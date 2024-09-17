@@ -17,6 +17,7 @@ type Type interface {
 	String() string
 	ToLlvm(llvm.Context) llvm.Type
 	valid(Type) bool
+	byteSize() int
 }
 
 var Context interface {
@@ -113,6 +114,19 @@ func Unwrap(ty Type) Type {
 		return container.unwrap()
 	}
 	return ty
+}
+
+func ByteSize(ty Type) int {
+	return ty.byteSize()
+}
+
+func BitSize(ty Type) int {
+	return ty.byteSize() * 8
+}
+
+func bitsToBytes(bits int) int {
+	// This makes sure we don't discard any bits, e.g. 9 bits goes to 2 bytes
+	return (bits + 7) / 8
 }
 
 type CastKind int
@@ -226,6 +240,24 @@ func (pt PrimaryType) ToLlvm(context llvm.Context) llvm.Type {
 		panic("TODO: Runtime types")
 	case Never:
 		panic("TODO: Never types")
+	default:
+		panic("Unreachable")
+	}
+}
+
+func (pt PrimaryType) byteSize() int {
+	switch pt {
+	case Bool:
+		return 1
+	case Invalid:
+		return 0
+	case Never:
+		return 0
+	case RuntimeType:
+		panic("TODO: Size of RuntimeType")
+	case String:
+		// TODO: Make this not a cstring
+		return 8
 	default:
 		panic("Unreachable")
 	}
@@ -557,6 +589,10 @@ func (n Numeric) ToLlvm(context llvm.Context) llvm.Type {
 	}
 }
 
+func (n Numeric) byteSize() int {
+	return bitsToBytes(n.BitWidth)
+}
+
 type ListType struct {
 	ElemType Type
 }
@@ -594,6 +630,11 @@ func (l *ListType) Item() Type {
 
 func (*ListType) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (l *ListType) byteSize() int {
+	// len + cap + ptr
+	return 24
 }
 
 type ArrayType struct {
@@ -662,6 +703,10 @@ func (*ArrayType) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (a *ArrayType) byteSize() int {
+	return a.Length * a.ElemType.byteSize()
+}
+
 type MapType struct {
 	KeyType   Type
 	ValueType Type
@@ -702,6 +747,11 @@ func (m *MapType) Item() Type {
 
 func (*MapType) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (m *MapType) byteSize() int {
+	// len + cap + ptr
+	return 24
 }
 
 type TupleType struct {
@@ -765,6 +815,14 @@ func (*TupleType) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (t *TupleType) byteSize() int {
+	size := 0
+	for _, ty := range t.Types {
+		size += ty.byteSize()
+	}
+	return size
+}
+
 type Function struct {
 	Parameters []Type
 	ReturnType Type
@@ -819,6 +877,11 @@ func (fn *Function) valid(other Type) bool {
 
 func (*Function) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (*Function) byteSize() int {
+	// Just a pointer
+	return 8
 }
 
 type Alias struct {
@@ -923,6 +986,14 @@ func (s *Struct) ToLlvm(context llvm.Context) llvm.Type {
 	return llvm.StructType(types, false)
 }
 
+func (s *Struct) byteSize() int {
+	size := 0
+	for _, field := range s.Fields {
+		size += field.Type.byteSize()
+	}
+	return size
+}
+
 type TupleStruct struct {
 	Name  string
 	Types []Type
@@ -983,6 +1054,14 @@ func (*TupleStruct) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (t *TupleStruct) byteSize() int {
+	size := 0
+	for _, ty := range t.Types {
+		size += ty.byteSize()
+	}
+	return size
+}
+
 type Interface struct {
 	Name    string
 	Methods map[string]*Function
@@ -1036,6 +1115,11 @@ func (*Interface) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (*Interface) byteSize() int {
+	panic("TODO")
+}
+
+// TODO: Untagged unions
 type Union struct {
 	Name    string
 	Id      int
@@ -1118,6 +1202,18 @@ func (to *Union) castFrom(from Type) CastKind {
 
 func (*Union) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (u *Union) byteSize() int {
+	if len(u.Members) > 255 {
+		panic("TODO: More than 1-bit tags")
+	}
+	size := 0
+	for _, member := range u.Members {
+		size = maxInt(size, member.byteSize())
+	}
+	// Add one for the tag size
+	return size + 1
 }
 
 type UnionVariant struct {
@@ -1246,6 +1342,18 @@ func (*InlineUnion) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (u *InlineUnion) byteSize() int {
+	if len(u.Types) > 255 {
+		panic("TODO: More than 1-bit tags")
+	}
+	size := 0
+	for _, member := range u.Types {
+		size = maxInt(size, member.byteSize())
+	}
+	// Add one for the tag size
+	return size + 1
+}
+
 type Module struct {
 	Name   string
 	Module interface {
@@ -1278,6 +1386,10 @@ func (m *Module) member(member string) (Type, *diagnostics.Partial) {
 }
 
 func (*Module) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
+func (m *Module) byteSize() int {
 	panic("TODO")
 }
 
@@ -1323,6 +1435,11 @@ func (p *Pointer) member(member string) (Type, *diagnostics.Partial) {
 
 func (p *Pointer) ToLlvm(context llvm.Context) llvm.Type {
 	return llvm.PointerType(p.Underlying.ToLlvm(context), 0)
+}
+
+func (p *Pointer) byteSize() int {
+	// TODO: target-specific pointer size
+	return 8
 }
 
 type Explicit struct {
@@ -1422,6 +1539,10 @@ func (*UnitStruct) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (*UnitStruct) byteSize() int {
+	return 0
+}
+
 type Tag struct {
 	Name  string
 	Id    int
@@ -1478,6 +1599,10 @@ func (to *Tag) castFrom(from Type) CastKind {
 	return NoCast
 }
 
+func (*Tag) byteSize() int {
+	panic("TODO")
+}
+
 var ErrorTag = Tag{
 	Name:  "Error",
 	Types: []Type{},
@@ -1514,6 +1639,10 @@ func (*Result) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
 }
 
+func (r *Result) byteSize() int {
+	return maxInt(ErrorTag.byteSize(), r.OkType.byteSize()) + 1
+}
+
 type Option struct {
 	SomeType Type
 }
@@ -1543,6 +1672,11 @@ func (r *Option) valid(other Type) bool {
 
 func (*Option) ToLlvm(llvm.Context) llvm.Type {
 	panic("TODO")
+}
+
+func (o *Option) byteSize() int {
+	// void is zero-size so it's always the size of the some type
+	return o.byteSize() + 1
 }
 
 type Enum struct {
@@ -1623,6 +1757,10 @@ func (to *Enum) castFrom(from Type) CastKind {
 }
 
 func (*Enum) ToLlvm(llvm.Context) llvm.Type {
+	panic("TODO")
+}
+
+func (*Enum) byteSize() int {
 	panic("TODO")
 }
 

@@ -6,6 +6,8 @@ import (
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/type_checker/types"
+	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type LoweredPackage struct {
@@ -39,6 +41,8 @@ type LoweredModule struct {
 	MainFunction *FunctionDeclaration
 	Functions    []*FunctionDeclaration
 	Globals      []*VariableDeclaration
+	// For ABI passes
+	FunctionCalls []*FunctionCall
 }
 
 func (m *LoweredModule) Print(node *printer.Node) {
@@ -131,4 +135,29 @@ func (b *Branch) Print(node *printer.Node) {
 			b.ElseLabel,
 		).
 		Node(b.Condition)
+}
+
+type BitCast struct {
+	expression
+	Value Expression
+	To    types.Type
+}
+
+func (b *BitCast) Print(node *printer.Node) {
+	node.
+		Text("%sBIT_CAST", node.Colour(colour.NodeName)).
+		Node(b.Value).
+		Node(b.To)
+}
+
+func (b *BitCast) Type() types.Type {
+	return b.To
+}
+
+func (b *BitCast) IsConst() bool {
+	return false
+}
+
+func (b *BitCast) ConstValue() values.ConstValue {
+	return nil
 }

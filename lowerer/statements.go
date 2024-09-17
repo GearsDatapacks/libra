@@ -27,7 +27,8 @@ func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir
 		statements = l.cfa(statements, &funcDecl.Location, funcDecl.Type.ReturnType != types.Void)
 		body = &ir.Block{Statements: statements, ResultType: funcDecl.Body.ResultType}
 	}
-	return &ir.FunctionDeclaration{
+
+	fn := &ir.FunctionDeclaration{
 		Name:       funcDecl.Name,
 		Parameters: funcDecl.Parameters,
 		Body:       body,
@@ -36,6 +37,7 @@ func (l *lowerer) lowerFunctionDeclaration(funcDecl *ir.FunctionDeclaration) *ir
 		Extern:     funcDecl.Extern,
 		Location:   funcDecl.Location,
 	}
+	return fn
 }
 
 func (l *lowerer) lowerReturnStatement(ret *ir.ReturnStatement, statements *[]ir.Statement) {

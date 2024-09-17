@@ -10,6 +10,7 @@ import (
 )
 
 type lowerer struct {
+	currentModule *ir.LoweredModule
 	diagnostics diagnostics.Manager
 	labelId     int
 	varId       int
@@ -67,6 +68,7 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 			Globals:      []*ir.VariableDeclaration{},
 		}
 		lowered.Modules[name] = mod
+		lowerer.currentModule = mod
 
 		for _, stmt := range module.Statements {
 			lowerer.lowerGlobal(stmt, mod)
@@ -78,6 +80,7 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 			mainFunction.Body.Statements = lowerer.cfa(mainFunction.Body.Statements, nil, false)
 		}
 	}
+	fixAbi(lowered)
 	return lowered, lowerer.diagnostics
 }
 

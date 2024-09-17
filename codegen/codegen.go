@@ -229,6 +229,16 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 			return llvmValue{}
 		}
 		return c.table.getValue(expr.Symbol.Name)
+	case *ir.BitCast:
+		if !used {
+			return llvmValue{}
+		}
+
+		toType := expr.To.ToLlvm(c.context)
+		left := c.compileExpression(expr.Value, true)
+		alloca := c.builder.CreateAlloca(toType, "bitcast")
+		c.builder.CreateStore(left.toRValue(c), alloca)
+		return stackVariable(alloca)
 	default:
 		panic("Unreachable")
 	}

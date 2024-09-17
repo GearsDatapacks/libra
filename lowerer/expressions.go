@@ -222,21 +222,26 @@ func (l *lowerer) lowerFunctionCall(call *ir.FunctionCall, statements *[]ir.Stat
 		}
 	}
 	function := l.lowerExpression(call.Function, statements, true)
+	var result *ir.FunctionCall
+
 	if !changed && function == call.Function {
-		return call
-	}
-	if !changed {
-		return &ir.FunctionCall{
+		result = call
+	} else if !changed {
+		result = &ir.FunctionCall{
 			Function:   function,
 			Arguments:  call.Arguments,
 			ReturnType: call.ReturnType,
 		}
+	} else {
+		result = &ir.FunctionCall{
+			Function:   function,
+			Arguments:  args,
+			ReturnType: call.ReturnType,
+		}
 	}
-	return &ir.FunctionCall{
-		Function:   function,
-		Arguments:  args,
-		ReturnType: call.ReturnType,
-	}
+
+	l.currentModule.FunctionCalls = append(l.currentModule.FunctionCalls, result)
+	return result
 }
 
 func (l *lowerer) lowerStructExpression(structExpr *ir.StructExpression, statements *[]ir.Statement) ir.Expression {
