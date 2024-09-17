@@ -1,0 +1,34 @@
+
+[`@extern;fn set_colour(c: Colour);;struct Colour {;  r, g, b, a: u8;};;set_colour(Colour { r: 0x15, g: 0xcc, b: 0xcc, a: 0xFF })` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %bitcast = alloca i32, align 4
+  store { i8, i8, i8, i8 } { i8 21, i8 -52, i8 -52, i8 -1 }, ptr %bitcast, align 1
+  %load_tmp = load i32, ptr %bitcast, align 4
+  call void @set_colour(i32 %load_tmp)
+  ret void
+}
+
+declare void @set_colour(i32)
+
+---
+
+[`@extern;fn move(v: Vector);;struct Vector {;  x, y: f32;};;move(Vector { x: 1.3, y: 5.2 })` - 1]
+; ModuleID = 'main'
+source_filename = "main"
+
+define void @main() {
+block0:
+  %bitcast = alloca double, align 8
+  store { float, float } { float 0x3FF4CCCCC0000000, float 0x4014CCCCC0000000 }, ptr %bitcast, align 4
+  %load_tmp = load double, ptr %bitcast, align 8
+  call void @move(double %load_tmp)
+  ret void
+}
+
+declare void @move(double)
+
+---

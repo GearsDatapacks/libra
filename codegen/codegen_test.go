@@ -97,7 +97,7 @@ func TestStructs(t *testing.T) {
 	utils.MatchCodegenSnaps(t,
 		"struct Vector2 { x, y: f32 }; let my_vec = Vector2 { x: 10, y: 3.1 }",
 		"struct Colour { r, g, b, a: u8 }; let red = Colour { r: 0xFF, g: 0, b: 0, a: 0xFF }",
-`struct Vector2 { x, y: f64 }
+		`struct Vector2 { x, y: f64 }
 
 struct Transform {
 	translate: Vector2, rotate: f64,
@@ -107,5 +107,27 @@ let transform = Transform {
 	translate: Vector2 { x: 72.3, y: 9.5 },
 	rotate: 83.4
 }`,
+	)
+}
+
+func TestABI(t *testing.T) {
+	utils.MatchCodegenSnaps(t,
+		`@extern
+fn set_colour(c: Colour)
+
+struct Colour {
+  r, g, b, a: u8
+}
+
+set_colour(Colour { r: 0x15, g: 0xcc, b: 0xcc, a: 0xFF })`,
+
+		`@extern
+fn move(v: Vector)
+
+struct Vector {
+  x, y: f32
+}
+
+move(Vector { x: 1.3, y: 5.2 })`,
 	)
 }
