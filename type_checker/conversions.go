@@ -16,6 +16,7 @@ func convert(from ir.Expression, to types.Type, maxKind types.CastKind) ir.Expre
 	}
 
 	return &ir.Conversion{
+		Location:   from.GetLocation(),
 		Expression: from,
 		To:         to,
 	}

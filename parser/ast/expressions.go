@@ -354,9 +354,9 @@ func (call *FunctionCall) Print(node *printer.Node) {
 
 type IndexExpression struct {
 	expression
-	Left  Expression
+	Left     Expression
 	Location text.Location
-	Index Expression
+	Index    Expression
 }
 
 func (index *IndexExpression) GetLocation() text.Location {
@@ -632,10 +632,10 @@ func (w *WhileLoop) GetLocation() text.Location {
 
 type ForLoop struct {
 	expression
-	LLocation text.Location
-	Variable  string
-	Iterator  Expression
-	Body      *Block
+	Location text.Location
+	Variable string
+	Iterator Expression
+	Body     *Block
 }
 
 func (fl *ForLoop) Print(node *printer.Node) {
@@ -652,5 +652,5 @@ func (fl *ForLoop) Print(node *printer.Node) {
 }
 
 func (f *ForLoop) GetLocation() text.Location {
-	return f.LLocation
+	return f.Location
 }

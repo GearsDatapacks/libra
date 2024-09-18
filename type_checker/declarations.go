@@ -181,6 +181,7 @@ func (t *typeChecker) typeCheckTypeDeclaration(typeDec *ast.TypeDeclaration) ir.
 		Name:     typeDec.Name,
 		Exported: typeDec.Exported,
 		Type:     symbol.Type,
+		Location: typeDec.Location,
 	}
 }
 
@@ -244,6 +245,7 @@ func (t *typeChecker) typeCheckStructDeclaration(decl *ast.StructDeclaration) ir
 		Name:     decl.Name,
 		Exported: decl.Exported,
 		Type:     ty,
+		Location: decl.Location,
 	}
 }
 
@@ -331,6 +333,7 @@ func (t *typeChecker) typeCheckInterfaceDeclaration(decl *ast.InterfaceDeclarati
 		Name:     decl.Name,
 		Exported: decl.Exported,
 		Type:     ty,
+		Location: decl.Location,
 	}
 }
 
@@ -372,6 +375,7 @@ func (t *typeChecker) typeCheckUnionDeclaration(decl *ast.UnionDeclaration) ir.S
 		Name:     decl.Name,
 		Exported: decl.Exported,
 		Type:     ty,
+		Location: decl.Location,
 	}
 }
 
@@ -427,6 +431,7 @@ func (t *typeChecker) typeCheckEnumDeclaration(decl *ast.EnumDeclaration) ir.Sta
 		Name:     decl.Name,
 		Exported: decl.Exported,
 		Type:     ty,
+		Location: decl.Location,
 	}
 }
 
@@ -443,6 +448,7 @@ func (t *typeChecker) typeCheckTagDeclaration(decl *ast.TagDeclaration) ir.State
 		Name:     decl.Name,
 		Exported: decl.Exported,
 		Type:     ty,
+		Location: decl.Location,
 	}
 }
 
@@ -514,5 +520,6 @@ func (t *typeChecker) typeCheckImport(importStmt *ast.ImportStatement) ir.Statem
 		Name:      name,
 		Symbols:   importedSymbols,
 		ImportAll: importStmt.All,
+		Location:  importStmt.Location,
 	}
 }

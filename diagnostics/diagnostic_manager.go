@@ -472,3 +472,8 @@ func NotAllPathsReturn(location text.Location) *Diagnostic {
 	const msg = "Not all code paths return a value"
 	return makeError(msg, location)
 }
+
+func NonDeclOutsideMain(location text.Location) *Diagnostic {
+	const msg = "Main is defined explicitly. Only declarations may be in module scope"
+	return makeError(msg, location)
+}

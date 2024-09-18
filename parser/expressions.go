@@ -609,9 +609,9 @@ func (p *parser) parseForLoop() (ast.Expression, *diagnostics.Diagnostic) {
 	}
 
 	return &ast.ForLoop{
-		LLocation: location,
-		Variable:  variable,
-		Iterator:  iterator,
-		Body:      body,
+		Location: location,
+		Variable: variable,
+		Iterator: iterator,
+		Body:     body,
 	}, nil
 }

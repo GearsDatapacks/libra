@@ -18,6 +18,7 @@ func (t *typeChecker) typeCheckExpression(expression ast.Expression) ir.Expressi
 	if varExpr, ok := expr.(*ir.VariableExpression); ok && varExpr.Symbol.Type == types.RuntimeType {
 		if unit, ok := varExpr.ConstValue().(values.TypeValue).Type.(*types.UnitStruct); ok {
 			expr = &ir.VariableExpression{
+				Location: expr.GetLocation(),
 				Symbol: symbols.Variable{
 					Name:  varExpr.Symbol.Name,
 					IsMut: false,
@@ -37,21 +38,25 @@ func (t *typeChecker) doTypeCheckExpression(expression ast.Expression) ir.Expres
 	switch expr := expression.(type) {
 	case *ast.IntegerLiteral:
 		return &ir.IntegerLiteral{
+			Location: expr.GetLocation(),
 			Value:    expr.Value,
 			DataType: types.IntType(expr.Value),
 		}
 	case *ast.FloatLiteral:
 		return &ir.FloatLiteral{
+			Location: expr.GetLocation(),
 			Value:    expr.Value,
 			DataType: types.FloatType(expr.Value),
 		}
 	case *ast.BooleanLiteral:
 		return &ir.BooleanLiteral{
-			Value: expr.Value,
+			Location: expr.GetLocation(),
+			Value:    expr.Value,
 		}
 	case *ast.StringLiteral:
 		return &ir.StringLiteral{
-			Value: expr.Value,
+			Location: expr.GetLocation(),
+			Value:    expr.Value,
 		}
 	case *ast.ListLiteral:
 		return t.typeCheckArray(expr)
@@ -120,6 +125,7 @@ func (t *typeChecker) lookupVariable(name string, location text.Location) ir.Exp
 		}
 	}
 	return &ir.VariableExpression{
+		Location: location,
 		Symbol: symbols.Variable{
 			Name:       symbol.GetName(),
 			IsMut:      symbol.Mutable(),
@@ -136,6 +142,7 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	// Don't even check for operators with invalid types, to prevent cascading errors
 	if left.Type() == types.Invalid || right.Type() == types.Invalid {
 		return &ir.BinaryExpression{
+			Location: binExpr.GetLocation(),
 			Left:     left,
 			Operator: ir.BinaryOperator{},
 			Right:    right,
@@ -149,6 +156,7 @@ func (t *typeChecker) typeCheckBinaryExpression(binExpr *ast.BinaryExpression) i
 	}
 
 	return &ir.BinaryExpression{
+		Location: binExpr.GetLocation(),
 		Left:     left,
 		Operator: operator,
 		Right:    right,
@@ -470,11 +478,13 @@ func (t *typeChecker) typeCheckPrefixExpression(unExpr *ast.PrefixExpression) ir
 		return &ir.UnaryExpression{
 			Operand:  operand,
 			Operator: ir.UnaryOperator{},
+			Location: unExpr.Location,
 		}
 	}
 
 	if unExpr.Operator == token.BANG && operand.Type() == types.RuntimeType {
 		return &ir.TypeExpression{
+			Location: unExpr.Location,
 			DataType: &types.Result{
 				OkType: t.typeFromExpr(operand, unExpr.Operand.GetLocation()),
 			},
@@ -493,6 +503,7 @@ func (t *typeChecker) typeCheckPrefixExpression(unExpr *ast.PrefixExpression) ir
 	}
 
 	return &ir.UnaryExpression{
+		Location: unExpr.Location,
 		Operator: operator,
 		Operand:  operand,
 	}
@@ -504,6 +515,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 	// Don't check for operators with invalid types, to prevent cascading errors
 	if operand.Type() == types.Invalid {
 		return &ir.UnaryExpression{
+			Location: unExpr.GetLocation(),
 			Operand:  operand,
 			Operator: ir.UnaryOperator{},
 		}
@@ -518,6 +530,7 @@ func (t *typeChecker) typeCheckPostfixExpression(unExpr *ast.PostfixExpression) 
 	}
 
 	return &ir.UnaryExpression{
+		Location: unExpr.GetLocation(),
 		Operator: operator,
 		Operand:  operand,
 	}
@@ -657,6 +670,7 @@ func (t *typeChecker) typeCheckCastExpression(expr *ast.CastExpression) ir.Expre
 	if conversion == nil {
 		t.diagnostics.Report(diagnostics.CannotCast(expr.Left.GetLocation(), value.Type(), ty))
 		return &ir.InvalidExpression{
+			Location:   expr.Location,
 			Expression: value,
 		}
 	}
@@ -681,6 +695,7 @@ func (t *typeChecker) typeCheckArray(arr *ast.ListLiteral) ir.Expression {
 	}
 
 	return &ir.ArrayExpression{
+		Location: arr.Location,
 		DataType: &types.ArrayType{
 			ElemType: elemType,
 			Length:   len(values),
@@ -697,7 +712,10 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 		elemType := t.typeFromExpr(left, indexExpr.Left.GetLocation())
 
 		if indexExpr.Index == nil {
-			return &ir.TypeExpression{DataType: &types.ListType{ElemType: elemType}}
+			return &ir.TypeExpression{
+				Location: indexExpr.Location,
+				DataType: &types.ListType{ElemType: elemType},
+			}
 		}
 
 		length := -1
@@ -714,11 +732,14 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 			}
 		}
 
-		return &ir.TypeExpression{DataType: &types.ArrayType{
-			ElemType: elemType,
-			Length:   length,
-			CanInfer: false,
-		}}
+		return &ir.TypeExpression{
+			Location: indexExpr.Location,
+			DataType: &types.ArrayType{
+				ElemType: elemType,
+				Length:   length,
+				CanInfer: false,
+			},
+		}
 	}
 
 	if indexExpr.Index == nil {
@@ -730,6 +751,7 @@ func (t *typeChecker) typeCheckIndexExpression(indexExpr *ast.IndexExpression) i
 	ty, diag := ir.Index(left, index)
 
 	expr := &ir.IndexExpression{
+		Location: indexExpr.Location,
 		Left:     left,
 		Index:    index,
 		DataType: ty,
@@ -776,6 +798,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 
 	if len(keyValues) == 1 && keyType == types.RuntimeType && valueType == types.RuntimeType {
 		return &ir.TypeExpression{
+			Location: mapLit.Location,
 			DataType: &types.MapType{
 				KeyType:   t.typeFromExpr(keyValues[0].Key, mapLit.KeyValues[0].Key.GetLocation()),
 				ValueType: t.typeFromExpr(keyValues[0].Value, mapLit.KeyValues[0].Value.GetLocation()),
@@ -784,6 +807,7 @@ func (t *typeChecker) typeCheckMap(mapLit *ast.MapLiteral) ir.Expression {
 	}
 
 	mapExpr := &ir.MapExpression{
+		Location:  mapLit.Location,
 		KeyValues: keyValues,
 		DataType: &types.MapType{
 			KeyType:   keyType,
@@ -813,6 +837,7 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 		}
 
 		value = &ir.BinaryExpression{
+			Location: assignment.GetLocation(),
 			Left:     left,
 			Operator: operator,
 			Right:    right,
@@ -833,6 +858,7 @@ func (t *typeChecker) typeCheckAssignment(assignment *ast.AssignmentExpression) 
 	}
 
 	return &ir.Assignment{
+		Location: assignment.GetLocation(),
 		Assignee: assignee,
 		Value:    value,
 	}
@@ -859,6 +885,7 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 			tupleMembers = append(tupleMembers, t.typeFromExpr(val, tuple.Values[i].GetLocation()))
 		}
 		return &ir.TypeExpression{
+			Location: tuple.Location,
 			DataType: &types.TupleType{
 				Types: tupleMembers,
 			},
@@ -866,7 +893,8 @@ func (t *typeChecker) typeCheckTuple(tuple *ast.TupleExpression) ir.Expression {
 	}
 
 	return &ir.TupleExpression{
-		Values: values,
+		Location: tuple.Location,
+		Values:   values,
 		DataType: &types.TupleType{
 			Types: dataTypes,
 		},
@@ -878,6 +906,7 @@ func (t *typeChecker) typeCheckTypeCheck(tc *ast.TypeCheckExpression) ir.Express
 	ty := t.typeCheckType(tc.Type)
 
 	return &ir.TypeCheck{
+		Location: tc.Location,
 		Value:    value,
 		DataType: ty,
 	}
@@ -890,6 +919,7 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 		t.diagnostics.Report(diagnostics.NotCallable(call.Callee.GetLocation(), fn.Type()))
 		return &ir.InvalidExpression{
 			Expression: &ir.FunctionCall{
+				Location:   call.GetLocation(),
 				Function:   fn,
 				Arguments:  []ir.Expression{},
 				ReturnType: types.Invalid,
@@ -901,6 +931,7 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 		t.diagnostics.Report(diagnostics.WrongNumberArguments(call.Callee.GetLocation(), len(funcType.Parameters), len(call.Arguments)))
 		return &ir.InvalidExpression{
 			Expression: &ir.FunctionCall{
+				Location:   call.GetLocation(),
 				Function:   fn,
 				Arguments:  []ir.Expression{},
 				ReturnType: types.Invalid,
@@ -922,6 +953,7 @@ func (t *typeChecker) typeCheckFunctionCall(call *ast.FunctionCall) ir.Expressio
 	}
 
 	return &ir.FunctionCall{
+		Location:   call.GetLocation(),
 		Function:   fn,
 		Arguments:  args,
 		ReturnType: funcType.ReturnType,
@@ -962,8 +994,9 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 		}
 
 		return &ir.StructExpression{
-			Struct: baseTy,
-			Fields: fields,
+			Location: structExpr.GetLocation(),
+			Struct:   baseTy,
+			Fields:   fields,
 		}
 	} else if tupleTy, ok := ty.(*types.TupleStruct); ok {
 		fields := []ir.Expression{}
@@ -972,8 +1005,9 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 			t.diagnostics.Report(diagnostics.WrongNumberTupleValues(structExpr.Struct.GetLocation(), len(tupleTy.Types), len(structExpr.Members)))
 			return &ir.InvalidExpression{
 				Expression: &ir.TupleStructExpression{
-					Struct: tupleTy,
-					Fields: fields,
+					Location: structExpr.GetLocation(),
+					Struct:   tupleTy,
+					Fields:   fields,
 				},
 			}
 		}
@@ -1001,13 +1035,14 @@ func (t *typeChecker) typeCheckStructExpression(structExpr *ast.StructExpression
 		}
 
 		return &ir.TupleStructExpression{
-			Struct: baseTy,
-			Fields: fields,
+			Location: structExpr.GetLocation(),
+			Struct:   baseTy,
+			Fields:   fields,
 		}
 	} else {
 		t.diagnostics.Report(diagnostics.CannotConstruct(structExpr.Struct.GetLocation(), ty))
 		return &ir.InvalidExpression{
-			Expression: &ir.IntegerLiteral{},
+			Expression: &ir.IntegerLiteral{Location: structExpr.GetLocation()},
 		}
 	}
 }
@@ -1017,6 +1052,7 @@ func (t *typeChecker) typeCheckMemberExpression(member *ast.MemberExpression) ir
 	ty, diag := ir.Member(left, member.Member)
 
 	memberExpr := &ir.MemberExpression{
+		Location: member.GetLocation(),
 		Left:     left,
 		Member:   member.Member,
 		DataType: ty,
@@ -1047,6 +1083,7 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 	if len(stmts) == 1 {
 		if expr, ok := stmts[0].(ir.Expression); ok {
 			return &ir.Block{
+				Location:   block.Location,
 				Statements: stmts,
 				ResultType: expr.Type(),
 			}
@@ -1057,6 +1094,7 @@ func (t *typeChecker) typeCheckBlock(block *ast.Block, createScope bool) *ir.Blo
 		resultType = t.symbols.Context.(*symbols.BlockContext).ResultType
 	}
 	return &ir.Block{
+		Location:   block.Location,
 		Statements: stmts,
 		ResultType: resultType,
 	}
@@ -1089,6 +1127,7 @@ func (t *typeChecker) typeCheckIfExpression(ifStmt *ast.IfExpression) ir.Express
 	}
 
 	return &ir.IfExpression{
+		Location:   ifStmt.Location,
 		Condition:  condition,
 		ResultType: resultType,
 		Body:       body,
@@ -1109,6 +1148,7 @@ func (t *typeChecker) typeCheckWhileLoop(loop *ast.WhileLoop) ir.Expression {
 	body.ResultType = t.symbols.Context.(*symbols.LoopContext).ResultType
 
 	return &ir.WhileLoop{
+		Location:  loop.Location,
 		Condition: condition,
 		Body:      body,
 	}
@@ -1137,6 +1177,7 @@ func (t *typeChecker) typeCheckForLoop(loop *ast.ForLoop) ir.Expression {
 	body.ResultType = t.symbols.Context.(*symbols.LoopContext).ResultType
 
 	return &ir.ForLoop{
+		Location: loop.Location,
 		Variable: variable,
 		Iterator: iter,
 		Body:     body,
@@ -1167,10 +1208,13 @@ func (t *typeChecker) typeCheckFunctionExpression(fn *ast.FunctionExpression) ir
 			}
 		}
 
-		return &ir.TypeExpression{DataType: &types.Function{
-			Parameters: params,
-			ReturnType: returnType,
-		}}
+		return &ir.TypeExpression{
+			Location: fn.Location,
+			DataType: &types.Function{
+				Parameters: params,
+				ReturnType: returnType,
+			},
+		}
 	}
 
 	t.enterScope(symbols.FunctionContext{ReturnType: returnType})
@@ -1230,8 +1274,9 @@ func (t *typeChecker) typeCheckRefExpression(ref *ast.RefExpression) ir.Expressi
 	}
 
 	return &ir.RefExpression{
-		Value:   value,
-		Mutable: ref.Mutable,
+		Location: ref.Location,
+		Value:    value,
+		Mutable:  ref.Mutable,
 	}
 }
 
@@ -1243,7 +1288,8 @@ func (t *typeChecker) typeCheckDerefExpression(deref *ast.DerefExpression) ir.Ex
 	}
 
 	return &ir.DerefExpression{
-		Value: value,
+		Location: deref.GetLocation(),
+		Value:    value,
 	}
 }
 
@@ -1251,6 +1297,7 @@ func (t *typeChecker) typeCheckPointerType(ptr *ast.PointerType) ir.Expression {
 	ty := t.typeCheckType(ptr.Operand)
 
 	return &ir.TypeExpression{
+		Location: ptr.Location,
 		DataType: &types.Pointer{
 			Underlying: ty,
 			Mutable:    ptr.Mutable,
@@ -1262,6 +1309,7 @@ func (t *typeChecker) typeCheckOptionType(opt *ast.OptionType) ir.Expression {
 	ty := t.typeCheckType(opt.Operand)
 
 	return &ir.TypeExpression{
+		Location: opt.Location,
 		DataType: &types.Option{
 			SomeType: ty,
 		},

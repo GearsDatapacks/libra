@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"fmt"
+
 	"github.com/gearsdatapacks/libra/type_checker/ir"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"tinygo.org/x/go-llvm"
@@ -240,7 +242,7 @@ func (c *compiler) compileExpression(expression ir.Expression, used bool) value 
 		c.builder.CreateStore(left.toRValue(c), alloca)
 		return stackVariable(alloca)
 	default:
-		panic("Unreachable")
+		panic(fmt.Sprintf("Unexpected expression type: %T", expression))
 	}
 }
 

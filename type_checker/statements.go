@@ -93,6 +93,7 @@ func (t *typeChecker) typeCheckVariableDeclaration(varDec *ast.VariableDeclarati
 	return &ir.VariableDeclaration{
 		Symbol: variable,
 		Value:  value,
+		Location: varDec.GetLocation(),
 	}
 }
 
@@ -186,6 +187,7 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 		}
 		return &ir.ReturnStatement{
 			Value: nil,
+			Location: ret.Location,
 		}
 	}
 
@@ -198,6 +200,7 @@ func (t *typeChecker) typeCheckReturn(ret *ast.ReturnStatement) ir.Statement {
 
 	return &ir.ReturnStatement{
 		Value: value,
+		Location: ret.Location,
 	}
 }
 
@@ -228,6 +231,7 @@ func (t *typeChecker) typeCheckBreak(b *ast.BreakStatement) ir.Statement {
 
 	return &ir.BreakStatement{
 		Value: value,
+		Location: b.Location,
 	}
 }
 
@@ -245,6 +249,7 @@ func (t *typeChecker) typeCheckYield(yield *ast.YieldStatement) ir.Statement {
 
 	return &ir.YieldStatement{
 		Value: value,
+		Location: yield.Location,
 	}
 }
 
@@ -261,5 +266,5 @@ func (t *typeChecker) typeCheckContinue(c *ast.ContinueStatement) ir.Statement {
 		t.diagnostics.Report(diagnostics.CannotUseStatementOutsideLoop(c.Location, "continue"))
 	}
 
-	return &ir.ContinueStatement{}
+	return &ir.ContinueStatement{Location: c.Location}
 }

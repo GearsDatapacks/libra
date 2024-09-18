@@ -6,6 +6,7 @@ import (
 
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
@@ -60,7 +61,12 @@ func (m *LoweredModule) Print(node *printer.Node) {
 }
 
 type Label struct {
+	Location text.Location
 	Name string
+}
+
+func (l *Label) GetLocation() text.Location {
+	return l.Location
 }
 
 func (l *Label) Print(node *printer.Node) {
@@ -73,7 +79,12 @@ func (l *Label) Print(node *printer.Node) {
 }
 
 type Goto struct {
+	Location text.Location
 	Label string
+}
+
+func (g *Goto) GetLocation() text.Location {
+	return g.Location
 }
 
 func (g *Goto) Print(node *printer.Node) {
@@ -86,8 +97,13 @@ func (g *Goto) Print(node *printer.Node) {
 }
 
 type GotoIf struct {
+	Location text.Location
 	Condition Expression
 	Label     string
+}
+
+func (g *GotoIf) GetLocation() text.Location {
+	return g.Location
 }
 
 func (g *GotoIf) Print(node *printer.Node) {
@@ -102,8 +118,13 @@ func (g *GotoIf) Print(node *printer.Node) {
 }
 
 type GotoUnless struct {
+	Location text.Location
 	Condition Expression
 	Label     string
+}
+
+func (g *GotoUnless) GetLocation() text.Location {
+	return g.Location
 }
 
 func (g *GotoUnless) Print(node *printer.Node) {
@@ -118,9 +139,14 @@ func (g *GotoUnless) Print(node *printer.Node) {
 }
 
 type Branch struct {
+	Location text.Location
 	Condition Expression
 	IfLabel   string
 	ElseLabel string
+}
+
+func (b *Branch) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *Branch) Print(node *printer.Node) {
@@ -139,8 +165,13 @@ func (b *Branch) Print(node *printer.Node) {
 
 type BitCast struct {
 	expression
+	Location text.Location
 	Value Expression
 	To    types.Type
+}
+
+func (b *BitCast) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *BitCast) Print(node *printer.Node) {

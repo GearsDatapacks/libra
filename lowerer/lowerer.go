@@ -11,10 +11,10 @@ import (
 
 type lowerer struct {
 	currentModule *ir.LoweredModule
-	diagnostics diagnostics.Manager
-	labelId     int
-	varId       int
-	scope       *scope
+	diagnostics   diagnostics.Manager
+	labelId       int
+	varId         int
+	scope         *scope
 }
 
 type scope struct {
@@ -59,7 +59,8 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 	}
 
 	for name, module := range pkg.Modules {
-		mainFunction := makeMain()
+		mainFunction, definesMain := getMain(module)
+
 		mod := &ir.LoweredModule{
 			Name:         name,
 			MainFunction: mainFunction,
@@ -71,10 +72,10 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 		lowerer.currentModule = mod
 
 		for _, stmt := range module.Statements {
-			lowerer.lowerGlobal(stmt, mod)
+			lowerer.lowerGlobal(stmt, mod, !definesMain)
 		}
 		// Only compile main if there are any statements there
-		if len(mainFunction.Body.Statements) == 0 {
+		if definesMain || len(mainFunction.Body.Statements) == 0 {
 			mod.Functions = mod.Functions[1:]
 		} else {
 			mainFunction.Body.Statements = lowerer.cfa(mainFunction.Body.Statements, nil, false)
@@ -82,6 +83,16 @@ func Lower(pkg *ir.Package, diagnostics diagnostics.Manager) (*ir.LoweredPackage
 	}
 	fixAbi(lowered)
 	return lowered, lowerer.diagnostics
+}
+
+func getMain(module *ir.Module) (*ir.FunctionDeclaration, bool) {
+	for _, statement := range module.Statements {
+		if funcDecl, ok := statement.(*ir.FunctionDeclaration); ok && funcDecl.Name == "main" {
+			return funcDecl, true
+		}
+	}
+
+	return makeMain(), false
 }
 
 func (l *lowerer) genLabel() string {
@@ -120,7 +131,11 @@ func findContext[Context any](l *lowerer) Context {
 	panic("Should find context")
 }
 
-func (l *lowerer) lowerGlobal(statement ir.Statement, mod *ir.LoweredModule) {
+func (l *lowerer) lowerGlobal(
+	statement ir.Statement,
+	mod *ir.LoweredModule,
+	allowArbitraryStatements bool,
+) {
 	switch stmt := statement.(type) {
 	case *ir.FunctionDeclaration:
 		mod.Functions = append(mod.Functions, l.lowerFunctionDeclaration(stmt))
@@ -129,7 +144,12 @@ func (l *lowerer) lowerGlobal(statement ir.Statement, mod *ir.LoweredModule) {
 	case *ir.ImportStatement:
 		mod.Imports = append(mod.Imports, l.lowerImportStatement(stmt))
 	default:
-		l.lower(statement, &mod.MainFunction.Body.Statements)
+		// TODO: Allow global variable/constant declarations here
+		if allowArbitraryStatements {
+			l.lower(statement, &mod.MainFunction.Body.Statements)
+		} else {
+			l.diagnostics.Report(diagnostics.NonDeclOutsideMain(statement.GetLocation()))
+		}
 	}
 }
 

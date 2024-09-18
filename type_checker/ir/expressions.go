@@ -17,8 +17,13 @@ func (expression) irExpr() {}
 
 type IntegerLiteral struct {
 	expression
+	Location text.Location
 	Value    int64
 	DataType types.Type
+}
+
+func (i *IntegerLiteral) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *IntegerLiteral) Print(node *printer.Node) {
@@ -46,8 +51,13 @@ func (i *IntegerLiteral) ConstValue() values.ConstValue {
 
 type UintLiteral struct {
 	expression
+	Location text.Location
 	Value    uint64
 	DataType types.Type
+}
+
+func (u *UintLiteral) GetLocation() text.Location {
+	return u.Location
 }
 
 func (i UintLiteral) Print(node *printer.Node) {
@@ -75,8 +85,13 @@ func (i UintLiteral) ConstValue() values.ConstValue {
 
 type FloatLiteral struct {
 	expression
+	Location text.Location
 	Value    float64
 	DataType types.Type
+}
+
+func (f *FloatLiteral) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *FloatLiteral) Print(node *printer.Node) {
@@ -104,7 +119,12 @@ func (f *FloatLiteral) ConstValue() values.ConstValue {
 
 type BooleanLiteral struct {
 	expression
-	Value bool
+	Location text.Location
+	Value    bool
+}
+
+func (b *BooleanLiteral) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *BooleanLiteral) Print(node *printer.Node) {
@@ -132,7 +152,12 @@ func (b *BooleanLiteral) ConstValue() values.ConstValue {
 
 type StringLiteral struct {
 	expression
-	Value string
+	Location text.Location
+	Value    string
+}
+
+func (s *StringLiteral) GetLocation() text.Location {
+	return s.Location
 }
 
 func (s *StringLiteral) Print(node *printer.Node) {
@@ -160,7 +185,12 @@ func (s *StringLiteral) ConstValue() values.ConstValue {
 
 type VariableExpression struct {
 	expression
-	Symbol symbols.Variable
+	Location text.Location
+	Symbol   symbols.Variable
+}
+
+func (t *VariableExpression) GetLocation() text.Location {
+	return t.Location
 }
 
 func (v *VariableExpression) Print(node *printer.Node) {
@@ -382,9 +412,14 @@ func (b BinaryOperator) Type() types.Type {
 
 type BinaryExpression struct {
 	expression
+	Location text.Location
 	Left     Expression
 	Operator BinaryOperator
 	Right    Expression
+}
+
+func (b *BinaryExpression) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *BinaryExpression) Print(node *printer.Node) {
@@ -693,8 +728,13 @@ func (u UnaryOperator) Type() types.Type {
 
 type UnaryExpression struct {
 	expression
+	Location text.Location
 	Operator UnaryOperator
 	Operand  Expression
+}
+
+func (u *UnaryExpression) GetLocation() text.Location {
+	return u.Location
 }
 
 func (u *UnaryExpression) Print(node *printer.Node) {
@@ -765,8 +805,13 @@ func (u *UnaryExpression) ConstValue() values.ConstValue {
 
 type Conversion struct {
 	expression
+	Location   text.Location
 	Expression Expression
 	To         types.Type
+}
+
+func (c *Conversion) GetLocation() text.Location {
+	return c.Location
 }
 
 func (c *Conversion) Print(node *printer.Node) {
@@ -815,6 +860,11 @@ func (c *Conversion) ConstValue() values.ConstValue {
 
 type InvalidExpression struct {
 	Expression
+	Location text.Location
+}
+
+func (i *InvalidExpression) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *InvalidExpression) Print(node *printer.Node) {
@@ -833,8 +883,13 @@ func (i *InvalidExpression) IsConst() bool {
 
 type ArrayExpression struct {
 	expression
+	Location text.Location
 	DataType *types.ArrayType
 	Elements []Expression
+}
+
+func (a *ArrayExpression) GetLocation() text.Location {
+	return a.Location
 }
 
 func (a *ArrayExpression) Print(node *printer.Node) {
@@ -878,9 +933,14 @@ func (a *ArrayExpression) ConstValue() values.ConstValue {
 
 type IndexExpression struct {
 	expression
+	Location text.Location
 	Left     Expression
 	Index    Expression
 	DataType types.Type
+}
+
+func (i *IndexExpression) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *IndexExpression) Print(node *printer.Node) {
@@ -925,8 +985,13 @@ func (kv KeyValue) Print(node *printer.Node) {
 
 type MapExpression struct {
 	expression
+	Location  text.Location
 	KeyValues []KeyValue
 	DataType  *types.MapType
+}
+
+func (m *MapExpression) GetLocation() text.Location {
+	return m.Location
 }
 
 func (m *MapExpression) Print(node *printer.Node) {
@@ -977,8 +1042,13 @@ func (m *MapExpression) ConstValue() values.ConstValue {
 
 type Assignment struct {
 	expression
+	Location text.Location
 	Assignee Expression
 	Value    Expression
+}
+
+func (a *Assignment) GetLocation() text.Location {
+	return a.Location
 }
 
 func (a *Assignment) Print(node *printer.Node) {
@@ -1005,8 +1075,13 @@ func (a *Assignment) ConstValue() values.ConstValue {
 
 type TupleExpression struct {
 	expression
+	Location text.Location
 	Values   []Expression
 	DataType *types.TupleType
+}
+
+func (t *TupleExpression) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TupleExpression) Print(node *printer.Node) {
@@ -1051,8 +1126,13 @@ func (t *TupleExpression) ConstValue() values.ConstValue {
 
 type TypeCheck struct {
 	expression
+	Location text.Location
 	Value    Expression
 	DataType types.Type
+}
+
+func (t *TypeCheck) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TypeCheck) Print(node *printer.Node) {
@@ -1087,9 +1167,14 @@ func (t *TypeCheck) ConstValue() values.ConstValue {
 
 type FunctionCall struct {
 	expression
+	Location   text.Location
 	Function   Expression
 	Arguments  []Expression
 	ReturnType types.Type
+}
+
+func (f *FunctionCall) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *FunctionCall) Print(node *printer.Node) {
@@ -1118,8 +1203,13 @@ func (f *FunctionCall) ConstValue() values.ConstValue {
 
 type StructExpression struct {
 	expression
-	Struct types.Type
-	Fields map[string]Expression
+	Location text.Location
+	Struct   types.Type
+	Fields   map[string]Expression
+}
+
+func (s *StructExpression) GetLocation() text.Location {
+	return s.Location
 }
 
 func (s *StructExpression) Print(node *printer.Node) {
@@ -1173,8 +1263,13 @@ func (s *StructExpression) ConstValue() values.ConstValue {
 
 type TupleStructExpression struct {
 	expression
-	Struct types.Type
-	Fields []Expression
+	Location text.Location
+	Struct   types.Type
+	Fields   []Expression
+}
+
+func (t *TupleStructExpression) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TupleStructExpression) Print(node *printer.Node) {
@@ -1220,9 +1315,14 @@ func (s *TupleStructExpression) ConstValue() values.ConstValue {
 
 type MemberExpression struct {
 	expression
+	Location text.Location
 	Left     Expression
 	Member   string
 	DataType types.Type
+}
+
+func (m *MemberExpression) GetLocation() text.Location {
+	return m.Location
 }
 
 func (m *MemberExpression) Print(node *printer.Node) {
@@ -1255,8 +1355,13 @@ func (m *MemberExpression) ConstValue() values.ConstValue {
 
 type Block struct {
 	expression
+	Location   text.Location
 	Statements []Statement
 	ResultType types.Type
+}
+
+func (b *Block) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *Block) Print(node *printer.Node) {
@@ -1284,10 +1389,15 @@ func (*Block) ConstValue() values.ConstValue {
 
 type IfExpression struct {
 	expression
+	Location   text.Location
 	Condition  Expression
 	ResultType types.Type
 	Body       *Block
 	ElseBranch Statement
+}
+
+func (i *IfExpression) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *IfExpression) Print(node *printer.Node) {
@@ -1322,8 +1432,13 @@ func (*IfExpression) ConstValue() values.ConstValue {
 
 type WhileLoop struct {
 	expression
+	Location  text.Location
 	Condition Expression
 	Body      *Block
+}
+
+func (w *WhileLoop) GetLocation() text.Location {
+	return w.Location
 }
 
 func (w *WhileLoop) Print(node *printer.Node) {
@@ -1350,9 +1465,14 @@ func (*WhileLoop) ConstValue() values.ConstValue {
 
 type ForLoop struct {
 	expression
+	Location text.Location
 	Variable symbols.Variable
 	Iterator Expression
 	Body     *Block
+}
+
+func (f *ForLoop) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *ForLoop) Print(node *printer.Node) {
@@ -1380,7 +1500,12 @@ func (*ForLoop) ConstValue() values.ConstValue {
 
 type TypeExpression struct {
 	expression
+	Location text.Location
 	DataType types.Type
+}
+
+func (t *TypeExpression) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TypeExpression) Print(node *printer.Node) {
@@ -1406,10 +1531,14 @@ func (t *TypeExpression) ConstValue() values.ConstValue {
 
 type FunctionExpression struct {
 	expression
+	Location   text.Location
 	Parameters []string
 	Body       *Block
 	DataType   *types.Function
-	Location   text.Location
+}
+
+func (f *FunctionExpression) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *FunctionExpression) Print(node *printer.Node) {
@@ -1446,8 +1575,13 @@ func (t *FunctionExpression) ConstValue() values.ConstValue {
 
 type RefExpression struct {
 	expression
-	Value   Expression
-	Mutable bool
+	Location text.Location
+	Value    Expression
+	Mutable  bool
+}
+
+func (r *RefExpression) GetLocation() text.Location {
+	return r.Location
 }
 
 func (r *RefExpression) Print(node *printer.Node) {
@@ -1481,7 +1615,12 @@ func (*RefExpression) ConstValue() values.ConstValue {
 
 type DerefExpression struct {
 	expression
-	Value Expression
+	Location text.Location
+	Value    Expression
+}
+
+func (d *DerefExpression) GetLocation() text.Location {
+	return d.Location
 }
 
 func (d *DerefExpression) Print(node *printer.Node) {

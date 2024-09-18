@@ -9,8 +9,13 @@ import (
 )
 
 type VariableDeclaration struct {
-	Symbol *symbols.Variable
-	Value  Expression
+	Location text.Location
+	Symbol   *symbols.Variable
+	Value    Expression
+}
+
+func (v *VariableDeclaration) GetLocation() text.Location {
+	return v.Location
 }
 
 func (v *VariableDeclaration) Print(node *printer.Node) {
@@ -24,13 +29,17 @@ func (v *VariableDeclaration) Print(node *printer.Node) {
 }
 
 type FunctionDeclaration struct {
+	Location   text.Location
 	Name       string
 	Parameters []string
 	Body       *Block
 	Type       *types.Function
 	Exported   bool
 	Extern     *string
-	Location   text.Location
+}
+
+func (f *FunctionDeclaration) GetLocation() text.Location {
+	return f.Location
 }
 
 func (f *FunctionDeclaration) Print(node *printer.Node) {
@@ -65,7 +74,12 @@ func (f *FunctionDeclaration) Print(node *printer.Node) {
 }
 
 type ReturnStatement struct {
-	Value Expression
+	Location text.Location
+	Value    Expression
+}
+
+func (r *ReturnStatement) GetLocation() text.Location {
+	return r.Location
 }
 
 func (r *ReturnStatement) Print(node *printer.Node) {
@@ -78,7 +92,12 @@ func (r *ReturnStatement) Print(node *printer.Node) {
 }
 
 type BreakStatement struct {
-	Value Expression
+	Location text.Location
+	Value    Expression
+}
+
+func (b *BreakStatement) GetLocation() text.Location {
+	return b.Location
 }
 
 func (b *BreakStatement) Print(node *printer.Node) {
@@ -91,7 +110,12 @@ func (b *BreakStatement) Print(node *printer.Node) {
 }
 
 type YieldStatement struct {
-	Value Expression
+	Location text.Location
+	Value    Expression
+}
+
+func (y *YieldStatement) GetLocation() text.Location {
+	return y.Location
 }
 
 func (y *YieldStatement) Print(node *printer.Node) {
@@ -103,7 +127,13 @@ func (y *YieldStatement) Print(node *printer.Node) {
 		Node(y.Value)
 }
 
-type ContinueStatement struct{}
+type ContinueStatement struct {
+	Location text.Location
+}
+
+func (c *ContinueStatement) GetLocation() text.Location {
+	return c.Location
+}
 
 func (*ContinueStatement) Print(node *printer.Node) {
 	node.Text(
@@ -113,10 +143,15 @@ func (*ContinueStatement) Print(node *printer.Node) {
 }
 
 type ImportStatement struct {
+	Location  text.Location
 	Module    string
 	Name      string
 	Symbols   []string
 	ImportAll bool
+}
+
+func (i *ImportStatement) GetLocation() text.Location {
+	return i.Location
 }
 
 func (i *ImportStatement) Print(node *printer.Node) {
@@ -147,9 +182,14 @@ func (i *ImportStatement) Print(node *printer.Node) {
 }
 
 type TypeDeclaration struct {
+	Location text.Location
 	Name     string
 	Exported bool
 	Type     types.Type
+}
+
+func (t *TypeDeclaration) GetLocation() text.Location {
+	return t.Location
 }
 
 func (t *TypeDeclaration) Print(node *printer.Node) {

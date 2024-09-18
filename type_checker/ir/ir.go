@@ -7,12 +7,14 @@ import (
 	"github.com/gearsdatapacks/libra/colour"
 	"github.com/gearsdatapacks/libra/diagnostics"
 	"github.com/gearsdatapacks/libra/printer"
+	"github.com/gearsdatapacks/libra/text"
 	"github.com/gearsdatapacks/libra/type_checker/types"
 	"github.com/gearsdatapacks/libra/type_checker/values"
 )
 
 type Statement interface {
 	printer.Printable
+	GetLocation() text.Location
 }
 
 type Expression interface {
